@@ -28,12 +28,15 @@ import {
 import type { Choice, Question, ThemeId } from "./content";
 import {
   STORAGE_KEY,
+  PENDING_STORAGE_KEY,
+  SESSION_MODE_KEY,
   nextUnanswered,
   parseResult,
   pressPercent,
   readAnswers,
+  readPendingVotes,
 } from "./model";
-import type { Answer, Answers, VoteResult } from "./model";
+import type { Answer, Answers, PendingVotes, VoteResult } from "./model";
 import styles from "./button.module.css";
 
 type Phase = "loading" | "ready" | "saving" | "answered" | "error";
@@ -65,12 +68,16 @@ async function requestResult(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action, id: question.id, version: question.version, ...(choice ? { choice } : {}) }),
     });
-    const body = await response.json();
+    const body = await response.json().catch(() => null);
     if (!response.ok) {
-      const message = typeof body.error === 'string' ? body.error : '统计暂不可用，请重试';
+      const message = typeof body?.error === 'string' ? body.error : '统计暂不可用，请重试';
       throw response.status >= 500 ? new StatisticsUnavailableError(message) : new Error(message);
     }
-    return parseResult(body);
+    try {
+      return parseResult(body);
+    } catch {
+      throw new StatisticsUnavailableError('统计响应无效，请重新连接');
+    }
   } catch (reason) {
     if (controller.signal.aborted && !signal?.aborted) throw new StatisticsUnavailableError('连接超时，选择尚未确认，请重新载入本题');
     if (reason instanceof TypeError) throw new StatisticsUnavailableError('网络连接失败，请重新载入本题');
@@ -99,6 +106,9 @@ export default function ButtonGame() {
   const [finished, setFinished] = useState(false);
   const [focused, setFocused] = useState(false);
   const [sound, setSound] = useState(false);
+  const [connectionMode, setConnectionMode] = useState<'auto' | 'local'>('auto');
+  const [unconfirmed, setUnconfirmed] = useState<PendingVotes>({});
+  const unconfirmedRef = useRef<PendingVotes>({});
   const answersRef = useRef<Answers>({});
   const savingRef = useRef(false);
   const audioRef = useRef<AudioContext | null>(null);
@@ -139,15 +149,41 @@ export default function ButtonGame() {
     }
   }, []);
 
+  const changeConnection = useCallback((mode: 'auto' | 'local') => {
+    setConnectionMode(mode);
+    try { sessionStorage.setItem(SESSION_MODE_KEY, mode); } catch { /* The mode still works for this page when session storage is blocked. */ }
+  }, []);
+
+  const rememberPending = useCallback((item: Question, choice: Choice | null) => {
+    const pending = { ...unconfirmedRef.current };
+    if (choice) pending[questionKey(item)] = { id: item.id, version: item.version, choice };
+    else delete pending[questionKey(item)];
+    unconfirmedRef.current = pending;
+    setUnconfirmed(pending);
+    try { localStorage.setItem(PENDING_STORAGE_KEY, JSON.stringify(pending)); } catch { setNotice('设备存储不可用，待确认选择仅在当前页面保留。'); }
+  }, []);
+
+  const reconnect = () => {
+    if (savingRef.current) return;
+    changeConnection('auto');
+    setRetry(value => value + 1);
+  };
+
   useEffect(() => {
     let stored: Answers = {};
     try {
       stored = readAnswers(localStorage.getItem(STORAGE_KEY));
+      const pending = readPendingVotes(localStorage.getItem(PENDING_STORAGE_KEY));
+      unconfirmedRef.current = pending;
+      setUnconfirmed(pending);
     } catch {
       setNotice("设备存储不可用，本次记录仅在当前页面保留。");
     }
     answersRef.current = stored;
     setAnswers(stored);
+    try {
+      if (sessionStorage.getItem(SESSION_MODE_KEY) === 'local') setConnectionMode('local');
+    } catch { /* Storage is optional. */ }
     const params = new URLSearchParams(window.location.search);
     const linked = QUESTIONS.find((item) => item.id === params.get("q"));
     const selectedTheme = THEMES.some((item) => item.id === params.get("theme"))
@@ -173,15 +209,35 @@ export default function ButtonGame() {
     const url = new URL(window.location.href);
     url.searchParams.set("theme", question.theme);
     url.searchParams.set("q", question.id);
-    window.history.replaceState(null, "", url);
+    window.history.replaceState(window.history.state, "", url);
     setPhase("loading");
     setResult(null);
     setError("");
+    const showLocal = () => {
+      if (unconfirmedRef.current[questionKey(question)]) {
+        setError('上次投票的结果尚未确认。请重新连接核实，也可以先跳过这题。');
+        setPhase('error');
+        return;
+      }
+      const choice = answersRef.current[questionKey(question)]?.choice || null;
+      setResult({ mode: 'local', choice, totals: null });
+      setPhase(choice ? 'answered' : 'ready');
+    };
+    if (connectionMode === 'local') {
+      showLocal();
+      return () => controller.abort();
+    }
     requestResult(question, "status", controller.signal)
       .then((data) => {
         if (controller.signal.aborted) return;
+        if (data.mode === 'local') {
+          changeConnection('local');
+          showLocal();
+          return;
+        }
+        if (unconfirmedRef.current[questionKey(question)]) rememberPending(question, null);
         const saved = answersRef.current[questionKey(question)];
-        const choice = data.mode === 'local' ? saved?.choice || null : data.choice;
+        const { choice } = data;
         setResult({ ...data, choice });
         setPhase(choice ? "answered" : "ready");
         if (data.mode === 'global' && data.choice && (saved?.mode !== 'global' || saved.choice !== data.choice)) {
@@ -200,10 +256,8 @@ export default function ButtonGame() {
         if (controller.signal.aborted) return;
         // Only failed status reads can fall back; a failed vote may already be committed.
         if (reason instanceof StatisticsUnavailableError) {
-          const choice = answersRef.current[questionKey(question)]?.choice || null;
-          setResult({ mode: "local", choice, totals: null });
-          setError("全站统计暂不可用，当前仅记录本机选择。");
-          setPhase(choice ? "answered" : "ready");
+          changeConnection('local');
+          showLocal();
           return;
         }
         setError(
@@ -212,7 +266,7 @@ export default function ButtonGame() {
         setPhase("error");
       });
     return () => controller.abort();
-  }, [hydrated, question, retry, remember]);
+  }, [hydrated, question, retry, remember, connectionMode, changeConnection, rememberPending]);
 
   const playClick = () => {
     if (!sound) return;
@@ -239,12 +293,13 @@ export default function ButtonGame() {
   };
 
   const vote = async (choice: Choice) => {
-    if (!question || phase !== "ready" || savingRef.current) return;
+    if (!question || phase !== "ready" || savingRef.current || unconfirmedRef.current[key]) return;
     savingRef.current = true;
     setPendingChoice(choice);
     setPhase("saving");
     playClick();
     try {
+      if (result?.mode === 'global') rememberPending(question, choice);
       const data =
         result?.mode === "local"
           ? result
@@ -261,6 +316,7 @@ export default function ButtonGame() {
         mode: data.mode,
         at: new Date().toISOString(),
       });
+      if (data.mode === 'global') rememberPending(question, null);
       setResult({ ...data, choice: confirmed });
       setPhase("answered");
     } catch (reason) {
@@ -353,6 +409,8 @@ export default function ButtonGame() {
         mode: view,
         phase,
         pendingChoice,
+        unconfirmedChoice: unconfirmed[key]?.choice || null,
+        connectionMode,
         theme,
         tag,
         perspective,
@@ -374,6 +432,9 @@ export default function ButtonGame() {
     view,
     phase,
     pendingChoice,
+    unconfirmed,
+    key,
+    connectionMode,
     theme,
     tag,
     perspective,
@@ -523,6 +584,24 @@ export default function ButtonGame() {
                     </button>
                   ))}
                 </div>
+              )}
+            </div>
+
+            <div className={styles.connectionBar}>
+              <span role="status">
+                {connectionMode === 'local'
+                  ? '本机畅玩 · 选择仅保存在此设备，不会自动上传'
+                  : phase === 'loading' ? '正在连接全站统计，可先在本机游玩' : '全站模式 · 投票确认后显示大家的选择'}
+              </span>
+              {process.env.NEXT_PUBLIC_ESA_PAGES !== '1' && (
+                <button
+                  type="button"
+                  className={styles.textButton}
+                  disabled={isBusy || !hydrated || (phase === 'error' && connectionMode === 'auto')}
+                  onClick={() => (connectionMode === 'local' ? reconnect() : changeConnection('local'))}
+                >
+                  {connectionMode === 'local' ? '重新连接统计' : '先本机游玩'}
+                </button>
               )}
             </div>
 
@@ -697,17 +776,7 @@ export default function ButtonGame() {
                         <div className={styles.localResult}>
                           <CheckOutlined aria-hidden />
                           <p>本机选择已记录</p>
-                          <span>{error ? "全站统计暂不可用" : "全站统计未连接"}</span>
-                          {error && (
-                            <button
-                              type="button"
-                              className={styles.textButton}
-                              onClick={() => setRetry((value) => value + 1)}
-                            >
-                              <ReloadOutlined aria-hidden />
-                              重新连接统计
-                            </button>
-                          )}
+                          <span>不计入全站统计，也不会自动上传</span>
                         </div>
                       )}
                       <button
@@ -764,7 +833,7 @@ export default function ButtonGame() {
                           <button
                             type="button"
                             disabled={isBusy}
-                            onClick={() => setRetry((value) => value + 1)}
+                            onClick={reconnect}
                           >
                             <ReloadOutlined aria-hidden />
                             重新载入本题

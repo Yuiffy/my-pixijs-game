@@ -14,6 +14,7 @@ type BoardProps = {
   onAimChange: (aim: AimChange) => void;
   onCleanupStatus: (status: CleanupStatus) => void;
   disabled?: boolean;
+  paused?: boolean;
 };
 type Aim = {
   pieceId: string;
@@ -298,15 +299,19 @@ function CameraRig({ width, length }: { width: number; length: number }) {
   return null;
 }
 
-function Scene({ snapshot, onShot, onAimChange, onCleanupStatus, disabled = false }: BoardProps) {
+function Scene({ snapshot, onShot, onAimChange, onCleanupStatus, disabled = false, paused = false }: BoardProps) {
   const { gl } = useThree();
   const [aim, setAim] = useState<Aim | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const aimRef = useRef<Aim | null>(null);
+  const captureRef = useRef<{ target: CaptureTarget; pointerId: number } | null>(null);
   const inputLocked = disabled || snapshot.phase !== "aiming" || snapshot.winner !== null;
 
   const clearAim = useCallback(() => {
     aimRef.current = null;
+    const capture = captureRef.current;
+    captureRef.current = null;
+    if (capture?.target.hasPointerCapture(capture.pointerId)) capture.target.releasePointerCapture(capture.pointerId);
     setAim(null);
     onAimChange(null);
     gl.domElement.style.cursor = "default";
@@ -318,8 +323,12 @@ function Scene({ snapshot, onShot, onAimChange, onCleanupStatus, disabled = fals
 
   useEffect(() => {
     window.addEventListener("blur", clearAim);
+    gl.domElement.addEventListener("lostpointercapture", clearAim);
+    gl.domElement.addEventListener("pointercancel", clearAim);
     return () => {
       window.removeEventListener("blur", clearAim);
+      gl.domElement.removeEventListener("lostpointercapture", clearAim);
+      gl.domElement.removeEventListener("pointercancel", clearAim);
       gl.domElement.style.cursor = "default";
     };
   }, [clearAim, gl]);
@@ -348,7 +357,9 @@ function Scene({ snapshot, onShot, onAimChange, onCleanupStatus, disabled = fals
   const startAim = (piece: FlickPiece, event: ThreeEvent<PointerEvent>) => {
     if (inputLocked || piece.side !== snapshot.turn || !piece.inPlay || aimRef.current || event.button !== 0) return;
     event.stopPropagation();
-    (event.target as CaptureTarget | null)?.setPointerCapture(event.pointerId);
+    const target = event.target as CaptureTarget;
+    target.setPointerCapture(event.pointerId);
+    captureRef.current = { target, pointerId: event.pointerId };
     const initial = { pieceId: piece.id, pointerId: event.pointerId, angle: 0, power: 0 };
     aimRef.current = initial;
     setAim(initial);
@@ -360,8 +371,6 @@ function Scene({ snapshot, onShot, onAimChange, onCleanupStatus, disabled = fals
     if (!aimRef.current || aimRef.current.pointerId !== event.pointerId) return;
     event.stopPropagation();
     const finalAim = cancel ? aimRef.current : updateAim(event);
-    const target = event.target as CaptureTarget | null;
-    if (target?.hasPointerCapture(event.pointerId)) target.releasePointerCapture(event.pointerId);
     clearAim();
     if (!cancel && finalAim && finalAim.power >= 0.04 && !inputLocked) {
       onShot(finalAim.pieceId, finalAim.angle, finalAim.power);
@@ -384,7 +393,7 @@ function Scene({ snapshot, onShot, onAimChange, onCleanupStatus, disabled = fals
         <meshStandardMaterial color="#303337" roughness={0.91} />
       </mesh>
       <BoardSurface width={snapshot.board.width} length={snapshot.board.length} />
-      <FlickCleanup snapshot={snapshot} onStatus={onCleanupStatus} />
+      <FlickCleanup snapshot={snapshot} onStatus={onCleanupStatus} paused={paused} />
       {visiblePieces.map((piece) => {
         const selectable = !inputLocked && piece.side === snapshot.turn;
         return (

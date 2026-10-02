@@ -119,6 +119,8 @@ function LiverPageContent({ liverId }: { liverId: string }) {
               <ArrowLeftOutlined />
               <span>返回列表</span>
             </Link>
+            {liverId === 'sui' && <Link href="/liver/sui/songs" className="text-emerald-300 hover:text-white px-3 py-1">唱歌统计与歌切</Link>}
+            {liverId === 'sui' && <Link href="/liver/sui/gifts" className="text-rose-300 hover:text-white px-3 py-1">舰礼档案</Link>}
           </div>
         </nav>
 

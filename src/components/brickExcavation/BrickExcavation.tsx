@@ -24,6 +24,7 @@ import {
   canShuffleRemaining, createGame, GameState, getCluster, getGrade,
   hasLegalMove, hasStrandedTreasure, shuffleRemaining, strike, Treasure,
 } from "./engine";
+import { navigatePlayable, nearestPlayable } from "./controls";
 import styles from "./brickExcavation.module.css";
 
 const BEST_KEY = "brick-excavation-best-v2";
@@ -142,12 +143,21 @@ export default function BrickExcavation() {
   const [rulesOpen, setRulesOpen] = useState(false);
   const [muted, setMuted] = useState(true);
   const [best, setBest] = useState<number | null>(null);
+  const [previewFirst, setPreviewFirst] = useState(false);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [focused, setFocused] = useState(0);
+  const [announcement, setAnnouncement] = useState("");
+  const pendingFocus = useRef<number | null>(null);
+  const shuffleRef = useRef<HTMLButtonElement>(null);
+  const undoRef = useRef<HTMLButtonElement>(null);
   const boardRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLElement>(null);
   const helpRef = useRef<HTMLButtonElement>(null);
   const rulesRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
+    setPreviewFirst(window.matchMedia("(pointer: coarse)").matches);
     try {
       const value = Number(localStorage.getItem(BEST_KEY));
       if (Number.isFinite(value) && value > 0) setBest(value);
@@ -169,14 +179,18 @@ export default function BrickExcavation() {
 
   useEffect(() => {
     const target = window as TextWindow;
-    target.render_game_to_text = () => JSON.stringify(publicState(game));
+    target.render_game_to_text = () => JSON.stringify({ ...publicState(game), previewFirst, selected, focused, rulesOpen });
     return () => {
       delete target.render_game_to_text;
     };
-  }, [game]);
+  }, [game, previewFirst, selected, focused, rulesOpen]);
 
   useEffect(() => {
-    if (rulesOpen) rulesRef.current?.focus();
+    if (!rulesOpen) return undefined;
+    const surfaces = rootRef.current?.querySelectorAll("[data-game-surface]");
+    surfaces?.forEach((element) => element.setAttribute("inert", ""));
+    rulesRef.current?.focus();
+    return () => surfaces?.forEach((element) => element.removeAttribute("inert"));
   }, [rulesOpen]);
 
   useEffect(() => {
@@ -221,13 +235,27 @@ export default function BrickExcavation() {
     return sizes;
   }, [game.board, game.cols]);
 
+  const tabStop = game.status === "playing" ? nearestPlayable(clusterSizes, game.cols, focused) : null;
+  const previewIndex = selected ?? hovered;
+
+  useEffect(() => {
+    if (pendingFocus.current === null) return;
+    const next = game.status === "playing" ? nearestPlayable(clusterSizes, game.cols, pendingFocus.current) : null;
+    pendingFocus.current = null;
+    if (next !== null) {
+      setFocused(next);
+      boardRef.current?.querySelector<HTMLButtonElement>(`button[data-index="${next}"]`)?.focus();
+    } else if (canShuffleRemaining(game)) shuffleRef.current?.focus();
+    else undoRef.current?.focus();
+  }, [clusterSizes, game]);
+
   const preview = useMemo(() => {
     const group = new Set<number>();
     const edge = new Set<number>();
-    if (hovered === null || game.status !== "playing" || clusterSizes[hovered] < 2) {
+    if (previewIndex === null || game.status !== "playing" || clusterSizes[previewIndex] < 2) {
       return { group, edge };
     }
-    getCluster(game.board, hovered, game.cols).forEach((index) => {
+    getCluster(game.board, previewIndex, game.cols).forEach((index) => {
       group.add(index);
     });
     group.forEach((index) => {
@@ -248,7 +276,7 @@ export default function BrickExcavation() {
       });
     });
     return { group, edge };
-  }, [clusterSizes, game, hovered]);
+  }, [clusterSizes, game, previewIndex]);
 
   function sound(frequency: number, duration = 0.07) {
     if (muted) return;
@@ -278,12 +306,16 @@ export default function BrickExcavation() {
     }
   }
 
-  function hit(index: number) {
+  function hit(index: number, keepFocus = false) {
+    if (rulesOpen) return;
     const next = strike(game, index);
     if (next === game) return;
+    if (keepFocus) pendingFocus.current = index;
     setHistory((previous) => [...previous, game]);
     setGame(next);
     setHovered(null);
+    setSelected(null);
+    setAnnouncement(`敲落 ${next.lastMove!.cleared.length} 格，得 ${next.lastMove!.scoreGained} 分，剩余 ${next.movesLeft} 锤。${next.status === "won" ? "全部出土。" : next.status === "lost" ? "本局结束，可撤销这一步。" : ""}`);
     sound(
       next.lastMove?.foundIds.length
         ? 760
@@ -294,9 +326,12 @@ export default function BrickExcavation() {
 
   function undo() {
     if (history.length === 0) return;
+    if (history.length === 1 && document.activeElement === undoRef.current) pendingFocus.current = game.lastMove?.index ?? focused;
     setGame(history[history.length - 1]);
     setHistory(history.slice(0, -1));
     setHovered(null);
+    setSelected(null);
+    setAnnouncement("已撤销上一步，可重新选择。");
   }
 
   function shuffle() {
@@ -305,6 +340,8 @@ export default function BrickExcavation() {
     setHistory((previous) => [...previous, game]);
     setGame(next);
     setHovered(null);
+    setSelected(null);
+    setAnnouncement("洗牌完成，已取消原来的预览。");
     sound(540, 0.16);
   }
 
@@ -312,12 +349,18 @@ export default function BrickExcavation() {
     setGame(createGame(game.seed));
     setHistory([]);
     setHovered(null);
+    setSelected(null);
+    setFocused(0);
+    setAnnouncement("当前矿层已重新开始。");
   }
 
   function newMap() {
     setGame(createGame(game.seed + 1));
     setHistory([]);
     setHovered(null);
+    setSelected(null);
+    setFocused(0);
+    setAnnouncement("已进入新的矿层。");
   }
 
   function closeRules() {
@@ -326,28 +369,16 @@ export default function BrickExcavation() {
   }
 
   function moveFocus(event: KeyboardEvent<HTMLButtonElement>, index: number) {
-    const delta = {
-      ArrowUp: -game.cols,
-      ArrowDown: game.cols,
-      ArrowLeft: -1,
-      ArrowRight: 1,
-    }[event.key];
-    if (delta === undefined) return;
-    event.preventDefault();
-    let candidate = index + delta;
-    while (candidate >= 0 && candidate < game.board.length) {
-      if (delta === 1 && candidate % game.cols === 0) break;
-      if (delta === -1 && candidate % game.cols === game.cols - 1) break;
-      if (clusterSizes[candidate] >= 2) {
-        boardRef.current
-          ?.querySelector<HTMLButtonElement>(
-            `button[data-index="${candidate}"]`,
-          )
-          ?.focus();
-        break;
-      }
-      candidate += delta;
+    if (event.key === "Escape") {
+      setSelected(null);
+      setHovered(null);
+      return;
     }
+    const candidate = navigatePlayable(clusterSizes, game.cols, index, event.key);
+    if (candidate === null) return;
+    event.preventDefault();
+    setSelected(null);
+    boardRef.current?.querySelector<HTMLButtonElement>(`button[data-index="${candidate}"]`)?.focus();
   }
 
   function renderCell(color: number | null, index: number) {
@@ -371,13 +402,20 @@ export default function BrickExcavation() {
         data-dead={dead}
         data-preview={previewKind}
         data-preview-color={nextColor}
-        aria-label={`第 ${row} 行第 ${col} 列，${COLOR_NAMES[color]}砖${dead ? '，孤砖，不能敲' : ''}`}
+        aria-label={`第 ${row} 行第 ${col} 列，${COLOR_NAMES[color]}砖${dead ? '，孤砖，不能敲' : `，连色 ${clusterSizes[index]} 格`}`}
+        aria-pressed={previewFirst ? selected !== null && preview.group.has(index) : undefined}
+        tabIndex={index === tabStop ? 0 : -1}
         title={dead ? '单格砖不能敲' : nextColor !== undefined ? `敲击后变为${COLOR_NAMES[nextColor]}` : undefined}
         disabled={game.status !== 'playing' || dead}
-        onClick={() => hit(index)}
+        onClick={(event) => {
+          if (previewFirst && event.detail !== 0) {
+            setSelected(index);
+            setAnnouncement(`预览 ${clusterSizes[index]} 格。${clusterSizes[index] >= 6 ? "返还落锤" : "消耗一锤"}。确认后才会敲击。`);
+          } else hit(index, event.detail === 0);
+        }}
         onMouseEnter={() => { if (!dead) setHovered(index); }}
         onMouseLeave={() => setHovered(null)}
-        onFocus={() => { if (!dead) setHovered(index); }}
+        onFocus={() => { setFocused(index); if (!dead) setHovered(index); }}
         onBlur={() => setHovered(null)}
         onKeyDown={(event) => moveFocus(event, index)}
       >
@@ -408,8 +446,8 @@ export default function BrickExcavation() {
   }
 
   return (
-    <main className={styles.page}>
-      <header className={styles.topbar}>
+    <main className={styles.page} ref={rootRef}>
+      <header className={styles.topbar} data-game-surface="">
         <Link
           className={styles.backLink}
           href="/demos"
@@ -448,7 +486,7 @@ export default function BrickExcavation() {
         </div>
       </header>
 
-      <div className={styles.workspace}>
+      <div className={styles.workspace} data-game-surface="">
         <section className={styles.boardColumn} aria-label="发掘棋盘">
           <div className={styles.boardHeading}>
             <span>
@@ -464,6 +502,19 @@ export default function BrickExcavation() {
             <span className={styles.desktopBoardLabel}>
               彩砖区 / {game.cols} × {game.rows}
             </span>
+          </div>
+          <div className={styles.inputMode}>
+            <button
+              type="button"
+              data-testid="preview-mode"
+              aria-pressed={previewFirst}
+              onClick={() => {
+                setPreviewFirst(!previewFirst);
+                setSelected(null);
+                setHovered(null);
+              }}
+            >{previewFirst ? "✓ 先预览，再落锤" : "直接敲击"}</button>
+            <span>{previewFirst ? "点砖选连片，确认后才敲" : "点一下就敲 · 可切换预览"}</span>
           </div>
           <div className={styles.boardFrame} data-status={game.status}>
             <div className={styles.boardBase} aria-hidden="true">
@@ -489,7 +540,7 @@ export default function BrickExcavation() {
             <span>
               {game.status === "playing" && !legalMoveAvailable
                 ? `颜色死局 · 可洗牌 ${game.shufflesLeft} 次`
-                : hovered !== null && preview.group.size > 0
+                : previewIndex !== null && preview.group.size > 0
                 ? `连色 ${preview.group.size} 格`
                 : "孤砖不可敲"}
             </span>
@@ -499,6 +550,35 @@ export default function BrickExcavation() {
                 : game.lastMove?.refunded ? '本次落锤返还' : '六格以上返还落锤'}
             </span>
           </div>
+          {previewFirst && game.status === "playing" && (
+            <div className={styles.selectionBar} aria-label="落锤预览">
+              <div>
+                <strong>{selected === null ? "先选一片彩砖" : `敲落 ${preview.group.size} 格 · 基础 ${preview.group.size * 5} 分`}</strong>
+                <span>{selected === null ? "高亮连片和外圈变色，慢慢想再出手" : `${preview.group.size >= 6 ? "返还落锤" : "消耗 1 锤"} · 外圈 ${preview.edge.size} 格变色`}</span>
+              </div>
+              <button
+                type="button"
+                data-testid="cancel-preview"
+                disabled={selected === null}
+                onClick={(event) => {
+                  const index = selected;
+                  setSelected(null);
+                  setHovered(null);
+                  if (event.detail === 0 && index !== null) boardRef.current?.querySelector<HTMLButtonElement>(`button[data-index="${index}"]`)?.focus();
+                }}
+              >取消</button>
+              <button
+                type="button"
+                data-testid="confirm-strike"
+                disabled={selected === null || game.status !== "playing"}
+                onClick={(event) => {
+                  if (selected !== null) hit(selected, event.detail === 0);
+                }}
+              >落锤</button>
+            </div>
+          )}
+          <p className={styles.keyboardHint}>方向键选砖 · Enter / 空格落锤 · Home / End 到首尾 · Tab 离开棋盘</p>
+          <div className={styles.srOnly} role="status">{announcement}</div>
           <div className={styles.colorGuide} aria-label="颜色变化顺序">
             <span className={styles.colorGuideTitle}>变色顺序</span>
             <div className={styles.colorGuideSteps}>
@@ -649,6 +729,7 @@ export default function BrickExcavation() {
             </button>
             <div className={styles.secondaryButtons}>
               <button
+                ref={shuffleRef}
                 type="button"
                 onClick={shuffle}
                 disabled={!canShuffleRemaining(game)}
@@ -659,6 +740,7 @@ export default function BrickExcavation() {
                 <SyncOutlined /> 洗牌 {game.shufflesLeft}/{game.maxShuffles}
               </button>
               <button
+                ref={undoRef}
                 type="button"
                 onClick={undo}
                 disabled={history.length === 0}
@@ -709,7 +791,7 @@ export default function BrickExcavation() {
               <li>每次敲击消耗一锤；一次敲落至少六块，返还这一锤。</li>
               <li>每局可洗牌 {game.maxShuffles} 次，只随机剩余砖的颜色，不补砖或落锤；四周已挖空的孤砖无法靠洗牌补救。</li>
             </ol>
-            <p>鼠标、触屏可直接敲击；键盘方向键移动焦点，Enter 或空格敲击。</p>
+            <p>触屏默认先预览：点砖选连片，再按“落锤”；可切换直接敲击。键盘方向键移动焦点，左右可跨行，Home / End 跳到首尾，Enter 或空格敲击后自动聚焦附近可敲砖。Tab 可直接离开棋盘。</p>
           </div>
         </div>
       )}

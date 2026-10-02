@@ -580,8 +580,12 @@
   border-bottom: 1px solid var(--line);
 }
 
-.groupNav a {
+.groupNav button {
+  min-height: 44px;
   padding: 8px 0;
+  background: transparent;
+  cursor: pointer;
+  border: 0;
   color: #c8c5bf;
   border-bottom: 1px solid transparent;
   font-size: 13px;
@@ -590,7 +594,7 @@
   transition: color 180ms ease, border-color 180ms ease;
 }
 
-.groupNav a:hover, .groupNav a:focus-visible {
+.groupNav button:hover, .groupNav button:focus-visible {
   color: var(--mint);
   border-color: var(--mint);
 }
@@ -620,6 +624,101 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   column-gap: 28px;
   border-top: 1px solid var(--line);
+}
+
+.libraryTools { margin-bottom: 22px; }
+.searchRow { display: flex; align-items: center; gap: 24px; }
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  padding: 0 16px;
+  border: 1px solid #555b58;
+  border-radius: 4px;
+  background: #151918;
+  color: var(--mint);
+}
+.searchBox:focus-within { border-color: var(--mint); }
+.searchBox input {
+  width: 100%;
+  min-width: 0;
+  min-height: 50px;
+  color: var(--ink);
+  border: 0;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 16px;
+}
+.searchBox input::placeholder { color: #a9ada9; }
+.sortControl { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 13px; }
+.sortControl select {
+  min-height: 50px;
+  padding: 0 32px 0 12px;
+  border: 1px solid #555b58;
+  border-radius: 4px;
+  background: #151918;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.shelfNav { display: flex; flex-wrap: wrap; gap: 24px; margin-top: 20px; }
+.shelfNav button, .resultSummary button, .emptyLibrary button {
+  min-height: 44px;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  color: #b3b6b1;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.shelfNav button { border-bottom: 2px solid transparent; font-weight: 700; }
+.shelfNav button span { margin-left: 6px; font-size: 11px; font-variant-numeric: tabular-nums; }
+.shelfNav button[aria-pressed="true"], .groupNav button[aria-pressed="true"] { color: var(--mint); border-bottom-color: var(--mint); }
+.resultSummary { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; margin-top: 18px; color: var(--muted); font-size: 12px; }
+.resultSummary button, .emptyLibrary button { color: var(--mint); text-decoration: underline; text-underline-offset: 5px; }
+.resultSummary > span { margin-right: auto; }
+.libraryNotice { margin: 12px 0 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
+.emptyLibrary { padding: 52px 0; }
+.emptyLibrary h3 { margin: 0 0 12px; font-size: 22px; color: var(--ink); }
+.emptyLibrary p { margin: 0 0 16px; color: var(--muted); font-size: 14px; }
+.gameEntry { position: relative; min-width: 0; border-bottom: 1px solid var(--line); }
+.gameEntry .gameRow { height: 100%; padding-right: 48px; border-bottom: 0; }
+.favoriteButton {
+  position: absolute;
+  z-index: 3;
+  top: 12px;
+  right: 0;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  color: #b2b8b2;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  font-size: 20px;
+  cursor: pointer;
+  transition: color 160ms ease, background 160ms ease;
+}
+.favoriteButton[aria-pressed="true"], .favoriteButton:hover { color: var(--mint); background: rgba(125, 224, 195, 0.08); }
+.page button:focus-visible, .page select:focus-visible, .gameRow:focus-visible { outline: 2px solid var(--mint); outline-offset: 3px; }
+@media (max-width: 760px) {
+  .searchRow { flex-wrap: wrap; gap: 12px; }
+  .searchBox { flex-basis: 100%; }
+  .sortControl { width: 100%; justify-content: space-between; }
+  .sortControl select { flex: 1; min-height: 44px; }
+  .shelfNav { justify-content: space-between; gap: 4px; }
+  .shelfNav button { font-size: 12px; }
+  .shelfNav button span { margin-left: 3px; }
+  .groupNav { gap: 4px 20px; padding-bottom: 16px; }
+  .gameEntry .gameRow { padding-right: 34px; grid-template-columns: 76px minmax(0, 1fr); gap: 10px; }
+  .gameEntry .gameThumb { width: 76px; height: 86px; }
+  .favoriteButton { top: 8px; right: -8px; }
 }
 
 .gameRow {

@@ -31,6 +31,68 @@
   font: inherit;
 }
 
+.inputMode {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-bottom: 12px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.inputMode button,
+.selectionBar button {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #232d29;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.inputMode button[aria-pressed="true"] {
+  color: var(--accent);
+  border-color: #77834a;
+}
+
+.selectionBar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.selectionBar strong,
+.selectionBar span {
+  display: block;
+  line-height: 1.6;
+}
+
+.selectionBar strong { font-size: 13px; }
+.selectionBar span { color: var(--muted); font-size: 11px; }
+.selectionBar button { font-size: 13px; }
+.selectionBar button:last-child { background: var(--accent); color: #1b261d; font-weight: 700; }
+.selectionBar button:disabled { opacity: 0.4; cursor: default; }
+.keyboardHint { color: var(--muted); font-size: 10px; line-height: 1.7; margin: 12px 0; }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+@media (pointer: coarse) {
+  .keyboardHint { display: none; }
+}
+
+@media (max-width: 760px) {
+  .keyboardHint { display: none; }
+}
+
+@media (max-width: 420px) {
+  .selectionBar { grid-template-columns: 1fr 1fr; }
+  .selectionBar > div { grid-column: 1 / -1; }
+}
+
 .topbar {
   display: flex;
   min-height: 78px;

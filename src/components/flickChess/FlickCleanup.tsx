@@ -279,9 +279,10 @@ function moveAlong(collector: Collector, distance: number) {
   return collector.route.length === 0;
 }
 
-export default function FlickCleanup({ snapshot, onStatus }: {
+export default function FlickCleanup({ snapshot, onStatus, paused = false }: {
   snapshot: FlickSnapshot;
   onStatus: (status: CleanupStatus) => void;
+  paused?: boolean;
 }) {
   const [renderItems, setRenderItems] = useState<Fallen[]>([]);
   const fallen = useRef<Fallen[]>([]);
@@ -313,6 +314,7 @@ export default function FlickCleanup({ snapshot, onStatus }: {
   }, [snapshot, onStatus]);
 
   useFrame((_, rawDelta) => {
+    if (paused) return;
     const delta = Math.min(rawDelta, 0.05);
     const items = fallen.current;
     const robot = collector.current;

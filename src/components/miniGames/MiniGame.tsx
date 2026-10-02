@@ -47,6 +47,7 @@ import { AgiCompanyPicker, AgiIndustryScene } from "./AgiIndustryPanel";
 import AgiTurnPanel from "./AgiTurnPanel";
 import { readGameSave } from "./save";
 import { SNACK_SKINS, SNACK_SKIN_STORAGE_KEY, SnackSkin } from "./snackSkins";
+import { SnackControls, SnackControlMode, SNACK_CONTROL_STORAGE_KEY } from "./snackControls";
 import styles from "./miniGames.module.css";
 
 const TITLES = { agi: "智能纪元", fab: "晶圆周期", snack: "主播，别嚼了！" };
@@ -149,10 +150,10 @@ function Rules({ kind }: { kind: GameState["kind"] }) {
     <ol>
       <li>
         按一下 J 吃一份，松手后自动嚼完；长按不会连吃下一份。
-        按住空格说话，提升气氛、降低怀疑。
+        默认按住空格说话，提升气氛、降低怀疑。
       </li>
       <li>
-        按住 K 静音，吃东西不会发出声音，但冷场消耗会加快。音乐响起时噪声只剩
+        默认按住 K 静音，吃东西不会发出声音，但冷场消耗会加快。音乐响起时噪声只剩
         12%。
       </li>
       <li>
@@ -161,7 +162,7 @@ function Rules({ kind }: { kind: GameState["kind"] }) {
       </li>
       <li>
         用 1–4 选择零食。气氛降到 0、怀疑达到 100 或超时即失败。
-        手机点一下「吃一口」，说话和静音仍需按住。
+        手机点一下「吃一口」。说话和静音可选按住，或点按保持、再点关闭。
       </li>
       <li>
         清空本关零食即可通关。更快、怀疑峰值更低、连续吃完更多份可获得高分。P /
@@ -205,8 +206,8 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
   const skinRef = useRef<SnackSkin>("original");
   const manual = useRef(false);
   const reduced = useRef(false);
-  const pointers = useRef(new Map<number, SnackInput>());
-  const keys = useRef(new Set<SnackInput>());
+  const controls = useRef(new SnackControls());
+  const [controlMode, setControlMode] = useState<SnackControlMode>("hold");
   const sync = useCallback(() => setGame(structuredClone(state.current)), []);
   const chooseSkin = (next: SnackSkin) => {
     skinRef.current = next;
@@ -232,10 +233,24 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
     persist();
   };
   const releaseAll = useCallback(() => {
-    keys.current.clear();
-    pointers.current.clear();
+    controls.current.clear();
     if (state.current.kind === "snack") clearSnackInput(state.current);
   }, []);
+  const applyControls = useCallback(() => {
+    if (state.current.kind !== "snack") return;
+    if (state.current.phase !== "playing") controls.current.clear();
+    for (const input of ["talk", "mute", "eat"] as const) {
+      snackInput(state.current, input, controls.current.active(input));
+    }
+    sync();
+  }, [sync]);
+  const chooseControls = (mode: SnackControlMode) => {
+    controls.current.setMode(mode);
+    releaseAll();
+    setControlMode(mode);
+    sync();
+    try { localStorage.setItem(SNACK_CONTROL_STORAGE_KEY, mode); } catch { setStorage("浏览器未允许存档，本局仍可玩"); }
+  };
   const fullScreen = useCallback(() => {
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     else root.current?.requestFullscreen?.().catch(() => {});
@@ -249,6 +264,10 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
     ).matches;
     if (kind === "snack") {
       try {
+        const savedMode = localStorage.getItem(SNACK_CONTROL_STORAGE_KEY);
+        const mode = savedMode === "toggle" ? "toggle" : "hold";
+        controls.current.setMode(mode);
+        setControlMode(mode);
         const savedSkin = localStorage.getItem(SNACK_SKIN_STORAGE_KEY);
         skinRef.current = savedSkin === "sui" ? "sui" : "original";
         setSkin(skinRef.current);
@@ -279,6 +298,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
       const elapsed = Math.min(100, now - last);
       last = now;
       if (!manual.current && state.current.kind === "snack") advanceSnack(state.current, elapsed);
+      if (state.current.kind === "snack" && state.current.phase !== "playing") controls.current.clear();
       if (now - painted > 45) {
         if (canvas.current) drawScene(
             canvas.current,
@@ -316,16 +336,11 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
       KeyJ: "eat",
       KeyK: "mute",
     };
-    const updateInput = (input: SnackInput) => {
-      if (state.current.kind === "snack") snackInput(
-          state.current,
-          input,
-          keys.current.has(input) ||
-            Array.from(pointers.current.values()).includes(input),
-        );
-    };
     const down = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement)?.matches("input, select, textarea")) return;
+      const target = e.target instanceof Element ? e.target : null;
+      if (e.defaultPrevented || e.ctrlKey || e.altKey || e.metaKey || target?.closest("input, select, textarea, [contenteditable=true]")) return;
+      // Focused buttons/links keep their native Space/Enter activation.
+      if (["Space", "Enter"].includes(e.code) && target?.closest("button, a, [role=button]")) return;
       if (e.code === "KeyF" && !e.repeat) fullScreen();
       if (state.current.kind !== "snack") return;
       if (e.code === "KeyP" || e.code === "Escape") {
@@ -338,9 +353,8 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
       }
       if (mapping[e.code] && state.current.phase === "playing") {
         e.preventDefault();
-        keys.current.add(mapping[e.code]);
-        updateInput(mapping[e.code]);
-        sync();
+        if (!e.repeat) controls.current.press(`key:${e.code}`, mapping[e.code]);
+        applyControls();
       }
       if (/^Digit[1-4]$/.test(e.code)) {
         selectSnack(state.current, Number(e.code.slice(-1)) - 1);
@@ -349,9 +363,8 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
     };
     const up = (e: KeyboardEvent) => {
       if (mapping[e.code]) {
-        keys.current.delete(mapping[e.code]);
-        updateInput(mapping[e.code]);
-        sync();
+        controls.current.release(`key:${e.code}`);
+        applyControls();
       }
     };
     window.addEventListener("keydown", down);
@@ -368,6 +381,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
               cover: snackCover(state.current),
               snack: SNACKS[state.current.selected].name,
               skin: skinRef.current,
+              controlMode: controls.current.mode,
               speech: snackSpeech(state.current),
             }
           : {}),
@@ -375,6 +389,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
     window.advanceTime = (ms: number) => {
       manual.current = true;
       if (state.current.kind === "snack") advanceSnack(state.current, ms);
+      if (state.current.kind === "snack" && state.current.phase !== "playing") controls.current.clear();
       if (canvas.current) drawScene(
           canvas.current,
           state.current,
@@ -394,7 +409,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
       delete window.render_game_to_text;
       delete window.advanceTime;
     };
-  }, [kind, fullScreen, persist, releaseAll, sync]);
+  }, [kind, fullScreen, persist, releaseAll, sync, applyControls]);
   const start = () => {
     window.scrollTo({ top: 0, behavior: "instant" });
     startedRef.current = true;
@@ -428,45 +443,54 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
     }
     sync();
   };
-  const hold = (input: SnackInput) => ({
-    onPointerDown: (e: React.PointerEvent<HTMLButtonElement>) => {
-      e.preventDefault();
-      e.currentTarget.setPointerCapture(e.pointerId);
-      pointers.current.set(e.pointerId, input);
-      if (state.current.kind === "snack") snackInput(state.current, input, true);
-      sync();
-    },
-    onPointerUp: (e: React.PointerEvent<HTMLButtonElement>) => {
-      pointers.current.delete(e.pointerId);
-      if (state.current.kind === "snack") snackInput(
-          state.current,
-          input,
-          keys.current.has(input) ||
-            Array.from(pointers.current.values()).includes(input),
-        );
-      sync();
-    },
-    onLostPointerCapture: (e: React.PointerEvent<HTMLButtonElement>) => {
-      pointers.current.delete(e.pointerId);
-      if (state.current.kind === "snack") snackInput(
-          state.current,
-          input,
-          keys.current.has(input) ||
-            Array.from(pointers.current.values()).includes(input),
-        );
-      sync();
-    },
-    onPointerCancel: (e: React.PointerEvent<HTMLButtonElement>) => {
-      pointers.current.delete(e.pointerId);
-      if (state.current.kind === "snack") snackInput(
-          state.current,
-          input,
-          keys.current.has(input) ||
-            Array.from(pointers.current.values()).includes(input),
-        );
-      sync();
-    },
-  });
+  const hold = (input: SnackInput) => {
+    const toggled = controlMode === "toggle" && input !== "eat";
+    const releasePointer = (e: React.PointerEvent<HTMLButtonElement>) => {
+      controls.current.release(`pointer:${e.pointerId}`);
+      applyControls();
+    };
+    return {
+      onPointerDown: (e: React.PointerEvent<HTMLButtonElement>) => {
+        if (e.button !== 0 || toggled) return;
+        e.preventDefault();
+        e.currentTarget.setPointerCapture(e.pointerId);
+        controls.current.press(`pointer:${e.pointerId}`, input);
+        applyControls();
+      },
+      onPointerUp: releasePointer,
+      onPointerCancel: releasePointer,
+      onLostPointerCapture: releasePointer,
+      onKeyDown: (e: React.KeyboardEvent<HTMLButtonElement>) => {
+        if (!["Space", "Enter"].includes(e.code)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (!e.repeat) controls.current.press(`button:${e.code}`, input);
+        applyControls();
+      },
+      onKeyUp: (e: React.KeyboardEvent<HTMLButtonElement>) => {
+        if (!["Space", "Enter"].includes(e.code)) return;
+        e.preventDefault();
+        // Also let the window release a shortcut pressed before focus moved.
+        controls.current.release(`button:${e.code}`);
+        applyControls();
+      },
+      onBlur: () => {
+        controls.current.releaseButtons();
+        applyControls();
+      },
+      onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
+        if (toggled) {
+          controls.current.toggle(input);
+          applyControls();
+        } else if (input === "eat" && e.detail === 0) {
+          controls.current.press("activation", input);
+          applyControls();
+          controls.current.release("activation");
+          applyControls();
+        }
+      },
+    };
+  };
   const snackGame = game.kind === "snack" ? game : null;
   const ended =
     game.kind === "snack"
@@ -684,7 +708,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
                       : musicEnding ? "音乐快结束了" : musicActive ? "音乐掩护中" : "等待下一段音乐"}
                   </strong>
                   <small>
-                    {musicActive ? "咀嚼声降低 88% · 抓紧这一口" : "按住 K 静音，也能掩护偷吃"}
+                    {musicActive ? "咀嚼声降低 88% · 抓紧这一口" : controlMode === "toggle" ? "按 K 切换静音，也能掩护偷吃" : "按住 K 静音，也能掩护偷吃"}
                   </small>
                 </div>
                 <span className={styles.musicTime}>
@@ -1137,6 +1161,13 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
                         />
                       </div>
                     </div>
+                    <fieldset className={styles.controlMode}>
+                      <legend>说话 / 静音操作</legend>
+                      <div>
+                        <button aria-pressed={controlMode === "hold"} onClick={() => chooseControls("hold")}>按住操作</button>
+                        <button aria-pressed={controlMode === "toggle"} onClick={() => chooseControls("toggle")}>点按保持</button>
+                      </div>
+                    </fieldset>
                     <div className={styles.holdControls}>
                       {(
                         [
@@ -1165,42 +1196,16 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
                           {...hold(control.id)}
                           disabled={snackGame.phase !== "playing"}
                           aria-pressed={control.id === "eat" ? snackGame.chewing > 0 : snackGame.inputs[control.id]}
-                          aria-label={control.id === "eat" ? "吃一口" : `按住${control.title}`}
-                          onKeyDown={control.id === "eat" ? (e) => {
-                            if (!["Space", "Enter"].includes(e.code)) return;
-                            e.preventDefault();
-                            e.stopPropagation();
-                            if (!e.repeat && state.current.kind === "snack") {
-                              snackInput(state.current, "eat", true);
-                              sync();
-                            }
-                          } : undefined}
-                          onKeyUp={control.id === "eat" ? (e) => {
-                            if (!["Space", "Enter"].includes(e.code)) return;
-                            e.preventDefault();
-                            e.stopPropagation();
-                            if (state.current.kind === "snack") {
-                              snackInput(state.current, "eat", keys.current.has("eat") || Array.from(pointers.current.values()).includes("eat"));
-                              sync();
-                            }
-                          } : undefined}
-                          onClick={control.id === "eat" ? (e) => {
-                            // Assistive/keyboard activation has no pointer-down event.
-                            if (e.detail === 0 && state.current.kind === "snack") {
-                              snackInput(state.current, "eat", true);
-                              snackInput(state.current, "eat", false);
-                              sync();
-                            }
-                          } : undefined}
+                          aria-label={control.id === "eat" ? "吃一口" : `${controlMode === "toggle" ? "切换" : "按住"}${control.title}`}
                         >
                           <kbd>{control.key}</kbd>
-                          <strong>{control.title}</strong>
+                          <strong>{control.title}{controlMode === "toggle" && control.id !== "eat" && snackGame.inputs[control.id] ? " · 已开启" : ""}</strong>
                           <small>{control.hint}</small>
                         </button>
                       ))}
                     </div>
                     <p className={styles.footnote}>
-                      点一下吃一份；说话、静音需按住。嘴里有食物也能接话，但会增加怀疑。
+                      点一下吃一份；{controlMode === "toggle" ? "说话、静音点一下保持，再点关闭。暂停后需重新开启。" : "说话、静音需按住，聚焦按钮后也可按住空格或 Enter。"}嘴里有食物也能接话，但会增加怀疑。
                       1–4 选零食。
                     </p>
                   </>

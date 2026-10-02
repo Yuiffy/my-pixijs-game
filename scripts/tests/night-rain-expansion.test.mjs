@@ -26,7 +26,7 @@ test('new guest patterns have distinct timings, silhouettes, punish windows and 
 });
 test('v3 progression migrates to expanded map without healing, resetting enemies or losing chosen skin',()=>{
  const s=fresh();s.worldVersion=3;s.enemies=s.enemies.slice(0,8);delete s.defeatedGuests;delete s.harborGate;s.playerSkin='nagisa';s.player.hp=43;s.player.flasks=1;s.enemies[0].hp=0;s.enemies[0].action='dead';
- const loaded=engine.loadGame(engine.saveGame(s));assert.ok(loaded);assert.equal(loaded.worldVersion,4);assert.equal(loaded.player.hp,43);assert.equal(loaded.player.flasks,1);assert.equal(loaded.playerSkin,'nagisa');assert.deepEqual(loaded.enemies.slice(0,8),s.enemies);assert.equal(loaded.enemies.length,13);
+ const loaded=engine.loadGame(engine.saveGame(s));assert.ok(loaded);assert.equal(loaded.worldVersion,6);assert.equal(loaded.player.hp,43);assert.equal(loaded.player.flasks,1);assert.equal(loaded.playerSkin,'nagisa');assert.deepEqual(loaded.enemies.slice(0,8),s.enemies);assert.equal(loaded.enemies.length,world.ENEMY_SPAWNS.length);
 });
 test('complete old city then new main route, guest duels, side rewards, inside shortcut and free exploration with persistent guest victories',()=>{
  const {state:s}=playFirstLevel(engine);engine.continueExploring(s);

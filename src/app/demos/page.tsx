@@ -10,6 +10,9 @@ import {
   ExperimentOutlined,
   HomeOutlined,
   RocketOutlined,
+  SearchOutlined,
+  StarFilled,
+  StarOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
 import Image from 'next/image';
@@ -19,239 +22,28 @@ import {
   AUTOCHESS_VERSION,
   AUTOCHESS_RELEASE_DATE,
 } from '@/components/autoChessGame/version';
-import { CONTENT_VERSION as SPARRING_VERSION } from '@/components/oneMoreGame/content';
-import { QUESTIONS as BUTTON_QUESTIONS } from '@/components/buttonGame/content';
+import {
+  gameGroups,
+  GameItem,
+  ProjectItem,
+} from '@/components/gameLibrary/catalog';
+import {
+  readLibrary,
+  recordGameOpen,
+  saveLibrary,
+  LIBRARY_EVENT,
+  LIBRARY_KEY,
+  LibraryData,
+} from '@/components/gameLibrary/storage';
+import {
+  DEFAULT_FILTERS,
+  readFilters,
+  writeFilters,
+  selectGames,
+  LibraryFilters,
+} from '@/components/gameLibrary/discovery';
 
 import styles from './page.module.css';
-
-interface ProjectItem {
-  title: string;
-  href: string;
-  description: string;
-  image?: string;
-  meta: string;
-  externalStats?: boolean;
-}
-
-interface GameItem extends ProjectItem {
-  releaseDate: string;
-  updateDate?: string;
-}
-
-// Date sources and update rules are documented in docs/demos-dates.md.
-const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
-  {
-    id: 'action',
-    title: '动作与探索',
-    games: [
-      {
-        title: '岁己 · 雨夜寻味',
-        href: '/game/night-rain',
-        description:
-          '穿过雨中的旧城，打开近路、挑战铁伞，和饼干岁一起找一顿热饭。',
-        image: '/games/night-rain/preview.png',
-        meta: '3D 动作探索 · 扮演岁己 · 箱庭冒险',
-        releaseDate: '2026-09-26',
-        updateDate: '2026-09-26',
-      },
-      {
-        title: '岁岁过招',
-        href: '/game/one-more',
-        description: '接飞铃、截突进，在三庭收钟的道场中挑战三位对手。',
-        image: '/games/one-more/dojo.webp',
-        meta: `动作对战 · 扮演挑战者 · 三位首章 Boss · v${SPARRING_VERSION}`,
-        releaseDate: '2026-09-06',
-        updateDate: '2026-09-07',
-      },
-      {
-        title: 'Knight：空洞搜打撤',
-        href: '/knight',
-        description: '深入空洞搜集资源、应对遭遇，在局势失控前带着战利品撤离。',
-        meta: '搜打撤 · 扮演探索者 · 搜索、交战、撤离',
-        externalStats: true,
-        releaseDate: '2026-07-18',
-      },
-    ],
-  },
-  {
-    id: 'virtual-streamer',
-    title: '虚拟主播模拟',
-    games: [
-      {
-        title: '不许手抖 · 黄金微针模拟室',
-        href: '/game/golden-needle',
-        description: '拿稳小方块探头，照顾岁己的变美愿望。清洁、敷麻、稳稳下针，别忘了冷敷，也可选栓剂止痛。',
-        image: '/games/golden-needle/preview.png',
-        meta: '手术操作模拟 · 三档难度 · 鼠标 / 触屏',
-        releaseDate: '2026-10-02',
-        updateDate: '2026-10-02',
-      },
-      {
-        title: '嘘，TA还在播',
-        href: '/game/hush-live',
-        description: '递外卖、隔墙报点、偷一个吻，守住两个人的小秘密。',
-        image: '/games/hush-live/preview.png',
-        meta: '第一人称潜行 · 扮演主播的秘密恋人 · 五晚同居',
-        releaseDate: '2026-09-22',
-        updateDate: '2026-09-26',
-      },
-      {
-        title: '饼干岁，听我说',
-        href: '/game/streamer',
-        description: '打出话题、挑选弹幕、救场转场，亲手控住三幕直播。',
-        image: '/images/materials/岁己SUI小猫帽短发小揪揪半身金瞳.png',
-        meta: '直播策略肉鸽 · 扮演主播岁己 · 七种结局',
-        releaseDate: '2026-09-12',
-        updateDate: '2026-09-12',
-      },
-      {
-        title: '岁己：马上就播',
-        href: '/game/pre-stream',
-        description: '跑遍公寓准备直播，趁保温杯慢慢接水去喂猫、试音，处理突发状况后赶到 OBS 开播。',
-        image: '/games/pre-stream/preview-3d.webp',
-        meta: '3D 开播竞速 · 扮演主播岁己 · 三晚计时摘星',
-        releaseDate: '2026-09-12',
-        updateDate: '2026-09-26',
-      },
-      {
-        title: '主播，别嚼了！',
-        href: '/game/snack',
-        description: '一边聊天一边偷偷吃零食，别让麦克风和观众发现。',
-        image: '/games/mini/snack.png',
-        meta: '实时操作 · 扮演偷吃的主播 · 五关挑战',
-        releaseDate: '2026-09-11',
-        updateDate: '2026-09-12',
-      },
-    ],
-  },
-  {
-    id: 'strategy',
-    title: '经营与策略',
-    games: [
-      {
-        title: 'RESET / 开蹬！',
-        href: '/game/reset-rush',
-        description: 'tibo 又说要 reset 了。经营多账号、押注银行券，把额度变成下一款碉游。',
-        image: '/games/reset-rush/preview.svg',
-        meta: '开发者桌游 · 1 人 + 3 AI · 时间、精力与并行开发',
-        releaseDate: '2026-09-26',
-        updateDate: '2026-09-26',
-      },
-      {
-        title: '上船！应援事务所',
-        href: '/game/hype-harbor',
-        description: '四位主播三条船。应援出圈、押未达标人数，或抢名场面切片，和朋友比比眼光。',
-        image: '/games/hype-harbor/preview.png',
-        meta: '投资桌游 · 2–4 人 · AI / 本地多人',
-        releaseDate: '2026-09-26',
-        updateDate: '2026-09-26',
-      },
-      {
-        title: '平陆运河：造山移海',
-        href: '/game/pinglu-canal',
-        description: '逐格炸山、拓河、疏浚，再把土运去填沟造田。在真实高程与河网构成的 3456 格地图上跨分水岭、建三级船闸，只有最终采用的航线才得分。',
-        image: '/games/pinglu-canal/preview.svg',
-        meta: '地形工程 · 1–4 人 / AI · 自由施工',
-        releaseDate: '2026-09-27',
-        updateDate: '2026-09-27',
-      },
-      {
-        title: '智能纪元',
-        href: '/game/agi',
-        description: '训练、蒸馏、发布大模型，与三家实验室竞速 AGI。',
-        image: '/games/mini/agi.png',
-        meta: '策略经营 · 扮演 AI 公司 · 发展大模型',
-        releaseDate: '2026-09-11',
-        updateDate: '2026-09-15',
-      },
-      {
-        title: '晶圆周期',
-        href: '/game/fab',
-        description: '决定报价、库存和扩产时机，在六年产业周期中积累财富。',
-        image: '/games/mini/fab.png',
-        meta: '模拟经营 · 扮演内存颗粒厂商 · 把握行情',
-        releaseDate: '2026-09-11',
-        updateDate: '2026-09-11',
-      },
-    ],
-  },
-  {
-    id: 'story',
-    title: '故事与抉择',
-    games: [
-      {
-        title: '虚境归途',
-        href: '/game/rpg',
-        description: '醒来成了一块饼干，结识伙伴，在山河间寻找通往现实的路。',
-        image: '/images/autochess/portraits/biscuit_sui.png',
-        meta: '角色扮演 · 扮演饼干 · 组队探索',
-        releaseDate: '2026-09-12',
-        updateDate: '2026-09-21',
-      },
-      {
-        title: '年关牌局：这婚，你催吗？',
-        href: '/game/family-pressure',
-        description:
-          '从妈妈推来的微信名片开始，在工位、下班路上与出租屋里，慢慢认识一个人。',
-        image: '/images/marriage-pressure/reunion-dinner.jpg',
-        meta: '3D 日常 · 微信与电话 · 相识和共同生活',
-        releaseDate: '2026-09-20',
-        updateDate: '2026-09-29',
-      },
-      {
-        title: '武侠小说生成器',
-        href: '/game/wuxia',
-        description: '从一次选择开始，让随机事件和你的决定写成自己的江湖。',
-        image: '/images/wiki/skill1.jpg',
-        meta: '文字冒险 · 扮演江湖人物 · 自由抉择',
-        releaseDate: '2025-11-29',
-        updateDate: '2026-09-06',
-      },
-      {
-        title: '这个按钮，你按吗？',
-        href: '/game/button',
-        description: '面对心动的奖励与纠结的代价，为虚拟主播的平行人生做选择。',
-        image: '/games/button/press.svg',
-        meta: `互动选择 · 扮演决策者 · ${BUTTON_QUESTIONS.length} 道难题`,
-        releaseDate: '2026-09-08',
-        updateDate: '2026-09-16',
-      },
-    ],
-  },
-  {
-    id: 'quick',
-    title: '轻松挑战',
-    games: [
-      {
-        title: '维阿发掘局',
-        href: '/game/brick-excavation',
-        description: '敲落连成一片的彩色砖块，找齐一盘中埋藏的维阿主播。',
-        image: '/games/brick-excavation/sui-excavation.png',
-        meta: '连色解谜 · 多件出土 · 两次洗牌',
-        releaseDate: '2026-09-26',
-        updateDate: '2026-09-26',
-      },
-      {
-        title: '维阿弹棋',
-        href: '/game/flick-chess',
-        description: '挑选棋子，拉开角度与力度，用连锁碰撞把对手弹出棋盘。',
-        image: '/games/flick-chess/preview.png',
-        meta: '3D 物理对战 · 扮演维阿角色 · 本地双人 / AI',
-        releaseDate: '2026-09-26',
-        updateDate: '2026-09-26',
-      },
-      {
-        title: '小鸟一百层',
-        href: '/game/jumpone',
-        description: '控制小鸟一路向上，在越来越刁钻的平台间刷新高度。',
-        image: '/images/sui-bird-jump.png',
-        meta: '垂直跳跃 · 扮演小鸟 · 挑战高度',
-        releaseDate: '2025-11-27',
-        updateDate: '2026-07-21',
-      },
-    ],
-  },
-];
 
 const webTrials: ProjectItem[] = [
   {
@@ -343,48 +135,70 @@ function GameRow({
   game,
   count,
   localOnly,
+  favorite,
+  onFavorite,
 }: {
   game: GameItem;
   count?: number | null;
   localOnly: boolean;
+  favorite: boolean;
+  onFavorite: () => void;
 }) {
   return (
-    <Link href={game.href} className={styles.gameRow}>
-      <div className={styles.gameThumb}>
-        {game.image ? (
-          <Image
-            src={game.image}
-            alt=""
-            fill
-            sizes="(max-width: 760px) 92px, 148px"
-            className={styles.gameImage}
+    <article className={styles.gameEntry} data-game={game.href}>
+      <Link
+        href={game.href}
+        className={styles.gameRow}
+        aria-label={`打开 ${game.title}`}
+        onClick={() => { if (game.externalStats) recordGameOpen(game.href); }}
+        onAuxClick={event => { if (event.button === 1 && game.externalStats) recordGameOpen(game.href); }}
+      >
+        <div className={styles.gameThumb}>
+          {game.image ? (
+            <Image
+              src={game.image}
+              alt=""
+              fill
+              sizes="(max-width: 760px) 92px, 148px"
+              className={styles.gameImage}
+            />
+          ) : (
+            <CompassOutlined aria-hidden />
+          )}
+        </div>
+        <div className={styles.gameCopy}>
+          <span className={styles.gameMeta}>{game.meta}</span>
+          <h3>{game.title}</h3>
+          <p>{game.description}</p>
+        </div>
+        <div className={styles.gameEnd}>
+          <ViewCount
+            count={count}
+            externalStats={game.externalStats}
+            localOnly={localOnly}
           />
-        ) : (
-          <CompassOutlined aria-hidden />
-        )}
-      </div>
-      <div className={styles.gameCopy}>
-        <span className={styles.gameMeta}>{game.meta}</span>
-        <h3>{game.title}</h3>
-        <p>{game.description}</p>
-      </div>
-      <div className={styles.gameEnd}>
-        <ViewCount
-          count={count}
-          externalStats={game.externalStats}
-          localOnly={localOnly}
-        />
-        <span className={styles.gameHistory}>
-          <CalendarOutlined className={styles.dateIcon} aria-hidden />
-          <GameDateDetails
-            releaseDate={game.releaseDate}
-            updateDate={game.updateDate}
-            external={game.externalStats}
-          />
-        </span>
-        <ArrowRightOutlined aria-hidden />
-      </div>
-    </Link>
+          <span className={styles.gameHistory}>
+            <CalendarOutlined className={styles.dateIcon} aria-hidden />
+            <GameDateDetails
+              releaseDate={game.releaseDate}
+              updateDate={game.updateDate}
+              external={game.externalStats}
+            />
+          </span>
+          <ArrowRightOutlined aria-hidden />
+        </div>
+      </Link>
+      <button
+        type="button"
+        className={styles.favoriteButton}
+        aria-label={`${favorite ? '取消收藏' : '收藏'} ${game.title}`}
+        aria-pressed={favorite}
+        title={favorite ? '取消收藏' : '收藏游戏'}
+        onClick={onFavorite}
+      >
+        {favorite ? <StarFilled aria-hidden /> : <StarOutlined aria-hidden />}
+      </button>
+    </article>
   );
 }
 
@@ -394,6 +208,60 @@ export default function DemosPage() {
     Record<string, number> | null | undefined
   >(undefined);
   const [localOnly, setLocalOnly] = useState(false);
+  const [filters, setFilters] = useState<LibraryFilters>(DEFAULT_FILTERS);
+  const [library, setLibrary] = useState<LibraryData>({
+    favorites: [],
+    recent: [],
+  });
+  const [storageNotice, setStorageNotice] = useState('');
+  const allGames = gameGroups.flatMap((group) => group.games);
+  const visibleGroups = selectGames(gameGroups, filters, library);
+  const visibleCount = visibleGroups.reduce(
+    (sum, group) => sum + group.games.length,
+    0
+  );
+  const favoriteCount = allGames.filter((game) => library.favorites.includes(game.href)).length;
+  const recentCount = allGames.filter((game) => library.recent.some((entry) => entry.href === game.href)).length;
+
+  useEffect(() => {
+    const syncLibrary = () => setLibrary(readLibrary());
+    const syncFilters = () => setFilters(readFilters(window.location.search, gameGroups));
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === LIBRARY_KEY || event.key === null) syncLibrary();
+    };
+    syncLibrary();
+    syncFilters();
+    window.addEventListener('storage', onStorage);
+    window.addEventListener(LIBRARY_EVENT, syncLibrary);
+    window.addEventListener('popstate', syncFilters);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener(LIBRARY_EVENT, syncLibrary);
+      window.removeEventListener('popstate', syncFilters);
+    };
+  }, []);
+
+  function changeFilters(update: Partial<LibraryFilters>) {
+    const next = { ...filters, ...update };
+    setFilters(next);
+    const url = writeFilters(new URL(window.location.href), next);
+    window.history.replaceState(window.history.state, '', url);
+  }
+
+  function updateLibrary(next: LibraryData) {
+    setLibrary(next);
+    const saved = saveLibrary(next);
+    setStorageNotice(saved ? '' : '浏览器未允许保存，收藏仅在本次页面中保留。');
+  }
+
+  function toggleFavorite(href: string) {
+    // Read the latest persisted data so another tab's recent visits are preserved.
+    const current = storageNotice ? library : readLibrary();
+    const favorites = current.favorites.includes(href)
+      ? current.favorites.filter((item) => item !== href)
+      : [...current.favorites, href];
+    updateLibrary({ ...current, favorites });
+  }
 
   useEffect(() => {
     const controller = new AbortController();
@@ -413,7 +281,7 @@ export default function DemosPage() {
     const root = pageRef.current;
     if (!root) return undefined;
     const sections = Array.from(
-      root.querySelectorAll<HTMLElement>('[data-reveal]'),
+      root.querySelectorAll<HTMLElement>('[data-reveal]')
     );
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       sections.forEach((section) => {
@@ -429,7 +297,7 @@ export default function DemosPage() {
           observer.unobserve(entry.target);
         });
       },
-      { threshold: 0.01 },
+      { threshold: 0.01 }
     );
     sections.forEach((section) => observer.observe(section));
     return () => observer.disconnect();
@@ -501,7 +369,7 @@ export default function DemosPage() {
           </div>
           <div className={styles.heroFacts} aria-label="游戏信息">
             <span>v{AUTOCHESS_VERSION}</span>
-            <span>单人策略</span>
+            <span>单人 / 在线多人</span>
             <span>可随时托管</span>
             <ViewCount
               count={
@@ -524,14 +392,147 @@ export default function DemosPage() {
             </div>
             {viewCounts && <p>浏览次数来自本站页面记录，包含重复访问。</p>}
           </div>
+          <div className={styles.libraryTools}>
+            <div className={styles.searchRow}>
+              <label className={styles.searchBox} htmlFor="game-search">
+                <SearchOutlined aria-hidden />
+                <input
+                  id="game-search"
+                  type="search"
+                  aria-label="搜索游戏"
+                  placeholder="搜游戏、角色或玩法"
+                  value={filters.query}
+                  maxLength={100}
+                  onChange={(event) => changeFilters({ query: event.target.value })}
+                />
+              </label>
+              <label className={styles.sortControl} htmlFor="game-sort">
+                排序
+                <select
+                  id="game-sort"
+                  aria-label="排序"
+                  value={filters.sort}
+                  onChange={(event) => changeFilters({
+                      sort: event.target.value as LibraryFilters['sort'],
+                    })}
+                >
+                  <option value="default">
+                    {filters.shelf === 'recent' ? '最近打开' : '按游戏类型'}
+                  </option>
+                  <option value="updated">最近更新</option>
+                  <option value="released">最新推出</option>
+                </select>
+              </label>
+            </div>
+            <div
+              className={styles.shelfNav}
+              role="group"
+              aria-label="我的游戏库"
+            >
+              <button
+                type="button"
+                aria-pressed={filters.shelf === 'all'}
+                onClick={() => changeFilters({ shelf: 'all' })}
+              >
+                全部游戏 <span>{allGames.length}</span>
+              </button>
+              <button
+                type="button"
+                aria-pressed={filters.shelf === 'favorites'}
+                onClick={() => changeFilters({ shelf: 'favorites' })}
+              >
+                我的收藏 <span>{favoriteCount}</span>
+              </button>
+              <button
+                type="button"
+                aria-pressed={filters.shelf === 'recent'}
+                onClick={() => changeFilters({ shelf: 'recent' })}
+              >
+                最近打开 <span>{recentCount}</span>
+              </button>
+            </div>
+          </div>
           <nav className={styles.groupNav} aria-label="游戏类型">
+            <button
+              type="button"
+              aria-pressed={filters.group === 'all'}
+              onClick={() => changeFilters({ group: 'all' })}
+            >
+              全部类型
+            </button>
             {gameGroups.map((group) => (
-              <a key={group.id} href={`#${group.id}`}>
+              <button
+                type="button"
+                key={group.id}
+                aria-pressed={filters.group === group.id}
+                onClick={() => changeFilters({ group: group.id })}
+              >
                 {group.title}
-              </a>
+              </button>
             ))}
           </nav>
-          {gameGroups.map((group) => (
+          <div className={styles.resultSummary}>
+            <span role="status" aria-live="polite">
+              找到 {visibleCount} 款游戏
+            </span>
+            {(filters.query ||
+              filters.group !== 'all' ||
+              filters.shelf !== 'all' ||
+              filters.sort !== 'default') && (
+              <button
+                type="button"
+                onClick={() => changeFilters(DEFAULT_FILTERS)}
+              >
+                重置筛选
+              </button>
+            )}
+            {filters.shelf === 'recent' && recentCount > 0 && (
+              <button
+                type="button"
+                onClick={() => updateLibrary({
+                    ...(storageNotice ? library : readLibrary()),
+                    recent: [],
+                  })}
+              >
+                清空打开记录
+              </button>
+            )}
+          </div>
+          {storageNotice && (
+            <p className={styles.libraryNotice} role="status">
+              {storageNotice}
+            </p>
+          )}
+          {filters.shelf !== 'all' && (
+            <p className={styles.libraryNotice}>
+              收藏与打开记录仅保存在当前浏览器。打开记录不代表游戏存档。
+            </p>
+          )}
+          {visibleCount === 0 && (
+            <div className={styles.emptyLibrary}>
+              <h3>
+                {filters.query || filters.group !== 'all'
+                  ? '没有找到匹配的游戏'
+                  : filters.shelf === 'favorites'
+                    ? '把喜欢的游戏留在这里'
+                    : '下一次，更快找到它'}
+              </h3>
+              <p>
+                {filters.query || filters.group !== 'all'
+                  ? '试试更短的关键词，或切换游戏类型。'
+                  : filters.shelf === 'favorites'
+                    ? '点击游戏旁的星星，即可加入收藏。'
+                    : '打开一款游戏后，它会出现在这里。'}
+              </p>
+              <button
+                type="button"
+                onClick={() => changeFilters(DEFAULT_FILTERS)}
+              >
+                浏览全部游戏
+              </button>
+            </div>
+          )}
+          {visibleGroups.map((group) => (
             <div id={group.id} className={styles.gameGroup} key={group.id}>
               <div className={styles.groupHeading}>
                 <h3>{group.title}</h3>
@@ -546,6 +547,8 @@ export default function DemosPage() {
                       viewCounts ? (viewCounts[game.href] ?? 0) : viewCounts
                     }
                     localOnly={localOnly}
+                    favorite={library.favorites.includes(game.href)}
+                    onFavorite={() => toggleFavorite(game.href)}
                   />
                 ))}
               </div>

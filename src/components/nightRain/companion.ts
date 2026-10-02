@@ -1,5 +1,7 @@
 import type { GameState, Vec3, WorldAccess } from './types';
 import { canOccupy, supportAt, interactionPoint, LANDMARKS } from './world';
+import { CHAPTER_GATES, CHAPTER_LANDMARKS } from './chapter';
+import { riverSeals, VALLEY_GATES, VALLEY_LANDMARKS } from './valley';
 
 export type CompanionSkin = 'biscuit' | 'otter';
 export type Companion = {
@@ -31,6 +33,12 @@ routeAt: -100,
 });
 const distance = (a: Vec3, b: Vec3) => Math.hypot(a.x - b.x, a.z - b.z, a.y - b.y);
 const labels: Record<string, string> = {
+  'drowned-warden': '沉舟水车院 · 缚流',
+  'silent-abbot': '无声山寺 · 听澜',
+  'river-serpent': '那伽沉殿 · 千流',
+  'gate-captain': '双象门楼 · 卫长',
+  'rain-regent': '雨冠大殿 · 长夜司灯',
+  ...Object.fromEntries([...CHAPTER_LANDMARKS, ...VALLEY_LANDMARKS].map(l => [l.id, l.label.replace(/^(读|打开|收下|拾取|使用)/, '')])),
   'temple-lamp': '莲池旧灯',
 'canal-lamp': '摆渡旧灯',
 'temple-flask': '刻露瓶',
@@ -58,6 +66,14 @@ boss: '铁伞前的夜市入口',
 export const targetLabel = (id: string | null) => (id ? labels[id] ?? id : '下一处发现');
 export function guideTargets(s: GameState) {
   return LANDMARKS.filter(l => {
+    if (VALLEY_LANDMARKS.some(v => v.id === l.id)) {
+      if (!s.chapterComplete) return false;
+      if (VALLEY_GATES.some(g => g.id === l.id)) return !s.valleyGates.includes(l.id);
+      if (l.kind === 'ferry') return s.collected.includes('ferry-winch');
+      if (l.id === 'river-heart') return s.defeatedGuests.includes('river-serpent') && !s.valleyComplete;
+    }
+    if (CHAPTER_GATES.some(g => g.id === l.id)) return !s.chapterGates.includes(l.id);
+    if (l.id === 'chapter-bell') return s.defeatedGuests.includes('rain-regent') && !s.chapterComplete;
     if (l.id === 'tide-note') return true;
     if (l.id === 'harbor-gate') return !s.harborGate;
     if (l.id === 'dawn-bell') return s.defeatedGuests.includes('nana-tide') && !s.collected.includes(l.id);
@@ -69,8 +85,25 @@ export function guideTargets(s: GameState) {
   });
 }
 export function mainTarget(s: GameState): string {
+  if (s.chapterComplete && !s.valleyComplete) {
+    if (!s.valleyGates.includes('valley-entry')) return 'valley-entry';
+    if (!s.litLamps.includes('village-lamp')) return 'village-lamp';
+    if (s.defeatedGuests.includes('river-serpent')) return 'river-heart';
+    if (s.valleyGates.includes('river-door')) return 'river-serpent';
+    if (riverSeals(s) === 2) return s.litLamps.includes('confluence-lamp') ? 'river-door' : 'confluence-lamp';
+    const eastFirst = s.player.x > -125 && s.player.z < -352;
+    if (!s.collected.includes('mill-sluice') && (!eastFirst || s.collected.includes('monastery-sluice'))) return s.defeatedGuests.includes('drowned-warden') ? 'mill-sluice' : 'drowned-warden';
+    return s.litLamps.includes('monastery-lamp') ? s.defeatedGuests.includes('silent-abbot') ? 'monastery-sluice' : 'silent-abbot' : 'monastery-lamp';
+  }
   if (!s.collected.includes('laptop') && s.checkpoint === 'room') return 'laptop';
   if (s.checkpoint === 'room') return 'courtyard';
+  if (!s.chapterComplete && s.collected.includes('food')) {
+    if (s.defeatedGuests.includes('rain-regent')) return 'chapter-bell';
+    if (s.litLamps.includes('royal-lamp')) return s.collected.includes('royal-note') ? 'rain-regent' : 'royal-note';
+    if (s.chapterGates.includes('archive-door')) return s.litLamps.includes('archive-lamp') ? 'royal-lamp' : 'archive-lamp';
+    if (s.defeatedGuests.includes('gate-captain')) return 'archive-door';
+    return s.litLamps.includes('lower-lamp') ? s.collected.includes('weaver-note') ? 'gate-captain' : 'weaver-note' : 'lower-lamp';
+  }
   if (s.collected.includes('food') && !s.collected.includes('dawn-bell')) return !s.visited.includes('潮汐港 · 灯市') ? 'tide-note' : !s.defeatedGuests.includes('nana-tide') ? 'tide-seal' : 'dawn-bell';
   if (s.collected.includes('food')) return LANDMARKS.find(l => ['cache', 'charm', 'flask'].includes(l.kind) && !s.collected.includes(l.id))?.id ?? 'courtyard';
   if (s.bossDefeated) return 'food';
@@ -129,7 +162,7 @@ export function findPath(start: Vec3, destination: Vec3, shortcut: WorldAccess):
     const id = key(x, z, y); points.set(id, p); costs.set(id, distance(start, p)); push(id, distance(start, p) + distance(p, destination));
   }
   const closed = new Set<string>();
-  while (heap.length && closed.size < 24000) {
+  while (heap.length && closed.size < 140000) {
     const { id } = pop(); if (closed.has(id)) continue; closed.add(id);
     const p = points.get(id)!;
     if (distance(p, destination) < 1 && walkSegment(p, destination, shortcut)) {
@@ -155,6 +188,11 @@ export function findPath(start: Vec3, destination: Vec3, shortcut: WorldAccess):
   return [];
 }
 function destinationFor(id: string): Vec3 | undefined {
+  if (id === 'drowned-warden') return { x: -202, y: 2, z: -399 };
+  if (id === 'silent-abbot') return { x: -92, y: 18, z: -414 };
+  if (id === 'river-serpent') return { x: -150, y: 8, z: -506 };
+  if (id === 'gate-captain') return { x: -53, y: 12, z: -127 };
+  if (id === 'rain-regent') return { x: -133, y: 24, z: -235 };
   if (id === 'boss') return { x: 4, y: 0, z: -37 };
   const landmark = LANDMARKS.find(l => l.id === id);
   return landmark ? interactionPoint(landmark) : undefined;
@@ -184,7 +222,7 @@ export function updateCompanion(c: Companion, s: GameState, dt: number) {
     const seen = c.seen[l.id] ?? { nearest: Infinity, stage: 0 };
     seen.nearest = Math.min(seen.nearest, distance(p, l)); c.seen[l.id] = seen;
   }
-  if (c.targetId && s.collected.includes(c.targetId)) { c.targetId = null; c.path = []; c.status = 'following'; speak(c, s, '拿到了！每一段绕路，都藏着一点小惊喜。'); }
+  if (c.targetId && (s.collected.includes(c.targetId) || s.defeatedGuests.includes(c.targetId) || s.valleyGates.includes(c.targetId))) { c.targetId = null; c.path = []; c.status = 'following'; speak(c, s, '拿到了！每一段绕路，都藏着一点小惊喜。'); }
   if (c.targetId && c.status !== 'arrived') {
     if (danger) {
       if (c.status !== 'danger') speak(c, s, '先别急着跟我！前面有人，Q 锁定，等起手后再弹反或闪开。');
@@ -209,7 +247,7 @@ export function updateCompanion(c: Companion, s: GameState, dt: number) {
         } else if (!walkSegment(p, c.position, s, 0.6) && s.time - c.routeAt > 2) leadTo(c, s, c.targetId);
         else c.status = 'waiting';
       } else {
-        c.status = 'arrived'; speak(c, s, c.targetId === 'tide-note' ? '这就是潮汐港的潮桥！沿桥向东走进灯市，暖灯长阶通往七海。' : c.targetId === 'boss' ? '前面就是铁伞。留一点体力，我陪你慢慢试。' : `到了，${targetLabel(c.targetId)}就在这里。靠近后按 E 试试。`, 9);
+        c.status = 'arrived'; speak(c, s, c.targetId === 'tide-note' ? '这就是潮汐港的潮桥！沿桥向东走进灯市，暖灯长阶通往七海。' : ['boss', 'gate-captain', 'rain-regent', 'drowned-warden', 'silent-abbot', 'river-serpent'].includes(c.targetId) ? '前面就是守路人。留一点体力，我陪你慢慢试。' : `到了，${targetLabel(c.targetId)}就在这里。靠近后按 E 试试。`, 9);
       }
     }
   } else if (!c.targetId) {

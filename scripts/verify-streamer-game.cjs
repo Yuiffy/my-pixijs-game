@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const { mkdirSync, readFileSync, writeFileSync } = require('node:fs');
 const path = require('node:path');
-const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE || require.resolve('playwright', { paths: [process.cwd(), path.join(require('node:os').homedir(), '.codex/skills/develop-web-game')] }));
 const { inspectPng } = require('./lib/autochess-screenshot.cjs');
 
 const base = process.env.STREAMER_BASE_URL || 'http://127.0.0.1:3847';
@@ -87,7 +87,15 @@ const runIdentity = value => ({
   const topicById = new Map(topics.map(topic => [topic.id, topic]));
   const notebook = topicById.get('laptop');
   assert.ok(notebook, 'The requested notebook travel scenario must exist');
-  const browser = await chromium.launch({ channel: 'chrome', headless: !process.env.HEADED });
+  const browser = await chromium.launch({ channel: 'chrome', headless: !process.env.HEADED, args: ['--mute-audio', '--disable-speech-api'] });
+  const newContext = browser.newContext.bind(browser);
+  browser.newContext = async options => {
+    const context = await newContext(options);
+    await context.addInitScript(() => { if (window.speechSynthesis) window.speechSynthesis.speak = () => {}; });
+    await context.route('**/api/record', route => route.fulfill({ json: { success: true } }));
+    await context.route(/https:\/\/(pagead2\.googlesyndication\.com|hm\.baidu\.com)\//, route => route.fulfill({ body: '' }));
+    return context;
+  };
   let passed = false;
   try {
     const context = await browser.newContext({ viewport: { width: 1440, height: 960 }, reducedMotion: 'reduce', permissions: ['clipboard-read', 'clipboard-write'], acceptDownloads: true });
@@ -255,6 +263,7 @@ const runIdentity = value => ({
 
     await control(page, 'mode-timed').click();
     await control(page, 'start-stream').click();
+    await control(page, 'confirm-new-stream').click();
     assert.equal((await state(page)).timed, true);
     assert.ok((await state(page)).perks.includes('empathetic'), 'A completed run must unlock a usable opening perk');
     await control(page, 'pause-stream').click();

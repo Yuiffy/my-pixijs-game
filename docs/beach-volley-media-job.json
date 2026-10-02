@@ -1,0 +1,20 @@
+{
+  "jobKey": "beach-volley-intro-20261002",
+  "canvasId": "73fa43ff-0177-4d07-912f-ff8ac90b9654",
+  "webUrl": "https://jimeng.jianying.com/ai-tool/ai-canvas/73fa43ff-0177-4d07-912f-ff8ac90b9654",
+  "keyframe": { "nodeId": "node_cj28z5d0t7", "resourceId": "3082cd02-0883-4e07-9de1-19965994d3e7" },
+  "items": {
+    "intro": {
+      "nodeId": "node_22fp4hzp69",
+      "submitId": "9c1e8a58-e9c7-46c0-a0b0-8c1c265e756f",
+      "model": "seedance_2.0_fast_vip",
+      "durationSeconds": 5,
+      "quotedMaxCredits": 30,
+      "confirmationRequired": false,
+      "selectedResourceId": "05f5e47b-b3dd-425d-bc7f-0df457376336",
+      "state": "succeeded",
+      "downloadVerified": true,
+      "path": "public/games/beach-volley/intro.mp4"
+    }
+  }
+}

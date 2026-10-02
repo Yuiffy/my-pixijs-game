@@ -36,7 +36,6 @@ import {
   getReplyPreview,
   getSupportRate,
   getViewers,
-  validateSave,
 } from "./engine";
 import type { FanKind, GameAction, ReplyStyle, StreamState } from "./types";
 import { STREAMER_SKINS } from "./skins";
@@ -47,9 +46,10 @@ import {
   META_KEY,
   readCareer,
   resultText,
-  SAVE_KEY,
 } from "./persistence";
 import type { Career } from "./persistence";
+import { createArchive, loadRun, MAX_ARCHIVE_BYTES, mergeCareer, parseArchive, writeRun } from "./save";
+import type { Archive } from "./save";
 import styles from "./streamer.module.css";
 
 type GameWindow = Window & {
@@ -134,12 +134,17 @@ export default function StreamerGame() {
   const [shareFallback, setShareFallback] = useState("");
   const [storageAvailable, setStorageAvailable] = useState(true);
   const [muted, setMuted] = useState(true);
+  const [saveMessage, setSaveMessage] = useState("");
+  const [confirmNew, setConfirmNew] = useState(false);
+  const [pendingImport, setPendingImport] = useState<Archive | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const runKey = useRef("");
   const audioRef = useRef<AudioContext | null>(null);
   const rootRef = useRef<HTMLElement>(null);
   const modalRef = useRef<HTMLElement>(null);
 
   const live = !["lobby", "ended"].includes(state.phase);
+  const blocked = paused || help || confirmNew || !!pendingImport;
   const skin =
     STREAMER_SKINS.find((item) => item.id === career.skin) || STREAMER_SKINS[1];
   const topic = TOPICS.find((item) => item.id === state.activeTopic);
@@ -161,19 +166,16 @@ export default function StreamerGame() {
 
   useEffect(() => {
     setCareer(readCareer());
+    const querySeed = new URLSearchParams(window.location.search).get("seed");
+    if (querySeed && /^\d{1,10}$/.test(querySeed)) setSeedInput(querySeed);
     try {
-      const raw = localStorage.getItem(SAVE_KEY);
-      const parsed = raw ? JSON.parse(raw) : null;
-      const restored = validateSave(parsed?.state);
-      if (restored && restored.phase !== "lobby") {
-        setSaved(restored);
-        runKey.current =
-          typeof parsed.runKey === "string"
-            ? parsed.runKey
-            : `restored-${restored.seed}`;
+      const result = loadRun(localStorage);
+      if (result.run) {
+        setSaved(result.run.state);
+        runKey.current = result.run.runKey;
       }
-      const querySeed = new URLSearchParams(window.location.search).get("seed");
-      if (querySeed && /^\d{1,10}$/.test(querySeed)) setSeedInput(querySeed);
+      if (result.status === "recovered") setSaveMessage("最新存档损坏或缺失，已找回上一份有效进度。可继续直播或先导出备份。");
+      if (result.status === "corrupt") setSaveMessage("本机存档已损坏，无法恢复。可导入备份，或开始新直播。");
       localStorage.setItem("streamer-storage-probe", "1");
       localStorage.removeItem("streamer-storage-probe");
     } catch {
@@ -197,10 +199,7 @@ export default function StreamerGame() {
   useEffect(() => {
     if (!ready || state.phase === "lobby") return;
     try {
-      localStorage.setItem(
-        SAVE_KEY,
-        JSON.stringify({ state, runKey: runKey.current }),
-      );
+      writeRun(localStorage, { state, runKey: runKey.current });
     } catch {
       setStorageAvailable(false);
     }
@@ -250,18 +249,18 @@ export default function StreamerGame() {
 
   const act = useCallback(
     (action: GameAction) => {
-      if (paused || help) return;
+      if (blocked) return;
       setState((previous) => gameReducer(previous, action));
       if (action.type !== "tick") {
         setSelectedComment(null);
         playTone();
       }
     },
-    [paused, help, playTone],
+    [blocked, playTone],
   );
 
   useEffect(() => {
-    if (!live || paused || help || !state.timed || state.phase === "reward") return undefined;
+    if (!live || blocked || !state.timed || state.phase === "reward") return undefined;
     let last = performance.now();
     const timer = window.setInterval(() => {
       const now = performance.now();
@@ -270,27 +269,27 @@ export default function StreamerGame() {
       if (!document.hidden) setState((previous) => gameReducer(previous, { type: "tick", ms: Math.min(elapsed, 1500) }),);
     }, 250);
     return () => window.clearInterval(timer);
-  }, [live, paused, help, state.timed, state.phase]);
+  }, [live, blocked, state.timed, state.phase]);
 
   useEffect(() => {
     const gameWindow = window as GameWindow;
     gameWindow.render_game_to_text = () => JSON.stringify({
         ...state,
         selectedComment,
-        paused: paused || help,
+        paused: blocked,
         skin: skin.id,
         viewers,
         supportRate,
         coordinateSystem: "DOM interface; origin top-left; x right, y down",
       });
     gameWindow.advanceTime = (ms) => {
-      if (!paused && !help) setState((previous) => gameReducer(previous, { type: "tick", ms }));
+      if (!blocked) setState((previous) => gameReducer(previous, { type: "tick", ms }));
     };
     return () => {
       delete gameWindow.render_game_to_text;
       delete gameWindow.advanceTime;
     };
-  }, [state, selectedComment, paused, help, skin.id, viewers, supportRate]);
+  }, [state, selectedComment, blocked, skin.id, viewers, supportRate]);
 
   const fullscreen = useCallback(() => {
     if (document.fullscreenElement) document.exitFullscreen().catch(() => setNotice("可按 Esc 退出全屏"));
@@ -301,6 +300,10 @@ export default function StreamerGame() {
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      if (confirmNew || pendingImport) {
+        if (event.key === "Escape") { setConfirmNew(false); setPendingImport(null); }
+        return;
+      }
       if (
         event.target instanceof HTMLInputElement ||
         event.target instanceof HTMLSelectElement ||
@@ -318,7 +321,7 @@ export default function StreamerGame() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [live, help, fullscreen]);
+  }, [live, help, fullscreen, confirmNew, pendingImport]);
 
   useEffect(() => {
     if (!notice) return undefined;
@@ -327,7 +330,7 @@ export default function StreamerGame() {
   }, [notice]);
 
   useEffect(() => {
-    if (!paused && !help) return undefined;
+    if (!blocked) return undefined;
     const previousFocus = document.activeElement;
     const shell = rootRef.current?.firstElementChild;
     shell?.setAttribute("inert", "");
@@ -353,7 +356,7 @@ export default function StreamerGame() {
       document.removeEventListener("keydown", trap);
       if (previousFocus instanceof HTMLElement) previousFocus.focus();
     };
-  }, [paused, help]);
+  }, [blocked, paused, help, confirmNew, pendingImport]);
 
   const start = (sameSeed = false) => {
     const typed = Number(seedInput);
@@ -376,8 +379,55 @@ export default function StreamerGame() {
     setPaused(false);
     setHelp(false);
     setShareFallback("");
+    setConfirmNew(false);
+    setSaveMessage("");
     playTone();
   };
+
+  const exportSave = () => {
+    const current = state.phase === "lobby" ? saved : state;
+    if (!current) return;
+    const url = URL.createObjectURL(new Blob([createArchive({ state: current, runKey: runKey.current }, career)], { type: "application/json" }));
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `sui-live-save-${current.seed}.json`;
+    anchor.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  const importFile = async (file?: File) => {
+    if (!file) return;
+    try {
+      if (file.size > MAX_ARCHIVE_BYTES) throw new Error("存档文件过大（最多 256 KB）");
+      setPendingImport(parseArchive(await file.text()));
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "无法读取存档，当前进度未更改");
+    }
+  };
+
+  const applyImport = () => {
+    if (!pendingImport) return;
+    const { run, career: importedCareer } = pendingImport;
+    try { writeRun(localStorage, run); } catch { setStorageAvailable(false); }
+    runKey.current = run.runKey;
+    setCareer((previous) => mergeCareer(previous, importedCareer));
+    setSaved(run.state);
+    setState(createInitialState());
+    setSeedInput(String(run.state.seed));
+    setSelectedComment(null);
+    setPendingImport(null);
+    setPaused(false);
+    setHelp(false);
+    setSaveMessage(run.state.phase === "ended" ? "备份已导入。点击查看上场成绩，回顾这场直播。" : "备份已导入。点击继续上次直播，回到保存时的进度。");
+  };
+
+  const saveTools = () => (
+    <div className={styles.saveTools}>
+      <button className={styles.textButton} data-testid="export-save" disabled={!ready || (state.phase === "lobby" && !saved)} onClick={exportSave}>导出存档</button>
+      <button className={styles.textButton} data-testid="import-save" disabled={!ready} onClick={() => fileRef.current?.click()}>导入存档</button>
+      <small>JSON 备份 · 可换设备继续</small>
+    </div>
+  );
 
   const changeLook = () => setCareer((previous) => ({
       ...previous,
@@ -413,7 +463,7 @@ export default function StreamerGame() {
         className={styles.primary}
         data-testid="start-stream"
         disabled={!ready}
-        onClick={() => start()}
+        onClick={() => (saved && saved.phase !== "ended" ? setConfirmNew(true) : start())}
       >
         <PlayCircleFilled /> {saved ? "另开一场" : "开始直播"}{" "}
         <ArrowRightOutlined />
@@ -426,6 +476,7 @@ export default function StreamerGame() {
             setState(saved);
             setSaved(null);
             setPaused(false);
+            setSaveMessage("");
           }}
         >
           {saved.phase === "ended" ? "查看上场成绩" : "继续上次直播"}{" "}
@@ -513,6 +564,7 @@ export default function StreamerGame() {
               最高 {career.best} 分 · 结局 {career.endings.length}/7
             </span>
           </div>
+          {saveTools()}
           <details className={styles.collection}>
             <summary>
               结局图鉴 <span>{career.endings.length} / 7</span>
@@ -1133,17 +1185,41 @@ export default function StreamerGame() {
         )}
         {!storageAvailable && (
           <p className={styles.storageNotice}>
-            当前浏览器无法保存进度；本场仍可正常游玩和导出成绩。
+            当前浏览器无法保存进度；本场仍可正常游玩，请导出存档备份。
           </p>
         )}
-        {notice && (
+        {saveMessage && <p className={styles.storageNotice} role="status">{saveMessage}</p>}
+        {notice && !blocked && (
           <div className={styles.toast} role="status">
             {notice}
           </div>
         )}
       </div>
 
-      {(paused || help) && (
+      <input
+        ref={fileRef}
+        data-testid="import-save-file"
+        type="file"
+        accept=".json,application/json"
+        hidden
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          event.target.value = "";
+          importFile(file).catch(() => setNotice("无法读取存档，当前进度未更改"));
+        }}
+      />
+      {(confirmNew || pendingImport) ? (
+        <div className={styles.overlay}>
+          <section className={`${styles.modal} ${styles.saveDialog}`} role="dialog" aria-modal="true" aria-labelledby="save-dialog-title" ref={modalRef}>
+            <span className={styles.eyebrow}>YOUR PROGRESS</span>
+            <h2 id="save-dialog-title">{pendingImport ? "恢复这份备份？" : "另开一场直播？"}</h2>
+            <p>{pendingImport ? `种子 ${pendingImport.run.state.seed} · 已完成 ${pendingImport.run.state.completedTopics}/6 个话题${pendingImport.run.state.phase === "ended" ? " · 已结束" : " · 未结束"}。将替换当前直播进度，保留两边的最高分与已解锁结局。` : `种子 ${saved?.seed} 的直播还没有结束。另开一场会替换它，可以先导出存档。`}</p>
+            <button className={styles.secondary} data-testid="cancel-save-dialog" onClick={() => { setConfirmNew(false); setPendingImport(null); }}>保留当前进度</button>
+            <button className={styles.textButton} data-testid="export-save" onClick={exportSave} disabled={state.phase === "lobby" && !saved}>先导出当前存档</button>
+            <button className={styles.primary} data-testid={pendingImport ? "confirm-import-save" : "confirm-new-stream"} onClick={() => (pendingImport ? applyImport() : start())}>{pendingImport ? "确认导入" : "确认另开一场"}</button>
+          </section>
+        </div>
+      ) : (paused || help) && (
         <div className={styles.overlay}>
           <section
             className={styles.modal}
@@ -1188,6 +1264,8 @@ export default function StreamerGame() {
             ) : (
               <>
                 <p>计时已经暂停，弹幕也会等你。</p>
+                {saveTools()}
+                {notice && <p role="status">{notice}</p>}
                 <button
                   className={styles.secondary}
                   data-testid="change-look"

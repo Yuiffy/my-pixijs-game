@@ -163,6 +163,18 @@ test("percentages handle zero, ties, small samples and invalid server data hones
   );
 });
 
+test("unconfirmed votes restore only current questions and never become confirmed answers", () => {
+  const q = QUESTIONS[0];
+  const pending = { id: q.id, version: q.version, choice: 'press' };
+  assert.deepEqual(model.readPendingVotes(JSON.stringify({ arbitraryKey: pending })), { [questionKey(q)]: pending });
+  assert.deepEqual(model.readAnswers(JSON.stringify({ [questionKey(q)]: pending })), {});
+  for (const raw of [null, '{', 'null', '[]', '4', '"bad"']) assert.deepEqual(model.readPendingVotes(raw), {});
+  for (const change of [{ id: 'missing' }, { version: 999 }, { choice: 'skip' }]) {
+    assert.deepEqual(model.readPendingVotes(JSON.stringify({ a: { ...pending, ...change } })), {});
+  }
+  assert.deepEqual(model.readPendingVotes(JSON.stringify({ a: null, b: false, c: {}, d: pending })), { [questionKey(q)]: pending });
+});
+
 test("signed anonymous identity cannot be selected or modified by the client", () => {
   const secret = "test-only-".repeat(5);
   const now = 1788816000000;

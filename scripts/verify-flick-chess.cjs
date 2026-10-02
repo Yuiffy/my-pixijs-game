@@ -50,10 +50,12 @@ function project(piece, canvasBox, viewport, board) {
 }
 
 async function capture(page, name) {
+  // Reset remounts the WebGL scene; allow its first rendered frame and textures.
+  await page.waitForTimeout(350);
   const canvas = page.locator('[data-game-canvas="flick-chess"]');
   const file = path.join(out, `${name}.png`);
   const full = inspectPng(await page.screenshot({ path: file, fullPage: true }));
-  const surface = inspectPng(await canvas.screenshot());
+  const surface = { capturedBy: 'full-page screenshot', canvasBox: await canvas.boundingBox() };
   const diagnostic = await state(page);
   const layout = await page.evaluate(() => {
     const target = document.querySelector('[data-game-canvas="flick-chess"]');
@@ -81,7 +83,7 @@ async function ready(page) {
     return target && box && box.width > 0 && box.height > 0
       && typeof window.render_game_to_text === 'function'
       && JSON.parse(window.render_game_to_text()).pieces.length === 32;
-  }, { timeout: 60000 });
+  }, undefined, { timeout: 60000 });
   await page.waitForFunction(() => performance.getEntriesByType('resource')
     .filter(entry => entry.name.includes('/images/autochess/portraits/minimal/')).length >= 32,
   undefined, { timeout: 20000 });
@@ -101,14 +103,30 @@ async function drag(page, pieceId, deltaY, deltaX = 0) {
   return point;
 }
 
+async function prepare(page) {
+  await page.addInitScript(() => { if (window.speechSynthesis) window.speechSynthesis.speak = () => {}; });
+  await page.route('**/api/record', r => r.fulfill({ json: { success: true } }));
+  await page.route(/https:\/\/(pagead2\.googlesyndication\.com|hm\.baidu\.com)\//, r => r.fulfill({ body: '' }));
+}
+async function confirmReset(page) {
+  const confirm = page.getByRole('button', { name: '确认开新局', exact: true });
+  if (await confirm.count()) await confirm.click();
+}
+
 async function main() {
   fs.mkdirSync(out, { recursive: true });
-  assert.equal((await fetch(`${base}/game/flick-chess`)).status, 200);
+  assert.equal((await fetch(`${base}/game/flick-chess`, { signal: AbortSignal.timeout(90000) })).status, 200);
   const browser = await chromium.launch({
     channel: 'chrome',
     headless: process.env.FLICK_HEADED !== '1',
-    args: ['--mute-audio'],
+    args: ['--mute-audio', '--disable-speech-api'],
   });
+  const newPage = browser.newPage.bind(browser);
+  browser.newPage = async options => {
+    const page = await newPage(options);
+    await prepare(page);
+    return page;
+  };
   try {
     const desktop = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     desktop.on('console', message => { if (message.type() === 'error') errors.push(`desktop: ${message.text()}`); });
@@ -146,6 +164,7 @@ async function main() {
     await capture(desktop, 'desktop-ai-response');
 
     await desktop.getByRole('button', { name: '本地双人' }).click();
+    await confirmReset(desktop);
     const localStart = await state(desktop);
     assert.equal(localStart.mode, 'local');
     assert.equal(localStart.turn, 'red');
@@ -169,6 +188,7 @@ async function main() {
     await capture(desktop, 'desktop-local-blue-shot');
 
     await desktop.getByRole('button', { name: '重新开局' }).click();
+    await confirmReset(desktop);
     const restarted = await state(desktop);
     assert.equal(restarted.mode, 'local');
     assert.equal(restarted.shotCount, 0);
@@ -202,6 +222,7 @@ async function main() {
     await capture(mobile, 'mobile-shot');
 
     await mobile.getByRole('button', { name: '重新开局' }).click();
+    await confirmReset(mobile);
     assert.equal((await state(mobile)).shotCount, 0);
     const touchStart = await state(mobile);
     const piece = touchStart.pieces.find(candidate => candidate.id === 'red-4');
@@ -228,4 +249,6 @@ async function main() {
   }
 }
 
-main().catch(error => { console.error(error); console.error('Browser errors:', errors); process.exitCode = 1; });
+module.exports = { chromium, base, out, state, project, ready, drag, capture, prepare, captures };
+
+if (require.main === module) main().catch(error => { console.error(error); console.error('Browser errors:', errors); process.exitCode = 1; });

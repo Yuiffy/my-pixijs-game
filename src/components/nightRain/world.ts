@@ -1,5 +1,10 @@
 import { architectureBlocked, architectureSupport, architectureIntervals } from './architecture';
 import type { EnemyKind, Landmark, Obstacle, Surface, Vec3, WorldAccess } from './types';
+import { CHAPTER_ENEMIES, CHAPTER_LANDMARKS, CHAPTER_OBSTACLES, CHAPTER_REST_POINTS, CHAPTER_SURFACES } from './chapter';
+
+import { VALLEY_ENEMIES, VALLEY_LANDMARKS, VALLEY_OBSTACLES, VALLEY_REST_POINTS, VALLEY_SURFACES } from './valley';
+
+import { HAVEN_ENEMIES, HAVEN_LANDMARKS, HAVEN_OBSTACLES, HAVEN_REST_POINTS, HAVEN_SURFACES } from './haven';
 
 // Metres. +x east, +z south, +y up. Ramp endY is the height at z2.
 // Solid parapets bound the walkable network; no hidden teleport links.
@@ -44,6 +49,9 @@ export const SURFACES: Surface[] = [
   // Return bridge shortens retries to the sole courtyard lamp after the inside winch.
   { id: 'harbor-return', name: '归灯水巷', x1: 27, x2: 31, z1: -28, z2: -1, y: 0, color: '#668078' },
   { id: 'return-bridge', name: '归灯长桥', x1: 12, x2: 31, z1: -5, z2: -1, y: 0, color: '#849083' },
+  ...CHAPTER_SURFACES,
+  ...VALLEY_SURFACES,
+  ...HAVEN_SURFACES,
 ];
 
 export const OBSTACLES: Obstacle[] = [
@@ -69,6 +77,9 @@ export const OBSTACLES: Obstacle[] = [
   { x: 47, z: -64, w: 1.2, d: 1.2, y: 6, h: 2.4, kind: 'pillar' },
   { x: 31.8, z: -18, w: 0.95, d: 0.65, y: 4, h: 0.65, kind: 'chest' },
   { x: 61, z: -51, w: 0.95, d: 0.65, y: 3, h: 0.65, kind: 'chest' },
+  ...CHAPTER_OBSTACLES,
+  ...VALLEY_OBSTACLES,
+  ...HAVEN_OBSTACLES,
 ];
 
 export const LANDMARKS: Landmark[] = [
@@ -94,6 +105,9 @@ export const LANDMARKS: Landmark[] = [
   { id: 'frog-cache', kind: 'cache', label: '打开苔灯戏匣', x: 61, y: 3, z: -50 },
   { id: 'tide-seal', kind: 'note', label: '端详七重潮门', x: 40, y: 6, z: -66 },
   { id: 'dawn-bell', kind: 'note', label: '叩响黎明钟', x: 35, y: 10, z: -80 },
+  ...CHAPTER_LANDMARKS,
+  ...VALLEY_LANDMARKS,
+  ...HAVEN_LANDMARKS,
 ];
 
 export const ENEMY_SPAWNS: (Vec3 & { id: string; kind: EnemyKind; name: string; facing: number })[] = [
@@ -110,6 +124,9 @@ export const ENEMY_SPAWNS: (Vec3 & { id: string; kind: EnemyKind; name: string; 
   { id: 'net-duelist', kind: 'duelist', name: '晒网刀客', x: 38, y: 4, z: -8, facing: Math.PI / 2 },
   { id: 'nana-tide', kind: 'nana', name: '七海 · 七重潮声', x: 40, y: 6, z: -61, facing: 0 },
   { id: 'azi-stage', kind: 'azi', name: '阿梓 · 苔灯夜曲', x: 57, y: 3, z: -50, facing: 0 },
+  ...CHAPTER_ENEMIES,
+  ...VALLEY_ENEMIES,
+  ...HAVEN_ENEMIES,
 ];
 
 export const SPAWN: Vec3 = { x: 1.8, y: 6, z: 15.5 };
@@ -118,6 +135,9 @@ export const CHECKPOINT: Vec3 = { x: -1, y: 0, z: 8.2 };
 export const REST_POINTS: Record<string, Vec3> = {
   room: SPAWN,
   courtyard: CHECKPOINT,
+  ...CHAPTER_REST_POINTS,
+  ...VALLEY_REST_POINTS,
+  ...HAVEN_REST_POINTS,
 };
 // A guide stops beside a solid shrine; interaction itself is allowed from any clear side.
 export function interactionPoint(l: Landmark): Vec3 {
@@ -127,12 +147,28 @@ export function interactionPoint(l: Landmark): Vec3 {
 }
 
 export function gateOpen(o: Obstacle, access: WorldAccess): boolean {
+  if (o.kind === 'gate' && o.gateId && !['harbor', 'temple'].includes(o.gateId)) return typeof access !== 'boolean' && (!!access.chapterGates?.includes(o.gateId) || !!access.valleyGates?.includes(o.gateId) || !!access.haven?.gates.includes(o.gateId));
   return o.kind === 'gate' && (o.gateId === 'harbor' ? typeof access !== 'boolean' && !!access.harborGate : o.gateId === 'temple' ? typeof access !== 'boolean' && access.templeGate : typeof access === 'boolean' ? access : access.shortcut);
 }
 
+export const WORLD_BOUNDS = { x1: -295, x2: 80, z1: -545, z2: 163, maxY: 50 };
+
+function spatialIndex<T>(items: T[], bounds: (item: T) => { x1: number; x2: number; z1: number; z2: number }) {
+  const buckets = new Map<string, T[]>();
+  for (const item of items) {
+    const b = bounds(item);
+    for (let x = Math.floor((b.x1 - 0.65) / 8); x <= Math.floor((b.x2 + 0.65) / 8); x++) for (let z = Math.floor((b.z1 - 0.65) / 8); z <= Math.floor((b.z2 + 0.65) / 8); z++) {
+      const id = `${x},${z}`; const list = buckets.get(id) ?? []; list.push(item); buckets.set(id, list);
+    }
+  }
+  return (x: number, z: number) => buckets.get(`${Math.floor(x / 8)},${Math.floor(z / 8)}`) ?? [];
+}
+const nearbySurfaces = spatialIndex(SURFACES, s => s);
+const nearbyObstacles = spatialIndex(OBSTACLES, o => ({ x1: o.x - o.w / 2, x2: o.x + o.w / 2, z1: o.z - o.d / 2, z2: o.z + o.d / 2 }));
+
 export function heightAt(x: number, z: number): number | null {
   let result: number | null = architectureSupport(x, z, Infinity);
-  for (const s of SURFACES) {
+  for (const s of nearbySurfaces(x, z)) {
     if (x < s.x1 || x > s.x2 || z < s.z1 || z > s.z2) continue;
     const y = s.y + (((s.endY ?? s.y) - s.y) * (z - s.z1)) / (s.z2 - s.z1);
     if (result === null || y > result) result = y;
@@ -145,7 +181,7 @@ export function canOccupy(x: number, z: number, fromY: number, shortcut: WorldAc
   if (y === null || Math.abs(y - fromY) > 0.6 || deckBlocks(x, z, fromY) || architectureBlocked(x, z, fromY, radius)) return false;
   // Four probes keep feet inside the visible parapets without sealing connected stairs.
   if ([[radius, 0], [-radius, 0], [0, radius], [0, -radius]].some(([dx, dz]) => supportAt(x + dx, z + dz, fromY + 0.6) === null)) return false;
-  return !OBSTACLES.some(o => !(ignoredLandmark && o.landmarkId === ignoredLandmark) && !gateOpen(o, shortcut)
+  return !nearbyObstacles(x, z).some(o => !(ignoredLandmark && o.landmarkId === ignoredLandmark) && !gateOpen(o, shortcut)
     && Math.abs(y - o.y) < 2 && Math.abs(x - o.x) < o.w / 2 + radius && Math.abs(z - o.z) < o.d / 2 + radius);
 }
 
@@ -188,9 +224,10 @@ inside = heightAt(x - dx, z - dz);
   return result;
 }
 export const PARAPETS = SURFACES.flatMap(surfaceRails);
+const nearbyParapets = spatialIndex(PARAPETS, o => ({ x1: o.x - o.w / 2, x2: o.x + o.w / 2, z1: o.z - o.d / 2, z2: o.z + o.d / 2 }));
 export function supportAt(x:number, z:number, ceiling = Infinity):number | null {
   let best:number | null = architectureSupport(x, z, ceiling);
-  for (const s of SURFACES) {
+  for (const s of nearbySurfaces(x, z)) {
     if (x < s.x1 || x > s.x2 || z < s.z1 || z > s.z2) continue;
     const y = s.y + (((s.endY ?? s.y) - s.y) * (z - s.z1)) / (s.z2 - s.z1);
     if (y <= ceiling + 0.001 && (best === null || y > best))best = y;
@@ -199,13 +236,13 @@ export function supportAt(x:number, z:number, ceiling = Infinity):number | null 
 }
 export function playerBlocked(x:number, z:number, feet:number, access:WorldAccess, radius = 0.24, step = 0.6):boolean {
   if (architectureBlocked(x, z, feet, radius, step)) return true;
-  if (OBSTACLES.some(o => !gateOpen(o, access) && feet < o.y + o.h - 0.02 && feet + 1.65 > o.y && Math.abs(x - o.x) < o.w / 2 + radius && Math.abs(z - o.z) < o.d / 2 + radius)) return true;
-  return PARAPETS.some(o => feet < o.y + o.slope * (z - o.z) + 0.73 && feet + 1.65 > o.y && Math.abs(x - o.x) < o.w / 2 + radius && Math.abs(z - o.z) < o.d / 2 + radius);
+  if (nearbyObstacles(x, z).some(o => !gateOpen(o, access) && feet < o.y + o.h - 0.02 && feet + 1.65 > o.y && Math.abs(x - o.x) < o.w / 2 + radius && Math.abs(z - o.z) < o.d / 2 + radius)) return true;
+  return nearbyParapets(x, z).some(o => feet < o.y + o.slope * (z - o.z) + 0.73 && feet + 1.65 > o.y && Math.abs(x - o.x) < o.w / 2 + radius && Math.abs(z - o.z) < o.d / 2 + radius);
 }
 
 /** Deck sides share head clearance between navigation and physical movement. */
 export function deckBlocks(x:number, z:number, feet:number):boolean {
-  return SURFACES.some(s => {
+  return nearbySurfaces(x, z).some(s => {
     if (x < s.x1 || x > s.x2 || z < s.z1 || z > s.z2) return false;
     const top = s.y + (((s.endY ?? s.y) - s.y) * (z - s.z1)) / (s.z2 - s.z1);
     return top > feet + 0.6 && feet + 1.65 > top - 0.58;
@@ -217,7 +254,7 @@ export function ceilingAt(x:number, z:number, before:number, after:number):numbe
  let result:number | null = null;
  for (const [dx, dz] of [[0, 0], [0.22, 0], [-0.22, 0], [0, 0.22], [0, -0.22]]) {
   const bottoms = architectureIntervals(x + dx, z + dz).map(h => h.bottom);
-  for (const s of SURFACES) if (x + dx >= s.x1 && x + dx <= s.x2 && z + dz >= s.z1 && z + dz <= s.z2)bottoms.push(s.y + (((s.endY ?? s.y) - s.y) * (z + dz - s.z1)) / (s.z2 - s.z1) - 0.58);
+  for (const s of nearbySurfaces(x + dx, z + dz)) if (x + dx >= s.x1 && x + dx <= s.x2 && z + dz >= s.z1 && z + dz <= s.z2)bottoms.push(s.y + (((s.endY ?? s.y) - s.y) * (z + dz - s.z1)) / (s.z2 - s.z1) - 0.58);
   for (const y of bottoms) if (y >= before - 0.001 && y <= after && (result === null || y < result))result = y;
  }
  return result;

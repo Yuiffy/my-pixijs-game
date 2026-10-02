@@ -29,16 +29,15 @@ export const emptyCareer = (): Career => ({
   skin: "sui-short",
 });
 
-export function readCareer(): Career {
-  try {
-    const value = JSON.parse(localStorage.getItem(META_KEY) || "null");
+export function parseCareer(input: unknown): Career | null {
+    const value = input as Partial<Career> | null;
     if (
       !value ||
       !Number.isSafeInteger(value.runs) ||
-      value.runs < 0 ||
+      typeof value.runs !== "number" || value.runs < 0 ||
       !Number.isSafeInteger(value.best) ||
-      value.best < 0
-    ) return emptyCareer();
+      typeof value.best !== "number" || value.best < 0
+    ) return null;
     return {
       runs: Math.min(value.runs, 100000),
       best: value.best,
@@ -53,11 +52,16 @@ export function readCareer(): Career {
         : [],
       recorded: Array.isArray(value.recorded)
         ? value.recorded
-            .filter((id: unknown) => typeof id === "string")
+            .filter((id: unknown) => typeof id === "string" && id.length <= 200)
             .slice(-100)
         : [],
-      skin: typeof value.skin === "string" ? value.skin : "sui-short",
+      skin: typeof value.skin === "string" && value.skin.length <= 100 ? value.skin : "sui-short",
     };
+}
+
+export function readCareer(): Career {
+  try {
+    return parseCareer(JSON.parse(localStorage.getItem(META_KEY) || "null")) || emptyCareer();
   } catch {
     return emptyCareer();
   }

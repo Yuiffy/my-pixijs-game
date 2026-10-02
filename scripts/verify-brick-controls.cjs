@@ -1,0 +1,143 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const { chromium } = require(require.resolve('playwright', { paths: [process.cwd(), path.join(require('node:os').homedir(), '.codex/skills/develop-web-game')] }));
+const { inspectPng } = require('./lib/autochess-screenshot.cjs');
+const url = process.env.BRICK_EXCAVATION_URL || 'http://localhost:3964/game/brick-excavation';
+const output = process.env.BRICK_EXCAVATION_QA_DIR || 'tmp/brick-controls-dev';
+const screenshots = [], scenarios = [], errors = [];
+fs.mkdirSync(output, { recursive: true });
+const state = page => page.evaluate(() => JSON.parse(window.render_game_to_text()));
+const tile = (page, index) => page.locator(`button[data-index="${index}"]`);
+const gameplay = value => { const { previewFirst, selected, focused, rulesOpen, ...game } = value; return game; };
+const open = async page => { await page.goto(url, { waitUntil: 'networkidle' }); await page.waitForFunction(() => !!window.render_game_to_text); };
+const capture = async (page, name) => {
+  await page.evaluate(() => document.fonts.ready);
+  const dom = await page.evaluate(() => ({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth, text: document.querySelector('main').innerText, canvasCount: document.querySelectorAll('canvas').length }));
+  assert.ok(dom.scrollWidth <= dom.width + 1, 'Horizontal overflow');
+  const file = path.join(output, `${name}.png`);
+  const pixels = inspectPng(await page.screenshot({ path: file, fullPage: true, animations: 'disabled' }));
+  screenshots.push({ file, pixels, dom, state: await state(page) });
+};
+(async () => {
+  assert.equal((await fetch(url, { signal: AbortSignal.timeout(60000) })).status, 200);
+  const { loadTypescriptModule } = await import('./tests/helpers/load-typescript-module.mjs');
+  const { createGame, getCluster, strike, shuffleRemaining } = await loadTypescriptModule('src/components/brickExcavation/engine.ts');
+  const browser = await chromium.launch({ channel: 'chrome', headless: !process.env.HEADED, args: ['--mute-audio', '--disable-speech-api'] });
+  const context = async options => {
+    const ctx = await browser.newContext({ reducedMotion: 'reduce', ...options });
+    await ctx.addInitScript(() => { if (window.speechSynthesis) window.speechSynthesis.speak = () => {}; });
+    await ctx.route('**/api/record', r => r.fulfill({ json: { success: true } }));
+    await ctx.route(/https:\/\/(pagead2\.googlesyndication\.com|hm\.baidu\.com)\//, r => r.fulfill({ body: '' }));
+    ctx.on('page', p => {
+      p.on('pageerror', e => errors.push(e.message));
+      p.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+    });
+    return ctx;
+  };
+  let passed = false;
+  try {
+    const ctx = await context({ viewport: { width: 1440, height: 960 } }), page = await ctx.newPage();
+    await open(page);
+    assert.equal((await state(page)).previewFirst, false);
+    const tabStops = () => page.locator('button[data-index][tabindex="0"]:enabled').count();
+    assert.equal(await tabStops(), 1);
+    await page.getByTestId('preview-mode').focus();
+    await page.keyboard.press('Tab');
+    assert.ok(await page.evaluate(() => document.activeElement.hasAttribute('data-index')));
+    await page.keyboard.press('Tab');
+    assert.equal(await page.evaluate(() => document.activeElement.hasAttribute('data-index')), false);
+    await page.keyboard.press('Shift+Tab');
+    let model = createGame(0);
+    for (let step = 0; model.status === 'playing' && step < 70; step++) {
+      const groups = model.board.map((_, index) => getCluster(model.board, index, model.cols));
+      const largest = groups.reduce((best, group) => group.length > best.length ? group : best, []);
+      const legal = groups.flatMap((group, index) => group.length >= 2 ? [index] : []);
+      await page.keyboard.press('Home');
+      for (let i = 0; i < legal.indexOf(largest[0]); i++) await page.keyboard.press('ArrowRight');
+      assert.equal(Number(await page.evaluate(() => document.activeElement.dataset.index)), largest[0]);
+      await page.keyboard.press(step % 2 ? 'Space' : 'Enter');
+      model = strike(model, largest[0]);
+      assert.deepEqual((await state(page)).board, model.board);
+      assert.equal((await state(page)).score, model.score);
+      if (model.status === 'playing') {
+        assert.equal(await tabStops(), 1);
+        const index = await page.evaluate(() => document.activeElement.dataset.index);
+        assert.ok(index !== undefined && getCluster(model.board, Number(index), model.cols).length >= 2, 'Focus must remain on a legal brick after removal');
+      }
+      if (step === 1) await capture(page, '01-continuous-keyboard');
+    }
+    assert.equal(model.status, 'won');
+    assert.equal(await page.evaluate(() => document.activeElement.getAttribute('aria-label')), '撤销');
+    await capture(page, '02-keyboard-victory');
+    await page.keyboard.press('Enter');
+    assert.equal((await state(page)).status, 'playing');
+    while ((await state(page)).turns > 0) await page.getByRole('button', { name: '撤销', exact: true }).click();
+    assert.ok(await page.evaluate(() => document.activeElement.hasAttribute('data-index')), 'Undoing the last move must return focus to board');
+    assert.equal(await tabStops(), 1);
+    scenarios.push('one board tab stop; Tab exits and returns; keyboard-only largest-group route wins; legal focus after every strike and final undo');
+
+    await page.getByRole('button', { name: '玩法规则', exact: true }).click();
+    assert.equal(await page.locator('[data-game-surface][inert]').count(), 2);
+    await page.keyboard.press('Tab');
+    assert.equal(await page.evaluate(() => document.activeElement.getAttribute('aria-label')), '关闭规则');
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => document.activeElement.getAttribute('aria-label') === '玩法规则');
+    assert.equal(await page.locator('[data-game-surface][inert]').count(), 0);
+    assert.equal(await page.evaluate(() => document.activeElement.getAttribute('aria-label')), '玩法规则');
+    scenarios.push('rules make background inert, trap focus, and restore Help focus');
+
+    const phoneCtx = await context({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), phone = await phoneCtx.newPage();
+    await open(phone);
+    assert.equal((await state(phone)).previewFirst, true);
+    const start = await state(phone);
+    const candidate = start.board.findIndex((_, index) => getCluster(start.board, index, start.cols).length >= 2);
+    const expected = strike(createGame(0), candidate);
+    await tile(phone, candidate).tap();
+    assert.deepEqual(gameplay(await state(phone)), gameplay(start), 'Selecting must not change gameplay');
+    assert.equal(await phone.locator('[data-treasure-cell]').count(), 0, 'Preview must not reveal hidden art');
+    assert.deepEqual(await phone.locator('[data-preview="group"]').evaluateAll(nodes => nodes.map(n => Number(n.dataset.index))), expected.lastMove.cleared);
+    assert.deepEqual(await phone.locator('[data-preview="edge"]').evaluateAll(nodes => nodes.map(n => Number(n.dataset.index))), expected.lastMove.shifted);
+    for (const index of expected.lastMove.shifted) assert.equal(Number(await tile(phone, index).getAttribute('data-preview-color')), expected.board[index]);
+    await capture(phone, '03-touch-preview-390');
+    await tile(phone, candidate).tap();
+    assert.equal((await state(phone)).turns, 0, 'Repeated taps must not accidentally strike');
+    await phone.getByTestId('cancel-preview').tap();
+    assert.equal((await state(phone)).selected, null);
+    assert.deepEqual(gameplay(await state(phone)), gameplay(start));
+    await tile(phone, candidate).tap();
+    await phone.getByTestId('confirm-strike').tap();
+    assert.deepEqual((await state(phone)).board, expected.board);
+    assert.equal((await state(phone)).selected, null);
+    assert.equal(await phone.getByTestId('confirm-strike').isDisabled(), true);
+    await phone.getByRole('button', { name: '撤销', exact: true }).tap();
+    assert.deepEqual((await state(phone)).board, start.board);
+    await tile(phone, candidate).tap();
+    await phone.locator('[data-shuffle]').tap();
+    assert.equal((await state(phone)).selected, null);
+    assert.deepEqual((await state(phone)).board, shuffleRemaining(createGame(0)).board);
+    await phone.getByRole('button', { name: '撤销', exact: true }).tap();
+    await phone.setViewportSize({ width: 320, height: 740 });
+    await tile(phone, candidate).tap();
+    await capture(phone, '04-touch-preview-320');
+    await phone.getByTestId('preview-mode').tap();
+    assert.equal((await state(phone)).selected, null);
+    await tile(phone, candidate).tap();
+    assert.deepEqual((await state(phone)).board, expected.board, 'Direct mode must retain one-tap gameplay');
+    await phone.getByRole('button', { name: '重开', exact: true }).tap();
+    assert.equal((await state(phone)).turns, 0);
+    await phone.getByTestId('preview-mode').tap();
+    await tile(phone, candidate).tap();
+    await phone.getByRole('button', { name: /^新地图/ }).tap();
+    assert.equal((await state(phone)).selected, null);
+    assert.equal((await state(phone)).seed, 1);
+    await phone.setViewportSize({ width: 844, height: 390 });
+    await capture(phone, '05-landscape');
+    scenarios.push('real touch preview matches clear/edge colors without spoilers, no action on repeated taps, cancel/confirm/undo/shuffle/mode/restart/new-map clear selection; 320/390px and landscape');
+    assert.deepEqual(errors, []); passed = true;
+  } finally {
+    fs.writeFileSync(path.join(output, 'controls-report.json'), JSON.stringify({ passed, scenarios, screenshots, errors }, null, 2));
+    await browser.close();
+  }
+  console.log(JSON.stringify({ passed, scenarios, screenshots: screenshots.map(s => s.file), errors }, null, 2));
+})().catch(error => { console.error(error); process.exitCode = 1; });

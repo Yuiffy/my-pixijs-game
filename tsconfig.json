@@ -34,7 +34,8 @@
     ".next/types/**/*.ts",
     ".next-agi-competition-dev/types/**/*.ts",
     ".next-pinglu-canal-dev/types/**/*.ts",
-    ".next-autochess-multiplayer-dev/types/**/*.ts"
+    ".next-autochess-multiplayer-dev/types/**/*.ts",
+    ".next-snack-controls-dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

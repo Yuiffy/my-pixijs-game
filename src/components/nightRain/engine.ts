@@ -1,5 +1,9 @@
 import type { Action, AttackId, Effect, Enemy, EnemyKind, GameInput, GameState, Player, Vec3, WorldAccess } from './types';
-import { ceilingAt, deckBlocks, playerBlocked, supportAt, canOccupy, REST_POINTS, ENEMY_SPAWNS, LANDMARKS, lineClear, regionAt, SPAWN } from './world';
+import { ceilingAt, deckBlocks, playerBlocked, supportAt, canOccupy, REST_POINTS, ENEMY_SPAWNS, LANDMARKS, lineClear, regionAt, SPAWN, WORLD_BOUNDS } from './world';
+import { freshHaven, HAVEN_ENEMIES, HAVEN_FERRIES, HAVEN_GATES, HAVEN_LORE, havenAvailable } from './haven';
+import { applyConversation, validHaven } from './havenStory';
+import { CHAPTER_GATES, CHAPTER_LORE } from './chapter';
+import { FERRY_DESTINATIONS, riverSeals, VALLEY_BOSSES, VALLEY_ENEMIES, VALLEY_GATES, VALLEY_LORE } from './valley';
 
 import { enemyAttack, ENEMY_STRIKE_TIME, ENEMY_CONTACT_TIME } from './enemyCombat';
 
@@ -16,6 +20,15 @@ const STATS: Record<EnemyKind, { hp: number; posture: number; damage: number; sp
   nana: { hp: 440, posture: 165, damage: 36, speed: 2.4, reward: 180 },
   azi: { hp: 260, posture: 130, damage: 27, speed: 2.8, reward: 110 },
   boss: { hp: 360, posture: 150, damage: 32, speed: 2.15, reward: 130 },
+  lancer: { hp: 150, posture: 108, damage: 28, speed: 2, reward: 48 },
+  captain: { hp: 430, posture: 170, damage: 34, speed: 2.1, reward: 220 },
+  regent: { hp: 780, posture: 220, damage: 42, speed: 2.5, reward: 400 },
+  reaver: { hp: 196, posture: 116, damage: 32, speed: 2.4, reward: 68 },
+  monk: { hp: 230, posture: 126, damage: 34, speed: 2.7, reward: 80 },
+  warden: { hp: 660, posture: 190, damage: 40, speed: 2.1, reward: 300 },
+  abbot: { hp: 620, posture: 180, damage: 38, speed: 2.8, reward: 300 },
+  elegist: { hp: 980, posture: 240, damage: 45, speed: 2.4, reward: 480 },
+  serpent: { hp: 1120, posture: 260, damage: 49, speed: 2.6, reward: 600 },
 };
 const DURATIONS: Record<Action, number> = { idle: 0, charge: 2, light: 0.5, heavy: 0.86, dodge: 0.64, parry: 0.52, guard: Infinity, guardRelease: 0.16, guardBreak: 0.9, hurt: 0.42, heal: 1.12, execute: 0.95, dead: Infinity };
 const NEUTRAL: GameInput = { x: 0, z: 0 };
@@ -25,10 +38,10 @@ const facingToward = (a: Vec3, b: Vec3) => Math.atan2(b.x - a.x, b.z - a.z);
 const alive = (enemy: Enemy) => enemy.hp > 0 && enemy.action !== 'dead';
 const finite = (n: unknown, min: number, max: number): n is number => typeof n === 'number' && Number.isFinite(n) && n >= min && n <= max;
 
-export function maxFlasks(s: GameState): number { return s.flaskUpgrade ? 4 : 3; }
-export function healAmount(s: GameState): number { return s.charm ? 80 : 60; }
+export function maxFlasks(s: GameState): number { return 3 + Number(s.flaskUpgrade) + Number(s.collected.includes('cistern-flask')) + Number(s.collected.includes('valley-flask')); }
+export function healAmount(s: GameState): number { return (s.charm ? 80 : 60) + (s.collected.includes('bamboo-dew') ? 30 : 0) + (s.haven.ending === 'release' ? 15 : 0); }
 export function maxHp(s: GameState): number { return 100 + s.level * 12; }
-export function maxStamina(s: GameState): number { return 100 + s.level * 5; }
+export function maxStamina(s: GameState): number { return 100 + s.level * 5 + (s.haven.ending === 'remember' ? 15 : 0); }
 export function upgradeCost(s: GameState): number { return 40 + s.level * 30; }
 
 function makeEnemies(bossDefeated = false, defeatedGuests: string[] = []): Enemy[] {
@@ -80,7 +93,12 @@ bankedRice: 0,
 level: 0,
 charm: false,
 shortcut: false,
-    worldVersion: 4,
+    worldVersion: 7,
+haven: freshHaven(),
+valleyGates: [],
+valleyComplete: false,
+chapterGates: [],
+chapterComplete: false,
 harborGate: false,
 defeatedGuests: [],
 playerSkin: 'sui',
@@ -176,6 +194,16 @@ function killEnemy(s: GameState, e: Enemy): void {
   effect(s, e, 'reward', `+${STATS[e.kind].reward} 夜市钱`);
   if (s.lockedId === e.id) s.lockedId = null;
   if (e.kind === 'nana' || e.kind === 'azi') { s.defeatedGuests.push(e.id); say(s, e.kind === 'nana' ? '七潮归寂 · 晨钟有路' : '苔灯谢幕 · 余音仍在', 6, 'event', e.kind === 'nana' ? '潮门安静了。登上后面的石阶，可以敲响黎明钟，也可以继续探索。' : '阿梓留下了戏匣。戏台南边落雨檐可以跳到低码头，再走回灯市。'); }
+  if (e.kind === 'captain' || e.kind === 'regent') {
+    s.defeatedGuests.push(e.id);
+    say(s, e.kind === 'captain' ? '双象卫长已败 · 拾得象纹铜印' : '雨冠熄落 · 长夜将尽', 7, 'event', e.kind === 'captain' ? '铜印可以打开高墙另一边的藏经院。门楼东侧还有回到织坊的近路。' : '大殿后面的归夜钟已经可以敲响。先回夜市吃饭，再以钟声结束这一晚。');
+  }
+  if (e.kind === 'elegist') { s.defeatedGuests.push(e.id); say(s, '末灯已静 · 无名不再守簿', 8, 'event', '库底的无名灯在等你的回答。先读守灯簿，再决定记名或放灯；东侧归廊可以开近路回庭。'); }
+  if (VALLEY_BOSSES.includes(e.id)) {
+    s.defeatedGuests.push(e.id);
+    const hint = e.kind === 'warden' ? '转动院北的西岸水闸，再到东边渡埠修好系缆。渡船会重新连通旧城。' : e.kind === 'abbot' ? '住持身后的东岸水闸可以转动了。西侧下山阶通向双流汇灯台。' : '河心安静了。走到殿后的灯台，放出第一盏归水灯。';
+    say(s, e.kind === 'warden' ? '缚流解缆 · 西岸已静' : e.kind === 'abbot' ? '听澜归寂 · 东岸已静' : '千流归海 · 愿灯可行', 8, 'event', hint);
+  }
   if (e.kind === 'boss') { s.bossDefeated = true; say(s, '铁伞已折', 5, 'event', '打赢啦！往夜市最里面的炉火走，找摊主点餐。'); }
 }
 
@@ -228,7 +256,7 @@ function execute(s: GameState): boolean {
   p.facing = facingToward(p, e); p.action = 'execute'; p.attack = null; p.buffer = null; p.combo = 0; p.actionTime = 0; p.hitDone = true; p.invulnerable = 1.05;
   p.stamina = Math.min(maxStamina(s), p.stamina + 30); s.executions += 1;
   e.posture = 0; e.action = 'recover'; e.timer = 1.5;
-  damageEnemy(s, e, ['boss', 'nana', 'azi'].includes(e.kind) ? 102 + s.level * 5 : e.hp, 0);
+  damageEnemy(s, e, ['boss', 'nana', 'azi', 'captain', 'regent', 'warden', 'abbot', 'serpent', 'elegist'].includes(e.kind) ? 102 + s.level * 5 : e.hp, 0);
   effect(s, e, 'parry', '破架处决'); return true;
 }
 
@@ -364,7 +392,7 @@ function updatePlayer(s: GameState, dt: number, input: GameInput): void {
           const heavy = p.action === 'heavy';
           const guarded = e.kind === 'guard' && e.action !== 'stagger' && e.action !== 'recover' && Math.abs(angleDiff(facingToward(e, p), e.facing)) < 1.4;
           damageEnemy(s, e, (spec.damage + s.level * (heavy ? 5 : 3)) * (guarded && !heavy ? 0.4 : 1), spec.posture); hits += 1;
-          if (alive(e) && e.action !== 'stagger' && e.kind !== 'boss' && (heavy || e.action !== 'windup')) { e.action = 'recover'; e.timer = heavy ? 0.55 : 0.28; }
+          if (alive(e) && e.action !== 'stagger' && !['boss', 'captain', 'regent', 'warden', 'abbot', 'serpent', 'elegist'].includes(e.kind) && (heavy || e.action !== 'windup')) { e.action = 'recover'; e.timer = heavy ? 0.55 : 0.28; }
         }
         if (hits) s.hitstop = p.action === 'heavy' ? 0.075 : 0.04;
         if (p.attack === 'charged' || p.attack === 'airHeavy') effect(s, { ...p, x: p.x + Math.sin(p.facing), z: p.z + Math.cos(p.facing) }, 'parry');
@@ -385,12 +413,14 @@ function updateEnemy(s: GameState, e: Enemy, dt: number): void {
   e.flash = Math.max(0, e.flash - dt);
   if (!alive(e)) return;
   const p = s.player; const dist = distance(e, p); const homeDistance = distance(e, e.spawn);
-  const sameLevel = Math.abs(e.y - p.y) < 1.8; const sees = sameLevel && lineClear(e, p, s);
-  if (['boss', 'nana', 'azi'].includes(e.kind) && e.hp <= e.maxHp * 0.5 && e.phase === 1) { e.phase = 2; say(s, e.kind === 'nana' ? '七潮叠浪' : e.kind === 'azi' ? '夜曲 · 变奏' : '铁伞破裂 · 第二式', 5, 'event', e.kind === 'nana' ? '七海的返潮变快了，连段后的长收招仍是机会。红色扫浪可以跳过。' : e.kind === 'azi' ? '阿梓开始延迟落拍。等她真正挥杖再反应，红色环扫需要跳跃或远离。' : '红色回旋不能弹反，向外闪开。'); }
+  // Distant idle actors do not trace hundreds of metres through the expanded city.
+  if (!e.aggro && dist > 17 && homeDistance < 0.15) return;
+  const sameLevel = Math.abs(e.y - p.y) < 1.8; const sees = sameLevel && dist < 17 && lineClear(e, p, s);
+  if (['boss', 'nana', 'azi', 'captain', 'regent', 'warden', 'abbot', 'serpent', 'elegist'].includes(e.kind) && e.hp <= e.maxHp * 0.5 && e.phase === 1) { e.phase = 2; say(s, e.kind === 'elegist' ? '抹名余烬 · 守簿第二式' : e.kind === 'serpent' ? '千流逆行 · 那伽第二式' : e.kind === 'warden' ? '沉舟起浪 · 缚流第二式' : e.kind === 'abbot' ? '无声听澜 · 回杖第二式' : e.kind === 'regent' ? '雨冠 · 百灯尽燃' : e.kind === 'captain' ? '铜印碎甲 · 卫长第二式' : e.kind === 'nana' ? '七潮叠浪' : e.kind === 'azi' ? '夜曲 · 变奏' : '铁伞破裂 · 第二式', 5, 'event', e.kind === 'nana' ? '七海的返潮变快了，连段后的长收招仍是机会。红色扫浪可以跳过。' : e.kind === 'azi' ? '阿梓开始延迟落拍。等她真正挥杖再反应，红色环扫需要跳跃或远离。' : '红色横扫不能弹反；跳过或远离，等重击后的长收招再反击。'); }
   const inArena = e.kind !== 'boss' || (p.z < -36 && p.y < 0.2);
-  if (!e.aggro && inArena && dist < (e.kind === 'boss' ? 8 : 6.3) && sees) { e.aggro = true; e.timer = 0.45; }
+  if (!e.aggro && homeDistance < 1.5 && inArena && dist < (e.kind === 'boss' ? 8 : 6.3) && sees) { e.aggro = true; e.timer = 0.45; }
   // Enemies return to their posts rather than pursuing through floors or the entire level.
-  if (e.aggro && (homeDistance > (e.kind === 'boss' ? 11 : 10) || dist > 15 || (e.kind === 'boss' && p.z > -35.5))) { e.aggro = false; e.action = 'idle'; e.timer = 0.8; e.posture = 0; }
+  if (e.aggro && (homeDistance > (['regent', 'serpent', 'elegist'].includes(e.kind) ? 22 : e.kind === 'captain' ? 18 : e.kind === 'boss' ? 11 : 10) || dist > 15 || (e.kind === 'boss' && p.z > -35.5))) { e.aggro = false; e.action = 'idle'; e.timer = 0.8; e.posture = 0; }
   if (!e.aggro) {
     if (homeDistance > 0.15) {
       e.facing = facingToward(e, e.spawn); e.action = 'chase';
@@ -430,16 +460,17 @@ function updatePrompt(s: GameState): void {
   if (s.bloodstain && distance(s.player, s.bloodstain) < 1.85 && Math.abs(s.player.y - s.bloodstain.y) < 0.8) { s.prompt = '取回遗落的夜市钱'; s.nearbyId = 'bloodstain'; return; }
   const broken = s.enemies.find(e => e.action === 'stagger' && inCone(s, s.player, e, 2.55, 1.65));
   if (broken) { s.prompt = '破架处决'; s.nearbyId = broken.id; return; }
-  const landmark = LANDMARKS.filter(l => !s.collected.includes(l.id) || l.kind === 'note')
-    .filter(l => !(l.kind === 'shortcut' && (l.id === 'harbor-gate' ? s.harborGate : l.id === 'temple-gate' ? s.templeGate : s.shortcut)) && distance(l, s.player) < 2.05 && Math.abs(l.y - s.player.y) < 0.8 && lineClear(s.player, l, s, l.id))
+  const landmark = LANDMARKS.filter(l => havenAvailable(s, l.id) && (!s.collected.includes(l.id) || l.kind === 'note' || l.kind === 'npc'))
+    .filter(l => !(l.kind === 'shortcut' && (HAVEN_GATES.some(g => g.id === l.id) ? s.haven.gates.includes(l.id) : VALLEY_GATES.some(g => g.id === l.id) ? s.valleyGates.includes(l.id) : CHAPTER_GATES.some(g => g.id === l.id) ? s.chapterGates.includes(l.id) : l.id === 'harbor-gate' ? s.harborGate : l.id === 'temple-gate' ? s.templeGate : s.shortcut)) && distance(l, s.player) < 2.05 && Math.abs(l.y - s.player.y) < 0.8 && lineClear(s.player, l, s, l.id))
     .sort((a, b) => distance(a, s.player) - distance(b, s.player))[0];
-  if (landmark) { s.nearbyId = landmark.id; s.prompt = landmark.kind === 'rest' ? (s.litLamps.includes(landmark.id) ? '中庭雨灯 · 免费休息' : '点燃中庭雨灯') : landmark.label; }
+  if (landmark) { s.nearbyId = landmark.id; s.prompt = landmark.kind === 'rest' ? (s.litLamps.includes(landmark.id) ? `${landmark.label} · 免费休息` : `点燃${landmark.label}`) : landmark.label; }
 }
 
 export function stepGame(s: GameState, dtMs: number, input: GameInput = NEUTRAL): void {
   if (s.mode !== 'playing' || s.paused || !Number.isFinite(dtMs) || dtMs <= 0) return;
   const safeInput = { ...input, x: finite(input.x, -1000, 1000) ? input.x : 0, z: finite(input.z, -1000, 1000) ? input.z : 0 };
   actionInput(s, safeInput);
+  if (s.paused) return;
   let remaining = Math.min(dtMs / 1000, 5);
   while (remaining > 0.000001 && s.mode === 'playing') {
     const dt = Math.min(1 / 120, remaining); remaining -= dt;
@@ -468,24 +499,68 @@ export function interact(s: GameState): void {
   if (!landmark) return;
   if (landmark.kind === 'rest') {
     if (!s.litLamps.includes(landmark.id)) {
-      s.litLamps.push(landmark.id); s.checkpoint = 'courtyard';
+      if (!safeToRest(s)) { say(s, '敌人还在附近，先脱离战斗才能点灯。'); return; }
+      s.litLamps.push(landmark.id); s.checkpoint = landmark.id as GameState['checkpoint'];
       effect(s, landmark, 'reward'); say(s, '雨灯初燃 · 归途已铭记', 4, 'event', '复活点记好了。点火不会回血、补药或刷新敌人；再交互才是免费休息。');
       updatePrompt(s); return;
     }
     if (!safeToRest(s)) { say(s, '敌人还在附近，先脱离战斗才能休息。'); return; }
-    s.checkpoint = 'courtyard';
+    s.checkpoint = landmark.id as GameState['checkpoint'];
     s.player.hp = maxHp(s); s.player.stamina = maxStamina(s); s.player.flasks = maxFlasks(s); s.restCount += 1;
     s.enemies = makeEnemies(s.bossDefeated, s.defeatedGuests); s.lockedId = null;
     effect(s, landmark, 'heal');
     say(s, '歇息片刻 · 雨仍未停', 4, 'event', '免费休息，生命、体力和药瓶已补满；普通敌人会重生。旁边花钱的是强化装备，不是休息。');
+  } else if (interactHaven(s, landmark.id)) {
+    updatePrompt(s); return;
+  } else if (landmark.id === 'bamboo-dew' && !s.collected.includes(landmark.id)) {
+    s.collected.push(landmark.id); effect(s, landmark, 'reward');
+    say(s, '灵竹露 · 每瓶恢复量 +30', 6, 'event', `现在每瓶椰露恢复 ${healAmount(s)} 生命。与金铃护符叠加，休息和死亡后保留。`);
   } else if (landmark.kind === 'cache' && !s.collected.includes(landmark.id)) {
     s.collected.push(landmark.id); s.rice += 35; effect(s, landmark, 'reward', '+35 夜市钱');
     say(s, '旧铜钱 ×35', 3, 'event', landmark.id === 'cloister-cache' ? '拿到了！回廊的矮阶通回中庭雨灯，不用原路返回。' : landmark.id === 'lookout-cache' ? '望台上能看到夜市和东侧运河，挑战首领前可以先绕去开近路。' : '这笔钱可以拿回雨灯整备，提高生命、体力和伤害。');
   } else if (landmark.kind === 'charm' && !s.charm) {
     s.charm = true; s.collected.push(landmark.id); effect(s, landmark, 'reward', '金铃护符'); say(s, '拾得 · 金铃护符', 4, 'event', '金铃会让椰子水恢复更多生命：现在一瓶恢复 80 点。绕路值得吧！');
+  } else if (['cistern-flask', 'valley-flask'].includes(landmark.id) && !s.collected.includes(landmark.id)) {
+    s.collected.push(landmark.id); s.player.flasks = Math.min(maxFlasks(s), s.player.flasks + 1);
+    effect(s, landmark, 'reward'); say(s, `${landmark.id === 'valley-flask' ? '听瀑露瓶' : '莲纹露瓶'} · 药瓶上限 +1`, 5, 'event', `现在可携带 ${maxFlasks(s)} 瓶椰露。回到已经点亮的雨灯休息后补满。`);
   } else if (landmark.kind === 'flask' && !s.flaskUpgrade) {
     s.flaskUpgrade = true; s.collected.push(landmark.id); s.player.flasks = Math.min(maxFlasks(s), s.player.flasks + 1);
-    effect(s, landmark, 'reward'); say(s, '刻露瓶 · 药瓶上限 +1', 5, 'event', '现在可以带四瓶回血药了。回中庭雨灯免费休息就能补满，R／手柄X喝药。');
+    effect(s, landmark, 'reward'); say(s, '刻露瓶 · 药瓶上限 +1', 5, 'event', `现在可以带 ${maxFlasks(s)} 瓶回血药了。回雨灯免费休息就能补满，R／手柄X喝药。`);
+  } else if (VALLEY_GATES.some(g => g.id === landmark.id)) {
+    const gate = VALLEY_GATES.find(g => g.id === landmark.id)!;
+    if ((gate.side === 'north' && s.player.z > gate.z - 0.7) || (gate.side === 'south' && s.player.z < gate.z + 0.7) || (gate.side === 'west' && s.player.x > gate.x - 0.7)) { say(s, '门闩在另一侧，先沿两岸前行。'); return; }
+    if (gate.id === 'valley-entry' && !s.chapterComplete) { say(s, '归夜钟响，后山门才迎归人。', 6, 'lore', '先完成第一关：击败雨冠、吃过晚饭，再敲响旁边的归夜钟。'); return; }
+    if (gate.id === 'river-door' && riverSeals(s) < 2) { say(s, `双流尚未汇合 · 已开水闸 ${riverSeals(s)} / 2`, 6, 'lore', '西岸沉舟水车院、东岸无声山寺各有一个水闸。击败守闸者后，需要亲手转动机关。'); return; }
+    if (!s.valleyGates.includes(gate.id)) s.valleyGates.push(gate.id);
+    effect(s, landmark, 'reward'); say(s, `${gate.name}已开`, 6, 'event', gate.id === 'valley-entry' ? '第二关 · 雾河回响。顺着钟后崖廊下山，渡村的雨灯在等你。随时可以沿原路返回王寺。' : '通路永久保留，休息或死亡不会关门。');
+  } else if (landmark.kind === 'ferry') {
+    if (!Object.hasOwn(HAVEN_FERRIES, landmark.id) && !s.collected.includes('ferry-winch')) { say(s, '渡船系缆还未修复。', 6, 'lore', '从王寺后山进入雾河，击败西岸沉舟摆渡，在水车院东边渡埠修好系缆。'); return; }
+    if (!safeToRest(s)) { say(s, '先摆脱追兵，才能乘船。'); return; }
+    const destination = HAVEN_FERRIES[landmark.id] ?? FERRY_DESTINATIONS[landmark.id];
+    if (!destination) return;
+    const { hp, stamina, flasks, staminaDelay } = s.player;
+    s.player = { ...makePlayer(destination.position), hp, stamina, flasks, staminaDelay };
+    s.lockedId = null; s.effects = []; s.hitstop = 0;
+    say(s, `渡船靠岸 · ${destination.label}`, 6, 'event', '渡船往返已经恢复。血量、药瓶与原先的复活雨灯保留。');
+  } else if (['mill-sluice', 'monastery-sluice', 'ferry-winch'].includes(landmark.id)) {
+    const guardian = landmark.id === 'monastery-sluice' ? 'silent-abbot' : 'drowned-warden';
+    if (!s.defeatedGuests.includes(guardian)) { say(s, '守闸者还没有离开。', 5, 'lore', guardian === 'silent-abbot' ? '先击败无声寺的听澜住持。' : '先击败水车院的沉舟摆渡。'); return; }
+    if (!s.collected.includes(landmark.id)) { s.collected.push(landmark.id); effect(s, landmark, 'reward'); }
+    say(s, landmark.id === 'ferry-winch' ? '系缆重连 · 归城渡船已恢复' : `水闸转动 · 双流 ${riverSeals(s)} / 2`, 7, 'event', landmark.id === 'ferry-winch' ? '水车院、渡村和第一关摆渡庵现在可以乘船往返，不消耗夜市钱。' : riverSeals(s) === 2 ? '双闸都已开启。去上游汇灯台休息，再解除北边锁桥，挑战那伽守愿。' : '另一岸仍有水闸未开。可经上游引水桥去对岸，也可回渡村再出发。');
+  } else if (landmark.id === 'river-heart') {
+    if (!s.defeatedGuests.includes('river-serpent')) { say(s, '那伽仍守着未归的愿灯。', 5, 'lore', '先击败沉殿里的千流，再来放灯。'); return; }
+    if (s.valleyComplete) return;
+    s.collected.push(landmark.id); s.valleyComplete = true; s.mode = 'ending'; s.lockedId = null;
+    say(s, '第二关 · 雾河回响。钟声翻过山，愿灯终于顺流回家。', 99, 'event');
+  } else if (VALLEY_LORE[landmark.id]) {
+    if (!s.collected.includes(landmark.id)) s.collected.push(landmark.id);
+    const [lore, hint] = VALLEY_LORE[landmark.id]; say(s, lore, 8, 'lore', hint);
+  } else if (CHAPTER_GATES.some(g => g.id === landmark.id)) {
+    const gate = CHAPTER_GATES.find(g => g.id === landmark.id)!;
+    if ((gate.side === 'north' && s.player.z > gate.z - 0.7) || (gate.side === 'south' && s.player.z < gate.z + 0.7) || (gate.side === 'west' && s.player.x > gate.x - 0.7) || (gate.side === 'east' && s.player.x < gate.x + 0.7)) { say(s, '机关在门的另一侧。'); return; }
+    if (gate.id === 'archive-door' && !s.defeatedGuests.includes('gate-captain')) { say(s, '铜门上留着双象的印痕。', 5, 'lore', '需要双象门楼卫长的象纹铜印。高墙西侧的蓄水院是可选支路。'); return; }
+    if (!s.chapterGates.includes(gate.id)) s.chapterGates.push(gate.id);
+    effect(s, landmark, 'reward'); say(s, `${gate.name}已开`, 5, 'event', '通路会一直保留，死亡和休息不会重新关门。');
   } else if (landmark.id === 'harbor-gate') {
     if (s.player.z > -8.8) return;
     s.harborGate = true; effect(s, landmark, 'reward'); say(s, '归灯长桥已开', 4, 'event', '长桥直通中庭，重试潮门不用绕夜市了。');
@@ -500,6 +575,15 @@ export function interact(s: GameState): void {
     if (s.collected.includes('food')) return;
     s.collected.push('food'); s.mode = 'ending'; s.lockedId = null; s.prompt = ''; s.nearbyId = null;
     say(s, '下播后的第一份打抛饭。明天还要直播，今晚先好好吃饭。', 99);
+  } else if (landmark.id === 'chapter-bell') {
+    if (!s.defeatedGuests.includes('rain-regent')) { say(s, '雨冠仍守长夜，钟声尚不能远行。', 5, 'lore', '先击败大殿里的长夜司灯。'); return; }
+    if (!s.collected.includes('food')) { say(s, '今晚还没有吃饭。先回夜市炉火，再来听钟。', 6, 'event', '雨灯旁可以在已经点亮的雨灯之间行旅。回中庭去夜市吃饭后，再返回王寺。'); return; }
+    if (s.chapterComplete) return;
+    s.collected.push('chapter-bell'); s.chapterComplete = true; s.mode = 'ending'; s.lockedId = null;
+    say(s, '第一关 · 长夜归灯。饭还温着，整座城终于等到了钟声。', 99, 'event');
+  } else if (CHAPTER_LORE[landmark.id]) {
+    if (!s.collected.includes(landmark.id)) s.collected.push(landmark.id);
+    const [lore, hint] = CHAPTER_LORE[landmark.id]; say(s, lore, 8, 'lore', hint);
   } else if (landmark.id === 'temple-lamp' || landmark.id === 'canal-lamp') {
     if (!s.collected.includes(landmark.id)) s.collected.push(landmark.id);
     say(s, '芯冷，灯空。归火尚在中庭。', 6, 'lore', '这只是旧灯，没有复活和补给功能。开好近路就能回中庭的雨灯，不必重绕整张地图。');
@@ -522,7 +606,7 @@ export function upgrade(s: GameState): boolean {
   const lamp = LANDMARKS.find(l => l.kind === 'rest' && distance(s.player, l) <= 2.05 && Math.abs(s.player.y - l.y) <= 0.8);
   if (!lamp || !s.litLamps.includes(lamp.id)) return false;
   if (s.mode !== 'playing' || s.player.action !== 'idle' || distance(s.player, lamp) > 2.05 || Math.abs(s.player.y - lamp.y) > 0.8 || !safeToRest(s)) return false;
-  if (s.level >= 5) { say(s, '这身行装已经整备完毕。'); return false; }
+  if (s.level >= 15) { say(s, '这身行装已经整备完毕。'); return false; }
   const cost = upgradeCost(s);
   if (s.rice < cost) { say(s, `整备需要 ${cost} 夜市钱。沿暗巷和屋脊找找。`); return false; }
   s.rice -= cost; s.bankedRice += cost; s.level += 1; s.player.hp = Math.min(maxHp(s), s.player.hp + 12); s.player.stamina = Math.min(maxStamina(s), s.player.stamina + 5);
@@ -531,7 +615,18 @@ export function upgrade(s: GameState): boolean {
 
 export function continueExploring(s: GameState): void {
   if (s.mode !== 'ending') return;
-  s.mode = 'playing'; s.paused = false; s.lockedId = null; clearHeldActions(s); say(s, '炉火身后，潮声在东。穿过无渡人的庵，桥仍等着脚步。', 9, 'lore', '去新区域：从夜市东边进入运河侧廊，在摆渡庵岔口向东穿过庵堂，再过桥就是潮汐港。按 C 可以让我直接带路。'); updatePrompt(s);
+  s.mode = 'playing'; s.paused = false; s.lockedId = null; clearHeldActions(s);
+  say(s, s.valleyComplete ? '灯随河流，路仍相连。' : s.chapterComplete ? '钟声翻过后山，雾河里的灯还在等你。' : '吃饱了。北口香料街尽头，王寺的灯还亮着。', 9, 'lore', s.valleyComplete ? '两关已完成。可以沿双岸步道、已开启的近门、雨灯行旅或渡船重访整个世界。' : s.chapterComplete ? '从钟台东侧的后山门进入第二关「雾河回响」。新区域与王寺直接相连，原有战斗和探索进度保留。' : '从夜市西北角向北，沿香料水街进入织坊下城。榕树下有新的雨灯。'); updatePrompt(s);
+}
+
+/** Travel is available only beside a lit, safe lamp and never grants a free heal. */
+export function travelToLamp(s: GameState, id: string): boolean {
+  const origin = LANDMARKS.find(l => l.kind === 'rest' && s.litLamps.includes(l.id) && distance(l, s.player) < 2.05 && Math.abs(l.y - s.player.y) < 0.8);
+  if (!origin || !s.litLamps.includes(id) || !REST_POINTS[id] || !safeToRest(s) || s.mode !== 'playing' || s.player.action !== 'idle' || isAirborne(s.player)) return false;
+  const { hp, stamina, flasks } = s.player;
+  s.player = { ...makePlayer(REST_POINTS[id]), hp, stamina, flasks };
+  s.checkpoint = id as GameState['checkpoint']; s.lockedId = null; s.effects = [];
+  say(s, `抵达${LANDMARKS.find(l => l.id === id)?.label}`, 4, 'event'); updatePrompt(s); return true;
 }
 
 /** Explicit rescue changes location only; it is not a free rest or enemy reset. */
@@ -558,10 +653,22 @@ export function clearHeldActions(s: GameState): void {
 export function setPaused(s: GameState, paused: boolean): void { if (s.mode === 'playing') { s.paused = paused; if (paused) clearHeldActions(s); } }
 
 export function getObjective(s: GameState): string {
-  if (s.mode === 'ending') return '第一幕完成 · 这顿饭，来之不易';
-  if (s.collected.includes('dawn-bell')) return '晨钟已响 · 自由探索旧城与潮汐港';
-  if (s.defeatedGuests.includes('nana-tide')) return '登上晨钟台阶，叩响黎明钟';
-  if (s.collected.includes('food')) return '夜市东侧 → 运河侧廊 → 摆渡庵 → 潮汐港 · 七重潮门';
+  if (s.haven.ending) return '灯下暗线已完成 · 回归灯庭听听归人的回应';
+  if (s.valleyComplete) return '两关完成 · 长夜归灯 / 雾河回响 · 旅馆南桥的归灯庭还有人在等你';
+  if (s.chapterComplete) {
+    if (!s.valleyGates.includes('valley-entry')) return '第二关 · 从王寺钟台东侧的后山门进入雾河';
+    if (!s.litLamps.includes('village-lamp')) return '沿钟后崖廊下山，点亮渡村雨灯';
+    if (s.defeatedGuests.includes('river-serpent')) return '走到沉殿后方，放出第一盏归水灯';
+    if (s.valleyGates.includes('river-door')) return '进入那伽沉殿，挑战守愿者 · 千流';
+    if (riverSeals(s) === 2) return '双流已汇 · 到汇灯台北边解除锁桥';
+    return `雾河双岸 · 水闸 ${riverSeals(s)} / 2 · ${!s.collected.includes('mill-sluice') ? '西岸水车院' : '东岸无声寺'}（两岸可自由选择）`;
+  }
+  if (s.defeatedGuests.includes('rain-regent')) return s.collected.includes('food') ? '走到大殿后方，敲响王寺归夜钟' : '回到夜市吃饭，再敲响王寺归夜钟';
+  if (s.litLamps.includes('royal-lamp')) return '进入雨冠大殿，挑战长夜司灯';
+  if (s.chapterGates.includes('archive-door')) return '藏经院 → 千灯朝圣桥 → 王寺天阶';
+  if (s.defeatedGuests.includes('gate-captain')) return '登上金雨高墙，以铜印打开藏经院';
+  if (s.litLamps.includes('lower-lamp')) return '织坊石阶 → 染布长廊 → 双象门楼 · 寻找铜印';
+  if (s.collected.includes('food')) return '夜市北口 → 香料水街 → 织坊下城 · 榕树雨灯';
   if (s.bossDefeated) return '到夜市炉火旁，吃上今晚的第一顿饭';
   if (s.shortcut) return '挑战封街人 · 铁伞，抵达深夜食堂';
   if (s.charm) return '沿夜市长阶下行，找出回到中庭的近路';
@@ -569,12 +676,51 @@ export function getObjective(s: GameState): string {
   return '合上笔记本，沿旅馆外梯寻找雨灯';
 }
 
+function interactHaven(s: GameState, id: string): boolean {
+  const landmark = LANDMARKS.find(l => l.id === id);
+  if (landmark?.kind === 'npc') {
+    if (!safeToRest(s)) { say(s, '先摆脱附近的追兵，再慢慢交谈。'); return true; }
+    if (id === 'well-choice' && !s.defeatedGuests.includes('last-lamplighter')) { say(s, '守簿人还没有放下最后一盏灯。'); return true; }
+    clearHeldActions(s); s.haven.talking = id; s.paused = true; return true;
+  }
+  const gate = HAVEN_GATES.find(g => g.id === id);
+  if (gate) {
+    if ((gate.side === 'west' && s.player.x > gate.x - 0.7) || (gate.side === 'north' && s.player.z > gate.z - 0.7) || (gate.side === 'south' && s.player.z < gate.z + 0.7)) { say(s, '门闩在归路的另一侧。'); return true; }
+    if (id === 'well-door' && s.haven.echoes !== 3) { say(s, '钟、水与名字，还没有一起响起。', 7, 'lore', '邀请弥音与温叔归庭，完成雾河归水灯，再按名册顺序回应庭南三座灯台。'); return true; }
+    if (!s.haven.gates.includes(id)) s.haven.gates.push(id);
+    say(s, `${gate.name}已开`, 6, 'event', id === 'well-door' ? '潮阶下的无名灯库可以进入了；准备好补给，再往深处走。' : '这条近路会在休息与死亡后保留。'); return true;
+  }
+  const index = ['haven-bell', 'haven-water', 'haven-name'].indexOf(id);
+  if (index >= 0) {
+    if (s.haven.recruits.length !== 2 || !s.valleyComplete) { say(s, '有回声，却还缺归人。', 6, 'lore', '先邀请书房的弥音和船坞的温叔回庭，并完成雾河的归水灯。'); return true; }
+    if (s.haven.echoes === 3) { say(s, '三声已齐 · 庭南封门在等你。'); return true; }
+    if (index === s.haven.echoes) {
+      s.haven.echoes += 1;
+      say(s, ['旧钟应答 · 第一声', '流水应答 · 第二声', '无名有声 · 三声封门可开'][index], 6, 'event', index === 2 ? '沿庭南潮阶下去，开启三声封门。' : '名册末页记着下一声。');
+    } else { s.haven.echoes = 0; say(s, '回声散了，庭院仍在等。', 6, 'lore', '名册写着：先叩归钟，再听流水，最后呼名。顺序不对不会损失道具，可以重新试。'); }
+    return true;
+  }
+  if (HAVEN_LORE[id]) {
+    if (!safeToRest(s) && ['names-register', 'keel-rubbing'].includes(id)) { say(s, '追兵正近，先让这里安静下来。'); return true; }
+    if (!s.collected.includes(id)) s.collected.push(id);
+    const [text, hint] = HAVEN_LORE[id]; say(s, text, 12, 'lore', hint); return true;
+  }
+  return false;
+}
+
+export function chooseConversation(s: GameState, choice: string): boolean {
+  const id = s.haven.talking; const l = LANDMARKS.find(landmark => landmark.id === id && landmark.kind === 'npc');
+  if (s.mode !== 'playing' || !l || !havenAvailable(s, l.id) || distance(s.player, l) >= 2.05 || Math.abs(s.player.y - l.y) >= 0.8 || !lineClear(s.player, l, s) || !safeToRest(s)) return false;
+  const result = applyConversation(s, choice); if (!result) return false;
+  say(s, result, 8, 'event'); updatePrompt(s); return true;
+}
+
 export function saveGame(s: GameState): string { return JSON.stringify(s); }
 
 function validPosition(p: unknown, shortcut: WorldAccess): p is Vec3 {
   if (!p || typeof p !== 'object') return false;
   const v = p as Vec3;
-  return finite(v.x, -40, 80) && finite(v.y, -1, 15) && finite(v.z, -90, 25)
+  return finite(v.x, WORLD_BOUNDS.x1, WORLD_BOUNDS.x2) && finite(v.y, -1, WORLD_BOUNDS.maxY) && finite(v.z, WORLD_BOUNDS.z1, WORLD_BOUNDS.z2)
     && canOccupy(v.x, v.z, v.y, shortcut, 0.05) && Math.abs((supportAt(v.x, v.z, v.y + 0.1) ?? -100) - v.y) < 0.08;
 }
 
@@ -591,33 +737,50 @@ function migrateLampPosition(p: Vec3 | null | undefined, s: GameState): void {
 }
 
 export function loadGame(raw: string | null): GameState | null {
-  if (!raw || raw.length > 60000) return null;
+  if (!raw || raw.length > 110000) return null;
   try {
     const s = JSON.parse(raw) as GameState;
     if (!s || s.version !== 1 || !['title', 'playing', 'dead', 'ending'].includes(s.mode) || typeof s.paused !== 'boolean') return null;
-    if (s.worldVersion !== undefined && ![2, 3, 4].includes(s.worldVersion)) return null;
-    const oldWorld = s.worldVersion === undefined; const oldDistrict = (s.worldVersion as number | undefined) !== 4;
-    if (oldWorld) { s.worldVersion = 4; s.templeGate = false; s.flaskUpgrade = false; s.litLamps = s.checkpoint === 'courtyard' ? ['courtyard'] : []; }
+    if (s.worldVersion !== undefined && ![2, 3, 4, 5, 6, 7].includes(s.worldVersion)) return null;
+    const oldWorld = s.worldVersion === undefined; const oldDistrict = (s.worldVersion ?? 0) < 4; const oldChapter = (s.worldVersion ?? 0) < 5; const oldValley = (s.worldVersion ?? 0) < 6; const oldHaven = (s.worldVersion ?? 0) < 7;
+    if (oldWorld) { s.templeGate = false; s.flaskUpgrade = false; s.litLamps = s.checkpoint === 'courtyard' ? ['courtyard'] : []; }
     if ((s.worldVersion as number) === 2) {
       if (!Array.isArray(s.litLamps) || s.litLamps.some(id => !['courtyard', 'temple-lamp', 'canal-lamp'].includes(id)) || new Set(s.litLamps).size !== s.litLamps.length) return null;
       if (s.checkpoint !== 'room' && !s.litLamps.includes(s.checkpoint)) return null;
       if (['temple-lamp', 'canal-lamp'].includes(s.checkpoint)) s.checkpoint = 'courtyard';
       s.litLamps = s.checkpoint === 'courtyard' || s.litLamps.includes('courtyard') ? ['courtyard'] : [];
-      s.worldVersion = 4;
     }
     if (s.mode === 'ending' && Array.isArray(s.collected) && !s.collected.includes('food')) s.collected.push('food');
-    if (oldDistrict) { s.worldVersion = 4; s.harborGate = false; s.defeatedGuests = []; }
-    if (typeof s.harborGate !== 'boolean' || !Array.isArray(s.defeatedGuests) || s.defeatedGuests.some(id => !['nana-tide', 'azi-stage'].includes(id)) || new Set(s.defeatedGuests).size !== s.defeatedGuests.length) return null;
+    if (oldDistrict) { s.harborGate = false; s.defeatedGuests = []; }
+    if (oldChapter) { s.chapterGates = []; s.chapterComplete = false; }
+    if (oldValley) { s.valleyGates = []; s.valleyComplete = false; }
+    if (oldHaven) s.haven = freshHaven();
+    s.worldVersion = 7;
+    if (!Array.isArray(s.valleyGates) || new Set(s.valleyGates).size !== s.valleyGates.length || s.valleyGates.some(id => !VALLEY_GATES.some(g => g.id === id)) || typeof s.valleyComplete !== 'boolean') return null;
+    if (!Array.isArray(s.chapterGates) || new Set(s.chapterGates).size !== s.chapterGates.length || s.chapterGates.some(id => !CHAPTER_GATES.some(g => g.id === id)) || typeof s.chapterComplete !== 'boolean') return null;
+    if (typeof s.harborGate !== 'boolean' || !Array.isArray(s.defeatedGuests) || s.defeatedGuests.some(id => !['nana-tide', 'azi-stage', 'gate-captain', 'rain-regent', ...VALLEY_BOSSES, 'last-lamplighter'].includes(id)) || new Set(s.defeatedGuests).size !== s.defeatedGuests.length) return null;
+    if (s.chapterGates.includes('archive-door') && !s.defeatedGuests.includes('gate-captain')) return null;
+    if (s.chapterComplete !== s.collected?.includes('chapter-bell') || (s.chapterComplete && (!s.defeatedGuests.includes('rain-regent') || !s.collected.includes('food')))) return null;
+    if (s.valleyGates.includes('valley-entry') && !s.chapterComplete) return null;
+    if (s.valleyGates.some(id => id !== 'valley-entry') && !s.valleyGates.includes('valley-entry')) return null;
+    if (s.valleyGates.includes('river-door') && riverSeals(s) !== 2) return null;
+    if ((s.collected?.includes('mill-sluice') || s.collected?.includes('ferry-winch')) && !s.defeatedGuests.includes('drowned-warden')) return null;
+    if (s.collected?.includes('monastery-sluice') && !s.defeatedGuests.includes('silent-abbot')) return null;
+    if (s.defeatedGuests.some(id => VALLEY_BOSSES.includes(id)) && !s.valleyGates.includes('valley-entry')) return null;
+    if (s.defeatedGuests.includes('river-serpent') && !s.valleyGates.includes('river-door')) return null;
+    if (s.valleyComplete !== s.collected?.includes('river-heart') || (s.valleyComplete && (!s.chapterComplete || !s.defeatedGuests.includes('river-serpent')))) return null;
     if (s.playerSkin === undefined)s.playerSkin = 'sui';
     if (!['sui', 'shiori', 'nagisa'].includes(s.playerSkin)) return null;
-    if (s.worldVersion !== 4 || typeof s.templeGate !== 'boolean' || typeof s.flaskUpgrade !== 'boolean') return null;
+    if (typeof s.templeGate !== 'boolean' || typeof s.flaskUpgrade !== 'boolean') return null;
     if (!Array.isArray(s.litLamps) || new Set(s.litLamps).size !== s.litLamps.length || s.litLamps.some(id => !LANDMARKS.some(l => l.id === id && l.kind === 'rest'))) return null;
     if (s.checkpoint !== 'room' && !s.litLamps.includes(s.checkpoint)) return null;
     if (!Object.hasOwn(REST_POINTS, s.checkpoint) || !['charm', 'shortcut', 'bossDefeated'].every(k => typeof s[k as keyof GameState] === 'boolean')) return null;
     for (const k of ['deaths', 'kills', 'parries', 'executions', 'rice', 'bankedRice', 'restCount', 'nextEffectId'] as const) if (!finite(s[k], 0, 1000000) || !Number.isInteger(s[k])) return null;
-    if (!finite(s.level, 0, 5) || !Number.isInteger(s.level) || !finite(s.time, 0, 10000000)) return null;
+    if (!finite(s.level, 0, 15) || !Number.isInteger(s.level) || !finite(s.time, 0, 10000000)) return null;
     if (!Array.isArray(s.collected) || s.collected.length > LANDMARKS.length || new Set(s.collected).size !== s.collected.length || s.collected.some(id => !LANDMARKS.some(l => l.id === id))) return null;
-    if (!Array.isArray(s.visited) || s.visited.length > 70 || s.visited.some(v => typeof v !== 'string' || v.length > 100)) return null;
+    if (!Array.isArray(s.visited) || s.visited.length > 150 || s.visited.some(v => typeof v !== 'string' || v.length > 100)) return null;
+    if (!validHaven(s)) return null;
+    s.haven.talking = null;
     const p = s.player;
     if (!p) return null;
     if (oldWorld) migrateLampPosition(p, s);
@@ -633,17 +796,20 @@ export function loadGame(raw: string | null): GameState | null {
     if (!finite(s.hitstop, 0, 0.1) || (p.attack !== null && !Object.hasOwn(ATTACKS, p.attack))) return null;
     if (p.fallPeak === undefined)p.fallPeak = p.y + p.jumpHeight;
     if (p.lastGround === undefined)p.lastGround = { x: p.x, y: p.y, z: p.z };
-    if (!finite(p.fallPeak, -1, 25) || !validPosition(p.lastGround, s) || !finite(p.jumpHeight, -30, 2)) return null;
+    if (!finite(p.fallPeak, -1, WORLD_BOUNDS.maxY + 10) || !validPosition(p.lastGround, s) || !finite(p.jumpHeight, -60, 2)) return null;
     for (const key of ['charge', 'landing', 'sprintTime', 'guardImpact', 'parryFlash'] as const) if (!finite(p[key], 0, 2)) return null;
     if (!finite(p.jumpVelocity, -40, 7) || !finite(p.airX, -6, 6) || !finite(p.airZ, -6, 6) || !finite(p.attackFacing, -100, 100) || !finite(p.combo, 0, 3) || !Number.isInteger(p.combo) || !finite(p.comboUntil, 0, 10000010) || !finite(p.dashTime, 0, 10)) return null;
     if (typeof p.dashDown !== 'boolean' || typeof p.dashUsed !== 'boolean' || typeof p.airAttackUsed !== 'boolean') return null;
     if (p.buffer !== null && (!['light', 'heavy', 'dodge', 'parry', 'jump'].includes(p.buffer.action) || !finite(p.buffer.until, 0, 10000010))) return null;
-    if (!(isAirborne(p) ? finite(p.x, -40, 80) && finite(p.z, -90, 25) && finite(p.y, -1, 15) && p.y + p.jumpHeight >= -9 : validPosition(p, s)) || !finite(p.hp, 0, maxHp(s)) || !finite(p.stamina, 0, maxStamina(s)) || !finite(p.facing, -100, 100)) return null;
+    if (!(isAirborne(p) ? finite(p.x, WORLD_BOUNDS.x1, WORLD_BOUNDS.x2) && finite(p.z, WORLD_BOUNDS.z1, WORLD_BOUNDS.z2) && finite(p.y, -1, WORLD_BOUNDS.maxY) && p.y + p.jumpHeight >= -9 : validPosition(p, s)) || !finite(p.hp, 0, maxHp(s)) || !finite(p.stamina, 0, maxStamina(s)) || !finite(p.facing, -100, 100)) return null;
     if (!Object.hasOwn(DURATIONS, p.action) || !finite(p.actionTime, 0, 5) || !finite(p.invulnerable, 0, 1.1) || !finite(p.staminaDelay, 0, 1)) return null;
     if (!finite(p.flasks, 0, maxFlasks(s)) || !Number.isInteger(p.flasks) || !finite(p.dodgeX, -1, 1) || !finite(p.dodgeZ, -1, 1) || typeof p.hitDone !== 'boolean') return null;
     if ((s.mode === 'dead') !== (p.hp === 0) || (s.mode === 'dead') !== (p.action === 'dead')) return null;
     if (oldWorld && Array.isArray(s.enemies) && s.enemies.length === 6) s.enemies.push(...makeEnemies().filter(e => e.id.startsWith('temple-')));
-    if (oldDistrict && Array.isArray(s.enemies) && s.enemies.length === 8)s.enemies.push(...makeEnemies().slice(8));
+    if (oldDistrict && Array.isArray(s.enemies) && s.enemies.length === 8)s.enemies.push(...makeEnemies().slice(8, 13));
+    if (oldChapter && Array.isArray(s.enemies) && s.enemies.length === 13)s.enemies.push(...makeEnemies().slice(13, ENEMY_SPAWNS.length - VALLEY_ENEMIES.length - HAVEN_ENEMIES.length));
+    if (oldValley && Array.isArray(s.enemies) && s.enemies.length === ENEMY_SPAWNS.length - VALLEY_ENEMIES.length - HAVEN_ENEMIES.length) s.enemies.push(...makeEnemies().slice(ENEMY_SPAWNS.length - VALLEY_ENEMIES.length - HAVEN_ENEMIES.length, ENEMY_SPAWNS.length - HAVEN_ENEMIES.length));
+    if (oldHaven && Array.isArray(s.enemies) && s.enemies.length === ENEMY_SPAWNS.length - HAVEN_ENEMIES.length) s.enemies.push(...makeEnemies().slice(-HAVEN_ENEMIES.length));
     if (!Array.isArray(s.enemies) || s.enemies.length !== ENEMY_SPAWNS.length) return null;
     for (let i = 0; i < s.enemies.length; i += 1) {
       const e = s.enemies[i]; const spawn = ENEMY_SPAWNS[i];
@@ -655,7 +821,7 @@ export function loadGame(raw: string | null): GameState | null {
       if (!finite(e.timer, -0.02, 5) || !finite(e.attackIndex, 0, 1000000) || !Number.isInteger(e.attackIndex) || ![1, 2].includes(e.phase) || !finite(e.facing, -100, 100) || !finite(e.flash, 0, 1)) return null;
       if (typeof e.hitDone !== 'boolean' || typeof e.aggro !== 'boolean') return null;
     }
-    if (s.enemies.some(e => (e.kind === 'nana' || e.kind === 'azi') && ((e.hp === 0) !== s.defeatedGuests.includes(e.id)))) return null;
+    if (s.enemies.some(e => ['nana', 'azi', 'captain', 'regent', 'warden', 'abbot', 'serpent', 'elegist'].includes(e.kind) && ((e.hp === 0) !== s.defeatedGuests.includes(e.id)))) return null;
     if (s.bossDefeated !== (s.enemies.find(e => e.kind === 'boss')?.hp === 0) || (s.mode === 'ending' && !s.bossDefeated)) return null;
     if (s.flaskUpgrade !== s.collected.includes('temple-flask')) return null;
     if (s.charm !== s.collected.includes('roof-charm')) return null;

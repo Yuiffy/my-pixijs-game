@@ -20,6 +20,7 @@ async function capture(page, name) {
 async function open(browser, virtual = false) {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   await ctx.addInitScript(installVirtualPointerLock);
+  await ctx.addInitScript(() => { if ('speechSynthesis' in window) window.speechSynthesis.speak = () => {}; });
   if (virtual) await ctx.addInitScript(() => {
     // Only the physical device boundary is emulated; production poll/edge/menu/game logic runs unchanged.
     window.virtualPad = { index: 0, id: 'QA standard device', connected: true, mapping: 'standard', axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0 })) };
@@ -43,7 +44,7 @@ async function button(page, index, duration = 100) {
 async function main() {
   fs.mkdirSync(output, { recursive: true });
   assert.equal((await fetch(`${base}/game/night-rain`)).status, 200);
-  const browser = await chromium.launch({ channel: 'chrome', headless: true });
+  const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--mute-audio', '--disable-speech-api'] });
   try {
     {
       const { ctx, page } = await open(browser);
@@ -107,7 +108,8 @@ async function main() {
       await waitIdle(page);
       const held = await button(page, 5, 1000); assert.equal(held.player.action, 'idle'); checks.gamepadActionsAndEdges = true;
       await button(page, 6); assert.equal((await state(page)).panel, 'companion');
-      await button(page, 13); assert.equal(await page.evaluate(() => document.activeElement.id), 'baby-mode');
+      for (let i = 0; i < 12 && await page.evaluate(() => document.activeElement.id) !== 'baby-mode'; i++) await button(page, 13);
+      assert.equal(await page.evaluate(() => document.activeElement.id), 'baby-mode');
       await button(page, 0); assert.equal((await state(page)).companion.enabled, false);
       await button(page, 0); assert.equal((await state(page)).companion.enabled, true);
       await button(page, 13); await button(page, 13); await button(page, 0); assert.equal((await state(page)).companion.skin, 'otter');

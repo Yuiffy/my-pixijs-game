@@ -1,0 +1,1021 @@
+.root {
+  min-height: 100svh;
+  background: #103c46;
+  color: #fdf8e9;
+  display: flex;
+  flex-direction: column;
+  font-family: Arial, "Microsoft YaHei", sans-serif;
+  overflow-x: hidden;
+}
+.header {
+  height: 64px;
+  flex: none;
+  padding: 0 3.4%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #ffffff20;
+  background: #0e343e;
+  z-index: 4;
+}
+.back {
+  color: #d3e4df;
+  font-size: 12px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  text-decoration: none;
+}
+.brand {
+  font-weight: 800;
+  letter-spacing: 2px;
+  font-size: 16px;
+}
+.brand i {
+  margin-left: 12px;
+  font-size: 9px;
+  font-style: normal;
+  letter-spacing: 2px;
+  font-weight: 400;
+  opacity: 0.58;
+}
+.tools {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.tools button {
+  color: #eff5e9;
+  border: none;
+  background: transparent;
+  width: 33px;
+  height: 34px;
+  font-size: 18px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.tools button:hover {
+  background: #ffffff1f;
+}
+.stage {
+  position: relative;
+  width: min(100%, calc((100svh - 104px) * 16 / 9));
+  aspect-ratio: 16/9;
+  margin: auto;
+  overflow: hidden;
+  background: #c8decd;
+  isolation: isolate;
+}
+.stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.menu {
+  position: absolute;
+  inset: 7% auto auto 6%;
+  width: 39%;
+  animation: enter 0.7s ease-out both;
+}
+.eyebrow {
+  letter-spacing: 3px;
+  font-size: clamp(9px, 1vw, 13px);
+  font-weight: 600;
+  color: #f9ebc5;
+}
+.menu h1 {
+  margin: 16px 0 0;
+  font-size: clamp(40px, 5.9vw, 83px);
+  line-height: 1.03;
+  font-weight: 900;
+  letter-spacing: -4px;
+  text-shadow: 0 4px 30px #123f5540;
+}
+.menu h1 span {
+  color: #ffdb7e;
+}
+.menu h1 b {
+  display: block;
+  font-size: clamp(14px, 1.8vw, 25px);
+  letter-spacing: 7px;
+  font-weight: 400;
+  margin-top: 13px;
+}
+.tagline {
+  font-size: clamp(10px, 1.15vw, 16px);
+  margin: 18px 0 28px;
+  color: #f8f0dc;
+  letter-spacing: 2px;
+}
+.selection {
+  width: 92%;
+}
+.label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 2px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+.characters {
+  display: flex;
+  margin: 8px 0 18px;
+  border-bottom: 1px solid #ffffff55;
+}
+.characters button {
+  border: 0;
+  color: #f4eee2;
+  background: transparent;
+  text-align: left;
+  width: 50%;
+  padding: 7px 0 10px;
+  cursor: pointer;
+  opacity: 0.54;
+  border-bottom: 2px solid transparent;
+}
+.characters button[aria-pressed="true"] {
+  opacity: 1;
+  border-color: #ffdd85;
+}
+.characters button span {
+  font-size: 23px;
+  font-weight: 700;
+  margin-right: 13px;
+}
+.characters button small {
+  font-size: 10px;
+  letter-spacing: 2px;
+}
+.modes {
+  display: flex;
+  gap: 0;
+  margin-top: 10px;
+  border: 1px solid #ffffff70;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.modes button {
+  border: 0;
+  border-right: 1px solid #ffffff30;
+  padding: 11px 4px;
+  flex: 1;
+  color: #fff8e9;
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.18s;
+}
+.modes button[aria-pressed="true"] {
+  background: #fff2d9;
+  color: #123e49;
+  font-weight: 700;
+}
+.settings {
+  display: flex;
+  gap: 22px;
+  margin: 16px 0;
+  align-items: center;
+}
+.settings label {
+  font-size: 11px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: #e2e9dc;
+}
+.settings select {
+  color: #fff8e5;
+  font-size: 11px;
+  background: #1b515eaa;
+  border: 0;
+  border-bottom: 1px solid #ffffff60;
+  border-radius: 0;
+  padding: 5px 3px;
+}
+.settings option {
+  background: #153e48;
+}
+.start {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: #ffdf88;
+  color: #153944;
+  border: 0;
+  padding: 17px 20px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 800;
+  box-shadow: 0 6px 20px #00304220;
+  transition:
+    background 0.2s,
+    transform 0.2s;
+}
+.start:hover {
+  background: #ffebaf;
+  transform: translateY(-2px);
+}
+.start span {
+  font-size: 24px;
+  font-weight: 400;
+}
+.menuFoot {
+  margin-top: 17px;
+  display: flex;
+  width: 92%;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #f1eddcaa;
+  gap: 10px;
+}
+.menuFoot button {
+  color: #fdf2dc;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font-size: 10px;
+}
+.heroCaption {
+  position: absolute;
+  bottom: 5%;
+  left: 59%;
+  color: #28555e;
+  border-left: 2px solid #3c74746b;
+  padding-left: 12px;
+}
+.heroCaption span {
+  display: block;
+  font-size: 22px;
+  font-weight: 800;
+}
+.heroCaption small {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+}
+.footer {
+  min-height: 40px;
+  flex: none;
+  padding: 12px 3.4%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #b6cfc9;
+  background: #0e343e;
+}
+.footer i {
+  font-style: normal;
+  padding: 0 10px;
+  opacity: 0.4;
+}
+.rotateHint {
+  display: none;
+}
+.scoreboard {
+  position: absolute;
+  top: 3.5%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 16px 26px 14px;
+  border: 1px solid #fffff530;
+  border-radius: 4px;
+  gap: 26px;
+  background: #103b48dd;
+  box-shadow: 0 9px 35px #0d405f15;
+  backdrop-filter: blur(10px);
+}
+.team {
+  flex: 1;
+  min-width: 0;
+}
+.team > span {
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.team small {
+  font-weight: 400;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #c3d5d8;
+}
+.energy {
+  height: 3px;
+  margin: 9px 0 3px;
+  background: #ffffff25;
+}
+.energy i {
+  height: 100%;
+  display: block;
+  background: #c3b3f2;
+  transition: width 0.15s;
+}
+.teamRight .energy i {
+  background: #7fd9ca;
+}
+.score {
+  display: flex;
+  gap: 17px;
+  align-items: center;
+}
+.score > b {
+  font-size: 38px;
+  line-height: 1;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.score > span {
+  text-align: center;
+  font-size: 9px;
+  white-space: nowrap;
+  color: #d9e7db;
+}
+.score i {
+  display: block;
+  font-size: 23px;
+  font-style: normal;
+  font-weight: 400;
+}
+.rally {
+  position: absolute;
+  bottom: 4%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  letter-spacing: 3px;
+  font-weight: 700;
+  color: #396671;
+}
+.skip {
+  position: absolute;
+  bottom: 5%;
+  right: 4%;
+  background: #144956df;
+  color: #fffbe9;
+  padding: 10px 16px;
+  border: 1px solid #ffffff44;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 11px;
+  z-index: 9;
+}
+.loading,
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #113e4ed9;
+  backdrop-filter: blur(8px);
+}
+.loading {
+  flex-direction: column;
+  gap: 20px;
+  font-size: 15px;
+  letter-spacing: 2px;
+}
+.loader {
+  width: 32px;
+  height: 32px;
+  border: 2px solid #f8df8d40;
+  border-top-color: #ffdb84;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+.dialog {
+  width: 360px;
+  max-width: 90%;
+  color: #173f48;
+  background: #fff7e6;
+  padding: 36px;
+  border-radius: 6px;
+  position: relative;
+  box-shadow: 0 30px 90px #03243d40;
+}
+.dialog h2 {
+  font-size: 29px;
+  margin: 14px 0;
+  font-weight: 800;
+}
+.dialog p {
+  font-size: 13px;
+  color: #597278;
+  line-height: 1.8;
+}
+.dialog .start {
+  margin-top: 22px;
+  box-shadow: none;
+}
+.dialogLinks {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 22px;
+}
+.dialogLinks button,
+.textButton {
+  color: inherit;
+  background: transparent;
+  border: 0;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 6px;
+}
+.help {
+  width: 510px;
+  max-height: 93%;
+  overflow: auto;
+  padding: 27px 32px;
+}
+.help h2 {
+  font-size: 26px;
+}
+.help dl {
+  margin: 16px 0;
+}
+.help dl div {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid #17465215;
+  gap: 16px;
+}
+.help dt {
+  font-weight: 700;
+}
+.help dd {
+  color: #637b7b;
+  margin: 0;
+}
+.help p.helpTip {
+  font-size: 11px;
+  line-height: 1.6;
+}
+.close {
+  position: absolute;
+  right: 17px;
+  top: 12px;
+  color: #234752;
+  font-size: 24px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.result {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  animation: enter 0.6s ease-out;
+}
+.resultArt {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+}
+.resultArt:after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    #082f43f5 0%,
+    #133c4cdc 30%,
+    #163e4a20 68%
+  );
+}
+.resultText {
+  position: absolute;
+  top: 9%;
+  left: 6%;
+  width: 35%;
+}
+.resultText h2 {
+  font-size: clamp(27px, 4vw, 57px);
+  line-height: 1.16;
+  margin: 18px 0;
+  letter-spacing: -1px;
+  font-weight: 900;
+}
+.resultText p {
+  font-size: 13px;
+  color: #e1e7d7;
+}
+.resultScore {
+  font-size: 57px;
+  letter-spacing: 9px;
+  color: #ffe293;
+  margin: 12px 0;
+}
+.resultScore span {
+  opacity: 0.5;
+}
+.stats {
+  display: flex;
+  gap: 28px;
+  margin-bottom: 23px;
+  font-size: 10px;
+  color: #c1d4d2;
+}
+.stats b {
+  display: block;
+  font-size: 23px;
+  color: white;
+  margin-top: 6px;
+}
+.resultText > .textButton {
+  margin-top: 14px;
+}
+.cinema {
+  position: absolute;
+  inset: 0;
+  background: #0c2933;
+  z-index: 11;
+}
+.cinema video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cinema > div {
+  position: absolute;
+  bottom: 0;
+  inset-inline: 0;
+  text-align: center;
+  padding: 40px;
+  background: linear-gradient(transparent, #062d46d0);
+}
+.cinema > div span {
+  font-size: 22px;
+  letter-spacing: 5px;
+}
+.cinema p {
+  font-size: 16px;
+}
+.touchControls {
+  display: none;
+  padding: 10px 15px;
+  gap: 14px;
+  justify-content: space-between;
+  background: #0e343e;
+  touch-action: none;
+  user-select: none;
+}
+.touchControls > div {
+  display: flex;
+  gap: 8px;
+}
+.touchControls button {
+  border: 1px solid #ffffff50;
+  border-radius: 50%;
+  width: 54px;
+  height: 54px;
+  background: #ffffff13;
+  color: #fff6df;
+  font-size: 12px;
+  font-weight: 700;
+  touch-action: none;
+}
+.touchControls button:active {
+  background: #ffdc87;
+  color: #123944;
+}
+.touchControls button.specialTouch {
+  border-color: #ffdc8780;
+  color: #ffdc87;
+}
+.secondTouch {
+  width: 100%;
+  justify-content: flex-end;
+}
+.root button:focus-visible,
+.root a:focus-visible,
+.root select:focus-visible {
+  outline: 3px solid #ffce68;
+  outline-offset: 4px;
+}
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (pointer: coarse) {
+  .touchControls {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .keyboardHint {
+    display: none;
+  }
+}
+@media (max-width: 1000px) and (orientation: landscape) {
+  .header {
+    height: 42px;
+  }
+  .footer {
+    min-height: 26px;
+    padding: 7px 3%;
+    font-size: 8px;
+  }
+  .stage {
+    width: min(100%, calc((100svh - 68px) * 16 / 9));
+  }
+  .menu {
+    top: 5%;
+  }
+  .menu h1 {
+    font-size: 38px;
+    margin-top: 7px;
+  }
+  .menu h1 b {
+    font-size: 12px;
+    letter-spacing: 4px;
+    margin-top: 5px;
+  }
+  .tagline {
+    margin: 9px 0 12px;
+    font-size: 9px;
+  }
+  .label {
+    font-size: 8px;
+  }
+  .characters {
+    margin: 3px 0 9px;
+  }
+  .characters button {
+    padding: 3px 0 5px;
+  }
+  .characters button span {
+    font-size: 16px;
+  }
+  .modes {
+    margin-top: 5px;
+  }
+  .modes button {
+    padding: 7px 2px;
+    font-size: 9px;
+  }
+  .settings {
+    margin: 6px 0;
+    gap: 12px;
+  }
+  .settings label,
+  .settings select {
+    font-size: 9px;
+  }
+  .start {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  .start span {
+    font-size: 17px;
+  }
+  .menuFoot {
+    margin-top: 8px;
+    font-size: 8px;
+  }
+  .menuFoot button {
+    font-size: 8px;
+  }
+  .eyebrow {
+    font-size: 7px;
+  }
+  .scoreboard {
+    padding: 8px 17px;
+    gap: 17px;
+  }
+  .team > span {
+    font-size: 12px;
+  }
+  .team small {
+    font-size: 7px;
+  }
+  .score > b {
+    font-size: 26px;
+  }
+  .score > span {
+    font-size: 7px;
+  }
+  .energy {
+    margin-top: 5px;
+  }
+  .resultText h2 {
+    margin: 9px 0;
+    font-size: 28px;
+  }
+  .resultScore {
+    font-size: 35px;
+    margin: 7px 0;
+  }
+  .resultText p {
+    font-size: 10px;
+  }
+  .stats {
+    margin-bottom: 12px;
+    gap: 20px;
+    font-size: 8px;
+  }
+  .stats b {
+    font-size: 15px;
+  }
+  .heroCaption span {
+    font-size: 16px;
+  }
+  .heroCaption small {
+    font-size: 7px;
+  }
+  .help {
+    padding: 20px 28px;
+  }
+  .help h2 {
+    font-size: 21px;
+  }
+  .help p {
+    font-size: 11px;
+  }
+  .help dl div {
+    padding: 3px 0;
+    font-size: 10px;
+  }
+  .touchControls {
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    background: transparent;
+    padding: 0 12px;
+    pointer-events: none;
+    z-index: 8;
+  }
+  .touchControls > div {
+    pointer-events: auto;
+  }
+  .touchControls button {
+    width: 43px;
+    height: 43px;
+    background: #123e49bd;
+    border-color: #ffffff70;
+    font-size: 10px;
+  }
+  .secondTouch {
+    justify-content: center;
+  }
+}
+@media (max-width: 600px) and (orientation: portrait) {
+  .root {
+    min-height: 100svh;
+  }
+  .header {
+    height: 56px;
+    padding: 0 16px;
+  }
+  .back {
+    font-size: 0;
+  }
+  .back span {
+    font-size: 17px;
+  }
+  .brand {
+    font-size: 14px;
+  }
+  .brand i {
+    display: none;
+  }
+  .tools {
+    gap: 1px;
+  }
+  .tools button {
+    width: 30px;
+    font-size: 16px;
+  }
+  .stage {
+    width: 100%;
+    overflow: visible;
+    margin: 0;
+  }
+  .menuStage {
+    aspect-ratio: auto;
+    min-height: 800px;
+    background: #225861;
+  }
+  .menuStage canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 330px;
+    width: 587px;
+    max-width: none;
+    transform: translateX(calc((100vw - 587px) * 0.88));
+    object-fit: cover;
+  }
+  .menu {
+    inset: 310px 0 auto;
+    width: 100%;
+    padding: 0 26px 25px;
+    background: linear-gradient(transparent, #1b515d 32px);
+  }
+  .menu h1 {
+    font-size: 55px;
+    margin-top: 14px;
+  }
+  .menu h1 b {
+    font-size: 16px;
+    letter-spacing: 5px;
+  }
+  .eyebrow {
+    font-size: 9px;
+  }
+  .tagline {
+    margin: 15px 0 24px;
+    font-size: 12px;
+  }
+  .selection {
+    width: 100%;
+  }
+  .characters button span {
+    font-size: 23px;
+  }
+  .label {
+    font-size: 9px;
+  }
+  .modes button {
+    font-size: 12px;
+    padding: 12px 2px;
+  }
+  .settings {
+    margin: 17px 0;
+  }
+  .start {
+    padding: 16px 18px;
+    font-size: 15px;
+  }
+  .menuFoot {
+    width: 100%;
+    margin-top: 19px;
+  }
+  .heroCaption {
+    display: none;
+  }
+  .footer {
+    font-size: 9px;
+    padding: 14px 17px;
+    flex-wrap: wrap;
+  }
+  .rotateHint {
+    display: inline;
+  }
+  .scoreboard {
+    top: 8px;
+    padding: 7px 9px;
+    gap: 10px;
+    width: 85%;
+  }
+  .team > span {
+    font-size: 11px;
+  }
+  .team small {
+    font-size: 6px;
+    letter-spacing: 0;
+  }
+  .energy {
+    margin: 5px 0 0;
+    height: 2px;
+  }
+  .score {
+    gap: 8px;
+  }
+  .score > b {
+    font-size: 24px;
+  }
+  .score > span {
+    font-size: 6px;
+  }
+  .score i {
+    font-size: 16px;
+  }
+  .rally {
+    font-size: 6px;
+    letter-spacing: 2px;
+    bottom: 4%;
+  }
+  .skip {
+    padding: 5px 8px;
+    font-size: 8px;
+  }
+  .overlay {
+    position: fixed;
+    height: 100svh;
+    z-index: 20;
+  }
+  .dialog {
+    padding: 27px;
+  }
+  .help {
+    max-height: 88svh;
+  }
+  .result {
+    min-height: 660px;
+  }
+  .resultArt {
+    background-position: 63% top;
+    background-size: auto 260px;
+    background-repeat: no-repeat;
+  }
+  .resultArt:after {
+    background: linear-gradient(0deg, #103d48 60%, transparent);
+  }
+  .resultText {
+    top: 245px;
+    left: 7%;
+    width: 86%;
+  }
+  .resultText h2 {
+    font-size: 37px;
+    margin: 14px 0;
+  }
+  .resultText h2 br {
+    display: none;
+  }
+  .resultScore {
+    font-size: 45px;
+    margin: 10px 0;
+  }
+  .stats {
+    gap: 40px;
+  }
+  .touchControls {
+    display: flex;
+    padding: 23px 15px;
+    gap: 13px;
+    flex-wrap: wrap;
+  }
+  .touchControls button {
+    width: 49px;
+    height: 49px;
+  }
+  .touchControls > div {
+    gap: 5px;
+  }
+  .cinema > div {
+    padding: 12px;
+  }
+  .cinema > div span {
+    font-size: 13px;
+  }
+  .cinema p {
+    font-size: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .root *,
+  .root *:before,
+  .root *:after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (max-width: 600px) and (orientation: portrait) {
+  .resultRoot .stage {
+    min-height: 700px;
+  }
+  .resultRoot .stage canvas {
+    position: absolute;
+    width: 740px;
+    height: 416px;
+    max-width: none;
+    left: calc(100vw - 740px);
+  }
+  .resultRoot .resultText {
+    top: 300px;
+  }
+  .resultRoot .resultArt:after {
+    background: linear-gradient(0deg, #103d48 53%, transparent);
+  }
+}
+
+.team > span { white-space: nowrap; }
+@media (max-height: 520px) and (orientation: landscape) { .stage { width: min(100%, calc((100svh - 68px) * 16 / 9)); } }

@@ -828,6 +828,16 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
 }
+
+.controlMode {
+  border: 0;
+  padding: 0;
+  margin: 12px 0;
+  min-width: 0;
+}
+.controlMode legend { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.controlMode > div { display: flex; gap: 8px; }
+.controlMode button { flex: 1; min-height: 44px; touch-action: manipulation; }
 .holdControls button {
   touch-action: none;
   user-select: none;

@@ -7,6 +7,14 @@ import type { CameraControl, EnemyKind, GameState, Surface } from "./types";
 import { enemyAttack, enemyMotion } from "./enemyCombat";
 import { HOUSES, STRUCTURES, houseParts, architectureIntervals, type House } from './architecture';
 import { CharacterStyle, GuestStyle, GuestWeapon, PLAYER_SKINS } from './CharacterStyle';
+import ChapterView from "./ChapterView";
+import HavenView from "./HavenView";
+import { HAVEN_GATES } from "./haven";
+import ValleyView from "./ValleyView";
+import { VALLEY_GATES } from "./valley";
+import GeometryBatch, { type StoneBox } from "./GeometryBatch";
+import { CHAPTER_GATES } from "./chapter";
+import { createStoneTexture } from './stoneTexture';
 import CompanionView from './CompanionView';
 import CombatTrail from './CombatTrail';
 import { combatPose, rollPose, CHARGE_TIME } from './combat';
@@ -19,6 +27,7 @@ import {
   surfaceRails,
   gateOpen,
   heightAt,
+  supportAt,
 } from "./world";
 
 type Triple = [number, number, number];
@@ -204,6 +213,8 @@ function Lantern({
 
 function Deck({ surface }: { surface: Surface }) {
   const { x1, x2, z1, z2, y, endY = y } = surface;
+  const stone = useMemo(createStoneTexture, []);
+  useEffect(() => () => stone.dispose(), [stone]);
   const geometry = useMemo(() => {
     const g = new THREE.BufferGeometry();
     g.setAttribute(
@@ -214,75 +225,28 @@ function Deck({ surface }: { surface: Surface }) {
       ),
     );
     g.setIndex([0, 2, 1, 1, 2, 3]);
+    g.setAttribute('uv', new THREE.Float32BufferAttribute([x1 / 2, z1 / 2, x2 / 2, z1 / 2, x1 / 2, z2 / 2, x2 / 2, z2 / 2], 2));
     g.computeVertexNormals();
     return g;
   }, [x1, x2, z1, z2, y, endY]);
   useEffect(() => () => geometry.dispose(), [geometry]);
-  const railing = useMemo(() => surfaceRails(surface).map(r => ({
-    position: [r.x, r.y + 0.35, r.z] as Triple,
-    size: [r.w, 0.65, r.d] as Triple,
-    rotation: [-Math.atan(r.slope), 0, 0] as Triple,
-  })), [surface]);
-  const steps = endY !== y ? Math.round(Math.abs(endY - y) / 0.22) : 0;
+  const boxes = useMemo(() => {
+    const items: StoneBox[] = [];
+    const steps = endY !== y ? Math.round(Math.abs(endY - y) / 0.22) : 0;
+    if (!steps) items.push({ position: [(x1 + x2) / 2, y - 0.3, (z1 + z2) / 2], size: [x2 - x1, 0.58, z2 - z1], color: COLORS.stone });
+    for (let i = 0; i < steps; i++) items.push({ position: [(x1 + x2) / 2, y + (endY - y) * ((i + 0.5) / steps) - 0.055, z1 + (i + 0.5) * ((z2 - z1) / steps)], size: [x2 - x1, 0.11, (z2 - z1) / steps - 0.04], color: i % 3 === 0 ? '#a6a393' : surface.color });
+    for (const r of surfaceRails(surface)) {
+      items.push({ position: [r.x, r.y + 0.35, r.z], size: [r.w, 0.65, r.d], rotation: [-Math.atan(r.slope), 0, 0], color: '#7f8b7e' });
+      items.push({ position: [r.x, r.y + 0.7, r.z], size: [r.w + 0.1, 0.07, r.d + 0.02], rotation: [-Math.atan(r.slope), 0, 0], color: '#b4ad96' });
+    }
+    return items;
+  }, [surface, x1, x2, z1, z2, y, endY]);
   return (
-    <group>
-      {steps === 0 && (
-        <Block
-          position={[(x1 + x2) / 2, y - 0.3, (z1 + z2) / 2]}
-          size={[x2 - x1, 0.58, z2 - z1]}
-          color={COLORS.stone}
-        />
-      )}
-      <mesh geometry={geometry} receiveShadow>
-        <meshStandardMaterial
-          color={surface.color}
-          roughness={0.48}
-          metalness={0.12}
-          side={THREE.DoubleSide}
-        />
-      </mesh>
-      {steps > 0 &&
-        Array.from({ length: steps }, (_, i) => {
-          const z = z1 + (i + 0.5) * ((z2 - z1) / steps);
-          const yy = y + (endY - y) * ((i + 0.5) / steps);
-          return (
-            <Block
-              key={i}
-              position={[(x1 + x2) / 2, yy - 0.055, z]}
-              size={[x2 - x1, 0.11, (z2 - z1) / steps - 0.04]}
-              color={i % 3 === 0 ? "#a6a393" : surface.color}
-            />
-          );
-        })}
-      {steps === 0 &&
-        Array.from({ length: Math.floor((z2 - z1) / 1.2) }, (_, i) => (
-          <Block
-            key={`line${i}`}
-            position={[(x1 + x2) / 2, y + 0.006, z1 + i * 1.2 + 0.5]}
-            size={[x2 - x1 - 0.15, 0.008, 0.018]}
-            color="#384f52"
-          />
-        ))}
-      {railing.map((rail, i) => (
-        <group key={`rail${i}`}>
-          <Block
-            {...rail}
-            color={surface.id === "room" ? "#738382" : "#7f8b7e"}
-          />
-          <Block
-            position={[
-              rail.position[0],
-              rail.position[1] + 0.35,
-              rail.position[2],
-            ]}
-            size={[rail.size[0] + 0.1, 0.07, rail.size[2] + 0.02]}
-            rotation={rail.rotation}
-            color="#b4ad96"
-          />
-        </group>
-      ))}
-    </group>
-  );
+<group>
+    <GeometryBatch boxes={boxes} />
+    <mesh geometry={geometry} receiveShadow><meshStandardMaterial map={stone} color={surface.color} roughness={0.62} metalness={0.1} side={THREE.DoubleSide} polygonOffset polygonOffsetFactor={-SURFACES.indexOf(surface) * 0.05} polygonOffsetUnits={-SURFACES.indexOf(surface)} /></mesh>
+  </group>
+);
 }
 
 function ShopHouse(house: House) {
@@ -551,10 +515,10 @@ function CityContent() {
     <group name="night-city">
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, -1.25, -12]}
+        position={[-100, -1.25, -180]}
         receiveShadow
       >
-        <planeGeometry args={[220, 220]} />
+        <planeGeometry args={[800, 850]} />
         <meshStandardMaterial
           color="#213f49"
           roughness={0.42}
@@ -562,6 +526,16 @@ function CityContent() {
         />
       </mesh>
       <TideDistrict />
+      <ChapterView />
+      <Sign position={[-125.5, 27, -269]} text="雾河 →" subtext="第二关 · 后山门" width={3} />
+      <Sign position={[-124, 5.2, -338]} text="← 水车院 · 山寺 →" subtext="两岸水闸 · 上游汇流" width={4.8} />
+      <Sign position={[-128.5, 5, -355]} rotation={[0, Math.PI, 0]} text="← 旧城 · 水车院 →" subtext="修复系缆后乘船" width={4.5} />
+      <Sign position={[-95, 12.7, -381]} text="← 渡村近路" subtext="无声山寺 ↑" width={3} />
+      <Sign position={[-152, 11, -466]} rotation={[0, Math.PI, 0]} text="双闸锁桥" subtext="西岸 · 东岸" width={3} />
+      <Pole position={[-4.2, 2.1, -61]} height={4.2} radius={0.055} />
+      <Sign position={[-4.2, 4, -61]} text="王城北路 ←" subtext="香料水街 · 织坊" width={2.2} />
+      <Sign position={[-72, 3, -77]} text="双象门楼 ↑" subtext="循染布长廊登城" width={3.5} />
+      <Sign position={[-68, 20.8, -163]} text="藏经院 ↓" subtext="象纹铜印" width={3} />
       <Sign position={[8, 2.3, -37.8]} rotation={[0, Math.PI, 0]} text="潮汐港 ↗" subtext="运河 · 摆渡庵" width={3.1} />
       <Sign position={[12.7, 2.6, -31.8]} text="潮汐港 →" subtext="过庵 · 渡桥" width={2.5} />
       <Sign position={[12.7, 2.6, -28.2]} rotation={[0, Math.PI, 0]} text="← 潮汐港" subtext="过庵 · 渡桥" width={2.5} />
@@ -788,16 +762,16 @@ function TreasureChest({ stateRef, id, position }: { stateRef: StateRef; id: str
   );
 }
 
-function GateWinch({ stateRef, temple, harbor, height, width }: { stateRef: StateRef; temple: boolean; harbor: boolean; height: number; width: number }) {
+function GateWinch({ stateRef, obstacle, height, width, end = 1 }: { stateRef: StateRef; obstacle: typeof OBSTACLES[number]; height: number; width: number; end?: number }) {
   const wheel = useRef<THREE.Group>(null); const pawl = useRef<THREE.Group>(null);
   useFrame((_, dt) => {
     if (stateRef.current.paused) return;
-    const open = harbor ? stateRef.current.harborGate : temple ? stateRef.current.templeGate : stateRef.current.shortcut;
+    const open = gateOpen(obstacle, stateRef.current);
     if (wheel.current) wheel.current.rotation.z = THREE.MathUtils.damp(wheel.current.rotation.z, open ? Math.PI * 2.3 : 0, 4, dt);
     if (pawl.current) pawl.current.rotation.z = THREE.MathUtils.damp(pawl.current.rotation.z, open ? -1.2 : 0.2, 7, dt);
   });
   return (
-    <group name={temple ? 'temple-gate-winch' : 'canal-gate-winch'} position={[width / 2, 0, 0]}>
+    <group name={`${obstacle.gateId ?? 'canal'}-gate-winch`} position={[end * (width / 2), 0, 0]}>
       <Block position={[0, height / 2, 0]} size={[0.8, height + 0.2, 0.8]} color="#7e8980" />
       {/* Gearbox and handle face north, the same side as the interaction point. */}
       <Block position={[0, 1.02, -0.45]} size={[0.72, 0.72, 0.18]} color="#544a38" />
@@ -828,43 +802,47 @@ function ObstacleArt({ stateRef }: { stateRef: StateRef }) {
   const gates = useRef<(THREE.Group | null)[]>([]);
   useFrame((_, dt) => {
     if (stateRef.current.paused) return;
-    OBSTACLES.forEach((o, i) => { const gate = gates.current[i]; if (gate) gate.position.y = THREE.MathUtils.damp(gate.position.y, gateOpen(o, stateRef.current) ? 3.5 : 0, 5, dt); });
+    OBSTACLES.forEach((o, i) => { const gate = gates.current[i]; if (gate) gate.position.y = THREE.MathUtils.damp(gate.position.y, gateOpen(o, stateRef.current) ? o.h + 0.2 : 0, 5, dt); });
   });
   return (
     <group>
       {OBSTACLES.map((o, i) => {
         if (o.kind === 'chest' || o.kind === 'shrine') return null;
-        if (o.kind === "gate") return (
-            <group key={i} position={[o.x, o.y, o.z]}>
+        if (o.kind === "gate") {
+          const gate = [...CHAPTER_GATES, ...VALLEY_GATES, ...HAVEN_GATES].find(g => g.id === o.gateId);
+          const yaw = gate?.side === 'west' ? Math.PI / 2 : gate?.side === 'east' ? -Math.PI / 2 : gate?.side === 'south' ? Math.PI : 0;
+          const width = Math.max(o.w, o.d); const depth = Math.min(o.w, o.d);
+          return (
+            <group key={i} position={[o.x, o.y, o.z]} rotation={[0, yaw, 0]}>
               {[-1, 1].map((s) => (
                 <Block
                   key={s}
-                  position={[s * (o.w / 2 + 0.11), o.h / 2, 0]}
+                  position={[s * (width / 2 + 0.11), o.h / 2, 0]}
                   size={[0.25, o.h + 0.2, 0.8]}
                   color="#7e8980"
                 />
               ))}
               <Block
                 position={[0, o.h + 0.12, 0]}
-                size={[o.w + 0.7, 0.3, 1]}
+                size={[width + 0.7, 0.3, 1]}
                 color="#aa9d80"
               />
-              <GateWinch stateRef={stateRef} temple={o.gateId === "temple"} harbor={o.gateId === "harbor"} height={o.h} width={o.w} />
+              <GateWinch stateRef={stateRef} obstacle={o} height={o.h} width={width} end={gate?.side === "west" || gate?.side === "south" ? -1 : 1} />
               <group ref={el => { gates.current[i] = el; }}>
                 <Block
                   position={[0, 1.5, 0]}
-                  size={[o.w, 0.12, o.d]}
+                  size={[width, 0.12, depth]}
                   color="#42585b"
                 />
                 <Block
                   position={[0, 0.35, 0]}
-                  size={[o.w, 0.12, o.d]}
+                  size={[width, 0.12, depth]}
                   color="#42585b"
                 />
                 {Array.from({ length: 13 }, (_, n) => (
                   <Pole
                     key={n}
-                    position={[-o.w / 2 + n * (o.w / 12), o.h / 2, 0]}
+                    position={[-width / 2 + n * (width / 12), o.h / 2, 0]}
                     height={o.h}
                     radius={0.045}
                   />
@@ -872,6 +850,7 @@ function ObstacleArt({ stateRef }: { stateRef: StateRef }) {
               </group>
             </group>
           );
+        }
         if (o.kind === "planter") return (
             <group key={i} position={[o.x, o.y, o.z]}>
               <Block
@@ -1000,6 +979,7 @@ function Landmarks({ stateRef }: { stateRef: StateRef }) {
     <group>
       {LANDMARKS.filter(l => l.id === 'cloister-cache' || l.id === 'lookout-cache').map(l => <TreasureChest key={l.id} stateRef={stateRef} id={l.id} position={[l.x, l.y, l.z - 0.8]} />)}
       {LANDMARKS.map((l, i) => {
+        if (l.kind === "npc") return null;
         if (l.id === 'temple-lamp' || l.id === 'canal-lamp') return (
           <group key={l.id} position={[l.x, l.y, l.z]} name={`spent-lamp-${l.id}`}>
             <Block position={[0, 0.14, 0]} size={[0.8, 0.28, 0.8]} color="#737267" />
@@ -1065,6 +1045,7 @@ function Landmarks({ stateRef }: { stateRef: StateRef }) {
               <pointLight color="#fbd079" intensity={2} distance={3} />
             </group>
           );
+        if (l.kind === 'ferry') return <group key={l.id} position={[l.x, l.y, l.z]}><mesh position={[0, 1, -0.5]}><cylinderGeometry args={[0.045, 0.055, 2, 6]} /><meshStandardMaterial color="#9c8964" /></mesh><mesh position={[0, 2, -0.5]}><octahedronGeometry args={[0.2]} /><meshBasicMaterial color="#9adcd2" /></mesh></group>;
         if (l.kind === "note") return (
             <group key={l.id} position={[l.x, l.y + 0.04, l.z]}>
               <Block
@@ -1119,14 +1100,15 @@ function Actor({
   const kind: EnemyKind | "player" = enemyId
     ? (ENEMY_SPAWNS.find((e) => e.id === enemyId)?.kind ?? "prowler")
     : "player";
-  const boss = kind === "boss" || kind === "nana";
+  const boss = ["boss", "nana", "captain", "regent", "warden", "abbot", "serpent", "elegist"].includes(kind ?? "");
+  const lancer = ["lancer", "captain", "regent", "monk", "abbot", "serpent", "elegist"].includes(kind ?? "");
   const guest = kind === "nana" || kind === "azi";
   const player = kind === "player";
   const guard = kind === "guard";
-  const size = boss ? 1.5 : kind === "prowler" ? 0.94 : 1.05;
+  const size = kind === "serpent" ? 2.05 : kind === "warden" ? 1.7 : kind === "regent" ? 1.85 : boss ? 1.5 : kind === "prowler" ? 0.94 : 1.05;
   const coat = player
     ? PLAYER_SKINS[appearance].coat
-    : guest ? kind === "nana" ? "#303b49" : "#91a269" : boss
+    : kind === 'elegist' ? '#897050' : kind === 'serpent' ? '#3d7c74' : kind === 'warden' ? '#536f81' : ['monk', 'abbot'].includes(kind ?? '') ? '#ae8651' : kind === 'reaver' ? '#667459' : kind === 'regent' ? '#673e48' : kind === 'captain' ? '#8a713f' : guest ? kind === "nana" ? "#303b49" : "#91a269" : boss
       ? "#335a63"
       : guard
         ? "#7c6653"
@@ -1243,7 +1225,10 @@ function Actor({
         if (rightLeg.current) rightLeg.current.rotation.x = -1.1 * roll.tuck;
       }
     } else if (enemy) {
-      if (heldWeapon.current) heldWeapon.current.rotation.x = Math.PI / 2;
+      if (heldWeapon.current) {
+        heldWeapon.current.visible = enemy.action !== 'dead';
+        heldWeapon.current.rotation.x = Math.PI / 2;
+      }
       const pose = enemyMotion(enemy);
       if (pose) {
         if (heldWeapon.current) heldWeapon.current.rotation.x = pose.weaponPitch;
@@ -1446,6 +1431,10 @@ function Actor({
               />
               <meshStandardMaterial color={boss ? "#9b977a" : "#43565a"} />
             </mesh>
+            {kind === 'serpent' && <group>{[-2, -1, 0, 1, 2].map(i => <group key={i} position={[i * 0.24, 1.92 - Math.abs(i) * 0.06, -0.13]}><mesh rotation={[0, 0, -i * 0.22]}><cylinderGeometry args={[0.095, 0.055, 0.7, 6]} /><meshStandardMaterial color="#c3b775" metalness={0.45} /></mesh><mesh position={[0, 0.36, 0.08]} scale={[1.3, 1, 0.6]}><sphereGeometry args={[0.14, 8, 6]} /><meshStandardMaterial color="#a6c092" /></mesh><mesh position={[0, 0.36, 0.17]}><boxGeometry args={[0.14, 0.025, 0.02]} /><meshBasicMaterial color="#d9ffe6" /></mesh></group>)}</group>}
+            {['monk', 'abbot'].includes(kind ?? '') && <group><mesh position={[0, 1.4, 0.16]} rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.23, 0.055, 6, 14]} /><meshStandardMaterial color="#decaa1" /></mesh><Block position={[-0.1, 1.05, 0.28]} size={[0.23, 0.72, 0.08]} color="#c2a169" rotation={[0, 0, -0.2]} /></group>}
+            {kind === 'reaver' && <mesh position={[0, 1.76, 0]}><coneGeometry args={[0.48, 0.28, 10]} /><meshStandardMaterial color="#ac9e70" /></mesh>}
+            {kind === 'regent' && <group><mesh position={[0, 1.85, 0]}><cylinderGeometry args={[0.18, 0.29, 0.3, 8]} /><meshStandardMaterial color="#cca958" metalness={0.5} /></mesh>{[-1, 0, 1].map(i => <mesh key={i} position={[i * 0.18, 2.07 + (i === 0 ? 0.13 : 0), 0]}><coneGeometry args={[0.075, 0.44, 5]} /><meshStandardMaterial color="#ddbd75" metalness={0.45} /></mesh>)}<Block position={[0, 1.03, -0.31]} size={[0.6, 0.73, 0.06]} color="#9c514d" /></group>}
             <Block
               position={[0, 1.45, 0.2]}
               size={[0.34, 0.18, 0.07]}
@@ -1498,11 +1487,11 @@ function Actor({
 <Pole
               position={[0, 0.45, 0]}
               radius={player ? 0.035 : 0.045}
-              height={boss ? 1.8 : 1.4}
+              height={lancer ? 2.6 : boss ? 1.8 : 1.4}
               color={guard ? "#a38a62" : "#b6c3bf"}
             />
 )}
-            {(player || (boss && !guest)) && (
+            {(player || (boss && !guest && !lancer && kind !== 'warden')) && (
               <mesh position={[0, 0.54, 0]} castShadow>
                 <coneGeometry
                   args={[boss ? 0.28 : 0.115, boss ? 1.3 : 0.95, 8]}
@@ -1514,7 +1503,12 @@ function Actor({
                 />
               </mesh>
             )}
+            {kind === 'elegist' && <mesh position={[0, 1.6, 0]}><boxGeometry args={[0.48, 0.68, 0.48]} /><meshStandardMaterial color="#bfb289" emissive="#846e3d" emissiveIntensity={0.7} /></mesh>}
+            {kind === 'warden' && <Block position={[0, 1.2, 0]} size={[0.47, 1.1, 0.12]} color="#a7a17a" />}
+            {kind === 'reaver' && <mesh position={[0.19, 1.05, 0]} rotation={[0, 0, -0.6]}><torusGeometry args={[0.3, 0.05, 6, 12, Math.PI]} /><meshStandardMaterial color="#c1cdc3" metalness={0.6} /></mesh>}
+            {['monk', 'abbot'].includes(kind ?? '') && <mesh position={[0, 1.9, 0]}><torusGeometry args={[0.2, 0.04, 6, 12]} /><meshStandardMaterial color="#d6ba7c" metalness={0.6} /></mesh>}
             {guest && <GuestWeapon kind={kind as "nana" | "azi"} />}
+            {lancer && <group position={[0, 1.8, 0]}><mesh castShadow><coneGeometry args={[0.12, 0.6, 4]} /><meshStandardMaterial color={kind === 'regent' ? '#e5bd67' : '#cbd4cf'} metalness={0.65} roughness={0.32} /></mesh><Block position={[0, -0.25, 0]} size={[0.35, 0.045, 0.06]} color="#b9a16b" /></group>}
             {kind === "duelist" && (
               <Block
                 position={[0, 0.5, 0]}
@@ -1594,13 +1588,14 @@ function Weather({ stateRef }: { stateRef: StateRef }) {
       const x = p.x + pseudoRandom(i + 700) * 38 - 19;
       const z = p.z + pseudoRandom(i + 1300) * 38 - 19;
       const y = p.y + 16 - ((time * 10 + pseudoRandom(i + 2400) * 20) % 20);
+      const falling = y > (supportAt(x, z) ?? -5) + 0.5;
       const n = i * 6;
       positions[n] = x;
       positions[n + 1] = y;
       positions[n + 2] = z;
-      positions[n + 3] = x - 0.075;
-      positions[n + 4] = y - 0.5;
-      positions[n + 5] = z + 0.045;
+      positions[n + 3] = x - (falling ? 0.075 : 0);
+      positions[n + 4] = y - (falling ? 0.5 : 0);
+      positions[n + 5] = z + (falling ? 0.045 : 0);
     }
     if (lines.current) {
       lines.current.geometry.attributes.position.needsUpdate = true;
@@ -1779,6 +1774,44 @@ function CameraRig({
   return null;
 }
 
+function Moonlight({ stateRef }: { stateRef: StateRef }) {
+  const light = useRef<THREE.DirectionalLight>(null);
+  const target = useMemo(() => new THREE.Object3D(), []);
+  useFrame(() => {
+    if (!light.current) return;
+    const p = stateRef.current.player;
+    // Follow every district with the same light direction and shadow density.
+    // Snapping prevents tiny movement from constantly sliding the shadow map.
+    const x = Math.round(p.x * 4) / 4;
+    const y = Math.round(p.y * 4) / 4;
+    const z = Math.round(p.z * 4) / 4;
+    light.current.position.set(x - 28, y + 44, z + 18);
+    target.position.set(x, y, z);
+    target.updateMatrixWorld();
+  });
+  return (
+    <>
+      <primitive object={target} />
+      <directionalLight
+        ref={light}
+        target={target}
+        intensity={1.95}
+        color="#b9d2f1"
+        castShadow
+        shadow-mapSize={[2048, 2048]}
+        shadow-camera-left={-32}
+        shadow-camera-right={32}
+        shadow-camera-top={32}
+        shadow-camera-bottom={-32}
+        shadow-camera-near={1}
+        shadow-camera-far={110}
+        shadow-normalBias={0.04}
+        shadow-bias={-0.00015}
+      />
+    </>
+  );
+}
+
 function Scene({ stateRef, cameraControl, onReady, onError, companionRef }: WorldProps) {
   const { gl } = useThree();
   useEffect(() => {
@@ -1793,26 +1826,14 @@ function Scene({ stateRef, cameraControl, onReady, onError, companionRef }: Worl
   }, [gl, onReady, onError]);
   return (
     <>
-      <color attach="background" args={["#728d9b"]} />
-      <fog attach="fog" args={["#728d9b", 34, 115]} />
-      <hemisphereLight args={["#c7dcf0", "#536a68", 2.1]} />
-      <ambientLight intensity={0.32} color="#c1d9eb" />
-      <directionalLight
-        position={[-22, 32, 15]}
-        intensity={2.35}
-        color="#c1d8ed"
-        castShadow
-        shadow-mapSize={[2048, 2048]}
-        shadow-camera-left={-45}
-        shadow-camera-right={45}
-        shadow-camera-top={50}
-        shadow-camera-bottom={-65}
-        shadow-camera-near={1}
-        shadow-camera-far={120}
-        shadow-normalBias={0.05}
-        shadow-bias={-0.0002}
-      />
+      <color attach="background" args={["#334d5c"]} />
+      <fog attach="fog" args={["#334d5c", 48, 165]} />
+      <hemisphereLight args={["#a8cce9", "#344741", 1.3]} />
+      <ambientLight intensity={0.2} color="#c1d9eb" />
+      <Moonlight stateRef={stateRef} />
       <City />
+      <ValleyView stateRef={stateRef} />
+      <HavenView stateRef={stateRef} />
       <ObstacleArt stateRef={stateRef} />
       <Landmarks stateRef={stateRef} />
       <Actor stateRef={stateRef} />
@@ -1832,7 +1853,7 @@ function WorldView(props: WorldProps) {
     <Canvas
       shadows
       dpr={[1, 1.5]}
-      camera={{ fov: 54, near: 0.08, far: 155, position: [2, 10, 24] }}
+      camera={{ fov: 54, near: 0.08, far: 220, position: [2, 10, 24] }}
       gl={{
         antialias: true,
         alpha: false,
