@@ -17,6 +17,8 @@
     "start": "next start",
     "lint": "next lint",
     "check": "pnpm lint && pnpm exec tsc --noEmit",
+    "needle:test": "node --test scripts/tests/golden-needle.test.mjs",
+    "needle:verify": "node scripts/verify-golden-needle.cjs",
     "harbor:test": "node --test scripts/tests/hype-harbor.test.mjs scripts/tests/hype-harbor-room.test.mjs",
     "harbor:verify": "node scripts/verify-hype-harbor.cjs",
     "harbor:verify:economy": "node scripts/verify-hype-harbor-economy.cjs",

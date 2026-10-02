@@ -78,6 +78,15 @@ const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
     title: '虚拟主播模拟',
     games: [
       {
+        title: '不许手抖 · 黄金微针模拟室',
+        href: '/game/golden-needle',
+        description: '拿稳小方块探头，照顾岁己的变美愿望。清洁、敷麻、稳稳下针，别忘了冷敷，也可选栓剂止痛。',
+        image: '/games/golden-needle/preview.png',
+        meta: '手术操作模拟 · 三档难度 · 鼠标 / 触屏',
+        releaseDate: '2026-10-02',
+        updateDate: '2026-10-02',
+      },
+      {
         title: '嘘，TA还在播',
         href: '/game/hush-live',
         description: '递外卖、隔墙报点、偷一个吻，守住两个人的小秘密。',
