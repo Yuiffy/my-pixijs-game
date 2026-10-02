@@ -18,14 +18,16 @@ import { ACTIVITIES, getActivityCost, getAvailableActivities } from "../activiti
 import { CHILD_ACTIONS, PARENT_ACTIONS } from "../content";
 import { getCandidate } from "../engine";
 import { getHouseholdBudget } from "../household";
-import { MESSAGE_KINDS, SLOT_LABELS, getSlots, hashKey } from "../inbox";
+import { MESSAGE_KINDS, SLOT_LABELS, getSlots, hashKey, isReplyPending, contextualReplyLabel } from "../inbox";
 import type { ActivityId, ChildActionId, InboxMessage, MarriageGameAction, ParentActionId } from "../types";
 import type { MarriageGameApi } from "../useMarriageGame";
 import { SENDER_CHAT, type ChatBubble, type DatePlan, type DialogueChoice } from "./dialogueTypes";
 import { arrivedMessages, buildScript, buildThread, chatProfile, listChats } from "./dialogues";
-import { pickLine, quarterLabel, type SenderProfile } from "./lines";
+import { dailyMoments } from "./dailyStories";
+import { quarterLabel, type SenderProfile } from "./lines";
 import { VENUE_TITLES, getFestivalReminders, phoneClock, type ChatId, type PhoneApp } from "./sceneRouter";
 import styles from "./immersive.module.css";
+import { CHAT_MEMORY_KEY, restoreConversations } from "./conversationMemory";
 import ChatPicture from "./ChatPicture";
 
 export interface PhoneDebug {
@@ -119,13 +121,13 @@ function Bubble({ bubble, profile, image }: { bubble: ChatBubble; profile: Sende
   );
 }
 
-function ReplyChips({ item, onReply }: { item: InboxMessage; onReply: PhoneProps["onReply"] }) {
+function ReplyChips({ item, onReply, state }: { item: InboxMessage; onReply: PhoneProps["onReply"]; state: MarriageGameApi["state"] }) {
   const kind = MESSAGE_KINDS[item.kind];
   return (
     <div className={styles.replyChips} data-testid={`inbox-${item.kind}`}>
       <small>{item.urgent ? "快速回复 · 对方在等你" : "快速回复 · 也可以先放着"}</small>
-      {kind.replies.map(reply => (
-        <button key={reply.id} data-testid={`reply-${item.kind}-${reply.id}`} onClick={() => onReply(item, reply.id)}>{reply.label}</button>
+      {kind.replies.filter(reply => !(item.kind === "candidate-share" && reply.id === "later" && state.week.slot !== "work")).map(reply => (
+        <button key={reply.id} data-testid={`reply-${item.kind}-${reply.id}`} onClick={() => onReply(item, reply.id)}>{contextualReplyLabel(state, item, reply)}</button>
       ))}
     </div>
   );
@@ -146,11 +148,23 @@ function ChatView({ game, chat, reducedMotion, onChoice, onReply, onDebug, voice
   const candidate = getCandidate(state.candidateId);
   const image = chat === "candidate" ? candidate?.image : null;
   const script = useMemo(() => buildScript(state, chat), [state, chat]);
-  const [nodeId, setNodeId] = useState<string | null>(script?.start ?? null);
-  const [sent, setSent] = useState<ChatBubble[]>([]);
+  const memoryKey = `${state.seed}-${state.turn}-${state.activeActor}-${state.candidateId}`;
+  const memoryChat = `${chat}-${voice ? "voice" : "text"}`;
+  const [remembered] = useState(() => {
+    try { return restoreConversations(localStorage.getItem(CHAT_MEMORY_KEY), memoryKey).chats[memoryChat]; } catch { return undefined; }
+  });
+  const [nodeId, setNodeId] = useState<string | null>(remembered?.nodeId && script?.nodes[remembered.nodeId] ? remembered.nodeId : script?.start ?? null);
+  const [sent, setSent] = useState<ChatBubble[]>(remembered?.sent ?? []);
+  useEffect(() => {
+    try {
+      const book = restoreConversations(localStorage.getItem(CHAT_MEMORY_KEY), memoryKey);
+      book.chats[memoryChat] = { nodeId, sent: sent.slice(-100) };
+      localStorage.setItem(CHAT_MEMORY_KEY, JSON.stringify(book));
+    } catch { /* Current conversation remains usable without storage. */ }
+  }, [memoryKey, memoryChat, nodeId, sent]);
   const [typing, setTyping] = useState(false);
   const thread = voice ? [] : buildThread(state, chat, playerName);
-  const pending = voice ? [] : arrivedMessages(state).filter(item => SENDER_CHAT[item.from] === chat && !state.week.handled[item.id]);
+  const pending = voice ? [] : arrivedMessages(state).filter(item => SENDER_CHAT[item.from] === chat && isReplyPending(state, item));
   const node = script && nodeId ? script.nodes[nodeId] : null;
   const threadRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -170,11 +184,6 @@ function ChatView({ game, chat, reducedMotion, onChoice, onReply, onDebug, voice
     const element = threadRef.current;
     if (element) element.scrollTop = element.scrollHeight;
   }, [thread.length, sent.length, typing, nodeId, pending.length]);
-
-  useEffect(() => {
-    setNodeId(script?.start ?? null);
-    setSent([]);
-  }, [chat, state.turn, state.activeActor, script?.start]);
 
   useEffect(() => {
     if (reducedMotion || !node?.lines.length) { setTyping(false); return undefined; }
@@ -203,7 +212,7 @@ function ChatView({ game, chat, reducedMotion, onChoice, onReply, onDebug, voice
     <div className={styles.chatView} data-testid={`chat-view-${chat}`}>
       <div className={styles.thread} ref={threadRef} data-testid="chat-thread" role="log" aria-live="polite">
         <div ref={contentRef}>
-        <p className={styles.threadDate}>{voice ? "电话接通了。你们找了个安静的地方慢慢聊。" : `${quarterLabel(state)} · ${SLOT_LABELS[state.week.slot]}`}</p>
+        <p className={styles.threadDate}>{voice ? state.week.slot === "commute" ? "电话接通了。你沿着人行道，听着那头的声音。" : "电话接通了。你们慢慢聊。" : `${quarterLabel(state)} · ${SLOT_LABELS[state.week.slot]}`}</p>
         {thread.map(bubble => <Bubble key={bubble.id} bubble={bubble} profile={profile} image={image} />)}
         {/* 本周已经有消息往来时，不再重复一句开场白 */}
         {script && thread.length === 0 && script.nodes[script.start].lines.map(line => <Bubble key={`start-${line.id}`} bubble={line} profile={profile} image={image} />)}
@@ -214,7 +223,7 @@ function ChatView({ game, chat, reducedMotion, onChoice, onReply, onDebug, voice
       <div className={styles.replyTray} data-testid="chat-reply-tray">
       {pending.length > 0 && (
         <div className={styles.composer}>
-          {pending.map(item => <ReplyChips key={item.id} item={item} onReply={onReply} />)}
+          {pending.map(item => <ReplyChips key={item.id} item={item} onReply={onReply} state={state} />)}
         </div>
       )}
       {node && !typing && (
@@ -236,18 +245,7 @@ function MomentsView({ game, onReply }: { game: MarriageGameApi; onReply: PhoneP
   const { state } = game;
   const candidate = getCandidate(state.candidateId);
   const moment = arrivedMessages(state).find(item => item.kind === "candidate-moments");
-  const revealed = state.knownInterests[state.knownInterests.length - 1];
-  const posts = [
-    ...(candidate && !state.matchClosed ? [{
-      id: "candidate",
-      name: candidate.name,
-      image: candidate.image,
-      text: revealed ? `周末又去${ACTIVITIES[revealed].title}了，下次想带朋友一起。` : pickLine(["今天的晚霞，拍了九张还是觉得不如眼睛看到的好看。", "打卡。", "周末的碎片。", "又是一周，辛苦了自己。"], state.seed, state.turn, candidate.id),
-    }] : []),
-    { id: "classmate", name: "大学同学小周", image: null, text: pickLine(["婚礼请柬已发，大家一定要来！", "宝宝满月啦，感谢大家的祝福。", "终于上岸了，明天入职。"], state.seed, state.turn, "classmate") },
-    { id: "coworker", name: "隔壁组的阿杰", image: null, text: pickLine(["凌晨一点的办公室，灯还亮着。", "周末爬了个山，腿废了。", "裸辞第一天，去看海。"], state.seed, state.turn, "coworker") },
-    { id: "aunt", name: "三姑", image: null, text: pickLine(["转发：《这三种人最容易被剩下》", "我家孙子会背唐诗了！", "今天广场舞比赛拿了第二名。"], state.seed, state.turn, "aunt") },
-  ];
+  const posts = dailyMoments(state, candidate);
   return (
     <div className={styles.moments} data-testid="moments-feed">
       <header className={styles.momentsCover}><strong>朋友圈</strong><small>{quarterLabel(state)}</small></header>
@@ -257,8 +255,8 @@ function MomentsView({ game, onReply }: { game: MarriageGameApi; onReply: PhoneP
           <div>
             <strong>{post.name}</strong>
             <p>{post.text}</p>
-            <ChatPicture subject={post.text} />
-            {post.id === "candidate" && moment && !state.week.handled[moment.id] && state.week.actor === state.activeActor && <ReplyChips item={moment} onReply={onReply} />}
+            {post.picture && <ChatPicture subject={post.picture} />}
+            {post.id === "candidate" && moment && !state.week.handled[moment.id] && state.week.actor === state.activeActor && <ReplyChips item={moment} onReply={onReply} state={state} />}
           </div>
         </article>
       ))}
@@ -310,7 +308,7 @@ function CallView({ game, onReply, onChoice, reducedMotion }: { game: MarriageGa
   if (contact) return (
     <div className={styles.chatView} data-testid="active-call">
       <div className={styles.callHeader}><PhoneOutlined /> 与{chatProfile(state, contact).name}通话中<button data-testid="hang-up" onClick={() => { setContact(null); setConnected(true); }}>挂断</button></div>
-      <ChatView game={game} chat={contact} voice reducedMotion={reducedMotion} onReply={onReply} onChoice={onChoice} onDebug={() => undefined} />
+      <ChatView key={`${contact}-${state.turn}`} game={game} chat={contact} voice reducedMotion={reducedMotion} onReply={onReply} onChoice={onChoice} onDebug={() => undefined} />
     </div>
   );
   const incoming = state.week.actor === state.activeActor
@@ -494,7 +492,7 @@ export default function PhoneOverlay({ game, app, chat, reducedMotion, onNavigat
               ))}
             </ul>
           )}
-          {app === "chat" && chat && <ChatView key={`${chat}-${state.turn}-${state.activeActor}`} game={game} chat={chat} reducedMotion={reducedMotion} onChoice={onChoice} onReply={onReply} onDebug={(node, choices) => setChatDebug(current => (current.node === node && current.choices.join() === choices.join() ? current : { node, choices }))} />}
+          {app === "chat" && chat && <ChatView key={`${state.seed}-${chat}-${state.turn}-${state.activeActor}-${state.candidateId}`} game={game} chat={chat} reducedMotion={reducedMotion} onChoice={onChoice} onReply={onReply} onDebug={(node, choices) => setChatDebug(current => (current.node === node && current.choices.join() === choices.join() ? current : { node, choices }))} />}
           {app === "moments" && <MomentsView game={game} onReply={onReply} />}
           {app === "map" && <MapView game={game} onStartDate={onStartDate} />}
           {app === "call" && <CallView game={game} onReply={onReply} onChoice={onChoice} reducedMotion={reducedMotion} />}

@@ -1,13 +1,14 @@
+import { candidateStory, dailyPick } from "./dailyStories";
 import { ACTIVITIES } from "../activities";
 import { PARENT_ACTIONS } from "../content";
 import { getAvailableChildActions, getAvailableParentActions, getCandidate } from "../engine";
-import { MESSAGE_KINDS, getSlots } from "../inbox";
+import { MESSAGE_KINDS, getSlots, isReplyPending } from "../inbox";
 import { nextUnknownLike } from "../interests";
 import type { ChildActionId, MarriageGameState, ParentActionId } from "../types";
 import type { BubbleKind, ChatBubble, DialogueChoice, DialogueNode, DialogueScript } from "./dialogueTypes";
 import { SENDER_CHAT } from "./dialogueTypes";
 import {
-  IGNORED_FOLLOWUP, OUTGOING, fillNames, previewOf, type MessageSpec,
+  IGNORED_FOLLOWUP, OUTGOING, OUTGOING_VARIANTS, fillNames, previewOf, type MessageSpec,
 } from "./chatScripts";
 import { messageSpecs, pickLine, senderProfile, type SenderProfile } from "./lines";
 import type { ChatId } from "./sceneRouter";
@@ -82,11 +83,29 @@ export function buildThread(state: MarriageGameState, chat: ChatId, playerName =
     if (SENDER_CHAT[item.from] !== chat) continue;
     bubbles.push(...toBubbles(state, item.id, messageSpecs(state, item), false, playerName));
     const handled = state.week.handled[item.id];
+    if (handled === "deferred" || handled === "kept-promise") {
+      bubbles.push(...toBubbles(state, `${item.id}-promise`, [
+        { kind: "text", text: "我现在还在忙，先记着，下班再好好跟你聊。" },
+      ], true, playerName));
+      bubbles.push(...toBubbles(state, `${item.id}-waiting`, [{ kind: "text", text: "好，你先忙，我不急。" }], false, playerName));
+    }
     if (handled === "ignored") {
       bubbles.push(...toBubbles(state, `${item.id}-chase`, IGNORED_FOLLOWUP[item.from] ?? [], false, playerName));
       bubbles.push({ id: `${item.id}-ignored`, mine: false, kind: "system", text: "你没有回复" });
+    } else if (handled === "deferred") {
+      if (state.week.slot !== "work") bubbles.push({ id: `${item.id}-reminder`, kind: "system", mine: false, text: "下班了，记得接上刚才的话题。" });
+    } else if (handled && item.kind === "candidate-home" && handled === "reply") {
+      bubbles.push(...toBubbles(state, `${item.id}-reply`, [{ kind: "text", text: state.week.slot === "commute" ? "还在路上，到了跟你说。" : "已经到家，刚把包放下。" }], true, playerName));
+      bubbles.push(...toBubbles(state, `${item.id}-answer`, [{ kind: "text", text: "好，忙了一天，记得歇一歇。" }], false, playerName));
+    } else if (handled && item.kind === "candidate-share") {
+      const story = candidateStory(state);
+      const text = handled === "kept-promise" ? `刚忙完，回来接着聊。${story.reply}` : story.reply;
+      bubbles.push(...toBubbles(state, `${item.id}-reply`, [{ kind: "text", text }], true, playerName));
+      bubbles.push(...toBubbles(state, `${item.id}-answer`, [{ kind: "text", text: story.answer }], false, playerName));
     } else if (handled) {
-      const script = OUTGOING[`${item.kind}.${handled}`];
+      const key = `${item.kind}.${handled}`;
+      const variants = OUTGOING_VARIANTS[key];
+      const script = variants ? dailyPick(variants, state.seed, state.turn, key) : OUTGOING[key];
       const label = MESSAGE_KINDS[item.kind]?.replies.find(option => option.id === handled)?.label ?? "";
       bubbles.push(...toBubbles(state, `${item.id}-reply`, script?.mine ?? [{ kind: "text", text: label }], true, playerName));
       bubbles.push(...toBubbles(state, `${item.id}-answer`, script?.answer ?? [], false, playerName));
@@ -122,7 +141,7 @@ export function listChats(state: MarriageGameState, childName?: string): ChatEnt
   if (!state.candidateId || (!parentView && state.stage === "single" && state.matchClosed)) ids.delete("candidate");
   const entries = Array.from(ids).map(id => {
     const messages = arrivedMessages(state).filter(item => SENDER_CHAT[item.from] === id);
-    const pending = messages.filter(item => !state.week.handled[item.id]);
+    const pending = messages.filter(item => isReplyPending(state, item));
     const last = messages[messages.length - 1];
     return {
       id,
@@ -162,7 +181,7 @@ function defaultPreview(state: MarriageGameState, chat: ChatId) {
 function candidateOpener(state: MarriageGameState) {
   const candidate = getCandidate(state.candidateId);
   if (state.matchClosed && state.stage !== "married" && state.stage !== "parenthood") return "我想了想，我们可能还是更适合做朋友。";
-  if (state.stage === "married" || state.stage === "parenthood") return pickLine(CANDIDATE_OPENERS.household, state.seed, state.turn, "household");
+  if (state.stage === "married" || state.stage === "parenthood") return pickLine(CANDIDATE_OPENERS.household.filter(line => state.stage === "parenthood" || !line.includes("孩子")), state.seed, state.turn, "household");
   if (state.meetings === 0 && state.understanding < 12 && candidate) return candidate.opening;
   return pickLine(state.stage === "dating" ? CANDIDATE_OPENERS.dating : CANDIDATE_OPENERS.chatting, state.seed, state.turn, "open");
 }
@@ -204,14 +223,15 @@ export function candidateScript(state: MarriageGameState): DialogueScript {
     };
     return { chat: "candidate", start: "start", nodes };
   }
-  const opener = candidateOpener(state);
+  const story = candidateStory(state);
+  const opener = story.incoming[0];
   const like = state.candidateId ? nextUnknownLike(state.candidateId, state.knownInterests) : null;
   const hobby = state.playerHobbies[state.playerHobbies.length - 1];
   nodes.start = {
     id: "start",
     lines: [them("open", opener)],
     choices: gate(state, [
-      { id: "ask", needs: "chat-listen", label: "问问对方最近怎么样", reply: "最近忙吗？周末一般都做些什么？", next: "listen" },
+      { id: "ask", needs: "chat-listen", label: story.question, reply: story.question, next: "listen" },
       { id: "tell", needs: "chat-share", label: "说说我这周的事", reply: hobby ? `我最近在玩${ACTIVITIES[hobby].title}，挺上头的。` : "我这周……其实挺普通的，不过有件小事想跟你说。", next: "share" },
       { id: "plans", needs: "chat-checklist", label: "直接问城市、收入和婚育打算", reply: "我想先确认几件事：以后在哪个城市、收入规划、什么时候考虑孩子？", next: "checklist" },
       child("meet-aa", { label: "约个周末见面", hint: "打开地图选地方", openApp: "map", action: undefined }),
@@ -226,8 +246,8 @@ export function candidateScript(state: MarriageGameState): DialogueScript {
   };
   nodes.listen = {
     id: "listen",
-    lines: [them("listen", like ? `最近在琢磨${ACTIVITIES[like].title}，不过还没找到人一起。` : "就是上班下班，偶尔追追剧。你呢？")],
-    choices: gate(state, [child("chat-listen", { label: "认真接话，多问两句", reply: "听起来很有意思，你是怎么喜欢上的？" }), { id: "back", label: "换个话题", next: "start" }]),
+    lines: [them("listen", story.detail)],
+    choices: gate(state, [child("chat-listen", { label: story.followup, reply: story.followup }), { id: "back", label: "换个话题", next: "start" }]),
   };
   nodes.share = {
     id: "share",
@@ -250,13 +270,16 @@ export function candidateScript(state: MarriageGameState): DialogueScript {
 // 与妈妈的聊天：边界、求助、推迟
 function momScript(state: MarriageGameState): DialogueScript {
   const last = state.lastParentAction ? PARENT_ACTIONS.find(item => item.id === state.lastParentAction) : null;
+  const recent = arrivedMessages(state).filter(item => item.from === "mom").at(-1);
+  const actual = recent ? messageSpecs(state, recent).filter(spec => spec.kind === "text" || spec.kind === "voice") : [];
+  const opener = actual.length ? actual.map((spec, index) => them(`mom-open-${index}`, spec.text, spec.kind, spec.meta)) : [them("mom-open", last ? last.detail.replace(/^“|”$/g, "") : "最近怎么样？有空回家吃饭。")];
   return {
     chat: "mom",
     start: "start",
     nodes: {
       start: {
         id: "start",
-        lines: [them("mom-open", last ? last.detail.replace(/^“|”$/g, "") : "最近怎么样？有空回家吃饭。", last?.id === "push-marriage" ? "voice" : "text", last?.id === "push-marriage" ? "32″" : undefined)],
+        lines: opener,
         choices: gate(state, [
           child("boundary", { label: "妈，我的事我自己会安排", reply: "妈，你的建议我会听，但我的人生得我自己决定。" }),
           child("ask-help", { label: "把账单摊开，请家里帮一次", reply: "妈，这个月确实有点紧，我把账单发你看看……" }),

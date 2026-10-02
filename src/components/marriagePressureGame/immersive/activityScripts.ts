@@ -1,6 +1,6 @@
 import type { VenueId } from "../activities";
 
-// 场馆小互动：只影响气氛台词和合照说明，不改任何数值
+// 场馆小互动：气氛在完成约会时结算一次，影响了解、放松或轻微亲近。
 export interface MiniOption {
   id: string;
   label: string;

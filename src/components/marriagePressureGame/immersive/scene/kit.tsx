@@ -129,13 +129,14 @@ export interface FigureLook {
 }
 
 // 父母、同事、亲戚等非立绘角色使用的低模人偶
-export function Figure({ position, look, rotation = 0, seated = false, scale = 1, holding }: {
+export function Figure({ position, look, rotation = 0, seated = false, scale = 1, holding, hideHead = false }: {
   position: Vec3;
   look: FigureLook;
   rotation?: number;
   seated?: boolean;
   scale?: number;
   holding?: "phone" | "cup" | "bag";
+  hideHead?: boolean;
 }) {
   const skin = look.skin ?? "#e9c3a0";
   const hair = look.hair ?? "#2b2522";
@@ -162,6 +163,8 @@ export function Figure({ position, look, rotation = 0, seated = false, scale = 1
         <mesh position={[0, -0.22, 0]}><sphereGeometry args={[0.065, 12, 10]} /><meshStandardMaterial color={skin} /></mesh>
       </group>
 ))}
+      {!hideHead && (
+<>
       <Cyl position={[0, seated ? 1.12 : 1.42, 0]} radius={0.065} height={0.12} color={skin} segments={16} />
       <group position={[0, seated ? 1.26 : 1.56, 0]}>
         <mesh castShadow>
@@ -179,6 +182,8 @@ export function Figure({ position, look, rotation = 0, seated = false, scale = 1
         <Box position={[0, -0.07, 0.152]} size={[0.06, 0.012, 0.01]} color="#b0605a" />
         {[-0.09, 0.09].map(x => <mesh key={x} position={[x, -0.045, 0.143]} scale={[1, 0.5, 0.18]}><sphereGeometry args={[0.037, 12, 8]} /><meshStandardMaterial color="#dfab96" /></mesh>)}
       </group>
+      </>
+)}
       {holding === "phone" && <Box position={[0, seated ? 0.95 : 1.25, 0.3]} size={[0.09, 0.16, 0.02]} color="#1b1c20" emissive="#6fb8ff" />}
       {holding === "cup" && <Cyl position={[0.22, seated ? 0.95 : 1.25, 0.28]} radius={0.05} height={0.1} color="#f2eee6" />}
       {holding === "bag" && <Box position={[0.3, 0.8, 0]} size={[0.08, 0.3, 0.3]} color="#7a5a3c" />}
@@ -187,12 +192,13 @@ export function Figure({ position, look, rotation = 0, seated = false, scale = 1
 }
 
 // 立绘立牌：候选人与伴侣用原有立绘贴在一块竖板上
-export function PortraitBillboard({ image, position, height = 1.7, rotation = 0, tint }: {
+export function PortraitBillboard({ image, position, height = 1.7, rotation = 0, tint, framed = true }: {
   image: string;
   position: Vec3;
   height?: number;
   rotation?: number;
   tint?: string;
+  framed?: boolean;
 }) {
   const invalidate = useThree(state => state.invalidate);
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
@@ -202,28 +208,57 @@ export function PortraitBillboard({ image, position, height = 1.7, rotation = 0,
     loader.load(encodeURI(image), loaded => {
       if (cancelled) { loaded.dispose(); return; }
       loaded.colorSpace = THREE.SRGBColorSpace;
+      // Tall source art is a full-body illustration: frame its upper body for dates.
+      const ratio = loaded.image.width / loaded.image.height;
+      if (!framed && ratio < 0.8) {
+        const span = ratio * 0.75;
+        loaded.repeat.set(0.75, span);
+        loaded.offset.set(0.125, 1 - span);
+      }
       setTexture(loaded);
       invalidate();
     });
     return () => { cancelled = true; };
-  }, [image, invalidate]);
+  }, [image, invalidate, framed]);
   useEffect(() => () => texture?.dispose(), [texture]);
   const source = texture?.image as { width?: number; height?: number } | undefined;
   const aspect = source?.width && source?.height ? source.width / source.height : 0.62;
-  const width = height * Math.min(1.2, aspect);
+  const width = height * (!framed && aspect < 0.8 ? 1 : Math.min(1.2, aspect));
+  const bust = useMemo(() => {
+    // Render the existing avatar on a bust silhouette instead of a rectangular sign.
+    const shape = new THREE.Shape();
+    shape.moveTo(-0.5, -0.5);
+    shape.lineTo(-0.47, -0.32);
+    shape.quadraticCurveTo(-0.38, -0.25, -0.34, -0.19);
+    shape.bezierCurveTo(-0.56, 0.03, -0.51, 0.42, -0.22, 0.48);
+    shape.quadraticCurveTo(0, 0.55, 0.22, 0.48);
+    shape.bezierCurveTo(0.51, 0.42, 0.56, 0.03, 0.34, -0.19);
+    shape.quadraticCurveTo(0.38, -0.25, 0.47, -0.32);
+    shape.lineTo(0.5, -0.5);
+    shape.closePath();
+    const geometry = new THREE.ShapeGeometry(shape, 32);
+    const positions = geometry.getAttribute("position");
+    const uv = geometry.getAttribute("uv");
+    for (let i = 0; i < positions.count; i++) uv.setXY(i, positions.getX(i) + 0.5, positions.getY(i) + 0.5);
+    geometry.scale(width, height, 1);
+    return geometry;
+  }, [width, height]);
+  useEffect(() => () => bust.dispose(), [bust]);
   return (
     <group position={position} rotation={[0, rotation, 0]}>
-      <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      {framed && (
+<mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <circleGeometry args={[width * 0.42, 20]} />
         <meshBasicMaterial color="#000000" transparent opacity={0.22} />
       </mesh>
+)}
       {texture && (
         <>
           {/* 立牌的白边与底座，让立绘看起来像一块真实的展板 */}
-          <Box position={[0, height / 2, -0.02]} size={[width + 0.08, height + 0.08, 0.03]} color="#fbf8f1" />
-          <Box position={[0, 0.03, 0.02]} size={[width * 0.6, 0.06, 0.24]} color="#6a6f78" />
+          {framed && <Box position={[0, height / 2, -0.02]} size={[width + 0.08, height + 0.08, 0.03]} color="#fbf8f1" />}
+          {framed && <Box position={[0, 0.03, 0.02]} size={[width * 0.6, 0.06, 0.24]} color="#6a6f78" />}
           <mesh position={[0, height / 2, 0.001]}>
-            <planeGeometry args={[width, height]} />
+            {framed ? <planeGeometry args={[width, height]} /> : <primitive object={bust} attach="geometry" />}
             <meshStandardMaterial map={texture} transparent alphaTest={0.08} color={tint ?? "#ffffff"} roughness={1} />
           </mesh>
         </>

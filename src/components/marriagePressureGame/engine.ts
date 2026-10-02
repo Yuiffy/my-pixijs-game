@@ -18,6 +18,7 @@ import type {
   CandidateId,
   ChildActionId,
   Difficulty,
+  DateMood,
   Ending,
   GameMode,
   MarriageGameAction,
@@ -172,16 +173,20 @@ function openWeek(state: MarriageGameState, actor: Actor) {
 
 // 把指定时段里没回的紧急消息按“已读不回”结算
 function settleWeek(state: MarriageGameState, steps: ResolutionStep[] | undefined, slots: WeekSlot[]) {
-  const pending = state.week.inbox.filter(item => item.urgent && slots.includes(item.slot) && !state.week.handled[item.id]);
+  const pending = state.week.inbox.filter(item => (
+    (item.urgent && slots.includes(item.slot) && !state.week.handled[item.id])
+    || (state.week.handled[item.id] === "deferred" && slots.includes("evening"))
+  ));
   if (!pending.length) return;
   const before = resolutionSnapshot(state);
   const notes: string[] = [];
   for (const item of pending) {
+    const promised = state.week.handled[item.id] === "deferred";
     const ignored = MESSAGE_KINDS[item.kind]?.ignored;
     state.week.handled[item.id] = "ignored";
     if (!ignored) continue;
     applyMicroEffects(state, ignored.effects);
-    notes.push(ignored.note);
+    notes.push(promised ? "你答应下班再聊，却一直没回去接话。对方没有再追问。" : ignored.note);
   }
   normalize(state);
   if (!notes.length) return;
@@ -199,13 +204,25 @@ function revealLike(state: MarriageGameState) {
 function applyReply(state: MarriageGameState, messageId: string, choice: string, steps?: ResolutionStep[]) {
   if (state.phase !== "turn" || state.week.actor !== state.activeActor) return false;
   const item = state.week.inbox.find(entry => entry.id === messageId);
-  if (!item || state.week.handled[item.id]) return false;
+  if (!item) return false;
+  const handled = state.week.handled[item.id];
+  const promised = handled === "deferred";
+  if (handled && (!promised || state.week.slot === "work")) return false;
   const reply = getReplyOption(item.kind, choice);
   if (!reply) return false;
   const before = resolutionSnapshot(state);
-  state.week.handled[item.id] = reply.id;
-  applyMicroEffects(state, reply.effects);
+  if (item.kind === "candidate-share" && choice === "later" && state.week.slot === "work") {
+    state.week.handled[item.id] = "deferred";
+    addResolutionStep(steps, "message", "先忙，约好下班再聊", "已经告诉对方你在忙。下班路上记得接着聊；此刻不会提前增加了解或好感。", before, state);
+    return true;
+  }
+  if (item.kind === "candidate-share" && choice === "later") return false;
+  state.week.handled[item.id] = promised ? "kept-promise" : reply.id;
+  const effects = { ...reply.effects };
+  if (item.kind === "candidate-share" && state.week.slot !== "work") delete effects.career;
+  applyMicroEffects(state, effects);
   let { note } = reply;
+  if (item.kind === "candidate-share" && state.week.slot !== "work") note = promised ? "你忙完后真的回来接上了话。对方记得你刚才说过下班再聊。" : "路上不用赶着切回工作，你们认真聊了一会儿。";
   if (reply.reveal === "like") {
     const like = revealLike(state);
     if (like) note += `对方好像很喜欢「${ACTIVITIES[like].title}」。`;
@@ -603,8 +620,9 @@ export function getAvailableParentActions(
   return actions;
 }
 
-function applyChildAction(state: MarriageGameState, id: ChildActionId, topic: MeetingTopic = "everyday", activityId?: ActivityId) {
+function applyChildAction(state: MarriageGameState, id: ChildActionId, topic: MeetingTopic = "everyday", activityId?: ActivityId, mood?: DateMood) {
   if (!["everyday", "listen", "plans"].includes(topic)) return false;
+  if (mood !== undefined && !["warm", "fun", "calm", "awkward"].includes(mood)) return false;
   if (!getAvailableChildActions(state).includes(id)) return false;
   const candidate = getCandidate(state.candidateId);
   if (!candidate) return false;
@@ -691,7 +709,11 @@ function applyChildAction(state: MarriageGameState, id: ChildActionId, topic: Me
     if (fit.liked && !state.knownInterests.includes(activity.id)) state.knownInterests.push(activity.id);
     if (fit.disliked && !state.knownDislikes.includes(activity.id)) state.knownDislikes.push(activity.id);
     state.lastActivity = activity.id;
-    state.dateLog = [...state.dateLog, { turn: state.turn, activity: activity.id, candidateId: candidate.id, topic, liked: fit.liked, disliked: fit.disliked }].slice(-30);
+    state.dateLog = [...state.dateLog, { turn: state.turn, activity: activity.id, candidateId: candidate.id, topic, liked: fit.liked, disliked: fit.disliked, ...(mood ? { mood } : {}) }].slice(-30);
+    if (mood === "warm") state.understanding += 2;
+    if (mood === "calm") state.stress -= 2;
+    if (mood === "fun" && welcomed) state.relation += 1;
+    if (mood === "awkward") { state.stress += 1; state.understanding += 1; }
     if (topic === "listen") { state.relation -= 3; state.stress -= 3; }
     if (topic === "plans") { state.relation -= premature ? 6 : 2; state.mutualIntent += premature ? -7 : 4; state.stress += premature ? 5 : 0; }
     if (state.stage === "single") state.stage = "chatting";
@@ -705,6 +727,8 @@ function applyChildAction(state: MarriageGameState, id: ChildActionId, topic: Me
     if (early && !state.matchClosed) state.datingFeedback = `刚认识就安排${activity.title}，对方有点拘谨。${state.datingFeedback}`;
     else if (fit.disliked && !state.matchClosed) state.datingFeedback = `对方对${activity.title}兴趣不大，全程有点勉强。${state.datingFeedback}`;
     else if (spark && !state.matchClosed) state.datingFeedback = `${activity.title}正是对方喜欢的，整个下午都很开心。${state.datingFeedback}`;
+    const moodNote = mood ? { warm: "你记住了对方的小习惯，彼此多了解了一点。", calm: "这次没有赶行程，两个人都松了口气。", fun: welcomed ? "一起笑起来的那一刻，距离近了一点。" : "气氛热闹，但愉快不等于对方一定心动。", awkward: "有点小尴尬，也让你知道了对方不太自在的地方。" }[mood] : "";
+    state.datingFeedback += moodNote;
     record(state, `第 ${state.meetings} 次见面${activity.id === "meal" ? "" : `（${activity.title}）`}，${id === "meet-aa" ? "提前说好 AA" : "这次由我请客"}，花费 ${cost}。${topic === "listen" ? "先听对方讲最近的生活。" : topic === "plans" ? "谈了城市与婚育预期。" : "互相分享平时的生活。"}${state.datingFeedback}`);
   } else if (id === "next") {
     if (!state.rejectedCandidates.includes(candidate.id)) state.rejectedCandidates.push(candidate.id);
@@ -1347,7 +1371,7 @@ export function resolveGameAction(
         steps,
         "choice",
         `我的选择：${definition?.title || "当事人回应"}`,
-        () => applyChildAction(state, action.id, action.topic, action.activity),
+        () => applyChildAction(state, action.id, action.topic, action.activity, action.mood),
       )
     ) return { state: previous, steps: [] };
     if (!state.candidateId || checkTerminal(state)) return { state, steps };

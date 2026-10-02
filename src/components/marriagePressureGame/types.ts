@@ -200,7 +200,10 @@ export interface WeekState {
   micro: Partial<Record<MicroMetric, number>>;
 }
 
+export type DateMood = "warm" | "fun" | "calm" | "awkward";
+
 export interface DateRecord {
+  mood?: DateMood;
   turn: number;
   activity: ActivityId;
   candidateId: CandidateId;
@@ -326,7 +329,7 @@ export type MarriageGameAction =
     }
   | { type: "candidate"; id: CandidateId }
   | { type: "parent-action"; id: ParentActionId }
-  | { type: "child-action"; id: ChildActionId; topic?: MeetingTopic; activity?: ActivityId }
+  | { type: "child-action"; id: ChildActionId; topic?: MeetingTopic; activity?: ActivityId; mood?: DateMood }
   | { type: "reply"; messageId: string; choice: string }
   | { type: "advance-slot" }
   | { type: "restart" };

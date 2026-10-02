@@ -51,6 +51,7 @@ async function inject(page, save) {
   mkdirSync(out, { recursive: true });
   const { loadTypescriptModule } = await import("./tests/helpers/load-typescript-module.mjs");
   const e = await loadTypescriptModule("src/components/marriagePressureGame/engine.ts");
+  const { candidateStory } = await loadTypescriptModule("src/components/marriagePressureGame/immersive/dailyStories.ts");
   const initial = e.gameReducer(e.createInitialState(), { type: "start", mode: "child", difficulty: "realistic", seed: 11 });
   const browser = await chromium.launch({ channel: "chrome", headless: !process.env.HEADED, args: ["--mute-audio"] });
   try {
@@ -123,8 +124,9 @@ async function inject(page, save) {
       assert.equal(state.pendingPlan, null);
       assert.equal(state.reunion, null);
 
-      // Deterministic conversation with received and sent lunch pictures.
+      // Select a deterministic photo-bearing story; text-only topics are intentional.
       const save = { ...initial, stage: "chatting", understanding: 20, week: { ...initial.week, inbox: [{ id: "1-child-candidate-share", kind: "candidate-share", from: "candidate", slot: "work", urgent: false }], handled: {} } };
+      while (!candidateStory(save).picture) save.seed++;
       await inject(page, save);
       await tid(page, "scene-phone").click();
       await tid(page, "chat-candidate").click();

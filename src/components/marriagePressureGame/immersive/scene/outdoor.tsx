@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useRef, type MutableRefObject } from "react";
+import { useFrame } from "@react-three/fiber";
+import type { CommuteMotion } from "./commuteMotion";
 import * as THREE from "three";
 import { hashKey } from "../../inbox";
 import type { Season } from "../lines";
-import { Ball, Box, Cyl, Figure, Floor, Hot, PortraitBillboard, Sign } from "./kit";
+import { Ball, Box, Cyl, Figure, Floor, Hot, PortraitBillboard } from "./kit";
 
 export const SEASON_TREE: Record<Season, string> = {
   spring: "#e9a5b8",
@@ -23,8 +25,9 @@ export function Tree({ position, season, scale = 1 }: { position: [number, numbe
   );
 }
 
-// 天气粒子：冬天下雪，夏天下雨；静态点阵，按需渲染不耗电
-export function Weather({ season, area = 14 }: { season: Season; area?: number }) {
+// 通勤天气跟随场景时钟；其他场景仍按需渲染。
+export function Weather({ season, area = 14, motion }: { season: Season; area?: number; motion?: MutableRefObject<CommuteMotion> }) {
+  const points = useRef<THREE.Points>(null);
   const geometry = useMemo(() => {
     const count = season === "winter" ? 240 : season === "summer" ? 320 : 0;
     const positions = new Float32Array(count * 3);
@@ -37,15 +40,24 @@ export function Weather({ season, area = 14 }: { season: Season; area?: number }
     result.setAttribute("position", new THREE.BufferAttribute(positions, 3));
     return result;
   }, [season, area]);
+  useFrame(() => {
+    if (!motion || !points.current) return;
+    const position = geometry.getAttribute("position") as THREE.BufferAttribute;
+    for (let i = 0; i < position.count; i++) {
+      const initialY = ((hashKey(season, i, "y") % 1000) / 1000) * 6;
+      position.setY(i, (((initialY - motion.current.elapsed * (season === "summer" ? 3.8 : 0.65)) % 6) + 6) % 6);
+    }
+    position.needsUpdate = true;
+  });
   if (season !== "winter" && season !== "summer") return null;
   return (
-    <points geometry={geometry}>
+    <points ref={points} geometry={geometry}>
       <pointsMaterial color={season === "winter" ? "#ffffff" : "#9fb7d6"} size={season === "winter" ? 0.045 : 0.025} transparent opacity={0.85} />
     </points>
   );
 }
 
-function Building({ position, size, color, seed }: { position: [number, number, number]; size: [number, number, number]; color: string; seed: number }) {
+export function Building({ position, size, color, seed }: { position: [number, number, number]; size: [number, number, number]; color: string; seed: number }) {
   const lit = useMemo(() => {
     const cells: Array<[number, number]> = [];
     const columns = Math.max(1, Math.floor(size[0] / 0.5));
@@ -63,60 +75,12 @@ function Building({ position, size, color, seed }: { position: [number, number, 
   );
 }
 
-function StreetLamp({ position }: { position: [number, number, number] }) {
+export function StreetLamp({ position }: { position: [number, number, number] }) {
   return (
     <group position={position}>
       <Cyl position={[0, 1.4, 0]} radius={0.04} height={2.8} color="#3a3d44" segments={6} />
       <Ball position={[0, 2.85, 0]} radius={0.12} color="#ffe6a8" emissive />
       <pointLight position={[0, 2.7, 0]} intensity={2.2} distance={4.5} color="#ffd89a" />
-    </group>
-  );
-}
-
-// 下班路上：街边店铺、地铁口、公交站，手机在手里亮着
-export function CommuteScene({ season }: { season: Season }) {
-  return (
-    <group>
-      <Floor size={[24, 18]} color="#4a4d54" />
-      <Box position={[0, 0.06, 1.6]} size={[24, 0.12, 2.6]} color="#8d8a84" />
-      <Box position={[0, 0.02, -1.2]} size={[24, 0.04, 0.12]} color="#e9e4da" />
-      {season === "winter" && <Box position={[0, 0.125, 1.6]} size={[24, 0.01, 2.6]} color="#eef2f5" />}
-      {[-9, -6, -3, 0, 3, 6, 9].map((x, index) => (
-        <Building key={x} position={[x, 0, -7]} size={[2.6, 4 + (hashKey(x) % 5), 2]} color={["#5c6270", "#6d6a70", "#586470", "#6f6760"][index % 4]} seed={x} />
-      ))}
-      <Hot id="barber" marker={[-2.9, 2.6, 2.4]}>
-        <Box position={[-2.9, 1.2, 2.2]} size={[2.2, 2.4, 0.3]} color="#e4ddd0" />
-        <Box position={[-2.9, 0.95, 2.36]} size={[1.6, 1.4, 0.02]} color="#bcd4de" emissive="#3a5a6a" />
-        <Sign position={[-2.9, 2.05, 2.37]} size={[1.6, 0.4]} text="快剪 · 理发" background="#b84a4a" glow font={52} />
-        <Cyl position={[-1.75, 0.9, 2.45]} radius={0.08} height={1.1} color="#e84a4a" segments={8} />
-      </Hot>
-      <group>
-        <Box position={[3.3, 1.2, 2.2]} size={[2.4, 2.4, 0.3]} color="#d7d1c6" />
-        <Sign position={[3.3, 2.05, 2.37]} size={[1.8, 0.4]} text="24h 便利店" background="#3f8a4a" glow font={52} />
-        <Box position={[3.3, 0.95, 2.36]} size={[1.9, 1.4, 0.02]} color="#f6f0d8" emissive="#bba86a" />
-      </group>
-      <Hot id="moments" marker={[1.8, 2.4, 0.4]}>
-        <Box position={[1.8, 1.1, 0.3]} size={[1.2, 2.2, 0.08]} color="#9aa0a8" opacity={0.5} />
-        <Box position={[1.8, 1.3, 0.35]} size={[0.9, 1.3, 0.03]} color="#f6e8d2" emissive="#d0a060" />
-        <Sign position={[1.8, 1.3, 0.37]} size={[0.8, 0.45]} text="朋友圈" background="#57b36a" glow font={56} />
-      </Hot>
-      <Hot id="track" marker={[-1.8, 1.3, -0.6]}>
-        <Box position={[-1.8, 0.5, -0.8]} size={[2.6, 0.08, 0.08]} color="#c9ccd0" />
-        <Box position={[-1.8, 0.25, -0.8]} size={[2.6, 0.5, 0.02]} color="#8d949c" opacity={0.6} />
-        <Sign position={[-1.8, 0.9, -0.76]} size={[1.3, 0.28]} text="滨江步道 →" background="#287a75" font={44} />
-      </Hot>
-      <Sign position={[-5.6, 2.3, 0.26]} size={[1.4, 0.5]} text="地铁 2 号线" background="#c24b4b" glow font={52} />
-      <Box position={[-5.6, 0.9, 0.2]} size={[1.6, 1.8, 0.1]} color="#3a3d44" />
-      <Figure position={[-1.8, 0.12, 1.9]} look={{ shirt: "#8a5a5a", hairLong: true }} rotation={-1.2} holding="bag" />
-      <Figure position={[2.4, 0.12, 2.0]} look={{ shirt: "#4f6a8a" }} rotation={1.4} holding="phone" />
-      <Box position={[-4.5, 0.55, -2.4]} size={[3.4, 1.0, 1.5]} color="#c24b4b" />
-      <Box position={[-4.5, 1.05, -2.4]} size={[2.2, 0.5, 1.3]} color="#2d3040" />
-      <Box position={[5.2, 0.5, -3.3]} size={[1.8, 0.9, 1.3]} color="#e0b24c" />
-      <StreetLamp position={[-2, 0.12, 0.5]} />
-      <StreetLamp position={[4.5, 0.12, 0.5]} />
-      <Tree position={[-8.2, 0.12, 1.6]} season={season} />
-      <Tree position={[8.4, 0.12, 1.6]} season={season} />
-      <Weather season={season} />
     </group>
   );
 }

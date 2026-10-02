@@ -1,12 +1,15 @@
 "use client";
 
-import { memo, useEffect, useMemo, useRef, useState } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
+import { memo, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import type { Hotspot, SceneRoute } from "../sceneRouter";
 import { HotContext, type Vec3 } from "./kit";
 import { HomeScene, HospitalScene, OfficeScene, ParentHomeScene, ReunionScene, RoomScene } from "./indoor";
-import { CommuteScene, ParkScene } from "./outdoor";
+import { ParkScene } from "./outdoor";
+import CommuteScene from "./CommuteScene";
+import { stepCommute, type CommuteMotion } from "./commuteMotion";
+import { venueView } from "./venueView";
 import { VENUE_LOOKS, VenueScene } from "./venues";
 import ScenePhone, { PHONE_POSITIONS } from "./ScenePhone";
 import styles from "../immersive.module.css";
@@ -32,7 +35,7 @@ const SHOTS: Record<string, CameraShot> = {
   home: { position: [0.2, 1.85, 4.3], target: [0, 0.85, -0.8], fov: 58 },
   office: { position: [0.05, 1.24, 0.82], target: [0, 0.96, -0.65], fov: 66 },
   "meeting-room": { position: [0.8, 1.7, 2.2], target: [-0.6, 1.1, -3], fov: 60 },
-  commute: { position: [0, 1.9, 6.4], target: [0, 1.2, -0.2], fov: 55 },
+  commute: { position: [0, 1.72, 5.5], target: [0, 1.5, -10], fov: 62 },
   park: { position: [0, 2.0, 6.2], target: [0, 1.1, -1.2], fov: 55 },
   matchmaking: { position: [0, 1.8, 5.2], target: [0, 1.0, -1.2], fov: 55 },
   "parent-home": { position: [1.2, 1.8, 4.2], target: [-0.2, 0.8, -1], fov: 58 },
@@ -55,7 +58,7 @@ function lookFor(route: SceneRoute): SceneLook {
     case "meeting-room":
       return { background: "#cfdbe6", fog: [10, 26], ambient: 0.72, sun: 1.1, sunColor: "#ffffff", sunPosition: [2, 5, -5], lamp: { position: [0, 3, 0], color: "#f2f6ff", intensity: route.id === "meeting-room" ? 2 : 4 } };
     case "commute":
-      return { background: winter ? "#8e9db2" : summer ? "#6e7c8e" : "#e3a17c", fog: [9, 26], ambient: 0.5, sun: 0.8, sunColor: winter ? "#dfe8ff" : "#ffb98a", sunPosition: [-6, 4, -6] };
+      return { background: winter ? "#8e9db2" : summer ? "#6e7c8e" : "#e3a17c", fog: [16, 40], ambient: 0.8, sun: 1.2, sunColor: winter ? "#dfe8ff" : "#ffb98a", sunPosition: [-6, 4, -6] };
     case "park":
     case "matchmaking":
       return { background: winter ? "#cdd8e2" : "#bcd8ea", fog: [12, 34], ambient: 0.75, sun: 1.3, sunColor: "#fff4dc", sunPosition: [4, 8, 4] };
@@ -75,22 +78,35 @@ function lookFor(route: SceneRoute): SceneLook {
 }
 
 // 相机随场景切换；竖屏时拉宽视角，保证手机上也能看到主要物件
-function CameraRig({ shot }: { shot: CameraShot }) {
+function CameraRig({ shot, walking, firstPerson, phoneOpen, reducedMotion, motion }: { shot: CameraShot; walking: boolean; firstPerson: boolean; phoneOpen: boolean; reducedMotion: boolean; motion: MutableRefObject<CommuteMotion> }) {
   const camera = useThree(state => state.camera) as THREE.PerspectiveCamera;
   const aspect = useThree(state => state.size.width / Math.max(1, state.size.height));
   const invalidate = useThree(state => state.invalidate);
   useEffect(() => {
     const narrow = aspect < 1;
-    const pull = narrow ? 1 + (1 - aspect) * 0.55 : 1;
+    const pull = narrow && !firstPerson ? 1 + (1 - aspect) * 0.55 : 1;
     const [x, y, z] = shot.position;
     const [tx, ty, tz] = shot.target;
-    camera.position.set(tx + (x - tx) * pull, y + (narrow ? 0.25 : 0), tz + (z - tz) * pull);
+    camera.position.set(tx + (x - tx) * pull, y + (narrow && !firstPerson ? 0.25 : 0), tz + (z - tz) * pull);
     camera.fov = narrow ? Math.min(78, shot.fov + 14) : shot.fov;
-    camera.lookAt(tx, ty, tz);
+    camera.lookAt(tx, ty - (narrow && firstPerson && !walking ? 0.32 : 0), tz);
     camera.updateProjectionMatrix();
     camera.updateMatrixWorld();
     invalidate();
-  }, [camera, aspect, shot, invalidate]);
+  }, [camera, aspect, shot, invalidate, walking, firstPerson]);
+  useFrame(() => {
+    if (!walking) return;
+    const phase = motion.current.distance * 7;
+    const bob = reducedMotion ? 0 : Math.sin(phase * 2) * 0.012;
+    camera.position.set(shot.position[0] + (reducedMotion ? 0 : Math.sin(phase) * 0.016), shot.position[1] + bob, shot.position[2]);
+    camera.lookAt(shot.target[0], (phoneOpen && aspect < 1 ? -4 : shot.target[1]) + bob, shot.target[2]);
+    camera.updateMatrixWorld();
+  }, -1);
+  return null;
+}
+
+function MotionClock({ motion }: { motion: MutableRefObject<CommuteMotion> }) {
+  useFrame((_, delta) => stepCommute(motion.current, delta), -2);
   return null;
 }
 
@@ -109,7 +125,7 @@ function ContextGuard({ onLost }: { onLost: (reason: string) => void }) {
   return null;
 }
 
-function SceneContent({ route, portrait, portraits, parenthood, month, parentActive, speaker }: SceneCanvasProps) {
+function SceneContent({ route, portrait, portraits, parenthood, month, parentActive, speaker, motion }: SceneCanvasProps) {
   const night = route.id === "room" || route.id === "home";
   switch (route.id) {
     case "room":
@@ -121,7 +137,7 @@ function SceneContent({ route, portrait, portraits, parenthood, month, parentAct
     case "meeting-room":
       return <OfficeScene season={route.season} portrait={null} night={false} meeting />;
     case "commute":
-      return <CommuteScene season={route.season} />;
+      return <CommuteScene season={route.season} motion={motion} />;
     case "park":
       return <ParkScene season={route.season} portraits={[]} showParent={parentActive} />;
     case "matchmaking":
@@ -142,6 +158,10 @@ function SceneContent({ route, portrait, portraits, parenthood, month, parentAct
 /* eslint-disable react/no-unused-prop-types -- 这些字段在 SceneCanvas 内解构使用，规则误判为未使用 */
 export interface SceneCanvasProps {
   route: SceneRoute;
+  motion: MutableRefObject<CommuteMotion>;
+  walkEnabled: boolean;
+  phoneOpen: boolean;
+  reducedMotion: boolean;
   hotspots: Hotspot[];
   onHotspot: (id: string) => void;
   portrait: string | null;
@@ -160,11 +180,25 @@ export interface SceneCanvasProps {
 /* eslint-enable react/no-unused-prop-types */
 
 function SceneCanvas(props: SceneCanvasProps) {
-  const { route, hotspots, onHotspot, onContextLost, showPhone, unread, phonePreview, onPhone, clock } = props;
+  const { route, hotspots, onHotspot, onContextLost, showPhone, unread, phonePreview, onPhone, clock, motion, walkEnabled, reducedMotion, phoneOpen } = props;
+  const [visible, setVisible] = useState(true);
+  useEffect(() => {
+    const update = () => setVisible(!document.hidden);
+    update();
+    document.addEventListener("visibilitychange", update);
+    return () => document.removeEventListener("visibilitychange", update);
+  }, []);
+  const walking = route.id === "commute";
+  const animate = walking && walkEnabled && visible;
+  useEffect(() => {
+    const travel = motion.current;
+    travel.moving = animate;
+    return () => { travel.moving = false; };
+  }, [motion, animate]);
   const [hovered, setHovered] = useState<string | null>(null);
   const phoneAnchor = useRef<HTMLButtonElement>(null);
   const look = lookFor(route);
-  const shot = SHOTS[route.id] ?? SHOTS.room;
+  const shot = useMemo(() => (route.id === "venue" ? venueView(route.venue ?? "restaurant") : SHOTS[route.id] ?? SHOTS.room), [route.id, route.venue]);
   const context = useMemo(() => ({
     hotspots: Object.fromEntries(hotspots.map(spot => [spot.id, spot])),
     hovered,
@@ -175,7 +209,7 @@ function SceneCanvas(props: SceneCanvasProps) {
   return (
     <>
     <Canvas
-      frameloop="demand"
+      frameloop={animate ? "always" : "demand"}
       shadows
       dpr={[1, 1.75]}
       camera={{ fov: shot.fov, near: 0.05, far: 80, position: shot.position }}
@@ -186,13 +220,14 @@ function SceneCanvas(props: SceneCanvasProps) {
       <fog attach="fog" args={[look.background, look.fog[0], look.fog[1]]} />
       <ambientLight intensity={look.ambient} />
       <hemisphereLight args={["#ffffff", "#6a5a4a", 0.35]} />
-      <directionalLight position={look.sunPosition} intensity={look.sun} color={look.sunColor} castShadow shadow-mapSize={[2048, 2048]} shadow-bias={-0.0005} shadow-normalBias={0.025} shadow-camera-left={-7} shadow-camera-right={7} shadow-camera-top={7} shadow-camera-bottom={-7} />
+      <directionalLight position={look.sunPosition} intensity={look.sun} color={look.sunColor} castShadow shadow-mapSize={walking ? [1024, 1024] : [2048, 2048]} shadow-bias={-0.0005} shadow-normalBias={0.025} shadow-camera-left={-7} shadow-camera-right={7} shadow-camera-top={7} shadow-camera-bottom={-7} />
       {look.lamp && <pointLight position={look.lamp.position} intensity={look.lamp.intensity} distance={9} color={look.lamp.color} />}
-      <CameraRig shot={shot} />
+      <MotionClock motion={motion} />
+      <CameraRig shot={shot} walking={walking} firstPerson={walking || route.id === "venue"} phoneOpen={phoneOpen} reducedMotion={reducedMotion} motion={motion} />
       <ContextGuard onLost={onContextLost} />
       <HotContext.Provider value={context}>
         <SceneContent {...props} />
-        {showPhone && <ScenePhone scene={route.id} unread={unread} preview={phonePreview} onOpen={onPhone} anchorRef={phoneAnchor} clock={clock} />}
+        {showPhone && <ScenePhone scene={route.id} unread={unread} preview={phonePreview} onOpen={onPhone} anchorRef={phoneAnchor} clock={clock} motion={walking && !reducedMotion ? motion : undefined} />}
       </HotContext.Provider>
     </Canvas>
     {showPhone && PHONE_POSITIONS[route.id] && (

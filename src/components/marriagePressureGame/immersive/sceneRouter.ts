@@ -149,7 +149,7 @@ export function getHotspots(state: MarriageGameState, route: SceneRoute, brief =
       break;
     case "commute":
       seeds.push(
-        phone("street-phone", "手机", "地铁上刷刷消息和朋友圈", "chats"),
+        phone("street-phone", "手机", "边走边回消息、打电话", "chats"),
         phone("moments", "朋友圈", "看看大家这周在干嘛", "moments"),
         child("barber", "理发店", "顺路理个发", "groom"),
         child("track", "江边夜跑", "绕江边跑两圈", "exercise"),

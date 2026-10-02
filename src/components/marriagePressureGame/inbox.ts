@@ -194,8 +194,8 @@ slot: "work",
 urgent: false,
 preview: "对方发来一张午饭的照片。",
     replies: [
-      { id: "now", label: "摸鱼回一句，也拍自己的", effects: { understanding: 2, relation: 1, career: -1 }, note: "你们隔着工位互相吐槽了午饭。" },
-      { id: "later", label: "下班再好好回", effects: { understanding: 1 }, note: "下班后你认真回了一段，对方回得也很长。" },
+      { id: "now", label: "现在放下工作，认真接话", effects: { understanding: 2, relation: 1, career: -1 }, note: "你接住了对方分享的小事。工位上分神聊天，会挤占一点工作精力。" },
+      { id: "later", label: "下班再好好回", effects: { understanding: 1 }, note: "你记下了这个话题，答应下班后再认真聊。" },
     ],
     ignored: { effects: { mutualIntent: -2 }, note: "对方的分享一直没有回音，聊天框停在了中午。" },
   },
@@ -381,4 +381,17 @@ export function applyMicroEffects(state: MarriageGameState, effects: MicroEffect
     applied[key] = allowed;
   }
   return applied;
+}
+
+// Deferred replies are promises, not completed conversations.
+export function isReplyPending(state: MarriageGameState, item: InboxMessage) {
+  const handled = state.week.handled[item.id];
+  return !handled || (handled === "deferred" && state.week.slot !== "work");
+}
+
+export function contextualReplyLabel(state: MarriageGameState, item: InboxMessage, reply: ReplyOption) {
+  if (item.kind !== "candidate-share") return reply.label;
+  if (reply.id === "later") return "先说在忙，约好下班接着聊";
+  if (state.week.handled[item.id] === "deferred") return "忙完了，回来接上刚才的话";
+  return state.week.slot === "work" ? "暂时放下工作，认真接话" : "慢慢回，聊聊这件小事";
 }

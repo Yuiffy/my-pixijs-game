@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import type { VenueId } from "../../activities";
 import type { Season } from "../lines";
 import { Ball, Box, Cyl, Figure, Floor, PortraitBillboard, Sign, Window } from "./kit";
+import { venueView } from "./venueView";
 import { Tree, Weather } from "./outdoor";
 
 export interface VenueLook {
@@ -88,7 +89,12 @@ function VenueProps({ venue, season }: { venue: VenueId; season: Season }) {
           <Table round top="#3a2a24" />
           <Cyl position={[0, 0.84, -0.4]} radius={0.3} height={0.16} color="#d23c2a" segments={16} />
           <Cyl position={[0, 0.93, -0.4]} radius={0.28} height={0.01} color="#ff7a3a" segments={16} />
-          {[0, 0.2, 0.4].map(y => <Ball key={y} position={[0.05 * y, 1.1 + y, -0.4]} radius={0.08 + y * 0.1} color="#f5f1e8" />)}
+          {[0, 0.12, 0.24].map(y => (
+            <mesh key={y} position={[-0.2 - y * 0.4, 1.01 + y, -0.4]} scale={[0.6, 1.4, 0.6]}>
+              <sphereGeometry args={[0.06 + y * 0.1, 12, 8]} />
+              <meshBasicMaterial color="#f5f1e8" transparent opacity={0.13 - y * 0.25} depthWrite={false} />
+            </mesh>
+          ))}
           <Sign position={[0, 2.3, -3.99]} size={[2.2, 0.6]} text="重庆火锅" background="#f0b43c" color="#6a1a14" glow font={60} />
           <Crowd spots={[[-3.2, -2, 0.3], [3.0, -2.4, -0.3], [2.4, -2.8, 0]]} colors={["#e0b24c", "#3d6a9c", "#4f8a55"]} />
         </Room>
@@ -208,7 +214,7 @@ function VenueProps({ venue, season }: { venue: VenueId; season: Season }) {
     case "catcafe":
       return (
         <Room floor="#e8d6c8" wall="#f7e8e0">
-          <Table round top="#fbf8f1" y={0.45} />
+          <Table round top="#fbf8f1" />
           {[[-1.2, 0.5, "#e0a060"], [1.6, 0.2, "#3a3a3a"], [-0.4, 1.0, "#f5f1e8"], [2.4, -1.8, "#8a8f96"]].map(([x, z, color]) => (
             <group key={`${x}${z}`} position={[x as number, 0, z as number]}>
               <Box position={[0, 0.12, 0]} size={[0.32, 0.18, 0.18]} color={color as string} />
@@ -328,17 +334,29 @@ function VenueProps({ venue, season }: { venue: VenueId; season: Season }) {
   }
 }
 
-// 约会现场：对象立牌在桌子另一侧，自己的人偶在近处侧身
+// 第一人称：自己的位置交给相机，对方在桌子另一侧或身旁。
 export function VenueScene({ venue, season, portrait }: { venue: VenueId; season: Season; portrait: string | null }) {
   const look = VENUE_LOOKS[venue];
-  const seatedVenue = ["restaurant", "hotpot", "western", "cafe", "boardgame", "cinema", "kitchen", "catcafe"].includes(venue);
+  const view = venueView(venue);
   return (
     <group>
       <VenueProps venue={venue} season={season} />
-      {portrait && <PortraitBillboard image={portrait} position={seatedVenue ? [0.7, 0.05, -1.05] : [0.8, 0.02, -0.9]} height={1.62} rotation={-0.25} />}
-      {/* “我”坐在桌子左侧、侧对镜头，不挡住对方 */}
-      {seatedVenue && <Box position={[-0.78, 0.2, -0.35]} size={[0.44, 0.4, 0.44]} color="#6a4a33" />}
-      <Figure position={seatedVenue ? [-0.78, 0, -0.3] : [-0.55, 0, -0.75]} look={{ shirt: season === "winter" ? "#3f4a5c" : "#5f7fa8", hair: "#221d1b" }} seated={seatedVenue} rotation={seatedVenue ? 1.9 : 1.35} scale={0.94} />
+      {portrait && (
+        <>
+          <Figure position={[view.partner[0], 0, view.partner[2] - 0.2]} look={{ shirt: "#494354", pants: "#343944" }} seated={view.seated} hideHead />
+          <PortraitBillboard image={portrait} position={view.partner} height={view.seated ? 0.82 : 0.72} framed={false} />
+        </>
+      )}
+      {view.seated && venue !== "cinema" && <Box position={[0, 0.4, -1.4]} size={[0.52, 0.08, 0.5]} color="#6a4a33" />}
+      {venue === "cafe" && (
+<>
+        <Cyl position={[-0.28, 0.79, 0]} radius={0.11} height={0.02} color="#ded2bc" />
+        <Cyl position={[-0.28, 0.86, 0]} radius={0.065} height={0.12} color="#fbf4e5" />
+        <Cyl position={[-0.28, 0.923, 0]} radius={0.053} height={0.003} color="#71482f" />
+        <Box position={[0.27, 0.783, -0.08]} size={[0.22, 0.018, 0.3]} color="#32474b" rotation={[0, -0.18, 0]} />
+        <Sign position={[-1.5, 1.9, -3.98]} size={[0.8, 0.5]} text="慢慢喝，慢慢聊" background="#8b7760" font={30} />
+      </>
+)}
       {look.outdoor && <Weather season={season} />}
     </group>
   );

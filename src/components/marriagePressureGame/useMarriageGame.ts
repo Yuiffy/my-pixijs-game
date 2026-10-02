@@ -206,7 +206,7 @@ export function useMarriageGame() {
     setPlayerName(cleanName);
     try {
       localStorage.setItem(PROFILE_KEY, cleanName);
-      ["marriage-pressure-introduction", "marriage-pressure-day-plan", "marriage-pressure-reunion"].forEach(key => localStorage.removeItem(key));
+      ["marriage-pressure-introduction", "marriage-pressure-day-plan", "marriage-pressure-reunion", "marriage-pressure-conversations"].forEach(key => localStorage.removeItem(key));
     } catch {
       setStorageAvailable(false);
     }

@@ -34,6 +34,7 @@ import { RELATIVES, REUNION_SECONDS, getReunionQuestions, reunionSummary, type R
 import {
   VENUE_TITLES, getFestivalReminders, getHotspots, isReunionTurn, phoneClock, routeScene, type ChatId, type PhoneApp,
 } from "./sceneRouter";
+import type { CommuteMotion } from "./scene/commuteMotion";
 import SceneCanvas from "./scene/SceneCanvas";
 import StepsMini from "./StepsMini";
 import TimingMini from "./TimingMini";
@@ -119,6 +120,9 @@ interface DateState {
 export default function ImmersiveGame({ game, onFallback }: { game: MarriageGameApi; onFallback: (reason: string) => void }) {
   const { state, candidate, resolution, playerName, eventNotice } = game;
   const reducedMotion = useReducedMotion();
+  const motion = useRef<CommuteMotion>({ distance: 0, elapsed: 0, moving: false });
+  const [walkChoice, setWalkChoice] = useState<boolean | null>(null);
+  const walkEnabled = walkChoice ?? !reducedMotion;
   const [pacing, setPacing] = usePreference("marriage-pressure-pacing", "full");
   const [muted, setMuted] = usePreference("marriage-pressure-muted", "off");
   const [phone, setPhone] = useState<{ app: PhoneApp; chat: ChatId | null } | null>(null);
@@ -169,6 +173,7 @@ export default function ImmersiveGame({ game, onFallback }: { game: MarriageGame
   useEffect(() => {
     game.debugRef.current = {
       view: "immersive",
+      commute: route.id === "commute" ? motion.current : null,
       scene: route.id,
       venue: route.venue,
       slot: state.week.slot,
@@ -304,7 +309,7 @@ export default function ImmersiveGame({ game, onFallback }: { game: MarriageGame
 
   const finishDate = useCallback((topic: MeetingTopic) => {
     if (!date) return;
-    const result = commit({ type: "child-action", id: date.plan.payment, topic, activity: date.plan.activity });
+    const result = commit({ type: "child-action", id: date.plan.payment, topic, activity: date.plan.activity, mood: date.mood?.mood });
     if (!result) { setDate(null); return; }
     const choice = result.steps.find(step => step.kind === "choice");
     const photo = result.state.dateLog[result.state.dateLog.length - 1];
@@ -349,7 +354,7 @@ export default function ImmersiveGame({ game, onFallback }: { game: MarriageGame
       {state.phase === "turn" && !date && !reunionDue && (
         <aside className={styles.narration} data-testid="relationship-feedback">
           <small>{state.activeActor === "parent" ? "家长视角" : `${playerName} · ${STAGE_LABELS[state.stage]}`}{candidate ? ` · ${candidate.name}` : ""}</small>
-          <p>{state.week.slot === "work" ? "手边的手机亮了。忙完这一阵，下班路上再慢慢聊。" : state.week.slot === "commute" ? "走出办公楼，街灯刚亮。回条消息，或给家里打个电话，再回家。" : eventNotice?.detail ? game.personalizeNarrative(eventNotice.detail) : state.stage === "married" || state.stage === "parenthood" ? state.partnerNote : state.datingFeedback}</p>
+          <p>{state.week.slot === "work" ? "手边的手机亮了。忙完这一阵，下班路上再慢慢聊。" : state.week.slot === "commute" ? "沿着人行道慢慢往家走。手机亮了，边走边聊，街边的灯一盏盏经过。" : eventNotice?.detail ? game.personalizeNarrative(eventNotice.detail) : state.stage === "married" || state.stage === "parenthood" ? state.partnerNote : state.datingFeedback}</p>
           <small>{partnerLabel} {state.mutualIntent} · 了解 {state.understanding}</small>
           {festival.map(line => (
             <button key={line} className={styles.festival} data-testid="festival-reminder" onClick={() => { cue("tap"); setPhone({ app: "calendar", chat: null }); }}>{line}</button>
@@ -374,6 +379,8 @@ export default function ImmersiveGame({ game, onFallback }: { game: MarriageGame
 
   const renderJourney = () => state.phase === "turn" && !date && !reunionDue && !introductionOpen && (
     <aside className={styles.journey} data-testid="daily-journey">
+      {route.id === "commute" && <button className={styles.walkToggle} data-testid="walk-toggle" aria-pressed={!walkEnabled} onClick={() => setWalkChoice(!walkEnabled)}>{walkEnabled ? "边走边聊 · 停下脚步" : "站在路边 · 继续走"}</button>}
+      {route.id === "commute" && state.week.inbox.some(item => state.week.handled[item.id] === "deferred") && <button data-testid="resume-promised-chat" onClick={() => setPhone({ app: "chat", chat: "candidate" })}>答应下班聊的话，接着说 →</button>}
       <small>{plan ? `已安排：${plan.label}` : state.week.slot === "work" ? route.night ? "22:47 · 忙完这一阵就回家" : "11:42 · 午休前的一条消息" : state.week.slot === "commute" ? "下班后 · 把工作留在身后" : "回到家 · 今天终于属于自己"}</small>
       {hotspots.some(spot => spot.id === "advance") ? <button data-testid="journey-next" onClick={() => onHotspot("advance")}>{state.week.slot === "work" ? "收好电脑，出发下班" : state.week.slot === "commute" ? "沿着灯光，回出租屋" : "回家吃午饭"} <ArrowRightOutlined /></button> : (
 <>
@@ -434,12 +441,12 @@ export default function ImmersiveGame({ game, onFallback }: { game: MarriageGame
             <div className={styles.dateChoices}>
               {skill && (
                 <button data-testid="mini-skill" className={styles.skillChoice} onClick={() => { cue("tap"); setDate({ ...date, stage: "skill" }); }}>
-                  <strong>来一局：{skill.title}</strong><small>看时机按下，成绩只影响气氛和合照</small>
+                  <strong>来一局：{skill.title}</strong><small>看时机按下，气氛会影响这次相处的感受</small>
                 </button>
               )}
               {steps && (
                 <button data-testid="mini-steps" className={styles.skillChoice} onClick={() => { cue("tap"); setDate({ ...date, stage: "steps" }); }}>
-                  <strong>来一局：{steps.title}</strong><small>每一步选择怎么和对方相处，只影响气氛和合照</small>
+                  <strong>来一局：{steps.title}</strong><small>每一步选择怎么和对方相处，会留下不同的相处感受</small>
                 </button>
               )}
               {options.map(option => (
@@ -634,11 +641,15 @@ export default function ImmersiveGame({ game, onFallback }: { game: MarriageGame
   );
 
   return (
-    <div className={styles.immersive} data-testid="immersive-game" data-scene={route.id} data-venue={route.venue ?? undefined} data-reduced-motion={reducedMotion}>
+    <div className={styles.immersive} data-testid="immersive-game" data-scene={route.id} data-phone-open={Boolean(phone)} data-venue={route.venue ?? undefined} data-reduced-motion={reducedMotion}>
       <div className={styles.canvasWrap} data-testid="scene-canvas">
         <SceneBoundary onError={onFallback}>
           <SceneCanvas
             route={route}
+            motion={motion}
+            phoneOpen={Boolean(phone)}
+            walkEnabled={walkEnabled && !resolution && !confirm && !introductionOpen}
+            reducedMotion={reducedMotion}
             hotspots={hotspots}
             onHotspot={onHotspot}
             portrait={candidate?.image ?? null}

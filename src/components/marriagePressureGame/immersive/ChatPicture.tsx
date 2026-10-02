@@ -6,12 +6,41 @@ import styles from "./immersive.module.css";
 // Small, local illustrations; the semantic subject can later select generated photos.
 export default function ChatPicture({ subject }: { subject: string }) {
   const id = useId().replace(/:/g, "");
-  const kind = /猫/.test(subject) ? "cat" : /饭|肉|鸡|吃|火锅|餐|蛋|冰箱|厨/.test(subject) ? "food" : /单|表|报名/.test(subject) ? "paper" : /婚|满月|宝宝|孙|视频/.test(subject) ? "party" : /办公室|入职|上岸/.test(subject) ? "work" : "view";
+  const kind = /猫/.test(subject) ? "cat" : /芽|植物/.test(subject) ? "plant" : /面包/.test(subject) ? "bread" : /小巷/.test(subject) ? "lane" : /饭|肉|鸡|吃|火锅|餐|蛋|冰箱|厨/.test(subject) ? "food" : /单|表|报名/.test(subject) ? "paper" : /婚|满月|宝宝|孙|视频/.test(subject) ? "party" : /办公室|入职|上岸/.test(subject) ? "work" : "view";
   return (
     <figure className={styles.chatPicture} data-testid="chat-picture" data-subject={kind}>
       <svg viewBox="0 0 240 160" role="img" aria-label={subject}>
         <defs><linearGradient id={id} x2="0.8" y2="1"><stop stopColor="#ead6b8" /><stop offset="1" stopColor="#b7cec6" /></linearGradient></defs>
         <rect width="240" height="160" rx="8" fill={`url(#${id})`} />
+        {kind === "plant" && (
+          <>
+            <rect x="20" y="12" width="200" height="106" fill="#c1dce0" />
+            <path d="M120 12v106M20 62h200" stroke="#f5eee2" strokeWidth="7" />
+            <path d="M0 124h240" stroke="#9e8469" strokeWidth="12" />
+            <path d="M92 105h56l-8 43h-40z" fill="#ba7957" />
+            <ellipse cx="120" cy="105" rx="28" ry="7" fill="#67503d" />
+            <path d="M120 105V60m0 22l-20-13m20 3l20-17" stroke="#568360" strokeWidth="4" fill="none" />
+            <ellipse cx="99" cy="65" rx="17" ry="9" fill="#7ea26b" transform="rotate(30 99 65)" />
+            <ellipse cx="141" cy="51" rx="17" ry="9" fill="#a4bf78" transform="rotate(-30 141 51)" />
+          </>
+        )}
+        {kind === "bread" && (
+          <>
+            <path d="M0 50h240M0 115h240" stroke="#b69a79" strokeWidth="3" />
+            <path d="M23 56l169-25 26 98-171 21z" fill="#f5ead4" />
+            {[0, 1, 2].map(n => <g key={n} transform={`translate(${67 + n * 50} ${88 - n * 9}) rotate(-15)`}><ellipse rx="24" ry="35" fill="#c78c47" /><ellipse cy="-3" rx="21" ry="30" fill="#e8b96f" /><path d="M-12-16l21 6m-24 6l26 8m-23 5l20 6" stroke="#fff0c5" strokeWidth="4" strokeLinecap="round" /></g>)}
+          </>
+        )}
+        {kind === "lane" && (
+          <>
+            <rect width="240" height="160" fill="#c3d4d3" />
+            <path d="M92 100h54l66 60H25z" fill="#a69c8d" />
+            <path d="M0 0l90 42v74L0 150z" fill="#b89e87" /><path d="M240 0l-93 39v74l93 38z" fill="#bdad98" />
+            <path d="M18 53l54 16v13L18 70z" fill="#4d8072" /><path d="M18 83l50 10v37l-50 11z" fill="#e7d9b8" />
+            <path d="M167 70l55-19v18l-55 14z" fill="#aa6655" /><path d="M170 94l46-8v45l-46-12z" fill="#697a79" />
+            <path d="M116 114l-10 46m25-46l15 46M67 138h107" stroke="#d2c8b9" strokeWidth="2" />
+          </>
+        )}
         {kind === "food" && (
 <>
           <path d="M0 32H240M0 80H240M0 132H240" stroke="#bca484" strokeWidth="2" />

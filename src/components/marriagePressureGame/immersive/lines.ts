@@ -1,3 +1,4 @@
+import { dailyPick, storyIncoming } from "./dailyStories";
 import { CANDIDATES } from "../content";
 import { INCOMING, previewOf, type MessageSpec } from "./chatScripts";
 import { MESSAGE_KINDS, hashKey } from "../inbox";
@@ -41,14 +42,15 @@ export function senderName(state: Pick<MarriageGameState, "candidateId">, from: 
 }
 
 // 这条消息实际发来的气泡序列（按局面哈希挑一种写法）
-export function messageSpecs(state: Pick<MarriageGameState, "seed" | "turn">, item: InboxMessage): MessageSpec[] {
+export function messageSpecs(state: Pick<MarriageGameState, "seed" | "turn"> & Partial<Pick<MarriageGameState, "candidateId">>, item: InboxMessage): MessageSpec[] {
+  if (item.kind === "candidate-share") return storyIncoming({ ...state, candidateId: state.candidateId ?? null });
   const options = INCOMING[item.kind];
   if (!options?.length) return [{ kind: "text", text: MESSAGE_KINDS[item.kind]?.preview ?? "" }];
-  return options[hashKey(state.seed, state.turn, item.id) % options.length];
+  return dailyPick(options, state.seed, state.turn, `${state.candidateId ?? "family"}-${item.kind}`);
 }
 
 // 经典模式消息面板用的一行摘要，与手机里的内容一致
-export function describeMessage(state: Pick<MarriageGameState, "seed" | "turn">, item: InboxMessage) {
+export function describeMessage(state: Pick<MarriageGameState, "seed" | "turn"> & Partial<Pick<MarriageGameState, "candidateId">>, item: InboxMessage) {
   return messageSpecs(state, item).filter(spec => spec.kind !== "system").map(previewOf).join(" ")
     .replaceAll("{name}", "你")
 .replaceAll("{partner}", "对方")

@@ -358,3 +358,23 @@
   .introCard h2 { font-size: 22px; }
   .replyTray { max-height: 44%; }
 }
+
+/* 通勤时手机拿在手里，保留前方道路；阅读区本身不跟着脚步晃动。 */
+.immersive[data-scene="commute"] .phoneLayer { background: linear-gradient(to left, #101b232a, transparent 70%); }
+.journey .walkToggle { background: transparent; color: #35675e; border: 1px solid #8ba99e; font-size: 12px; }
+@media (max-width: 760px) {
+  .immersive[data-scene="commute"] .phoneLayer { align-items: flex-end; padding: 0 8px 8px; }
+  .immersive[data-scene="commute"] .phone { height: 72%; border: 5px solid #252c30; border-radius: 24px; }
+}
+
+@media (max-width: 760px) {
+  .immersive[data-scene="venue"] .datePanel { max-height: 43%; padding: 12px; }
+  .immersive[data-scene="venue"] .datePanel header strong { font-size: 18px; }
+}
+
+.immersive[data-phone-open="true"] .scenePhone { visibility: hidden; }
+@media (max-width: 760px) {
+  .immersive[data-scene="commute"][data-phone-open="true"] .meters,
+  .immersive[data-scene="commute"][data-phone-open="true"] .hudTools,
+  .immersive[data-scene="commute"][data-phone-open="true"] .slotStrip { display: none; }
+}
