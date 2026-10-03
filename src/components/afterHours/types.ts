@@ -1,5 +1,9 @@
 export type Stage =
+  | "visit"
+  | "tea"
+  | "photo"
   | "home"
+  | "unease"
   | "power"
   | "memories"
   | "corridor"
@@ -7,7 +11,16 @@ export type Stage =
   | "choice"
   | "dawn";
 export type Mode = "title" | "playing" | "paused" | "dead" | "ending";
-export type Panel = "none" | "journal" | "fuse" | "code" | "choice";
+export type Panel =
+  | "none"
+  | "journal"
+  | "fuse"
+  | "code"
+  | "choice"
+  | "dialogue"
+  | "tea"
+  | "photo"
+  | "photograph";
 export type Point = { x: number; z: number };
 export type Input = { forward: number; right: number; run: boolean };
 export type Echo = Point & {
@@ -19,12 +32,28 @@ export type Echo = Point & {
   patrol: number;
 };
 export type Game = {
-  version: 1;
+  version: 2;
   mode: Mode;
   stage: Stage;
   panel: Panel;
   player: Point & { yaw: number; pitch: number; stamina: number };
   echo: Echo;
+  sui: Point & { yaw: number; path: Point[]; repath: number };
+  evening: {
+    greeted: boolean;
+    tea: number;
+    blend: "honey" | "lemon" | null;
+    carrying: boolean;
+    served: boolean;
+    photo: boolean;
+    promise: "tomorrow" | "extra" | null;
+    anomaly: number;
+    dialogue: "greeting" | "serve" | "promise" | "anomaly" | null;
+    gesture: "idle" | "wave" | "offer" | "heart" | "shy" | "worried";
+    gestureUntil: number;
+  };
+  photoRequest: number;
+  photoImage: string;
   time: number;
   stageTime: number;
   tapes: string[];

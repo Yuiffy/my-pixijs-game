@@ -80,10 +80,11 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
       {
         title: '岁己：零点之后',
         href: '/game/after-hours',
-        description: '下播之后，房间里的另一个你还在等最后一句话。找回午夜录音，穿过回声走廊，带着自己的名字走向天亮。',
+        description: '赴岁己的晚安之约，一起泡茶、拍照、约定明天。零点之后，留住真实的今晚，走出不肯结束的回放。',
         image: '/games/after-hours/preview.png',
-        meta: '3D 心理恐怖 · 扮演岁己 · 探索 / 解谜 / 追逐',
+        meta: '3D 互动短篇 · 晚安陪伴 / 解谜 / 心理恐怖',
         releaseDate: '2026-10-03',
+        updateDate: '2026-10-04',
       },
     ],
   },

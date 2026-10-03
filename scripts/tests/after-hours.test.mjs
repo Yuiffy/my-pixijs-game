@@ -18,7 +18,7 @@ test('title, pause, panels and invalid time never move the player or advance a c
   engine.stepGame(g, 999999); assert.ok(Math.abs(g.time - time - 5) < .00001);
 });
 
-for (const ending of ['name', 'stay']) test(`normal movement, clues and puzzles complete all six chapters: ${ending}`, () => {
+for (const ending of ['name', 'stay']) test(`normal movement, clues and puzzles complete the warm evening and every horror chapter: ${ending}`, () => {
   const { g, pilot } = fresh(); pilot.toChoice();
   assert.equal(g.stage, 'choice'); assert.equal(g.panel, 'choice'); assert.equal(g.tapes.length, 3); assert.equal(g.seals, 3); assert.equal(g.sources.length, 3); assert.equal(g.deaths, 0);
   engine.chooseEnding(g, ending);
@@ -27,15 +27,15 @@ for (const ending of ['name', 'stay']) test(`normal movement, clues and puzzles 
 });
 
 test('facing, walls and distance prevent interacting through partitions', () => {
-  const { g, pilot } = fresh(); engine.startGame(g);
+  const { g, pilot } = fresh(); pilot.toHome(); pilot.interact('sui'); engine.chooseDialogue(g, 'tomorrow');
   const original = g.stage; engine.interact(g); assert.equal(g.stage, original);
   pilot.reach('computer'); pilot.turn(g.player.yaw + Math.PI); engine.interact(g); assert.equal(g.stage, original);
-  pilot.turn(g.player.yaw + Math.PI); engine.interact(g); assert.equal(g.stage, 'power');
+  pilot.turn(g.player.yaw + Math.PI); engine.interact(g); assert.equal(g.stage, 'unease');
   pilot.walk({ x: .4, z: -2.5 }); assert.equal(world.focusedSpot(g), null);
 });
 
 test('the wrong fuse order resets only the puzzle and the correct order restores power', () => {
-  const { g, pilot } = fresh(); engine.startGame(g); pilot.interact('computer'); pilot.interact('fuse');
+  const { g, pilot } = fresh(); pilot.toPower(); pilot.interact('fuse');
   engine.fuseSwitch(g, 0); assert.deepEqual(g.fuse, []); assert.equal(g.mistakes, 1);
   engine.fuseSwitch(g, 1); engine.fuseSwitch(g, 2); assert.deepEqual(g.fuse, []); assert.equal(g.stage, 'power');
   for (const i of [1, 0, 2]) engine.fuseSwitch(g, i);
@@ -43,7 +43,7 @@ test('the wrong fuse order resets only the puzzle and the correct order restores
 });
 
 test('password requires all three recordings; wrong digits do not open the hall', () => {
-  const { g, pilot } = fresh(); engine.startGame(g); pilot.interact('computer'); pilot.interact('fuse');
+  const { g, pilot } = fresh(); pilot.toPower(); pilot.interact('fuse');
   [1, 0, 2].forEach(i => engine.fuseSwitch(g, i)); pilot.interact('computer'); assert.equal(g.panel, 'none');
   for (const id of ['tape-shelf', 'tape-bedroom', 'tape-kitchen']) pilot.interact(id);
   pilot.interact('computer'); engine.submitCode(g, '0000'); assert.equal(g.stage, 'memories');
@@ -51,7 +51,7 @@ test('password requires all three recordings; wrong digits do not open the hall'
 });
 
 test('wrong memory door repeats the hallway without awarding a seal', () => {
-  const { g, pilot } = fresh(); engine.startGame(g); pilot.interact('computer'); pilot.interact('fuse'); [1, 0, 2].forEach(i => engine.fuseSwitch(g, i));
+  const { g, pilot } = fresh(); pilot.toPower(); pilot.interact('fuse'); [1, 0, 2].forEach(i => engine.fuseSwitch(g, i));
   for (const id of ['tape-shelf', 'tape-bedroom', 'tape-kitchen']) pilot.interact(id);
   pilot.interact('computer'); engine.submitCode(g, '0017'); pilot.interact('portrait');
   assert.equal(g.seals, 0); assert.equal(g.mistakes, 1); assert.equal(g.player.z, 6.8); assert.equal(g.stage, 'corridor');
@@ -91,6 +91,60 @@ test('shipped models contain geometry, packed textures and articulated character
     assert.ok(doc.meshes.length > 0); assert.ok(doc.images.length > 0);
     assert.ok(doc.images.every(image => image.bufferView !== undefined), 'textures ship inside GLB');
     assert.ok(!JSON.stringify(doc).includes('https://'), 'no external asset fetch');
-    if (name === 'sui') for (const pivot of ['Sui_Head', 'Sui_Body', 'Sui_LeftArm', 'Sui_RightArm', 'Sui_LeftLeg', 'Sui_RightLeg']) assert.ok(doc.nodes.some(node => node.name === pivot), pivot);
+    if (name === 'sui') {
+      for (const pivot of ['Sui_Head', 'Sui_Body', 'Sui_LeftArm', 'Sui_RightArm', 'Sui_LeftForearm', 'Sui_RightForearm', 'Sui_LeftEye', 'Sui_RightEye', 'Sui_LeftLeg', 'Sui_RightLeg']) assert.ok(doc.nodes.some(node => node.name === pivot), pivot);
+      const mouth = doc.meshes.find(mesh => mesh.extras?.targetNames?.includes('Smile'));
+      assert.ok(mouth, 'optimized export retains the real mouth morph targets');
+      assert.deepEqual(mouth.extras.targetNames, ['Smile', 'Talk', 'Worry']);
+      assert.equal(mouth.primitives[0].targets.length, 3);
+      assert.equal(doc.nodes.find(node => node.name === 'Sui_Root').extras.character_revision, 2);
+    }
   }
+});
+
+test('tea has a real ingredient order and either blend remains personal after reload', () => {
+  for (const blend of ['honey', 'lemon']) {
+    const {g, pilot} = fresh(); engine.startGame(g); pilot.interact('sui');
+    engine.chooseDialogue(g, 'help'); pilot.settle(); pilot.interact('kettle');
+    engine.makeTea(g, 'water'); engine.makeTea(g, 'honey'); assert.equal(g.evening.tea, 0);
+    engine.makeTea(g, 'bag'); engine.makeTea(g, 'bag'); assert.equal(g.evening.tea, 1);
+    engine.makeTea(g, 'water'); engine.makeTea(g, blend);
+    const loaded = engine.loadGame(engine.saveGame(g)); assert.ok(loaded);
+    assert.equal(loaded.evening.blend, blend); assert.equal(loaded.evening.carrying, true);
+    engine.startGame(loaded); const resumed = createPilot(engine, world, loaded); resumed.settle(); resumed.interact('sui'); engine.chooseDialogue(loaded, 'tease');
+    assert.equal(loaded.stage, 'photo'); assert.equal(loaded.evening.served, true);
+    assert.ok(loaded.subtitle.text.includes(blend === 'lemon' ? '柠檬' : '蜂蜜'));
+  }
+});
+
+test('the room only fails after a photograph, a promise, inspection and Sui’s answer', () => {
+  const {g, pilot} = fresh(); pilot.toHome('lemon');
+  const image = g.photoImage; pilot.interact('computer'); assert.equal(g.stage, 'home');
+  pilot.interact('sui'); engine.chooseDialogue(g, 'extra'); pilot.interact('computer');
+  assert.equal(g.stage, 'unease'); assert.ok(g.subtitle.text.includes('永远'));
+  pilot.interact('computer'); assert.equal(g.stage, 'unease');
+  pilot.interact('photo-frame'); assert.equal(g.evening.anomaly, 1);
+  assert.equal(g.panel, 'photograph'); g.panel = 'none';
+  pilot.interact('computer'); assert.equal(g.stage, 'unease');
+  pilot.interact('sui'); engine.chooseDialogue(g, 'name'); pilot.interact('computer');
+  assert.equal(g.stage, 'power'); assert.equal(g.photoImage, image);
+});
+
+test('a photo cannot advance the chapter without the camera and survives the save roundtrip', () => {
+  const {g, pilot} = fresh(); engine.finishPhoto(g, 'data:image/jpeg;base64,fake'); assert.equal(g.stage, 'visit');
+  pilot.toHome(); const restored = engine.loadGame(engine.saveGame(g));
+  assert.ok(restored); assert.equal(restored.photoImage, g.photoImage); assert.equal(restored.photoRequest, 0);
+  assert.equal(restored.evening.photo, true); assert.equal(restored.evening.dialogue, null);
+  const broken = JSON.parse(engine.saveGame(g)); broken.evening.served = false;
+  assert.equal(engine.loadGame(JSON.stringify(broken)), null);
+});
+
+test('legacy saves restart the old intro and preserve later horror progress', () => {
+  const {g, pilot} = fresh(); pilot.toHome();
+  const old = JSON.parse(engine.saveGame(g)); old.version = 1; delete old.evening; delete old.photoImage;
+  const intro = engine.loadGame(JSON.stringify(old)); assert.ok(intro); assert.equal(intro.stage, 'visit'); assert.equal(intro.evening.greeted, false);
+  pilot.interact('sui'); engine.chooseDialogue(g, 'tomorrow'); pilot.interact('computer'); pilot.interact('photo-frame'); g.panel = 'none'; pilot.interact('sui'); engine.chooseDialogue(g, 'voice'); pilot.interact('computer');
+  const later = JSON.parse(engine.saveGame(g)); later.version = 1; delete later.evening; delete later.photoImage;
+  const migrated = engine.loadGame(JSON.stringify(later)); assert.ok(migrated); assert.equal(migrated.stage, 'power');
+  assert.equal(migrated.evening.promise, 'tomorrow'); assert.equal(migrated.photoImage, '');
 });

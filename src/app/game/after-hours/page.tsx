@@ -4,7 +4,7 @@ import AfterHours from "@/components/afterHours/AfterHours";
 export const metadata: Metadata = {
   title: "岁己：零点之后 · 3D 心理恐怖游戏",
   description:
-    "下播以后，房间里的另一个岁己还在等最后一句话。探索午夜公寓，找回录音，穿过回声走廊，把自己的名字带回天亮。",
+    "赴岁己的晚安之约，一起泡茶、拍照、约定明天。零点之后，用真实的今晚走出监听回放，和岁己一起走向天亮。",
 };
 
 export default function AfterHoursPage() {

@@ -2,6 +2,31 @@ import type { Game, Point, Rect, Spot } from "./types";
 
 export const BODY_RADIUS = 0.2;
 export const SPOTS: Spot[] = [
+  { id: "sui", label: "岁己", x: -4.15, z: 1.15, height: 1.43, reach: 1.75 },
+  {
+    id: "kettle",
+    label: "晚安茶",
+    x: -2.3,
+    z: -4.65,
+    height: 1.12,
+    reach: 1.5,
+  },
+  {
+    id: "tripod",
+    label: "合照相机",
+    x: -2.1,
+    z: 2.25,
+    height: 1.42,
+    reach: 1.6,
+  },
+  {
+    id: "photo-frame",
+    label: "刚拍的合照",
+    x: -3.5,
+    z: -0.58,
+    height: 0.74,
+    reach: 1.6,
+  },
   {
     id: "computer",
     label: "直播电脑",
@@ -70,6 +95,14 @@ export const OBSTACLES: Rect[] = [
 ];
 
 export const corridorOpen = (g: Game) => ["corridor", "chase", "choice", "dawn"].includes(g.stage);
+export const friendlyStage = (g: Game) => ["visit", "tea", "photo", "home", "unease", "dawn"].includes(g.stage);
+export const companionTarget = (g: Game): Point => (g.stage === "tea" && !g.evening.carrying
+    ? { x: -2.75, z: -3.95 }
+    : g.stage === "unease" && g.evening.anomaly === 2
+      ? { x: 6.1, z: 1.6 }
+      : g.stage === "dawn"
+        ? { x: -4.25, z: 3.75 }
+        : { x: -4.15, z: 1.15 });
 export const rects = (g: Game): Rect[] => (corridorOpen(g)
     ? OBSTACLES
     : [...OBSTACLES, { id: "entry-door", x: -3, z: 6, w: 2.2, d: 0.12 }]);
@@ -94,8 +127,13 @@ export function walkable(p: Point, g: Game, radius = BODY_RADIUS) {
 }
 
 export function move(p: Point, dx: number, dz: number, g: Game) {
-  if (walkable({ x: p.x + dx, z: p.z }, g)) p.x += dx;
-  if (walkable({ x: p.x, z: p.z + dz }, g)) p.z += dz;
+  const free = (point: Point) => walkable(point, g) &&
+    (p !== g.player ||
+      !friendlyStage(g) ||
+      Math.hypot(point.x - g.sui.x, point.z - g.sui.z) >=
+        Math.min(0.52, Math.hypot(p.x - g.sui.x, p.z - g.sui.z)));
+  if (free({ x: p.x + dx, z: p.z })) p.x += dx;
+  if (free({ x: p.x, z: p.z + dz })) p.z += dz;
 }
 
 export function clearLine(
@@ -144,7 +182,10 @@ export function findPath(a: Point, b: Point, g: Game): Point[] {
     const id = key(current);
     if (closed.has(id)) continue;
     closed.add(id);
-    if (Math.hypot(current.x - target.x, current.z - target.z) < 0.5) {
+    if (
+      Math.hypot(current.x - target.x, current.z - target.z) < 0.6 &&
+      clearLine(current, b, g, BODY_RADIUS)
+    ) {
       const path = [current];
       let previous = parent.get(id);
       while (previous && path.length < 1800) {
@@ -183,7 +224,11 @@ export function findPath(a: Point, b: Point, g: Game): Point[] {
 
 export function activeSpots(g: Game) {
   return SPOTS.filter((s) => {
-    if (s.id === "echo") return ["home", "memories", "choice"].includes(g.stage);
+    if (s.id === "sui") return friendlyStage(g) && g.stage !== "dawn" && g.stage !== "photo";
+    if (s.id === "kettle") return g.stage === "tea" && !g.evening.carrying;
+    if (s.id === "tripod") return g.stage === "photo" && !g.evening.photo;
+    if (s.id === "photo-frame") return g.stage === "unease" && g.evening.anomaly === 0;
+    if (s.id === "echo") return ["memories", "choice"].includes(g.stage);
     if (s.id === "hide") return g.stage === "chase";
     if (["clock", "portrait", "radio", "exit"].includes(s.id)) return g.stage === "corridor";
     if (s.id.startsWith("tape-")) return g.stage === "memories" && !g.tapes.includes(s.id);
@@ -193,13 +238,22 @@ export function activeSpots(g: Game) {
         (g.stage === "chase" && !g.sources.includes("fuse"))
       );
     if (s.id === "computer") return (
-        ["home", "memories", "choice"].includes(g.stage) ||
+        ["home", "unease", "memories", "choice"].includes(g.stage) ||
         (g.stage === "chase" && !g.sources.includes("computer"))
       );
-    if (s.id === "fridge") return !g.notes.includes("power-note");
-    if (s.id === "notebook") return !g.notes.includes("diary");
+    if (s.id === "fridge") return (
+        !["visit", "photo"].includes(g.stage) && !g.notes.includes("power-note")
+      );
+    if (s.id === "notebook") return (
+        !["visit", "tea", "photo"].includes(g.stage) &&
+        !g.notes.includes("diary")
+      );
     return s.id === "entry";
-  }).map((s) => (s.id === "echo" ? { ...s, x: g.echo.x, z: g.echo.z } : s));
+  }).map((s) => (s.id === "echo"
+      ? { ...s, x: g.echo.x, z: g.echo.z }
+      : s.id === "sui"
+        ? { ...s, x: g.sui.x, z: g.sui.z }
+        : s),);
 }
 
 export function focusedSpot(g: Game) {

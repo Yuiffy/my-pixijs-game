@@ -1,3 +1,4 @@
+const PHOTO = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA0JCgsKCA0LCgsODg0PEyAVExISEyccHhcgLikxMC4pLSwzOko+MzZGNywtQFdBRkxOUlNSMj5aYVpQYEpRUk//2wBDAQ4ODhMREyYVFSZPNS01T09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0//wAARCAABAAEDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDqaKKKwNz/2Q==';
 export function createPilot(engine, world, g) {
   function turn(yaw) {
     engine.look(g, Math.atan2(Math.sin(yaw - g.player.yaw), Math.cos(yaw - g.player.yaw)), 0);
@@ -34,13 +35,25 @@ export function createPilot(engine, world, g) {
     if (world.focusedSpot(g)?.id !== id) throw Error('Wrong focus: ' + JSON.stringify({ id, actual: g.focus, player: g.player }));
   }
   function interact(id, run = false) { reach(id, run); engine.interact(g); }
+  function settle() { for (let i = 0; i < 14; i++) engine.stepGame(g, 1000); }
+  function toHome(blend = 'honey') {
+    engine.startGame(g); interact('sui'); engine.chooseDialogue(g, 'happy');
+    settle(); interact('kettle');
+    for (const ingredient of ['bag', 'water', blend]) engine.makeTea(g, ingredient);
+    settle(); interact('sui'); engine.chooseDialogue(g, 'care');
+    interact('tripod'); engine.takePhoto(g); engine.finishPhoto(g, PHOTO);
+  }
+  function toPower(blend = 'honey', promise = 'tomorrow') {
+    toHome(blend); interact('sui'); engine.chooseDialogue(g, promise); interact('computer');
+    interact('photo-frame'); g.panel = 'none'; interact('sui'); engine.chooseDialogue(g, 'voice'); interact('computer');
+  }
   function toChase() {
-    engine.startGame(g); interact('echo'); interact('computer'); interact('fridge'); g.panel = 'none'; interact('fuse');
+    toPower(); interact('fridge'); g.panel = 'none'; interact('fuse');
     for (const index of [1, 0, 2]) engine.fuseSwitch(g, index);
     for (const id of ['tape-shelf', 'tape-bedroom', 'tape-kitchen']) interact(id);
     interact('notebook'); g.panel = 'none'; interact('computer'); engine.submitCode(g, '0017');
     for (const id of ['clock', 'portrait', 'radio']) interact(id);
   }
   function toChoice() { toChase(); for (const id of ['fuse', 'computer', 'mirror']) interact(id, true); interact('computer'); }
-  return { turn, walk, reach, interact, toChase, toChoice };
+  return { turn, walk, reach, interact, settle, toHome, toPower, toChase, toChoice };
 }
