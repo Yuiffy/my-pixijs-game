@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import rawCatalog from '@/data/gifts/sui.json';
+import BetaBadge from '@/components/BetaBadge';
 import { DEFAULT_FILTERS, PAGE_SIZE, TIERS, filterMonths, parseFilters, serializeFilters, visibleEntries } from './catalog';
 import type { Filters, GiftImage, GiftMonth, Tier } from './catalog';
 import styles from './GiftArchive.module.css';
@@ -131,11 +132,11 @@ export default function GiftArchive() {
     <main className={styles.page}>
       <header className={styles.topbar}>
         <Link href="/liver/sui" className={styles.brand}>鹿饼 <span>／ 岁己 SUI</span></Link>
-        <nav aria-label="相关页面"><Link href="/liver/sui">直播档案</Link><Link href="/liver/sui/songs">岁己歌单 ↗</Link></nav>
+        <nav aria-label="相关页面"><Link href="/liver/sui">直播档案</Link><Link href="/liver/sui/songs">岁己歌单<BetaBadge /> ↗</Link></nav>
       </header>
       <div className={styles.shell}>
         <header className={styles.intro}>
-          <div><p className={styles.eyebrow}>SUI / MONTHLY GIFTS</p><h1>岁己舰礼档案<span>。</span></h1>
+          <div><p className={styles.eyebrow}>SUI / MONTHLY GIFTS</p><h1>岁己舰礼档案<span>。</span><BetaBadge /></h1>
             <p className={styles.description}>按月查询舰长、提督与总督礼物，查看录播出处和展示图。</p>
           </div>
           <div className={styles.archiveMeta}><strong>{populatedCount}<span>个月有资料</span></strong><span>{imageCount} 张录播展示图</span><time dateTime={rawCatalog.updatedAt}>整理于 {rawCatalog.updatedAt}</time></div>

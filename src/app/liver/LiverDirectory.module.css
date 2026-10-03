@@ -87,7 +87,11 @@
   gap: 18px;
   color: #748396;
   font-size: 11px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
+
+.topbarMeta a { white-space: nowrap; }
 
 .topbarMeta strong {
   color: #dbe8ef;
@@ -364,8 +368,16 @@
 
 @media (max-width: 480px) {
   .topbar {
-    height: 58px;
+    height: auto;
+    min-height: 58px;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px 18px;
   }
+
+  .brand { flex-shrink: 0; }
+
+  .topbarMeta { width: 100%; justify-content: flex-start; }
 
   .topbarMeta span {
     display: none;

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import BetaBadge from '@/components/BetaBadge';
 import snapshot from '@/data/songs/sui.json';
 import shards from '../../../config/stream-shards.json';
 import { duration, formatBeijingTime, isSongCatalog, normalizeSongName, performedAt, performanceTimestamp, SongCatalog, SongPerformance } from './catalog';
@@ -104,7 +105,7 @@ export default function SongLibrary() {
       <div className={styles.shell}>
         <header className={styles.intro}>
           <Image src="/images/livers/sui.png" width={88} height={88} alt="岁己SUI" priority />
-          <div><p className={styles.eyebrow}>SUI / SONG ARCHIVE</p><h1>岁己歌单<span>唱歌统计与歌切</span></h1>
+          <div><p className={styles.eyebrow}>SUI / SONG ARCHIVE</p><h1>岁己歌单<BetaBadge /><span>唱歌统计与歌切</span></h1>
             <p>找到唱过的歌，回到每一次演唱。</p></div>
         </header>
         <div className={styles.stats} aria-label="全库统计">

@@ -95,7 +95,7 @@ fs.mkdirSync(output, { recursive: true });
     assert.equal(new URL(page.url()).pathname, '/liver/sui/songs');
     await page.route('**/data/streams/sui/streams.json', route => route.fulfill({ json: [] }));
     await page.goto(new URL('/liver/sui', url).href);
-    await page.getByRole('link', { name: '唱歌统计与歌切' }).click();
+    await page.getByRole('link', { name: '岁己歌单' }).click();
     await page.waitForURL('**/liver/sui/songs');
     assert.equal(new URL(page.url()).pathname, '/liver/sui/songs');
     assert.deepEqual(errors, []);

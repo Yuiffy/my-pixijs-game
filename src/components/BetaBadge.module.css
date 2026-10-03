@@ -1,0 +1,18 @@
+.badge {
+  display: inline-block;
+  position: relative;
+  top: 0;
+  margin-left: 6px;
+  padding: 2px 5px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  color: inherit;
+  font-size: 10px;
+  font-weight: 500;
+  font-style: normal;
+  line-height: 1.2;
+  letter-spacing: .03em;
+  vertical-align: middle;
+  white-space: nowrap;
+  opacity: .8;
+}

@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { ConfigProvider, theme, Typography, Spin } from 'antd';
 import { getLiverConfig, LiverInfo } from '@/data/livers';
 import LiverAvatar from '@/components/LiverAvatar';
+import BetaBadge from '@/components/BetaBadge';
 import RecordsModule from '@/components/Home/RecordsModule';
 import { StreamData } from '@/components/Home/RecordsShared';
 import Link from 'next/link';
@@ -111,7 +112,7 @@ function LiverPageContent({ liverId }: { liverId: string }) {
 
         {/* Navigation */}
         <nav className="fixed top-0 inset-x-0 z-[100] p-4 flex justify-center">
-          <div className="bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-full flex items-center px-4 py-2">
+          <div className="bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-3xl flex flex-wrap justify-center items-center px-2 py-2 text-sm">
             <Link
               href="/liver"
               className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors px-3 py-1"
@@ -119,8 +120,8 @@ function LiverPageContent({ liverId }: { liverId: string }) {
               <ArrowLeftOutlined />
               <span>返回列表</span>
             </Link>
-            {liverId === 'sui' && <Link href="/liver/sui/songs" className="text-emerald-300 hover:text-white px-3 py-1">唱歌统计与歌切</Link>}
-            {liverId === 'sui' && <Link href="/liver/sui/gifts" className="text-rose-300 hover:text-white px-3 py-1">舰礼档案</Link>}
+            {liverId === 'sui' && <Link href="/liver/sui/songs" className="text-emerald-300 hover:text-white px-2 py-1">岁己歌单<BetaBadge /></Link>}
+            {liverId === 'sui' && <Link href="/liver/sui/gifts" className="text-rose-300 hover:text-white px-2 py-1">舰礼档案<BetaBadge /></Link>}
           </div>
         </nav>
 
