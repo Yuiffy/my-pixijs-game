@@ -4,7 +4,8 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { memo, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import * as THREE from "three";
 import type { CameraControl, EnemyKind, GameState, Surface } from "./types";
-import { enemyAttack, enemyMotion } from "./enemyCombat";
+import { enemyAttack, enemyMotion, enemyTell } from "./enemyCombat";
+import EnemyStrike, { EnemyWeaponTell } from "./EnemyStrike";
 import { HOUSES, STRUCTURES, houseParts, architectureIntervals, type House } from './architecture';
 import { CharacterStyle, GuestStyle, GuestWeapon, PLAYER_SKINS } from './CharacterStyle';
 import ChapterView from "./ChapterView";
@@ -1097,6 +1098,8 @@ function Actor({
   const rightLeg = useRef<THREE.Group>(null);
   const arm = useRef<THREE.Group>(null);
   const leftArm = useRef<THREE.Group>(null);
+  const rightElbow = useRef<THREE.Group>(null);
+  const leftElbow = useRef<THREE.Group>(null);
   const chargeGlow = useRef<THREE.Mesh>(null);
   const heldWeapon = useRef<THREE.Group>(null); const medicine = useRef<THREE.Group>(null);
   const telegraph = useRef<THREE.Mesh>(null);
@@ -1189,6 +1192,10 @@ function Actor({
     if (rightLeg.current) rightLeg.current.rotation.x = -swing;
     if (leftArm.current) leftArm.current.rotation.set(-swing * 0.65, 0, 0);
     if (arm.current) arm.current.rotation.y = 0;
+    if (rightElbow.current) rightElbow.current.rotation.x = player ? 0 : -0.2 - swing * 0.12;
+    if (leftElbow.current) leftElbow.current.rotation.x = player ? 0 : -0.2 + swing * 0.12;
+    if (leftLeg.current) leftLeg.current.rotation.z = 0;
+    if (rightLeg.current) rightLeg.current.rotation.z = 0;
     let armX = swing * 0.6;
     let armZ = -0.08;
     if (player) {
@@ -1245,6 +1252,11 @@ function Actor({
       const pose = enemyMotion(enemy);
       if (pose) {
         if (heldWeapon.current) heldWeapon.current.rotation.x = pose.weaponPitch;
+        if (rightElbow.current) rightElbow.current.rotation.x = pose.elbow;
+        if (leftElbow.current) leftElbow.current.rotation.x = pose.leftElbow;
+        body.current.position.x = pose.side; body.current.position.z = pose.advance;
+        if (leftLeg.current) leftLeg.current.rotation.z = -pose.stance;
+        if (rightLeg.current) rightLeg.current.rotation.z = pose.stance;
         armX = pose.ax; armZ = pose.az;
         if (arm.current) arm.current.rotation.y = pose.ay;
         body.current.rotation.x = pose.lean; body.current.rotation.y += pose.twist; body.current.position.y += pose.crouch;
@@ -1261,10 +1273,11 @@ function Actor({
       arm.current.rotation.x = armX;
       arm.current.rotation.z = armZ;
     }
-    if (player && actor.action === 'heal' && medicine.current && arm.current) {
+    if (player && actor.action === 'heal' && medicine.current && arm.current && rightElbow.current) {
       // Aim the neck at the mouth in shoulder space as the hand rises and falls.
       drinkAim.inverse.copy(arm.current.quaternion).invert();
-      drinkAim.direction.set(0, 1.44, 0.235).sub(arm.current.position).applyQuaternion(drinkAim.inverse).sub(medicine.current.position)
+      drinkAim.direction.set(0, 1.44, 0.235).sub(arm.current.position).applyQuaternion(drinkAim.inverse).sub(rightElbow.current.position)
+.sub(medicine.current.position)
 .normalize();
       medicine.current.quaternion.setFromUnitVectors(drinkAim.up, drinkAim.direction);
     }
@@ -1281,21 +1294,22 @@ function Actor({
       body.current.position.y += Math.max(0, actor.y + state.player.jumpHeight + 0.02 - rollBounds.all.min.y);
     }
     if (telegraph.current && enemy) {
-      telegraph.current.visible = enemy.action === "windup";
+      telegraph.current.visible = enemy.action === "windup" || (enemy.action === "attack" && !enemy.hitDone);
       telegraph.current.geometry =
         attackShapes[(enemy.phase === 2 ? 3 : 0) + (enemy.attackIndex % 3)];
       telegraph.current.rotation.set(-Math.PI / 2, 0, enemy.facing);
       const attack = enemyAttack(enemy);
       const mat = telegraph.current.material as THREE.MeshBasicMaterial;
       mat.color.set(attack.parryable ? "#ffc270" : "#ef655e");
-      mat.opacity = 0.18 + (1 - enemy.timer / attack.windup) * 0.25;
+      const tell = enemyTell(enemy);
+      mat.opacity = tell.committed ? 0.42 : 0.13 + Math.min(1, 1 - enemy.timer / attack.windup) * 0.15;
     }
     if (slash.current) {
       slash.current.visible = player
         ? actor.action === "execute" &&
           state.player.actionTime > 0.18 &&
           state.player.actionTime < 0.6
-        : enemy?.action === "attack";
+        : false;
       slash.current.rotation.z = state.time * 15;
     }
     if (marker.current) {
@@ -1473,32 +1487,22 @@ function Actor({
         )
         )}
         <group ref={leftArm} position={[-0.36, 1.24, 0]}>
-          {kind === 'captain' && <group position={[0, -0.46, 0.07]} rotation={[Math.PI / 2, 0, 0]}><Katana /></group>}
-          <Pole
-            position={[0, -0.24, 0]}
-            radius={0.105}
-            height={0.42}
-            color={coat}
-          />
-          <mesh position={[0, -0.49, 0.02]}>
-            <sphereGeometry args={[0.1, 8, 6]} />
-            <meshStandardMaterial color={skin} />
-          </mesh>
+          <Pole position={[0, -0.12, 0]} radius={0.105} height={0.23} color={coat} />
+          <group ref={leftElbow} position={[0, -0.24, 0]}>
+            <Pole position={[0, -0.1, 0]} radius={0.095} height={0.2} color={coat} />
+            <mesh position={[0, -0.25, 0.02]}><sphereGeometry args={[0.1, 8, 6]} /><meshStandardMaterial color={skin} /></mesh>
+            {kind === 'captain' && <group position={[0, -0.22, 0.07]} rotation={[Math.PI / 2, 0, 0]}><Katana /></group>}
+          </group>
         </group>
         <group ref={arm} position={[0.36, 1.24, 0]}>
-          <Pole
-            position={[0, -0.24, 0]}
-            radius={0.105}
-            height={0.42}
-            color={coat}
-          />
-          <mesh position={[0, -0.49, 0.02]}>
-            <sphereGeometry args={[0.1, 8, 6]} />
-            <meshStandardMaterial color={skin} />
-          </mesh>
-          {player && <group ref={medicine} visible={false} position={[0, -0.52, 0.09]} rotation={[Math.PI / 2, 0, 0]}><mesh><cylinderGeometry args={[0.09, 0.12, 0.28, 10]} /><meshStandardMaterial color="#76cbb2" metalness={0.2} roughness={0.2} emissive="#255346" /></mesh><mesh position={[0, 0.2, 0]}><cylinderGeometry args={[0.045, 0.055, 0.13, 8]} /><meshStandardMaterial color="#dcc698" /></mesh></group>}
-          <group ref={heldWeapon} position={[0, -0.46, 0.07]} rotation={[Math.PI / 2, 0, 0]}>
+          <Pole position={[0, -0.12, 0]} radius={0.105} height={0.23} color={coat} />
+          <group ref={rightElbow} position={[0, -0.24, 0]}>
+            <Pole position={[0, -0.1, 0]} radius={0.095} height={0.2} color={coat} />
+            <mesh position={[0, -0.25, 0.02]}><sphereGeometry args={[0.1, 8, 6]} /><meshStandardMaterial color={skin} /></mesh>
+          {player && <group ref={medicine} visible={false} position={[0, -0.28, 0.09]} rotation={[Math.PI / 2, 0, 0]}><mesh><cylinderGeometry args={[0.09, 0.12, 0.28, 10]} /><meshStandardMaterial color="#76cbb2" metalness={0.2} roughness={0.2} emissive="#255346" /></mesh><mesh position={[0, 0.2, 0]}><cylinderGeometry args={[0.045, 0.055, 0.13, 8]} /><meshStandardMaterial color="#dcc698" /></mesh></group>}
+          <group ref={heldWeapon} position={[0, -0.22, 0.07]} rotation={[Math.PI / 2, 0, 0]}>
             {player && <WeaponView stateRef={stateRef} />}
+            {enemyId && <EnemyWeaponTell stateRef={stateRef} enemyId={enemyId} />}
             {(shioriBoss || kind === 'captain') && <Katana />}
             {namedBoss && <BossWeapon kind={kind as EnemyKind} />}
             {player && <mesh ref={chargeGlow} position={[0, 1.05, 0]} visible={false}><sphereGeometry args={[0.14, 12, 8]} /><meshBasicMaterial color="#ffe5a8" transparent opacity={0.6} depthWrite={false} /></mesh>}
@@ -1542,6 +1546,7 @@ function Actor({
               color={COLORS.wood}
             />
           </group>
+          </group>
         </group>
         <mesh
           ref={slash}
@@ -1560,6 +1565,7 @@ function Actor({
         </mesh>
       </group>
       {player && <CombatTrail stateRef={stateRef} />}
+      {enemyId && <EnemyStrike stateRef={stateRef} enemyId={enemyId} size={size} />}
       {!player && (
         <mesh
           ref={telegraph}
@@ -1661,7 +1667,7 @@ function CameraRig({
     let { distance } = controls;
     let { pitch } = controls;
     if (locked) {
-      const desiredYaw = Math.atan2(p.x - locked.x, p.z - locked.z) + 0.32;
+      const desiredYaw = Math.atan2(p.x - locked.x, p.z - locked.z) + 0.58;
       const difference = Math.atan2(
         Math.sin(desiredYaw - yaw),
         Math.cos(desiredYaw - yaw),
@@ -1678,7 +1684,7 @@ function CameraRig({
       pitch = 0.3;
     }
     target.set(p.x, p.y + 1.3 + p.jumpHeight, p.z);
-    if (locked) { target.x += (locked.x - p.x) * 0.24; target.z += (locked.z - p.z) * 0.24; }
+    if (locked) { target.x += (locked.x - p.x) * 0.38; target.z += (locked.z - p.z) * 0.38; }
     desired.set(
       p.x + Math.sin(yaw) * Math.cos(pitch) * distance,
       p.y + 1.3 + p.jumpHeight + Math.sin(pitch) * distance,

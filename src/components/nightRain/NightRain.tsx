@@ -9,6 +9,7 @@ import { companionName, createCompanion, guideTargets, leadTo, mainTarget, recom
 import type { CameraControl, GameInput, GameState, PlayerSkin } from './types';
 import { WEAPONS } from './weapons';
 import { BOSS_ROSTER } from './bossRoster';
+import { enemyTell } from './enemyCombat';
 import { LANDMARKS } from './world';
 import HavenPanel from './HavenPanel';
 import WorldMap from './WorldMap';
@@ -128,7 +129,7 @@ sprint: pad?.sprint,
     controls.current = devices;
     const target = window as GameWindow;
     target.nightRain = { getState: () => JSON.parse(JSON.stringify(stateRef.current)), input: action => { external.current = { ...action }; }, resetCamera, save };
-    target.render_game_to_text = () => JSON.stringify({ ...stateRef.current, presentation: noticeRef.current ? { kind: noticeRef.current.kind, label: noticeRef.current.label } : null, journey: { chapter: stateRef.current.chapterComplete ? 2 : 1, sluices: riverSeals(stateRef.current), ferry: stateRef.current.collected.includes('ferry-winch'), complete: stateRef.current.valleyComplete }, coordinateSystem: '+x east, +z south, +y up; metres', camera: camera.current, companion: companionRef.current, panel: panelRef.current, controls: { source: devices.source, pointerLocked: devices.locked, altHeld: devices.altHeld, gamepadConnected: devices.gamepadConnected, look: devices.lookSettings } });
+    target.render_game_to_text = () => JSON.stringify({ ...stateRef.current, enemyTells: stateRef.current.enemies.filter(e => e.aggro && ['windup', 'attack', 'recover'].includes(e.action)).map(e => ({ id: e.id, ...enemyTell(e) })), presentation: noticeRef.current ? { kind: noticeRef.current.kind, label: noticeRef.current.label } : null, journey: { chapter: stateRef.current.chapterComplete ? 2 : 1, sluices: riverSeals(stateRef.current), ferry: stateRef.current.collected.includes('ferry-winch'), complete: stateRef.current.valleyComplete }, coordinateSystem: '+x east, +z south, +y up; metres', camera: camera.current, companion: companionRef.current, panel: panelRef.current, controls: { source: devices.source, pointerLocked: devices.locked, altHeld: devices.altHeld, gamepadConnected: devices.gamepadConnected, look: devices.lookSettings } });
     target.advanceTime = ms => {
       if (!Number.isFinite(ms) || ms < 0) return;
       manualUntil.current = performance.now() + 1200;
@@ -241,7 +242,10 @@ sprint: pad?.sprint,
   const boss = g.enemies.find(e => ['boss', 'nana', 'azi', 'captain', 'regent', 'warden', 'abbot', 'serpent', 'elegist'].includes(e.kind) && e.aggro && e.hp > 0);
   const locked = g.enemies.find(e => e.id === g.lockedId);
   const usingPad = controls.current?.source === 'gamepad';
-  const threat = c.enabled ? g.enemies.find(e => e.action === 'windup' && e.timer < 0.3 && Math.abs(e.y - g.player.y) < 1 && Math.hypot(e.x - g.player.x, e.z - g.player.z) < 4) : undefined;
+  const threat = c.enabled ? g.enemies.find(e => {
+    const tell = enemyTell(e);
+    return (tell.parryNow || (tell.dangerous && tell.committed && tell.toImpact !== null && tell.toImpact > 0)) && Math.abs(e.y - g.player.y) < 1 && Math.hypot(e.x - g.player.x, e.z - g.player.z) < enemyAttack(e).range + 0.2;
+  }) : undefined;
   const hold = (key: string) => ({
     onPointerDown: (e: React.PointerEvent<HTMLButtonElement>) => { e.preventDefault(); e.currentTarget.setPointerCapture(e.pointerId); if (key === 'shift') shiftSince.current = performance.now(); keys.current.add(key); },
     onPointerUp: () => {
@@ -376,7 +380,7 @@ onClick={() => {
             <label className={styles.toggle} htmlFor="invert-look"><input id="invert-look" type="checkbox" checked={controls.current?.lookSettings.invertY ?? false} onChange={e => { controls.current?.setLook({ invertY: e.target.checked }); redraw(); }} />反转上下视角</label>
             <small>手柄十字键上下选择，左右调节速度。</small>
           </div></details>
-          <details><summary>操作与战斗手记</summary><p>WASD 移动，鼠标直接转视角，按住 Alt 显示光标，松开继续。点击画面可重新捕获鼠标，Esc 释放并暂停。滚轮缩放，左键 / J 轻击，右键 / K 重击（按住蓄力），中键 / Q 锁定，空格跳跃，Shift 轻按松开闪避、按住疾跑，F 轻按弹反、按住防御（L 备用）、R 喝药回血、E 交互。</p><p>手柄：左摇杆移动、L3 切换奔跑（停下结束），右摇杆视角、R3 锁定。RB 轻击、RT 重击（按住蓄力）、LB 轻按弹反 / 按住防御、B 轻按松开闪避／按住疾跑、A 跳跃、Y 交互、X 喝药回血、LT 找精灵，雨灯旁十字键↑整备。View 看地图，Menu 暂停。菜单用十字键或左摇杆选择，A 确认、B 返回。按钮按 Xbox 标准标注，其他标准手柄使用对应位置。</p><p>连续轻击可接横斩、返斩、挑斩。按住重击蓄力，金光亮起后松手释放；疾跑中攻击会突刺或回旋，空中攻击会横斩或下砸。攻击起手可用方向键／摇杆或镜头修正朝向，出手后转向减弱。看清敌人抬手再弹反。持续按住可架伞防住正面攻击，消耗体力并受少量伤害；体力不足会破防。背后攻击与红色横扫无法防住。打空或贪刀会消耗体力；红色横扫用闪避。架势打满后靠近轻击处决。中庭雨灯首次交互只点火、记录复活点，不补给也不刷新敌人；再次交互免费休息，补满生命与药瓶并复活普通敌人。强化装备才消耗夜市钱。所有已开启的门、宝箱和药瓶升级会保留。中庭、榕树、经院、王寺、雾河渡村、竹寺与汇流台各有一盏补给雨灯；在灯旁打开地图，可前往已经点亮的雨灯。残钟雨寺、蓄水院和听瀑莲亭藏着提升瓶数的露瓶。第一关敲钟后，从钟台东侧后山门进入第二关。水车院与山寺两岸可任意顺序探索，亲手转动两闸后可进沉殿。修复水车院系缆后，渡船连接旧城、渡村与水车院。灵竹露增加每瓶恢复量，行装可升到十五级。旅馆南桥通往归灯庭：阿莲提供寄存钱币，庭灯可以休息和行旅。旧寺书房与盐仓船坞有可邀请的归人，按 N 查看手记与重读线索；交谈会暂停战斗。</p><p>手机左侧方向移动，右侧拖动镜头，动作按钮出招。C 找精灵，M 看地图，F10 全屏。</p></details>
+          <details><summary>操作与战斗手记</summary><p>WASD 移动，鼠标直接转视角，按住 Alt 显示光标，松开继续。点击画面可重新捕获鼠标，Esc 释放并暂停。滚轮缩放，左键 / J 轻击，右键 / K 重击（按住蓄力），中键 / Q 锁定，空格跳跃，Shift 轻按松开闪避、按住疾跑，F 轻按弹反、按住防御（L 备用）、R 喝药回血、E 交互。</p><p>手柄：左摇杆移动、L3 切换奔跑（停下结束），右摇杆视角、R3 锁定。RB 轻击、RT 重击（按住蓄力）、LB 轻按弹反 / 按住防御、B 轻按松开闪避／按住疾跑、A 跳跃、Y 交互、X 喝药回血、LT 找精灵，雨灯旁十字键↑整备。View 看地图，Menu 暂停。菜单用十字键或左摇杆选择，A 确认、B 返回。按钮按 Xbox 标准标注，其他标准手柄使用对应位置。</p><p>连续轻击可接横斩、返斩、挑斩。按住重击蓄力，金光亮起后松手释放；疾跑中攻击会突刺或回旋，空中攻击会横斩或下砸。攻击起手可用方向键／摇杆或镜头修正朝向，出手后转向减弱。先看抬手姿势：高举重砸、侧身横扫、收刀居合、平举点射；蓄势别急，武器亮光时再弹反。持续按住可架伞防住正面攻击，消耗体力并受少量伤害；体力不足会破防。背后攻击与红色横扫无法防住。打空或贪刀会消耗体力；红色横扫用闪避。架势打满后靠近轻击处决。中庭雨灯首次交互只点火、记录复活点，不补给也不刷新敌人；再次交互免费休息，补满生命与药瓶并复活普通敌人。强化装备才消耗夜市钱。所有已开启的门、宝箱和药瓶升级会保留。中庭、榕树、经院、王寺、雾河渡村、竹寺与汇流台各有一盏补给雨灯；在灯旁打开地图，可前往已经点亮的雨灯。残钟雨寺、蓄水院和听瀑莲亭藏着提升瓶数的露瓶。第一关敲钟后，从钟台东侧后山门进入第二关。水车院与山寺两岸可任意顺序探索，亲手转动两闸后可进沉殿。修复水车院系缆后，渡船连接旧城、渡村与水车院。灵竹露增加每瓶恢复量，行装可升到十五级。旅馆南桥通往归灯庭：阿莲提供寄存钱币，庭灯可以休息和行旅。旧寺书房与盐仓船坞有可邀请的归人，按 N 查看手记与重读线索；交谈会暂停战斗。</p><p>手机左侧方向移动，右侧拖动镜头，动作按钮出招。C 找精灵，M 看地图，F10 全屏。</p></details>
           <div className={styles.row}><button onClick={fullscreen}>切换全屏</button><button onClick={resetCamera}>镜头归正</button><button onClick={() => setRestartConfirm(true)}>重新开始</button><Link href="/demos">离开旧城</Link></div>
         </>
 )}

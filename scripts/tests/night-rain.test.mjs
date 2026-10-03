@@ -48,7 +48,8 @@ test('light and heavy hit only at impact in the forward arc and spend actual sta
 test('holding no attacks causes no contact damage until an actual telegraphed strike', () => {
   const { s, e } = courtyardDuel(); beforeAttack(s, e, 0.3);
   assert.equal(s.player.hp, 100); assert.equal(e.action, 'windup');
-  advance(s, 550); assert.equal(s.player.hp, 81); assert.equal(e.action, 'recover');
+  advance(s, 550); assert.equal(s.player.hp, 81); assert.equal(e.action, 'attack');
+  advance(s, 150); assert.equal(s.player.hp, 81); assert.equal(e.action, 'recover');
   advance(s, 350); assert.equal(s.player.hp, 81);
 });
 

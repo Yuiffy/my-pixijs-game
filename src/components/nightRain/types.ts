@@ -31,7 +31,7 @@ export type GameInput = {
 };
 export type Effect = Vec3 & { id: number; kind: 'hit' | 'parry' | 'block' | 'dodge' | 'heal' | 'death' | 'reward'; life: number; text?: string };
 export type GameState = {
-  version: 1; mode: 'title' | 'playing' | 'dead' | 'ending'; paused: boolean;
+  version: 1; motionVersion: 1; mode: 'title' | 'playing' | 'dead' | 'ending'; paused: boolean;
   player: Player; enemies: Enemy[]; effects: Effect[]; nextEffectId: number;
   time: number; deaths: number; kills: number; parries: number; executions: number;
   rice: number; bankedRice: number; level: number; charm: boolean; shortcut: boolean;

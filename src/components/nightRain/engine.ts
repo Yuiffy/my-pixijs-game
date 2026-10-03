@@ -5,7 +5,7 @@ import { applyConversation, validHaven } from './havenStory';
 import { CHAPTER_ENEMIES, CHAPTER_GATES, CHAPTER_LORE } from './chapter';
 import { FERRY_DESTINATIONS, riverSeals, VALLEY_BOSSES, VALLEY_ENEMIES, VALLEY_GATES, VALLEY_LORE } from './valley';
 
-import { enemyAttack, ENEMY_STRIKE_TIME, ENEMY_CONTACT_TIME } from './enemyCombat';
+import { enemyAttack, enemyTiming, ENEMY_STRIKE_TIME, ENEMY_CONTACT_TIME } from './enemyCombat';
 
 import { BOSS_ROSTER } from './bossRoster';
 import { WEAPONS, weaponAttack } from './weapons';
@@ -76,6 +76,7 @@ function makePlayer(position: Vec3): Player {
 export function createGame(): GameState {
   return {
     version: 1,
+motionVersion: 1,
 hitstop: 0,
 messageSerial: 0,
 messageKind: 'hint',
@@ -421,7 +422,7 @@ function updateEnemy(s: GameState, e: Enemy, dt: number): void {
   // Distant idle actors do not trace hundreds of metres through the expanded city.
   if (!e.aggro && dist > 17 && homeDistance < 0.15) return;
   const sameLevel = Math.abs(e.y - p.y) < 1.8; const sees = sameLevel && dist < 17 && lineClear(e, p, s);
-  if (['boss', 'nana', 'azi', 'captain', 'regent', 'warden', 'abbot', 'serpent', 'elegist'].includes(e.kind) && e.hp <= e.maxHp * 0.5 && e.phase === 1) { e.phase = 2; say(s, BOSS_ROSTER[e.kind] ? `${BOSS_ROSTER[e.kind]!.name.split(' · ')[0]} · ${BOSS_ROSTER[e.kind]!.second}` : e.kind === 'nana' ? '七海 · 七潮叠浪' : '阿梓 · 夜曲变奏', 5, 'event', BOSS_ROSTER[e.kind]?.tip ?? '红色横扫不能弹反，跳过或退开，等收招再反击。'); }
+  if (['boss', 'nana', 'azi', 'captain', 'regent', 'warden', 'abbot', 'serpent', 'elegist'].includes(e.kind) && e.hp <= e.maxHp * 0.5 && e.phase === 1 && !['windup', 'attack'].includes(e.action)) { e.phase = 2; say(s, BOSS_ROSTER[e.kind] ? `${BOSS_ROSTER[e.kind]!.name.split(' · ')[0]} · ${BOSS_ROSTER[e.kind]!.second}` : e.kind === 'nana' ? '七海 · 七潮叠浪' : '阿梓 · 夜曲变奏', 5, 'event', BOSS_ROSTER[e.kind]?.tip ?? '红色横扫不能弹反，跳过或退开，等收招再反击。'); }
   const inArena = e.kind !== 'boss' || (p.z < -36 && p.y < 0.2);
   const ambush = AMBUSH_ENEMIES.some(a => a.id === e.id);
   const refuge = s.litLamps.includes('courtyard') && Math.abs(p.y) < 0.8 && Math.hypot(p.x + 1, p.z - 7) < 3.5;
@@ -439,14 +440,18 @@ function updateEnemy(s: GameState, e: Enemy, dt: number): void {
   if (e.action === 'stagger') { e.timer -= dt; if (e.timer <= 0) { e.action = 'recover'; e.timer = 0.6; e.posture = e.maxPosture * 0.35; } return; }
   const attack = enemyAttack(e);
   if (e.action === 'windup') {
-    // Commit to direction during the final quarter-second: circling and spacing work.
-    if (e.timer > 0.25) e.facing = facingToward(e, p);
+    // The loaded stance turns gradually, then plants its feet before release.
+    if (e.timer > enemyTiming(e).commit) {
+      const turn = facingToward(e, p) - e.facing;
+      const angle = Math.atan2(Math.sin(turn), Math.cos(turn));
+      e.facing += Math.max(-2.7 * dt, Math.min(2.7 * dt, angle));
+    }
     e.timer -= dt;
     if (e.timer <= 0) { e.action = 'attack'; e.timer = ENEMY_STRIKE_TIME; e.hitDone = false; }
     return;
   }
   if (e.action === 'attack') {
-    if (e.timer > 0.12) move(s, e, Math.sin(e.facing) * attack.lunge * dt * 5, Math.cos(e.facing) * attack.lunge * dt * 5);
+    if (e.timer > ENEMY_STRIKE_TIME - 0.12) move(s, e, Math.sin(e.facing) * attack.lunge * dt * 5, Math.cos(e.facing) * attack.lunge * dt * 5);
     e.timer -= dt;
     if (!e.hitDone && e.timer <= ENEMY_STRIKE_TIME - ENEMY_CONTACT_TIME) { e.hitDone = true; damagePlayer(s, e); }
     if (e.action === 'attack' && e.timer <= 0) { e.action = 'recover'; e.timer = attack.recovery; }
@@ -789,6 +794,8 @@ export function loadGame(raw: string | null): GameState | null {
   try {
     const s = JSON.parse(raw) as GameState;
     if (!s || s.version !== 1 || !['title', 'playing', 'dead', 'ending'].includes(s.mode) || typeof s.paused !== 'boolean') return null;
+    const legacyMotion = s.motionVersion === undefined;
+    if (!legacyMotion && s.motionVersion !== 1) return null;
     if (s.worldVersion !== undefined && ![2, 3, 4, 5, 6, 7, 8].includes(s.worldVersion)) return null;
     const oldWorld = s.worldVersion === undefined; const oldDistrict = (s.worldVersion ?? 0) < 4; const oldChapter = (s.worldVersion ?? 0) < 5; const oldValley = (s.worldVersion ?? 0) < 6; const oldHaven = (s.worldVersion ?? 0) < 7;
     if (oldWorld) { s.templeGate = false; s.flaskUpgrade = false; s.litLamps = s.checkpoint === 'courtyard' ? ['courtyard'] : []; }
@@ -882,7 +889,13 @@ export function loadGame(raw: string | null): GameState | null {
       if (!['idle', 'chase', 'windup', 'attack', 'recover', 'stagger', 'dead'].includes(e.action) || (e.hp === 0) !== (e.action === 'dead')) return null;
       if (!finite(e.timer, -0.02, 5) || !finite(e.attackIndex, 0, 1000000) || !Number.isInteger(e.attackIndex) || ![1, 2].includes(e.phase) || !finite(e.facing, -100, 100) || !finite(e.flash, 0, 1)) return null;
       if (typeof e.hitDone !== 'boolean' || typeof e.aggro !== 'boolean') return null;
+      // The longer follow-through must not move an old saved strike past contact.
+      if (legacyMotion && e.action === 'attack') {
+        if (e.timer > 0.24 + 0.001) return null;
+        e.timer += ENEMY_STRIKE_TIME - 0.24;
+      }
     }
+    s.motionVersion = 1;
     if (s.enemies.some(e => ['nana', 'azi', 'captain', 'regent', 'warden', 'abbot', 'serpent', 'elegist'].includes(e.kind) && ((e.hp === 0) !== s.defeatedGuests.includes(e.id)))) return null;
     if (s.bossDefeated !== (s.enemies.find(e => e.kind === 'boss')?.hp === 0) || (s.mode === 'ending' && !s.bossDefeated)) return null;
     if (s.flaskUpgrade !== s.collected.includes('temple-flask')) return null;

@@ -391,3 +391,13 @@ Original prompt: 存档点光点和点亮文字、死亡文字、首灯敌人距
 雨灯增加引导光点与 BONFIRE LIT，死亡增加 YOU DIED，弹反喷出金色火花。首敌后移、已点亮中庭灯圈内追兵返岗，精力恢复提到 42／秒。新增箱后与柱后伏兵，全部单侧门错面提示；雨灯锻造折雨伞→铁骨伞→雨切武士刀，真实改变属性，可免费换回旧形态，死亡读档保留。v8 精确迁移旧 Boss 名字及出生点，保留进度和战斗状态。
 
 108 项规则、修改源文件 ESLint、顺序完整检查／构建通过。静音安装版 Chrome 开发 26 张与生产 8 张截图、390／320px 窄屏交互验收通过，截图已打开目检，状态／DOM／像素一致，无页面或控制台错误。包含新特效的生产版三类拾取仍为零新编译和零长任务，两帧恢复约 29–37ms。细节、复现与低模／共享动作限制见 [角色首领与魂系体验](docs/night-rain-experience.md)。本地试玩 `http://localhost:3926/game/night-rain`；本轮按追加要求将新内容单独提交 master，再由 Vercel 自动发布，部署状态以 production Ready 为准。拾取修复已先行正式上线。
+
+## 2026-10-03 · 雨夜敌人动作与读招（已验收）
+
+Original prompt: 敌人的抬手、前摇不明显，各种动作呆板、不好预判；优化后新内容也上 master。
+
+完成直刺、重砸、横扫、居合、点射五套程序动作，加入快速抬手、蓄势、释放、命中、随势和收招，肩肘、支撑手、站姿与重心联动。真实命中前 210ms 才亮金白光，不可弹反招亮红光；长延迟招保留等待阶段。转身最多 2.7rad/s，最后 240–300ms 定向，Boss 不在已抬手或出手时切阶段。刀光沿真实武器姿势生成，复用缓冲且不增加动态灯光。锁定镜头更靠肩侧，减少玩家遮挡。旧出手存档按 motionVersion 一次性转换，保持原命中倒计时。
+
+113 项雨夜规则测试、修改源文件 ESLint、完整 check 与随后顺序 build 通过，保留构建 ESLint。开发版 28 张、生产包 8 张、生产拾取回归 4 张和静音通用客户端生产版 1 张截图，均完成像素检查、状态 / DOM / canvas / 错误交叉核对并打开目检，错误为空。拾取三类物品的新着色器编译为 0、无长任务，首帧约 32–40ms（本机此次测量）。证据在 tmp/night-rain-readability-{verified,production,production-shared}/、tmp/night-rain-pickup-readability-production/，最终日志 tmp/night-rain-readable-release-*-final.log。实现规则与复跑命令见 docs/night-rain-readability.md。
+
+本轮使用独立检出 D:/workspace/releases/night-rain-experience-20261003 验证发布候选。没有待修复的验收项；后续可沿同一模拟时序增加 Boss 独有骨骼动画。

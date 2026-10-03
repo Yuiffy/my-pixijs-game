@@ -126,8 +126,8 @@ test('parry has authored preparation, deflection and settle; roll tucks and sett
 
 
 test('enemy windups move through raise, gather, release and continuous contact/recovery for every pattern',async()=>{
- const {enemyMotion,enemyAttack,ENEMY_STRIKE_TIME,ENEMY_CONTACT_TIME}=await loadTypescriptModule('src/components/nightRain/enemyCombat.ts');
- const neutral={lean:0,twist:0,crouch:0,ax:0,ay:0,az:-.08,lx:0,lz:0,legL:0,legR:0,weaponPitch:Math.PI/2};
+ const {enemyMotion,enemyAttack,ENEMY_NEUTRAL,ENEMY_STRIKE_TIME,ENEMY_CONTACT_TIME}=await loadTypescriptModule('src/components/nightRain/enemyCombat.ts');
+ const neutral=ENEMY_NEUTRAL;
  const delta=(a,b)=>Math.max(...Object.keys(a).map(k=>Math.abs(a[k]-b[k])));
  for(const kind of ['prowler','guard','duelist','boss'])for(const phase of [1,2])for(const attackIndex of [0,1,2]){
   const e={kind,phase,attackIndex,action:'windup'};const spec=enemyAttack(e);const pose=(action,timer)=>enemyMotion({...e,action,timer});
