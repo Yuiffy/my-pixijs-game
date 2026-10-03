@@ -3,6 +3,8 @@ import {
   activeSpots,
   clearLine,
   findPath,
+  friendlyStage,
+  companionTarget,
   focusedSpot,
   move,
   walkable,
@@ -11,7 +13,11 @@ import {
 export const SAVE_KEY = "sui-after-hours-v1";
 export const EMPTY_INPUT: Input = { forward: 0, right: 0, run: false };
 export const STAGES: Stage[] = [
+  "visit",
+  "tea",
+  "photo",
   "home",
+  "unease",
   "power",
   "memories",
   "corridor",
@@ -22,11 +28,27 @@ export const STAGES: Stage[] = [
 
 export function createGame(): Game {
   return {
-    version: 1,
+    version: 2,
     mode: "title",
-    stage: "home",
+    stage: "visit",
     panel: "none",
-    player: { x: 3.25, z: -2.4, yaw: -0.48, pitch: -0.045, stamina: 100 },
+    player: { x: -1.9, z: 2.75, yaw: 0.88, pitch: -0.035, stamina: 100 },
+    sui: { x: -4.15, z: 1.15, yaw: 0.88, path: [], repath: 0 },
+    evening: {
+      greeted: false,
+      tea: 0,
+      blend: null,
+      carrying: false,
+      served: false,
+      photo: false,
+      promise: null,
+      anomaly: 0,
+      dialogue: null,
+      gesture: "wave",
+      gestureUntil: 12,
+    },
+    photoRequest: 0,
+    photoImage: "",
     echo: {
       x: 5.65,
       z: -2,
@@ -67,7 +89,12 @@ export function notify(g: Game, text: string, seconds = 4) {
 export function startGame(g: Game) {
   g.mode = "playing";
   g.panel = "none";
-  if (g.stage === "home") speak(g, "岁己", "好啦，今天就到这里。……怎么还有一个人没走？");
+  if (g.stage === "visit") speak(
+      g,
+      "岁己",
+      "终于来啦，小饼干。今天的直播结束了，不过我们的晚安茶还没开始呢。",
+      10,
+    );
 }
 
 export function pause(g: Game, paused: boolean) {
@@ -87,6 +114,141 @@ function chapter(g: Game, stage: Stage) {
   g.revision++;
 }
 
+export function chooseDialogue(g: Game, answer: string) {
+  if (g.mode !== "playing" || g.panel !== "dialogue") return;
+  const kind = g.evening.dialogue;
+  const allowed: Record<string, string[]> = {
+    greeting: ["happy", "help"],
+    serve: ["care", "tease"],
+    promise: ["tomorrow", "extra"],
+    anomaly: ["name", "voice"],
+  };
+  if (!kind || !allowed[kind].includes(answer)) return;
+  g.evening.dialogue = null;
+  g.evening.gestureUntil = g.time + 9;
+  if (kind === "greeting" && g.stage === "visit") {
+    g.evening.greeted = true;
+    g.evening.gesture = answer === "happy" ? "shy" : "wave";
+    chapter(g, "tea");
+    speak(
+      g,
+      "岁己",
+      answer === "happy"
+        ? "我也很开心呀。先做一杯茶吧，今天可以慢慢来。"
+        : "好呀，我教你泡晚安茶。先放茶包，再倒热水，最后选你喜欢的味道。",
+      10,
+    );
+  } else if (kind === "serve" && g.stage === "tea" && g.evening.carrying) {
+    g.evening.carrying = false;
+    g.evening.served = true;
+    g.evening.gesture = "offer";
+    g.notes.push("tea-memory");
+    chapter(g, "photo");
+    speak(
+      g,
+      "岁己",
+      `${g.evening.blend === "honey" ? "蜂蜜的，好甜。" : "柠檬的，好清香。"}${answer === "tease" ? "你做的当然最好喝啦。" : "谢谢你还记得别让我烫到。"}一起拍张合照，好不好？`,
+      11,
+    );
+  } else if (kind === "promise" && g.stage === "home") {
+    g.evening.promise = answer as "tomorrow" | "extra";
+    g.evening.gesture = "shy";
+    g.notes.push("promise-memory");
+    g.panel = "none";
+    g.revision++;
+    speak(
+      g,
+      "岁己",
+      answer === "tomorrow"
+        ? "说好了，明天见。今天也可以好好结束呀。帮我结束房间监听，我们就说晚安。"
+        : "再坐一会儿也很好，不过可不是永远哦。我们还有明天。到零点十七分，就一起说晚安。",
+      12,
+    );
+  } else if (
+    kind === "anomaly" &&
+    g.stage === "unease" &&
+    g.evening.anomaly === 1
+  ) {
+    g.evening.anomaly = 2;
+    g.evening.gesture = "worried";
+    g.panel = "none";
+    g.revision++;
+    speak(
+      g,
+      "岁己",
+      "刚才我没有说话。声音是监听回放……先在电脑上停止房间监听。我去检查卧室的镜子，别回答那个声音。",
+      13,
+    );
+  }
+}
+
+export function makeTea(
+  g: Game,
+  ingredient: "bag" | "water" | "honey" | "lemon",
+) {
+  if (
+    g.mode !== "playing" ||
+    g.panel !== "tea" ||
+    g.stage !== "tea" ||
+    g.evening.carrying
+  ) return;
+  if (
+    (ingredient === "bag" && g.evening.tea === 0) ||
+    (ingredient === "water" && g.evening.tea === 1)
+  ) {
+    g.evening.tea++;
+    g.revision++;
+    return;
+  }
+  if (g.evening.tea !== 2 || !["honey", "lemon"].includes(ingredient)) return;
+  g.evening.tea = 3;
+  g.evening.blend = ingredient as "honey" | "lemon";
+  g.evening.carrying = true;
+  g.panel = "none";
+  g.revision++;
+  speak(
+    g,
+    "岁己",
+    "好香呀。端过来吧，我们去沙发那边。客厅的月亮杯、直播间的星灯、门口的太阳……这三个房间的电也是按这个顺序接的。",
+    13,
+  );
+  notify(g, "晚安茶做好了。走到岁己身边，递给她。", 8);
+}
+
+export function takePhoto(g: Game) {
+  if (
+    g.mode !== "playing" ||
+    g.stage !== "photo" ||
+    g.panel !== "photo" ||
+    g.photoRequest
+  ) return;
+  g.photoRequest = 1;
+  g.revision++;
+}
+
+export function finishPhoto(g: Game, image: string) {
+  if (
+    g.mode !== "playing" ||
+    g.stage !== "photo" ||
+    g.panel !== "photo" ||
+    !g.photoRequest ||
+    !image.startsWith("data:image/jpeg;base64,") ||
+    image.length < 40
+  ) return;
+  g.photoImage = image;
+  g.evening.photo = true;
+  g.evening.gesture = "shy";
+  g.evening.gestureUntil = g.time + 10;
+  g.notes.push("photo-memory");
+  chapter(g, "home");
+  speak(
+    g,
+    "岁己",
+    "拍得真好看。记住哦，合照上的 SUI 是正着写的。照片放在茶几上，明天也可以再一起拍一张。",
+    12,
+  );
+}
+
 function sourceOff(g: Game, id: string) {
   if (g.sources.includes(id)) return;
   g.sources.push(id);
@@ -98,11 +260,9 @@ function sourceOff(g: Game, id: string) {
   speak(
     g,
     "回声",
-    [
-      "你为什么要关掉我？",
-      "你也听见我在害怕，对吗？",
-      "原来……我只是最后一条弹幕。",
-    ][g.sources.length - 1],
+    ["你为什么要关掉我？", "你也听见我在害怕，对吗？", "原来……今晚可以结束。"][
+      g.sources.length - 1
+    ],
   );
   if (g.sources.length === 3) {
     chapter(g, "choice");
@@ -112,7 +272,7 @@ function sourceOff(g: Game, id: string) {
     speak(
       g,
       "回声",
-      "如果关掉直播，就再也没人陪我了。你会记得我的名字吗？",
+      "如果结束今晚，明天还有人记得我吗？你会记得她的名字吗？",
       10,
     );
   }
@@ -128,13 +288,71 @@ export function interact(g: Game) {
   const spot = focusedSpot(g);
   if (!spot) return;
   const { id } = spot;
-  if (id === "notebook" || id === "fridge") {
+  if (id === "sui") {
+    const dialogue =
+      g.stage === "visit"
+        ? "greeting"
+        : g.stage === "tea" && g.evening.carrying
+          ? "serve"
+          : g.stage === "home" && !g.evening.promise
+            ? "promise"
+            : g.stage === "unease" && g.evening.anomaly === 1
+              ? "anomaly"
+              : null;
+    if (dialogue) {
+      g.evening.dialogue = dialogue;
+      g.panel = "dialogue";
+    } else speak(
+        g,
+        "岁己",
+        g.stage === "tea"
+          ? "我在这儿等你。茶包、热水，最后再选味道。"
+          : "不用着急，我们还有明天。",
+        8,
+      );
+  } else if (id === "kettle") {
+    g.panel = "tea";
+  } else if (id === "tripod" && g.stage === "photo") {
+    if (Math.hypot(g.sui.x + 4.15, g.sui.z - 1.15) > 0.15) {
+      notify(g, "等岁己走到合照的位置。", 4);
+      return;
+    }
+    g.panel = "photo";
+    g.sui.yaw = Math.atan2(-2.1 - g.sui.x, 2.25 - g.sui.z);
+    g.evening.gesture = "heart";
+    speak(g, "岁己", "看镜头了吗？三、二……等你按快门哦。", 8);
+  } else if (id === "photo-frame" && g.stage === "unease") {
+    g.evening.anomaly = 1;
+    g.panel = "photograph";
+    g.revision++;
+    speak(g, "你", "照片里的名字倒过来了。刚才的合照……不是这样的。", 9);
+    notify(g, "去问岁己。她刚才真的说话了吗？", 7);
+  } else if (id === "notebook" || id === "fridge") {
     g.notes.push(id === "notebook" ? "diary" : "power-note");
     g.panel = "journal";
     g.revision++;
   } else if (id === "computer" && g.stage === "home") {
+    if (!g.evening.promise) {
+      notify(g, "先和岁己说完今天的晚安约定。", 6);
+      return;
+    }
+    chapter(g, "unease");
+    speak(
+      g,
+      "房间监听",
+      g.evening.promise === "extra"
+        ? "再坐一会儿……再坐一会儿……永远。"
+        : "明天见……明天……明天不会来了。",
+      10,
+    );
+    notify(g, "房间没有退出，麦克风还在回放。茶几上的合照变了。", 9);
+  } else if (id === "computer" && g.stage === "unease") {
+    if (g.evening.anomaly < 2) {
+      notify(g, "先检查合照，再问岁己这是谁的声音。", 6);
+      return;
+    }
     chapter(g, "power");
-    speak(g, "回声", "等一下。不是说好……再陪我一会儿吗？");
+    speak(g, "回声", "不能结束。你答应过，要再陪我一会儿。");
     notify(g, "灯灭了。按 F 打开手电。", 6);
   } else if (id === "fuse" && g.stage === "power") {
     g.panel = "fuse";
@@ -146,9 +364,12 @@ export function interact(g: Game) {
       g.revision++;
     }
     const words: Record<string, string> = {
-      "tape-kitchen": "我记得是零点。走廊里，只有时钟肯停下来。",
-      "tape-shelf": "下播后十七分钟。她的名字写反了。我的表停在 00:17。",
-      "tape-bedroom": "去找没有波形的广播。然后，关掉电、屏幕和镜子。",
+      "tape-kitchen":
+        "这是房间维护用的备份。晚安茶结束在零点十七分，时钟记住的是 00:17。别跟着回放退回直播开始的时候。",
+      "tape-shelf":
+        "照片上的 SUI 正着写。她会记得你放的味道，回放只会念出同一句话。找到名字没有倒过来的门。",
+      "tape-bedroom":
+        "真正的晚安之后，广播会安静。安静的门通往监听室。断开电路、电脑、镜面这三个回放通道，我就在出口等你。",
     };
     speak(g, "旧录音 · 岁己", words[id], 8);
     notify(g, "录音已记入手记 · J 查看");
@@ -203,10 +424,10 @@ export function interact(g: Game) {
       g.stageTime = 0;
       speak(
         g,
-        "岁己",
+        "你",
         g.seals === 1
-          ? "钟停了。可名字为什么是倒着的？"
-          : "最后一次。没有波形的声音，才是真正的出口。",
+          ? "00:17，是我们说好晚安的时间。下一扇门，找合照上正着的 SUI。"
+          : "是合照里的名字。最后一扇门，是说完晚安后真正安静的广播。",
       );
     } else {
       chapter(g, "chase");
@@ -235,13 +456,7 @@ export function interact(g: Game) {
     g.echo.repath = 0;
     notify(g, "放轻呼吸。按 E 离开衣柜。", 5);
   } else if (id === "echo") {
-    speak(
-      g,
-      "回声",
-      g.stage === "home"
-        ? "还在听吗？我是最后一个，不可以先走哦。"
-        : "我是你没有说出口的那一句“再见”。",
-    );
+    speak(g, "回声", "再陪我一会儿。再陪我一会儿。再陪我一会儿。");
   }
 }
 
@@ -262,8 +477,8 @@ export function fuseSwitch(g: Game, index: number) {
   g.fuse.push(index);
   if (g.fuse.length === 3) {
     chapter(g, "memories");
-    speak(g, "岁己", "灯亮了。可电脑上的时间……怎么一直都是零点十七分？");
-    notify(g, "公寓里有三段旧录音。", 6);
+    speak(g, "你", "灯亮了，岁己却不在这里。钟停在了我们说晚安的零点十七分。");
+    notify(g, "找到三份房间维护录音，恢复离开房间的权限。", 8);
   }
 }
 
@@ -275,7 +490,12 @@ export function submitCode(g: Game, code: string) {
     return;
   }
   chapter(g, "corridor");
-  speak(g, "回声", "原来你还记得。门开了，要不要试试能走多远？", 8);
+  speak(
+    g,
+    "房间系统",
+    "访客权限已恢复。回放走廊会复制房间；只选择和今晚记忆一致的门。",
+    10,
+  );
   notify(g, "公寓门已经解锁。走到门口，穿过走廊。", 7);
 }
 
@@ -289,7 +509,15 @@ export function chooseEnding(g: Game, choice: "name" | "stay") {
     return;
   }
   chapter(g, "dawn");
-  speak(g, "岁己", "我会记得你。但我们都不必永远留在这里。明天见。", 10);
+  g.sui.x = -4.25;
+  g.sui.z = 3.75;
+  g.sui.path = [];
+  speak(
+    g,
+    "岁己",
+    `${g.evening.blend === "lemon" ? "柠檬茶" : "蜂蜜茶"}和我们的合照，我都记得。今天可以结束，明天还会再见。`,
+    12,
+  );
   notify(g, "门开了。走向天亮。", 8);
 }
 
@@ -345,7 +573,12 @@ function tick(g: Game, dt: number, input: Input) {
     if (!e.cooldown) {
       // Patrol destinations must be on the floor, not at a tabletop object
       // inside a collider. Otherwise A* cannot reach the streaming computer.
-      const patrol = [{ x: 3.6, z: -3.6 }, { x: -6.2, z: 3.3 }, { x: 6.2, z: 1.6 }, { x: -3, z: 10 }];
+      const patrol = [
+        { x: 3.6, z: -3.6 },
+        { x: -6.2, z: 3.3 },
+        { x: 6.2, z: 1.6 },
+        { x: -3, z: 10 },
+      ];
       const target =
         e.alert > 0 && !g.hidden ? g.player : patrol[e.patrol % patrol.length];
       e.repath -= dt;
@@ -382,8 +615,32 @@ function tick(g: Game, dt: number, input: Input) {
         speak(g, "回声", "别怕。我们可以……从这里重新开始。");
       }
     }
-  } else if (["home", "memories", "choice"].includes(g.stage)) {
+  } else if (["memories", "choice"].includes(g.stage)) {
     g.echo.yaw = Math.atan2(g.player.x - g.echo.x, g.player.z - g.echo.z);
+  }
+  if (friendlyStage(g)) {
+    const s = g.sui;
+    const target = companionTarget(g);
+    s.repath -= dt;
+    if (s.repath <= 0) {
+      s.path = findPath(s, target, g);
+      s.repath = 0.8;
+    }
+    const next = s.path[0];
+    if (next && Math.hypot(next.x - s.x, next.z - s.z) > 0.025) {
+      const dx = next.x - s.x;
+      const dz = next.z - s.z;
+      const d = Math.hypot(dx, dz);
+      const step = Math.min(d, dt * 1.08);
+      move(s, (dx / d) * step, (dz / d) * step, g);
+      s.yaw = Math.atan2(dx, dz);
+      if (d < 0.07) s.path.shift();
+    } else {
+      const wanted = Math.atan2(g.player.x - s.x, g.player.z - s.z);
+      s.yaw +=
+        Math.atan2(Math.sin(wanted - s.yaw), Math.cos(wanted - s.yaw)) *
+        Math.min(1, dt * 3);
+    }
   }
   g.focus = focusedSpot(g)?.id || null;
 }
@@ -424,7 +681,9 @@ export function retry(g: Game) {
 
 export function saveGame(g: Game) {
   return JSON.stringify({
-    version: 1,
+    version: 2,
+    evening: g.evening,
+    photoImage: g.photoImage,
     stage: g.stage,
     player: g.player,
     time: g.time,
@@ -444,12 +703,70 @@ export function loadGame(raw: string | null): Game | null {
   try {
     const data = JSON.parse(raw);
     if (
-      data.version !== 1 ||
+      ![1, 2].includes(data.version) ||
       !STAGES.includes(data.stage) ||
       typeof data.player !== "object"
     ) return null;
     const g = createGame();
-    g.stage = data.stage;
+    g.stage =
+      data.version === 1 && data.stage === "home" ? "visit" : data.stage;
+    if (data.version === 1 && g.stage !== "visit") {
+      g.evening = {
+        ...g.evening,
+        greeted: true,
+        tea: 3,
+        blend: "honey",
+        served: true,
+        photo: true,
+        promise: "tomorrow",
+        anomaly: 2,
+      };
+    } else if (
+      data.version === 2 &&
+      data.evening &&
+      typeof data.evening === "object"
+    ) {
+      const e = data.evening;
+      g.evening.greeted = Boolean(e.greeted);
+      g.evening.tea = Number.isInteger(e.tea)
+        ? Math.max(0, Math.min(3, e.tea))
+        : 0;
+      g.evening.blend = ["honey", "lemon"].includes(e.blend) ? e.blend : null;
+      g.evening.carrying = Boolean(e.carrying && g.evening.blend);
+      g.evening.served = Boolean(e.served);
+      g.evening.photo = Boolean(e.photo);
+      g.evening.promise = ["tomorrow", "extra"].includes(e.promise)
+        ? e.promise
+        : null;
+      g.evening.anomaly = Number.isInteger(e.anomaly)
+        ? Math.max(0, Math.min(2, e.anomaly))
+        : 0;
+      if (
+        typeof data.photoImage === "string" &&
+        data.photoImage.startsWith("data:image/jpeg;base64,") &&
+        data.photoImage.length < 500000
+      ) g.photoImage = data.photoImage;
+      // Progress must remain playable when a damaged save loses its portrait.
+      if (g.evening.carrying && g.evening.tea !== 3) return null;
+      if (
+        STAGES.indexOf(g.stage) >= STAGES.indexOf("tea") &&
+        !g.evening.greeted
+      ) return null;
+      if (
+        STAGES.indexOf(g.stage) >= STAGES.indexOf("photo") &&
+        (!g.evening.served || !g.evening.blend)
+      ) return null;
+      if (STAGES.indexOf(g.stage) >= STAGES.indexOf("home") && !g.evening.photo) return null;
+      if (
+        STAGES.indexOf(g.stage) >= STAGES.indexOf("unease") &&
+        !g.evening.promise
+      ) return null;
+    } else if (data.version === 2) {
+      return null;
+    }
+    const companion = companionTarget(g);
+    g.sui.x = companion.x;
+    g.sui.z = companion.z;
     for (const key of ["x", "z", "yaw", "pitch", "stamina"] as const) {
       if (!Number.isFinite(data.player[key])) return null;
       g.player[key] = data.player[key];
@@ -458,7 +775,11 @@ export function loadGame(raw: string | null): Game | null {
     g.player.pitch = Math.max(-1.15, Math.min(1.05, g.player.pitch));
     g.player.stamina = Math.max(0, Math.min(100, g.player.stamina));
     const strings = (value: unknown, allowed: string[]) => (Array.isArray(value)
-        ? (Array.from(new Set(value.filter((v) => typeof v === "string" && allowed.includes(v)))) as string[])
+        ? (Array.from(
+            new Set(
+              value.filter((v) => typeof v === "string" && allowed.includes(v)),
+            ),
+          ) as string[])
         : []);
     g.tapes = strings(data.tapes, [
       "tape-kitchen",
@@ -468,6 +789,9 @@ export function loadGame(raw: string | null): Game | null {
     g.notes = strings(data.notes, [
       "diary",
       "power-note",
+      "tea-memory",
+      "photo-memory",
+      "promise-memory",
       ...g.tapes,
       "seal-clock",
       "seal-portrait",
@@ -498,6 +822,7 @@ export function loadGame(raw: string | null): Game | null {
 export function publicState(g: Game) {
   return {
     ...g,
+    photoImage: g.photoImage ? "saved photograph" : "",
     spots: activeSpots(g),
     coordinateSystem: "+x east, +z south, +y up; metres",
     collision:

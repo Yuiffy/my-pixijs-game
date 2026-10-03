@@ -1,12 +1,14 @@
 # 岁己：零点之后
 
-原创第一人称 3D 心理恐怖游戏。参考《米塔》由熟悉室内生活转向异常空间、角色陪伴与不可信叙事的节奏，场景、谜题、文本、角色模型和合成环境音均独立制作。玩家扮演下播后的岁己；公寓里的另一个「岁己」来自没有关掉的直播回声。
+原创第一人称 3D 互动与心理恐怖短篇。参考《米塔》由室内陪伴转向异常空间、不可信叙事的节奏，场景、谜题、文本、角色模型和合成环境音均独立制作。玩家是来赴晚安之约的小饼干，真实岁己是同伴；零点后的另一个「岁己」来自仍在监听、拒绝结束的房间回放。
 
-完整流程：收工 → 公寓断电与恢复供电 → 找到三段回声，解开午夜密码 → 穿过重复走廊辨认真实房间 → 追逐躲藏、关闭回声源 → 在留在循环／带回真实名字间选择结局。死亡从当前章节检查点重试，菜单可以继续进度或重新开始。剧情关键线索在手记中可回看。
+完整流程：回应欢迎 → 亲手泡茶、送茶 → 合照并保存照片 → 约定明天、向房间说晚安 → 发现照片反转与被扭曲的约定 → 询问岁己、强制停止监听 → 公寓断电、恢复供电 → 录音与午夜密码 → 重复走廊 → 追逐躲藏、关闭回放源 → 留在循环／走向天亮。死亡从当前章节检查点重试，菜单可以继续进度或重新开始，手记保留关键线索与合照。
 
 ## 技术与美术
 
-Next.js、React Three Fiber 与 Three.js；独立规则状态、同源碰撞数据和 DOM 菜单。米为单位，Y 向上，第一人称站立视角。Blender 4.5 LTS 作者文件保存到 `assets/after-hours/`，GLB 运行模型在 `public/games/after-hours/`。角色使用银色双马尾、红瞳、紫黑衣装、猫耳帽、翅膀与金色光环的岁己特征，具有可动画的头／手臂／腿部层级。贴图打包进 GLB，不需要网络模型服务。
+Next.js、React Three Fiber 与 Three.js；独立规则状态、同源碰撞数据和 DOM 菜单。米为单位，Y 向上，第一人称站立视角。Blender 4.5 LTS 作者文件保存到 `assets/after-hours/`，GLB 运行模型在 `public/games/after-hours/`。新版依据仓库中的蓝色双马尾形象制作：银色分层发束、红色动漫眼、海军蓝贝雷帽与披肩、象牙白衬衣与褶裙、手套手指、羽翼与金色月桂光环；面部增加下颌、脸颊、鼻形和绘制贴图。贴图打包进 GLB，不需要网络模型服务。
+
+欢迎、送茶、害羞与合照有对应姿势，眨眼和 Smile／Talk／Worry 嘴部形变配合呼吸、行走、头发与翅膀摆动。真实岁己投影，回放复制体不投影。前段对话与泡茶面板放在画面下部，保留同伴面部可见。
 
 WASD 移动、鼠标锁定／拖动与方向键转头、E 互动、Shift 跑步、F 手电、J 手记、Esc 暂停。手机提供左摇杆、右侧滑动与互动按钮。音效在玩家操作后才启动，菜单可静音；浏览器自测强制静音并禁用 TTS。
 
@@ -44,18 +46,49 @@ codex mcp get blender-local
 pwsh -NoLogo -NoProfile -NonInteractive -File scripts/blender/optimize-assets.ps1
 ```
 
-作者脚本 `scripts/blender/build_after_hours.py` 生成可编辑的场景和角色，压缩保存 .blend，关闭自动备份版本。优化脚本通过 glTF Transform 4.2.1 去重、焊接与清理，保留命名关节，无额外几何解码器；同时更新 manifest 中的相对源路径和实际运行文件大小。当前公寓 GLB 约 3.48 MB、角色约 1.46 MB，纹理全部内嵌。
+作者脚本 `scripts/blender/build_after_hours.py` 生成场景，并调用 `build_sui_v2.py` 生成新版角色，压缩保存 .blend，关闭自动备份版本。只重建角色时，可通过 Blender MCP 执行 `build_sui_v2.build_character(OUT)`，随后运行 `pwsh -NoLogo -NoProfile -NonInteractive -File scripts/blender/optimize-assets.ps1 -Assets sui`，避免改写公寓资产。优化脚本通过 glTF Transform 4.2.1 去重、焊接与清理，保留命名关节和形变，无额外几何解码器；同时更新 manifest 中的相对源路径和运行文件大小。公寓 GLB 约 3.48 MB，新版角色为 1,945,480 字节（约 1.95 MB），纹理全部内嵌。
 
-角色保留 `Sui_Root / Head / Body / LeftArm / RightArm / LeftLeg / RightLeg` 层级，运行时驱动行走、待机和追逐姿态。场景统一使用米制碰撞与交互数据，玩家和回声共用地面与障碍规则；回声通过 A* 寻路，不能穿墙。关键灯光跨章节保留，避免因灯光数量变化重新编译材质。启动前预编译，画面丢失时暂停，重载后保留游戏进度。
+角色有 20 个命名关节支点、44 个网格、84,408 个三角形与 13 个材质，新增前臂、小腿、发束、翅膀和眼部支点，由 `SuiActor.tsx` 驱动。场景统一使用米制碰撞与交互数据，玩家、同伴和回声共用地面与 A* 障碍规则；终点段也检查碰撞，玩家不能穿过真实同伴。关键灯光跨章节保留，避免因灯光数量变化重新编译材质。启动前预编译，画面丢失时暂停，重载后保留游戏进度。
 
-## 本轮验证与复现
+## 晚安之约与回放线索
+
+茶包、热水、蜂蜜／柠檬按实际顺序操作，茶杯出现在手中并送给同伴。固定相机由玩家按下快门，保存 640×480 JPEG 到本地存档，并显示在手记和实体相框中。拍摄时克隆相机，使用固定横向宽高比 640／450，同步临时渲染后加上照片底边，并在 `finally` 中恢复渲染器原尺寸；桌面和手机保存的照片都能保留完整角色，不启用持续 `preserveDrawingBuffer`。异常相框显示真实合照的镜像，提供照片近看面板，随后引导询问岁己。
+
+「明天见」或「再坐一会儿，但我们还有明天」的选择会被房间歪曲，也在后续线索中回应。月亮茶杯、直播台的星和门口的太阳说明配电顺序；维护录音与 00:17 解释密码、时钟门和关闭回放源的原因，名字门要求保留原本的 SUI，而非镜像 IUS。天亮时真实岁己记得选过的茶。
+
+存档版本为 v2，沿用 `sui-after-hours-v1` 键，保留照片、配茶和约定。首版 intro 存档迁入新序章；已经进入恐怖章节的首版进度继续保留，不要求重玩前段。
+
+## 新版验证与复现（2026-10-04）
+
+本轮发布候选在同盘独立检出 `D:/workspace/releases/after-hours-v2-20261004` 中验证。规则用正常移动与公开互动完成晚安之约和两个结局，覆盖配茶顺序、蜂蜜／柠檬与存档、合照前置条件和保存、约定与异常推进、旧档迁移，以及优化模型的关节／面部形变。15 项游戏规则与 6 项游戏馆规则通过，修改源文件 ESLint 与完整 lint／TypeScript 检查通过。
+
+```powershell
+node --test scripts/tests/after-hours.test.mjs scripts/tests/game-library.test.mjs
+pnpm exec eslint src/components/afterHours/AfterHours.tsx src/components/afterHours/Scene.tsx src/components/afterHours/SuiActor.tsx src/components/gameLibrary/catalog.ts
+pnpm run check
+pnpm run build
+$env:PLAYWRIGHT_MODULE='C:/Users/yuiffy/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright'
+$env:AFTER_HOURS_URL='http://127.0.0.1:3963'
+$env:AFTER_HOURS_QA='D:/workspace/myrepo/my-pixijs-game/tmp/after-hours-v2-ship'
+node scripts/verify-after-hours.cjs
+```
+
+最终生产构建使用静音安装版 Chrome，通过正常移动与公开互动完成桌面的蜂蜜／明天约定、手机的柠檬／稍坐片刻支线、恐怖全流程与两个结局。覆盖实际 JPEG 合照及刷新保留、异常照片近看、暂停／指针锁定／手记释放、WebGL 丢失后恢复、追逐抓人／检查点重试／衣柜躲藏，以及 390／320px 双指触控。`tmp/after-hours-v2-ship/report.json` 中的 57 张 PNG 与两张实际保存的 JPEG 已逐张打开目检；截图通过像素有效性检查，并与游戏文本状态、DOM、画布尺寸和页面／控制台错误交叉核对，错误数组为空。两张合照均为 640×480，有效亮像素约 90%，超过 6 万种颜色。
+
+本轮同时修正合照姿势的目标叠加，让双手在胸前相合；提高甜蜜对话遮罩选择器优先级，防止手机样式重新模糊角色；保存合照采用独立横向取景，修正手机照片裁掉头部的问题。游戏馆预览取自已目检的实际游戏标题画面 `tmp/after-hours-v2-art/title.png`，`/demos` 已验证搜索、点击入口与开始游玩。最终 `pnpm run check` 后顺序执行 `pnpm run build` 成功，Next 构建 ESLint 保持启用，仅有其他游戏既有警告；门禁记录为 `tmp/after-hours-v2-release-check.log`、`tmp/after-hours-v2-release-build.log`，浏览器日志为 `tmp/after-hours-v2-release-browser-ship.log`。
+
+推送前已整合远程 `master` 的 `9aa7182` 潮汐格斗更新，保留两项任务的游戏馆目录和进度记录。整合后再次通过 21 项规则、修改源文件 ESLint、顺序完整检查与生产构建，并用静音 Chrome 从 `/demos` 搜索、点击入口进入游戏和开始游玩；三张新增生产截图全部通过像素检查与逐张目检，页面／控制台错误为空。证据为 `tmp/after-hours-v2-integrated-smoke/` 与 `tmp/after-hours-v2-release-integrated-{check,build,browser}.log`。
+
+Blender 中已检查正面、面部和侧面渲染，检查场景结构；优化后的角色经 glTF Transform 验证，错误和警告均为零。动作属于命名支点程序动画，面部使用三种形变；截图与模型统计不能代替角色制作质量评价。
+
+## 首版验证记录（2026-10-03）
 
 开发预览：`http://127.0.0.1:3940/game/after-hours`，独立目录 `.next-after-hours-dev`。生产预览：`http://127.0.0.1:3941/game/after-hours`，独立目录 `.next-after-hours-build`。游戏馆 `/demos` 已加入实景预览和入口。
 
 ```powershell
 node --test scripts/tests/after-hours.test.mjs
 node --test scripts/tests/game-library.test.mjs
-pnpm exec eslint src/components/afterHours --ext .ts,.tsx
+pnpm exec eslint src/components/afterHours --ext '.ts,.tsx'
 pnpm run check
 $env:NEXT_DIST_DIR='.next-after-hours-build'
 pnpm run build
@@ -78,9 +111,9 @@ node scripts/verify-after-hours.cjs
 
 ## 当前内容边界
 
-这是有完整探索、解谜、追逐与双结局的短篇首版。人物与室内美术采用原创风格化模型，动作是关节程序动画；目前剧情以字幕呈现，环境音为本地 Web Audio 合成，没有真人配音、面部表情动画或长篇过场。手机验证使用 Chrome 窄屏与触控模拟，尚未做真实手机 GPU 或 Safari 性能验收。
+这是有陪伴互动、探索、解谜、追逐与双结局的风格化短篇。新版加入面部形变与程序姿势，剧情仍以字幕呈现，环境音为本地 Web Audio 合成；没有真人配音或长篇过场。模型和动画属于独立风格化制作，尚未达到《米塔》的角色制作精度。手机验证使用 Chrome 窄屏与触控模拟，尚未做真实手机 GPU 或 Safari 性能验收。
 
-## 远程 master 交付
+## 首版远程 master 交付记录
 
 按用户要求，提交范围包含完整游戏、运行模型、Blender 作者文件与连接脚本，以及 `/demos` 的「岁己：零点之后」入口和实景预览。发布候选基于最新远程 `master` 在独立检出中验证，仅纳入本任务内容。提交到远程与托管平台完成上线是两个步骤，线上状态需以实际部署结果为准。
 

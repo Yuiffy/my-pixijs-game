@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import Link from "next/link";
 import {
   useCallback,
@@ -9,14 +10,23 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { CHAPTERS, NOTES, actionLabel, objective } from "./content";
+import {
+  CHAPTERS,
+  actionLabel,
+  conversation,
+  note,
+  objective,
+} from "./content";
 import {
   chooseEnding,
+  chooseDialogue,
   createGame,
   fuseSwitch,
+  finishPhoto,
   interact,
   loadGame,
   look,
+  makeTea,
   pause,
   publicState,
   retry,
@@ -25,6 +35,7 @@ import {
   startGame,
   stepGame,
   submitCode,
+  takePhoto,
 } from "./engine";
 import { createAudio } from "./audio";
 import type { Game, Input } from "./types";
@@ -125,6 +136,14 @@ export default function AfterHours() {
     store();
     refresh();
   }, [refresh, store, unlock]);
+  const onPhoto = useCallback(
+    (image: string) => {
+      finishPhoto(game.current, image);
+      store();
+      refresh();
+    },
+    [refresh, store],
+  );
 
   useEffect(() => {
     audio.current = createAudio();
@@ -220,7 +239,7 @@ export default function AfterHours() {
     };
     frame = requestAnimationFrame(loop);
     const keyDown = (event: KeyboardEvent) => {
-      if (event.target instanceof HTMLInputElement && event.code !== 'Escape') return;
+      if (event.target instanceof HTMLInputElement && event.code !== "Escape") return;
       const control = [
         "KeyW",
         "KeyA",
@@ -409,6 +428,7 @@ export default function AfterHours() {
             quality={quality}
             onReady={onReady}
             onError={onError}
+            onPhoto={onPhoto}
           />
         )}
       </div>
@@ -435,12 +455,12 @@ export default function AfterHours() {
             <h1>
               零点<span>之后</span>
             </h1>
-            <p className={styles.titleSui}>岁己 · 一场没有结束的直播</p>
+            <p className={styles.titleSui}>岁己 · 一场不肯结束的晚安</p>
             <div className={styles.rule} />
             <p className={styles.intro}>
-              你已经说过晚安。
+              她为你留了一盏灯。
               <br />
-              可房间里的另一个你，还在等最后一句话。
+              茶、合照、明天的约定。然后，零点到了。
             </p>
             <div className={styles.titleActions}>
               {hasSave && (
@@ -449,7 +469,7 @@ export default function AfterHours() {
                   disabled={!ready}
                   onClick={() => begin(true)}
                 >
-                  继续 · {CHAPTERS[saved.current?.stage || "home"].name}
+                  继续 · {CHAPTERS[saved.current?.stage || "visit"].name}
                 </button>
               )}
               <button
@@ -461,13 +481,13 @@ export default function AfterHours() {
                   else begin(false);
                 }}
               >
-                {ready ? "从下播那一刻开始" : "正在准备房间…"} <span>↗</span>
+                {ready ? "赴一场晚安的约定" : "正在准备房间…"} <span>↗</span>
               </button>
             </div>
             <p className={styles.genre}>
               第一人称心理恐怖 · 探索 / 解谜 / 追逐
               <br />
-              <span>扮演岁己。耳机体验更好，可随时暂停。</span>
+              <span>与岁己相处，再找回真实的今晚。可随时暂停。</span>
             </p>
           </div>
           <Link href="/demos" className={styles.back}>
@@ -509,12 +529,13 @@ export default function AfterHours() {
               <span>互动</span>
             </button>
           )}
-          {g.subtitle.until > g.time && (
-            <div className={styles.subtitle} aria-live="polite">
-              <span>{g.subtitle.speaker}</span>
-              <p>“{g.subtitle.text}”</p>
-            </div>
-          )}
+          {g.subtitle.until > g.time &&
+            !["dialogue", "tea", "photo"].includes(g.panel) && (
+              <div className={styles.subtitle} aria-live="polite">
+                <span>{g.subtitle.speaker}</span>
+                <p>“{g.subtitle.text}”</p>
+              </div>
+            )}
           {active && (
             <div className={styles.bottom}>
               <span>
@@ -604,19 +625,29 @@ export default function AfterHours() {
         </>
       )}
       {g.panel !== "none" && g.mode === "playing" && (
-        <div className={styles.scrim}>
+        <div
+          className={`${styles.scrim} ${["dialogue", "tea", "photo"].includes(g.panel) ? styles.socialScrim : ""}`}
+        >
           <section
-            className={`${styles.panel} ${g.panel === "journal" ? styles.journal : ""}`}
+            className={`${styles.panel} ${g.panel === "journal" ? styles.journal : ""} ${["dialogue", "tea", "photo"].includes(g.panel) ? styles.socialPanel : ""}`}
             role="dialog"
             aria-modal="true"
             aria-label={
-              g.panel === "journal"
-                ? "收工手记"
-                : g.panel === "fuse"
-                  ? "配电箱"
-                  : g.panel === "code"
-                    ? "午夜密码"
-                    : "最后一句话"
+              g.panel === "photograph"
+                ? "变了的合照"
+                : g.panel === "dialogue"
+                  ? "和岁己说话"
+                  : g.panel === "tea"
+                    ? "一起泡晚安茶"
+                    : g.panel === "photo"
+                      ? "合照相机"
+                      : g.panel === "journal"
+                        ? "收工手记"
+                        : g.panel === "fuse"
+                          ? "配电箱"
+                          : g.panel === "code"
+                            ? "午夜密码"
+                            : "最后一句话"
             }
           >
             <button
@@ -626,20 +657,125 @@ export default function AfterHours() {
             >
               ×
             </button>
+            {g.panel === "dialogue" && (
+              <>
+                <p className={styles.eyebrow}>SUI / 岁己</p>
+                <p className={styles.dialogueText}>{conversation(g).text}</p>
+                <div className={styles.answers}>
+                  {conversation(g).options.map((option) => (
+                    <button
+                      key={option.id}
+                      onClick={() => {
+                        chooseDialogue(game.current, option.id);
+                        store();
+                        refresh();
+                      }}
+                    >
+                      {option.text}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+            {g.panel === "tea" && (
+              <>
+                <p className={styles.eyebrow}>GOODNIGHT TEA / 两个人的茶</p>
+                <h2>
+                  {
+                    ["先放茶包", "慢慢倒热水", "你喜欢哪种味道？"][
+                      g.evening.tea
+                    ]
+                  }
+                </h2>
+                <p>岁己：小心烫。今天可以慢慢来，我陪着你。</p>
+                <div className={styles.answers}>
+                  {(g.evening.tea === 0
+                    ? [{ id: "bag" as const, text: "把茶包放进月亮杯" }]
+                    : g.evening.tea === 1
+                      ? [{ id: "water" as const, text: "提起茶壶，倒入热水" }]
+                      : [
+                          { id: "honey" as const, text: "加一勺蜂蜜 · 甜甜的" },
+                          { id: "lemon" as const, text: "加一片柠檬 · 清香的" },
+                        ]
+                  ).map((ingredient) => (
+                    <button
+                      key={ingredient.id}
+                      onClick={() => {
+                        makeTea(game.current, ingredient.id);
+                        store();
+                        refresh();
+                      }}
+                    >
+                      {ingredient.text}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+            {g.panel === "photo" && (
+              <>
+                <p className={styles.eyebrow}>TONIGHT / WITH YOU</p>
+                <p>岁己：看镜头了吗？镜头后面的你，也在我们的照片里哦。</p>
+                <button
+                  className={styles.primary}
+                  disabled={Boolean(g.photoRequest)}
+                  onClick={() => {
+                    takePhoto(game.current);
+                    refresh();
+                  }}
+                >
+                  按下快门 · 保存今晚
+                </button>
+              </>
+            )}
+            {g.panel === "photograph" && (
+              <>
+                <p className={styles.eyebrow}>00:17 / SOMETHING CHANGED</p>
+                <h2>刚才不是这样的</h2>
+                {g.photoImage && (
+                  <Image
+                    className={`${styles.photograph} ${styles.mirroredPhoto}`}
+                    src={g.photoImage}
+                    alt="刚才亲手拍的合照被镜面回放倒转，SUI 变成 IUS"
+                    width={640}
+                    height={480}
+                    unoptimized
+                  />
+                )}
+                <p>
+                  你亲手留下的照片倒过来了。电脑那边的声音，还在重复那句话。
+                </p>
+                <button className={styles.primary} onClick={closePanel}>
+                  去问岁己 →
+                </button>
+              </>
+            )}
             {g.panel === "journal" && (
               <>
                 <p className={styles.eyebrow}>FIELD NOTES / SUI</p>
                 <h2>收工手记</h2>
                 <p className={styles.journalGoal}>{objective(g)}</p>
+                {g.photoImage && (
+                  <Image
+                    className={styles.photograph}
+                    src={g.photoImage}
+                    alt="你亲手拍下的岁己晚安合照，正着的 SUI"
+                    width={640}
+                    height={480}
+                    unoptimized
+                  />
+                )}
                 {g.notes.length ? (
                   g.notes.map((id) => (
                     <article key={id}>
-                      <h3>{NOTES[id]?.title}</h3>
-                      <p>{NOTES[id]?.text}</p>
+                      <h3>{note(g, id)?.title}</h3>
+                      <p>{note(g, id)?.text}</p>
                     </article>
                   ))
                 ) : (
-                  <p>房间里有些不对劲。找到的便签和录音会留在这里。</p>
+                  <p>
+                    今晚的茶、合照、约定，以及找到的便签和录音，会留在这里。
+                  </p>
                 )}
                 <p className={styles.controls}>
                   WASD / 左摇杆：移动 鼠标 / 右侧滑动：转头
@@ -657,7 +793,7 @@ export default function AfterHours() {
                 <p>
                   配电箱只能按顺序接通。
                   <br />
-                  冰箱上的便签记着怎么做。
+                  月亮杯 → 星灯 → 门口的太阳。冰箱上也留着标签。
                 </p>
                 <div className={styles.fuses}>
                   {["星", "月亮", "太阳"].map((name, index) => (
@@ -868,8 +1004,8 @@ export default function AfterHours() {
             <h1>{g.ending === "dawn" ? "天会亮" : "再陪我一会儿"}</h1>
             <p>
               {g.ending === "dawn"
-                ? "你记住了她的名字，也把自己的名字带回了清晨。\n直播结束了。明天见，岁己。"
-                : "时钟又回到了零点十七分。\n房间很温暖，最后一条弹幕永远不会离开。"}
+                ? `岁己还记得${g.evening.blend === "lemon" ? "柠檬" : "蜂蜜"}茶，也记得你亲手拍的合照。\n房间停止监听了。明天见，岁己。`
+                : "时钟又回到了零点十七分。\n茶凉了，照片里的名字倒过来。房间继续回放同一句话。"}
             </p>
             <span className={styles.endingStats}>
               三段录音 · 三枚门印 · {g.deaths} 次回返

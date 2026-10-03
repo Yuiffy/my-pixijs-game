@@ -1,8 +1,9 @@
+param([string[]]$Assets = @('apartment', 'sui'))
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $rawDir = Join-Path $projectRoot 'tmp/after-hours-raw'
 New-Item -ItemType Directory -Path $rawDir -Force | Out-Null
-foreach ($assetName in @('apartment', 'sui')) {
+foreach ($assetName in $Assets) {
     $runtimeFile = Join-Path $projectRoot "public/games/after-hours/$assetName.glb"
     $rawFile = Join-Path $rawDir "$assetName.glb"
     Copy-Item -LiteralPath $runtimeFile -Destination $rawFile

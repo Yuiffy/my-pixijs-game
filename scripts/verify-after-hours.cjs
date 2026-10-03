@@ -62,7 +62,7 @@ async function reach(page, id, run = false) {
   for (let x = -1.4; x <= 1.4; x += .2) for (let z = -1.4; z <= 1.4; z += .2) {
     const p = { x: spot.x + x, z: spot.z + z };
     const d = Math.hypot(x, z);
-    if (d < .5 || d > (spot.reach || 1.3) - .16 || !world.walkable(p, s) || !world.clearLine(p, spot, s, 0, true)) continue;
+    if (d < .65 || d > (spot.reach || 1.3) - .16 || !world.walkable(p, s) || !world.clearLine(p, spot, s, 0, true)) continue;
     const path = world.findPath(s.player, p, s);
     if (path.length) choices.push({ p, cost: path.reduce((n, point, i) => n + Math.hypot(point.x - (path[i - 1] || s.player).x, point.z - (path[i - 1] || s.player).z), 0) });
   }
@@ -119,9 +119,67 @@ async function exerciseShell(page) {
   results.push({ pointerLockAndJournalRelease: true, pausedContextLossAndRecovery: true });
 }
 
+async function evening(page, blend = 'honey', promise = 'tomorrow', prefix = '') {
+  await interact(page, 'sui');
+  await capture(page, prefix + 'welcome-dialogue');
+  await page.getByRole('button', { name: '当然开心，终于可以这样见到你了。', exact: true }).click();
+  assert.equal((await state(page)).stage, 'tea');
+  await advance(page, 12000);
+  await interact(page, 'kettle');
+  await capture(page, prefix + 'tea-together');
+  await page.getByRole('button', { name: '把茶包放进月亮杯', exact: true }).click();
+  await page.getByRole('button', { name: '提起茶壶，倒入热水', exact: true }).click();
+  await page.getByRole('button', { name: blend === 'honey' ? '加一勺蜂蜜 · 甜甜的' : '加一片柠檬 · 清香的', exact: true }).click();
+  assert.equal((await state(page)).evening.carrying, true);
+  await capture(page, prefix + 'carrying-tea');
+  await advance(page, 12000);
+  await interact(page, 'sui');
+  await capture(page, prefix + 'serve-dialogue');
+  await page.getByRole('button', { name: '给你，慢慢喝，小心烫。', exact: true }).click();
+  assert.equal((await state(page)).stage, 'photo');
+  await interact(page, 'tripod');
+  await page.waitForTimeout(900);
+  await capture(page, prefix + 'heart-photo');
+  assert.equal((await state(page)).renderer.character.gesture, 'heart');
+  await page.getByRole('button', { name: '按下快门 · 保存今晚', exact: true }).click();
+  await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).stage === 'home');
+  const picture = await page.evaluate(() => JSON.parse(localStorage.getItem('sui-after-hours-v1')).photoImage);
+  assert.ok(picture.startsWith('data:image/jpeg;base64,'));
+  const actualPhoto = await page.evaluate(async image => {
+    const img = new Image(); img.src = image; await img.decode();
+    const canvas = document.createElement('canvas'); canvas.width = img.width; canvas.height = img.height;
+    const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0);
+    const pixels = ctx.getImageData(0, 0, img.width, 450).data;
+    let lit = 0; const colors = new Set();
+    for (let i = 0; i < pixels.length; i += 4) { if (pixels[i] + pixels[i + 1] + pixels[i + 2] > 65) lit++; colors.add(`${pixels[i]},${pixels[i + 1]},${pixels[i + 2]}`); }
+    return { width: img.width, height: img.height, lit: lit / (pixels.length / 4), colors: colors.size };
+  }, picture);
+  assert.deepEqual([actualPhoto.width, actualPhoto.height], [640, 480]);
+  assert.ok(actualPhoto.lit > .45 && actualPhoto.colors > 3000, JSON.stringify(actualPhoto));
+  fs.writeFileSync(path.join(out, prefix + 'actual-photo.jpg'), Buffer.from(picture.split(',')[1], 'base64'));
+  await page.keyboard.press('j'); await capture(page, prefix + 'saved-photo-journal');
+  await page.getByRole('button', { name: '收起面板' }).click();
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForFunction(() => !document.querySelector('#after-hours-start').disabled);
+  await page.getByRole('button', { name: /继续 ·/ }).click();
+  assert.equal((await state(page)).stage, 'home');
+  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('sui-after-hours-v1')).photoImage), picture);
+  await interact(page, 'sui'); await capture(page, prefix + 'tomorrow-dialogue');
+  await page.getByRole('button', { name: promise === 'tomorrow' ? '明天也想见到你。今天好好说晚安。' : '想再坐一会儿，不过我们还有明天。', exact: true }).click();
+  await interact(page, 'computer');
+  assert.equal((await state(page)).stage, 'unease');
+  await capture(page, prefix + 'unease');
+  await interact(page, 'photo-frame', prefix + 'reversed-photo');
+  await capture(page, prefix + 'inspect-reversed-photo');
+  await page.getByRole('button', { name: '去问岁己 →', exact: true }).click();
+  await interact(page, 'sui'); await capture(page, prefix + 'anomaly-dialogue');
+  await page.getByRole('button', { name: '声音从电脑那边来的。你刚才没有开口。', exact: true }).click();
+  await interact(page, 'computer');
+  results.push({ warmEvening: true, blend, promise, savedActualPhoto: actualPhoto, persistedPhotoAfterRefresh: true });
+}
+
 async function solve(page, ending = 'name', photographs = true) {
-  await interact(page, 'echo', photographs && 'sui-companion');
-  await interact(page, 'computer', photographs && 'last-stream');
+  await evening(page);
   assert.equal((await state(page)).stage, 'power');
   await page.keyboard.press('f');
   await interact(page, 'fridge', photographs && 'power-note');
@@ -269,6 +327,7 @@ async function main() {
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
       const after = await state(page); assert.ok(Math.hypot(before.x - after.player.x, before.z - after.player.z) > .1); assert.equal(after.controls.forward, 0); assert.ok(Math.abs(before.yaw - after.player.yaw) > .1);
       results.push({ viewport: width, realTwoFingerMovementAndLook: true }); await cdp.detach();
+      if (width === 390) await evening(page, 'lemon', 'extra', 'mobile-');
       await page.getByRole('button', { name: '暂停游戏' }).click();
       await page.getByRole('button', { name: '重新开始', exact: true }).click(); await page.getByRole('button', { name: '从下播那一刻开始', exact: true }).click();
     }

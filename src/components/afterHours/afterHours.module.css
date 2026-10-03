@@ -434,6 +434,50 @@
   color: #debe84;
   font-size: 11px;
 }
+.scrim.socialScrim {
+  align-items: end;
+  background: linear-gradient(transparent 48%, #0c101bc7);
+  backdrop-filter: none;
+  pointer-events: none;
+  padding-bottom: 28px;
+}
+.socialPanel {
+  width: min(680px, 100%);
+  padding: 22px 28px;
+  background: #161b25ed;
+  pointer-events: auto;
+  max-height: 44dvh;
+}
+.socialPanel .eyebrow {
+  margin-bottom: 10px;
+}
+.socialPanel h2 {
+  font-size: 23px;
+  margin-bottom: 12px;
+}
+.socialPanel .dialogueText {
+  font-size: 15px;
+  margin-bottom: 14px;
+}
+.answers {
+  display: grid;
+  gap: 8px;
+}
+.answers button {
+  padding: 12px 15px;
+  text-align: left;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.photograph {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-bottom: 22px;
+}
+.mirroredPhoto {
+  transform: scaleX(-1);
+}
 .settings {
   display: grid;
   grid-template-columns: 1fr 1fr;
