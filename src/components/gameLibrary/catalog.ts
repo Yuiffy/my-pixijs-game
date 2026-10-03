@@ -42,15 +42,6 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
         releaseDate: '2026-10-03',
       },
       {
-        title: '晴海双打 · 岁己 × 栞栞',
-        href: '/game/beach-volley',
-        description: '迎着海风起跳扣杀，和岁己、栞栞在晴海沙滩打出漂亮的一球。',
-        image: '/games/beach-volley/intro.webp',
-        meta: '沙滩排球 · 单人 / 同机双人 · 专属必杀',
-        releaseDate: '2026-10-02',
-        updateDate: '2026-10-03',
-      },
-      {
         title: '岁己 · 雨夜寻味',
         href: '/game/night-rain',
         description:
@@ -59,6 +50,15 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
         meta: '3D 动作探索 · 扮演岁己 · 箱庭冒险',
         releaseDate: '2026-09-26',
         updateDate: '2026-09-26',
+      },
+      {
+        title: '晴海双打 · 岁己 × 栞栞',
+        href: '/game/beach-volley',
+        description: '迎着海风起跳扣杀，和岁己、栞栞在晴海沙滩打出漂亮的一球。',
+        image: '/games/beach-volley/intro.webp',
+        meta: '沙滩排球 · 单人 / 同机双人 · 专属必杀',
+        releaseDate: '2026-10-02',
+        updateDate: '2026-10-03',
       },
       {
         title: '岁岁过招',
@@ -84,13 +84,13 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
     title: '虚拟主播模拟',
     games: [
       {
-        title: '不许手抖 · 黄金微针模拟室',
-        href: '/game/golden-needle',
+        title: '岁己：马上就播',
+        href: '/game/pre-stream',
         description:
-          '拿稳小方块探头，照顾岁己的变美愿望。清洁、敷麻、稳稳下针，别忘了冷敷，也可选栓剂止痛。',
-        image: '/games/golden-needle/preview.png',
-        meta: '手术操作模拟 · 三档难度 · 键鼠 / 触屏',
-        releaseDate: '2026-10-02',
+          '跑遍公寓准备直播，趁保温杯慢慢接水去喂猫、试音，处理突发状况后赶到 OBS 开播。',
+        image: '/games/pre-stream/preview-3d.webp',
+        meta: '3D 开播竞速 · 扮演主播岁己 · 三晚计时摘星',
+        releaseDate: '2026-09-12',
         updateDate: '2026-10-03',
       },
       {
@@ -112,22 +112,22 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
         updateDate: '2026-09-12',
       },
       {
-        title: '岁己：马上就播',
-        href: '/game/pre-stream',
-        description:
-          '跑遍公寓准备直播，趁保温杯慢慢接水去喂猫、试音，处理突发状况后赶到 OBS 开播。',
-        image: '/games/pre-stream/preview-3d.webp',
-        meta: '3D 开播竞速 · 扮演主播岁己 · 三晚计时摘星',
-        releaseDate: '2026-09-12',
-        updateDate: '2026-10-03',
-      },
-      {
         title: '主播，别嚼了！',
         href: '/game/snack',
         description: '一边聊天一边偷偷吃零食，别让麦克风和观众发现。',
         image: '/games/mini/snack.png',
         meta: '实时操作 · 扮演偷吃的主播 · 五关挑战',
         releaseDate: '2026-09-11',
+        updateDate: '2026-10-03',
+      },
+      {
+        title: '不许手抖 · 黄金微针模拟室',
+        href: '/game/golden-needle',
+        description:
+          '拿稳小方块探头，照顾岁己的变美愿望。清洁、敷麻、稳稳下针，别忘了冷敷，也可选栓剂止痛。',
+        image: '/games/golden-needle/preview.png',
+        meta: '手术操作模拟 · 三档难度 · 键鼠 / 触屏',
+        releaseDate: '2026-10-02',
         updateDate: '2026-10-03',
       },
     ],
@@ -146,22 +146,22 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
         updateDate: AUTOCHESS_RELEASE_DATE,
       },
       {
-        title: 'RESET / 开蹬！',
-        href: '/game/reset-rush',
-        description:
-          'tibo 又说要 reset 了。经营多账号、押注银行券，把额度变成下一款碉游。',
-        image: '/games/reset-rush/preview.svg',
-        meta: '开发者桌游 · 1 人 + 3 AI · 时间、精力与并行开发',
-        releaseDate: '2026-09-26',
-        updateDate: '2026-10-03',
-      },
-      {
         title: '上船！应援事务所',
         href: '/game/hype-harbor',
         description:
           '四位主播三条船。应援出圈、押未达标人数，或抢名场面切片，和朋友比比眼光。',
         image: '/games/hype-harbor/preview.png',
         meta: '投资桌游 · 2–4 人 · AI / 本地多人',
+        releaseDate: '2026-09-26',
+        updateDate: '2026-10-03',
+      },
+      {
+        title: 'RESET / 开蹬！',
+        href: '/game/reset-rush',
+        description:
+          'tibo 又说要 reset 了。经营多账号、押注银行券，把额度变成下一款碉游。',
+        image: '/games/reset-rush/preview.svg',
+        meta: '开发者桌游 · 1 人 + 3 AI · 时间、精力与并行开发',
         releaseDate: '2026-09-26',
         updateDate: '2026-10-03',
       },
