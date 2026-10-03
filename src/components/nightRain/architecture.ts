@@ -1,6 +1,7 @@
 import { CHAPTER_HOUSES, CHAPTER_STRUCTURES } from './chapter';
 import { HAVEN_HOUSES, HAVEN_STRUCTURES } from './haven';
 import { VALLEY_HOUSES, VALLEY_STRUCTURES } from './valley';
+import { DUNGEON_SOLIDS } from './dungeons';
 
 export type Triple = [number, number, number];
 export type Solid = { id:string; position:Triple; size:Triple; color:string; yaw?:number; tilt?:number };
@@ -57,7 +58,7 @@ function worldPart(h:House, p:Solid):Solid {
  const yaw = h.rotation ?? 0; const c = Math.cos(yaw); const s = Math.sin(yaw); const [x, y, z] = p.position;
  return { ...p, id: `${h.id}/${p.id}`, position: [h.position[0] + c * x + s * z, h.position[1] + y, h.position[2] - s * x + c * z], yaw };
 }
-export const ARCHITECTURE = [...HOUSES.flatMap(h => houseParts(h).map(p => worldPart(h, p))), ...STRUCTURES];
+export const ARCHITECTURE = [...HOUSES.flatMap(h => houseParts(h).map(p => worldPart(h, p))), ...STRUCTURES, ...DUNGEON_SOLIDS];
 // Precompute each rotated box basis and broad phase bounds. No render dependency.
 const boxes = ARCHITECTURE.map(s => {
  const c = Math.cos(s.yaw ?? 0); const n = Math.sin(s.yaw ?? 0); const a = Math.cos(s.tilt ?? 0); const b = Math.sin(s.tilt ?? 0);

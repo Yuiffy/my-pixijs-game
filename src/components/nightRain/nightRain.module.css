@@ -138,3 +138,11 @@
  .audioUnlock { position: absolute; top: 85px; right: 20px; z-index: 4; font-size: 11px !important; padding: 7px 12px !important; }
  .root[data-mode="interlude"] .hud, .root[data-mode="interlude"] .tools, .root[data-mode="interlude"] .region { visibility: hidden; }
  @media (max-width: 600px) { .interludeCaption { left: 6%; right: 6%; bottom: -24px; font-size: 14px; } .interludeActions { right: 6%; bottom: -96px; } }
+
+.equipmentPortrait { width: 72px; height: 80px; flex: 0 0 72px; display: block; }
+.gear button { display: flex; align-items: center; gap: 16px; }
+.gear button > span { min-width: 0; line-height: 1.6; }
+.forgeWeapon { display: flex; align-items: flex-start; gap: 16px; }
+.forgeWeapon > div { flex: 1; min-width: 0; }
+.forgeWeapon .equipmentPortrait { width: 84px; height: 93px; flex-basis: 84px; }
+@media (max-width: 500px) { .gear button, .forgeWeapon { gap: 10px; } .equipmentPortrait, .forgeWeapon .equipmentPortrait { width: 54px; height: 60px; flex-basis: 54px; } }

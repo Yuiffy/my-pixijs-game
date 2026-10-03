@@ -1,5 +1,7 @@
 import type { HavenState } from './haven';
 import type { Equipment } from './equipment';
+import type { DungeonId } from './dungeons';
+import type { LiftRide } from './dungeonTravel';
 
 export type Vec3 = { x: number; y: number; z: number };
 export type PlayerSkin = 'sui' | 'shiori' | 'nagisa';
@@ -36,10 +38,11 @@ export type GameState = {
   version: 1; motionVersion: 1; mode: 'title' | 'playing' | 'dead' | 'ending' | 'interlude'; paused: boolean;
   projectiles: Projectile[];
   bestiary: string[];
+  liftRide: LiftRide | null; discoveredDungeons: DungeonId[];
   player: Player; enemies: Enemy[]; effects: Effect[]; nextEffectId: number;
   time: number; deaths: number; kills: number; parries: number; executions: number;
   rice: number; bankedRice: number; level: number; charm: boolean; shortcut: boolean;
-  worldVersion: 9; gear: Equipment; weaponLevel: number; weapon: 'umbrella' | 'ironUmbrella' | 'katana' | 'graveSpear' | 'reedDaggers' | 'stoneMaul'; haven: HavenState; templeGate: boolean; flaskUpgrade: boolean; litLamps: string[];
+  worldVersion: 10; gear: Equipment; weaponLevel: number; weapon: 'umbrella' | 'ironUmbrella' | 'katana' | 'graveSpear' | 'reedDaggers' | 'stoneMaul'; haven: HavenState; templeGate: boolean; flaskUpgrade: boolean; litLamps: string[];
   chapterGates: string[]; chapterComplete: boolean; valleyGates: string[]; valleyComplete: boolean;
   playerSkin: PlayerSkin; harborGate: boolean; defeatedGuests: string[];
   checkpoint: 'courtyard' | 'room' | 'lower-lamp' | 'archive-lamp' | 'royal-lamp' | 'village-lamp' | 'monastery-lamp' | 'confluence-lamp' | 'haven-lamp' | 'crypt-lamp' | 'cave-lamp'; bossDefeated: boolean; collected: string[];

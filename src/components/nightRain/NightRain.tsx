@@ -4,12 +4,14 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import GameShareButton from '@/app/game/GameShareButton';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { DUNGEONS, dungeonFoyer, undergroundId } from './dungeons';
 import { interact, escapeStuck, continueExploring, clearHeldActions, createGame, enemyAttack, getObjective, loadGame, maxFlasks, healAmount, maxHp, maxStamina, forgeWeapon, equipWeapon, canForge, respawn, saveGame, setPaused, startGame, stepGame, upgrade, upgradeCost, travelToLamp, chooseConversation } from './engine';
 import { companionName, createCompanion, guideTargets, leadTo, mainTarget, recommendedTarget, speak, stopLeading, targetLabel, updateCompanion } from './companion';
 import type { CameraControl, GameInput, GameState, PlayerSkin } from './types';
 import { WEAPONS, weaponUnlocked, weaponAttack } from './weapons';
 import { ARMORS, TALISMANS, equipArmor, equipTalisman } from './equipment';
 import BestiaryPanel from './BestiaryPanel';
+import EquipmentPortrait from './EquipmentPortrait';
 import { isBoss, enemyRole, ROLE_NAMES } from './encounters';
 import { slotKey, migrateLegacy, selectedSlot, SLOT_COUNT } from './saveSlots';
 import { BOSS_ROSTER } from './bossRoster';
@@ -58,7 +60,7 @@ export default function NightRain() {
   const [ready, setReady] = useState(false); const [sceneError, setSceneError] = useState(false);
   const [sceneVersion, setSceneVersion] = useState(0); const [canResume, setCanResume] = useState(false);
   const [storageError, setStorageError] = useState(false);
-  const [notice, setNotice] = useState<{ id: number; kind: 'lamp' | 'death'; label: string } | null>(null);
+  const [notice, setNotice] = useState<{ id: number; kind: 'lamp' | 'death' | 'area'; label: string } | null>(null);
   const noticeSerial = useRef(0); const noticeRef = useRef(notice); noticeRef.current = notice;
   const [restartConfirm, setRestartConfirm] = useState(false);
   const confirmRef = useRef(false); confirmRef.current = restartConfirm;
@@ -83,7 +85,7 @@ export default function NightRain() {
     if (next) controls.current?.release(); else controls.current?.capture();
   }, [clearInput, cancelVoice, redraw]);
   const backPanel = useCallback(() => { showPanel(lampParent.current && ['forge', 'map', 'gear'].includes(panelRef.current ?? '') ? 'lamp' : null); }, [showPanel]);
-  const resetCamera = useCallback(() => { const underground = stateRef.current.player.x > 80; camera.current = { yaw: underground ? Math.PI : 0, pitch: underground ? 0.66 : 0.46, distance: 6.5, reset: camera.current.reset + 1 }; }, []);
+  const resetCamera = useCallback(() => { const underground = !!undergroundId(stateRef.current.player); camera.current = { yaw: underground ? Math.PI : 0, pitch: underground ? 0.54 : 0.46, distance: 6.5, reset: camera.current.reset + 1 }; }, []);
   const fullscreen = useCallback(() => {
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     else root.current?.requestFullscreen().catch(() => {});
@@ -110,15 +112,25 @@ sprint: pad?.sprint,
     if (action.interact && canForge(s)) { showPanel('lamp'); return; }
     const previousLamps = s.litLamps.length; const previousRest = s.restCount; const previousCollected = s.collected.length; const previousDoors = Number(s.shortcut) + Number(s.templeGate) + Number(s.harborGate) + s.chapterGates.length + s.valleyGates.length + s.haven.gates.length;
     const previousPosition = { x: s.player.x, z: s.player.z };
+    const previousFoyer = dungeonFoyer(s.player); const previousLift = s.liftRide; const
+previousDiscoveries = s.discoveredDungeons.length;
     const previousEchoes = s.haven.echoes;
     const before = s.time; const previousMessage = s.messageSerial;
     stepGame(s, ms, action); audio.current?.observe(s);
+    const arrived = dungeonFoyer(s.player);
+    if (arrived && arrived !== previousFoyer) setNotice({ id: ++noticeSerial.current, kind: 'area', label: DUNGEONS[arrived].name });
+    if (!!previousLift !== !!s.liftRide) {
+      cc.position = { ...s.player }; cc.path = []; cc.targetId = null; cc.status = 'following';
+      if (!s.liftRide) resetCamera();
+      save();
+    }
+    if (s.discoveredDungeons.length !== previousDiscoveries) save();
     if (s.litLamps.length > previousLamps) setNotice({ id: ++noticeSerial.current, kind: 'lamp', label: LANDMARKS.find(l => l.id === s.checkpoint)?.label ?? '雨灯' });
     if (stateRef.current.mode === 'dead') setNotice({ id: ++noticeSerial.current, kind: 'death', label: '雨灯仍为你守夜' });
     if (s.haven.talking) showPanel('story');
     if (Math.hypot(s.player.x - previousPosition.x, s.player.z - previousPosition.z) > 30) {
       cc.position = { ...s.player }; cc.path = []; cc.targetId = null; cc.status = 'following';
-      camera.current.yaw = s.player.x > 80 ? Math.PI : 0; camera.current.pitch = s.player.x > 80 ? 0.66 : 0.46; camera.current.reset += 1; save();
+      resetCamera(); save();
     }
     updateCompanion(cc, s, s.time - before);
     if ((s.haven.echoes !== previousEchoes || s.litLamps.length !== previousLamps || s.restCount !== previousRest || s.collected.length !== previousCollected || previousDoors !== Number(s.shortcut) + Number(s.templeGate) + Number(s.harborGate) + s.chapterGates.length + s.valleyGates.length + s.haven.gates.length) && save() && (s.restCount !== previousRest || s.litLamps.length !== previousLamps)) setRecordedAt(s.time);
@@ -127,7 +139,7 @@ sprint: pad?.sprint,
     // Public input is one action per advance, never a mutation hook.
     if (external.current) external.current = { x: action.x, z: action.z, sprint: action.sprint, dashHeld: action.dashHeld, heavyHeld: action.heavyHeld, guardHeld: action.guardHeld, aim: action.aim };
     if (s.mode !== 'playing') { controls.current?.release(); clearInput(); cancelVoice(); save(); }
-  }, [cancelVoice, clearInput, save, showPanel]);
+  }, [cancelVoice, clearInput, resetCamera, save, showPanel]);
   useEffect(() => {
     try {
       migrateLegacy(localStorage); slot.current = selectedSlot(localStorage); setSlotView(slot.current);
@@ -352,15 +364,15 @@ onPointerCancel={() => { drag.current = null; }}
         <p className={styles.eyebrow}>雨暂时停在这一刻</p>
         {panel !== 'story' && <h2>{panel === 'gear' ? '选择下一程的行装' : panel === 'bestiary' ? '雨夜图鉴' : panel === 'lamp' ? targetLabel(g.nearbyId) : panel === 'forge' ? '收伞，试一把新刃' : panel === 'journal' ? '归灯手记' : panel === 'map' ? '旧城与雾河地图' : panel === 'companion' ? '我陪你慢慢找' : '歇一会儿'}</h2>}
         <small className={styles.menuHints}>{hint('confirm')} 确认 · {hint('back')} 返回{usingPad ? ' · 十字键 / 左摇杆选择，左右调节' : ''}</small>
-        {panel === 'bestiary' ? <BestiaryPanel state={g} /> : panel === 'gear' ? <div className={styles.gear}><p>武器距离、速度和防具重量会改变打法。发现的遗物永久保留；在安全雨灯旁更换。</p><h3>武器</h3>{(Object.keys(WEAPONS) as GameState['weapon'][]).filter(id => weaponUnlocked(g, id)).map(id => <button data-game-primary={g.weapon === id || undefined} key={id} aria-pressed={g.weapon === id} disabled={!canForge(g)} onClick={() => { equipWeapon(g, id); save(); redraw(); }}>{WEAPONS[id].name}<small>轻击距离 {weaponAttack({ ...g, weapon: id }, 'light1').range.toFixed(2)} 米 · {WEAPONS[id].description}</small></button>)}<h3>防具</h3>{(Object.keys(ARMORS) as GameState['gear']['armor'][]).filter(id => !ARMORS[id].item || g.collected.includes(ARMORS[id].item)).map(id => <button key={id} aria-pressed={g.gear.armor === id} disabled={!canForge(g)} onClick={() => { equipArmor(g, id); save(); redraw(); }}>{ARMORS[id].name}<small>{ARMORS[id].description}</small></button>)}<h3>护符 · 1 个位置</h3>{(Object.keys(TALISMANS) as GameState['gear']['talisman'][]).filter(id => !TALISMANS[id].item || g.collected.includes(TALISMANS[id].item)).map(id => <button key={id} aria-pressed={g.gear.talisman === id} disabled={!canForge(g)} onClick={() => { equipTalisman(g, id); save(); redraw(); }}>{TALISMANS[id].name}<small>{TALISMANS[id].description}</small></button>)}</div> : panel === 'lamp' ? <div className={styles.lampTravel}><p>围着这盏雨灯，准备下一段旅程。</p><button data-game-primary onClick={() => { setPaused(g, false); interact(g); setPaused(g, true); setRecordedAt(g.time); save(); redraw(); }}>坐下休息 · 补满生命与药瓶</button><button disabled={g.level >= 15 || g.rice < upgradeCost(g)} onClick={() => { upgrade(g); save(); redraw(); }}>强化行装 +{g.level} · {upgradeCost(g)} 钱</button><button onClick={() => showPanel('forge')}>锻造与更换武器 · {WEAPONS[g.weapon].name}</button><button onClick={() => showPanel('gear')}>更换行装 · 武器 / 防具 / 护符</button><button onClick={() => showPanel('map')}>雨灯行旅 · 已开启 {g.litLamps.length} 处</button><button onClick={() => showPanel(null)}>离开雨灯</button><small>休息会复活普通敌人；传送保留当前补给。</small></div> : panel === 'forge' ? (
+        {panel === 'bestiary' ? <BestiaryPanel state={g} /> : panel === 'gear' ? <div className={styles.gear}><p>武器距离、速度和防具重量会改变打法。发现的遗物永久保留；在安全雨灯旁更换。</p><h3>武器</h3>{(Object.keys(WEAPONS) as GameState['weapon'][]).filter(id => weaponUnlocked(g, id)).map(id => <button data-game-primary={g.weapon === id || undefined} key={id} aria-pressed={g.weapon === id} disabled={!canForge(g)} onClick={() => { equipWeapon(g, id); save(); redraw(); }}><EquipmentPortrait id={id} /><span>{WEAPONS[id].name}<small>轻击距离 {weaponAttack({ ...g, weapon: id }, 'light1').range.toFixed(2)} 米 · {WEAPONS[id].description}</small></span></button>)}<h3>防具</h3>{(Object.keys(ARMORS) as GameState['gear']['armor'][]).filter(id => !ARMORS[id].item || g.collected.includes(ARMORS[id].item)).map(id => <button key={id} aria-pressed={g.gear.armor === id} disabled={!canForge(g)} onClick={() => { equipArmor(g, id); save(); redraw(); }}><EquipmentPortrait id={id} /><span>{ARMORS[id].name}<small>{ARMORS[id].description}</small></span></button>)}<h3>护符 · 1 个位置</h3>{(Object.keys(TALISMANS) as GameState['gear']['talisman'][]).filter(id => !TALISMANS[id].item || g.collected.includes(TALISMANS[id].item)).map(id => <button key={id} aria-pressed={g.gear.talisman === id} disabled={!canForge(g)} onClick={() => { equipTalisman(g, id); save(); redraw(); }}><EquipmentPortrait id={id} /><span>{TALISMANS[id].name}<small>{TALISMANS[id].description}</small></span></button>)}</div> : panel === 'lamp' ? <div className={styles.lampTravel}><p>围着这盏雨灯，准备下一段旅程。</p><button data-game-primary onClick={() => { setPaused(g, false); interact(g); setPaused(g, true); setRecordedAt(g.time); save(); redraw(); }}>坐下休息 · 补满生命与药瓶</button><button disabled={g.level >= 15 || g.rice < upgradeCost(g)} onClick={() => { upgrade(g); save(); redraw(); }}>强化行装 +{g.level} · {upgradeCost(g)} 钱</button><button onClick={() => showPanel('forge')}>锻造与更换武器 · {WEAPONS[g.weapon].name}</button><button onClick={() => showPanel('gear')}>更换行装 · 武器 / 防具 / 护符</button><button onClick={() => showPanel('map')}>雨灯行旅 · 已开启 {g.litLamps.length} 处</button><button onClick={() => showPanel(null)}>离开雨灯</button><small>休息会复活普通敌人；传送保留当前补给。</small></div> : panel === 'forge' ? (
 <div className={styles.forge}>
           <p>在灯火旁锻造，雨夜里选择自己的打法。武器和锻造进度会永久保留。</p>
           <p className={styles.forgeBalance}>夜市钱 {g.rice} · 当前握持 {WEAPONS[g.weapon].name}</p>
           {Object.entries(WEAPONS).filter(([, w]) => !('item' in w)).map(([id, w]) => (
 <div key={id} className={styles.forgeWeapon}>
-            <h3>{w.name}{g.weapon === id ? ' · 已握持' : ''}</h3><p>{w.description}</p>
+            <EquipmentPortrait id={id as GameState['weapon']} /><div><h3>{w.name}{g.weapon === id ? ' · 已握持' : ''}</h3><p>{w.description}</p>
             <small>轻击 {24 + w.lightDamage} · 重击 {41 + w.heavyDamage} · 轻击耗力 {17 + w.stamina}{w.tier === 2 ? ' · 击败栞栞后解锁' : ''}</small>
-            {w.tier <= g.weaponLevel ? <button disabled={g.weapon === id} onClick={() => { equipWeapon(g, id as GameState['weapon']); save(); redraw(); }}>握持{w.name}</button> : <button disabled={w.tier !== g.weaponLevel + 1 || g.rice < w.cost || (w.tier === 2 && !g.bossDefeated)} onClick={() => { forgeWeapon(g); save(); redraw(); }}>锻造 · {w.cost} 夜市钱</button>}
+            {w.tier <= g.weaponLevel ? <button disabled={g.weapon === id} onClick={() => { equipWeapon(g, id as GameState['weapon']); save(); redraw(); }}>握持{w.name}</button> : <button disabled={w.tier !== g.weaponLevel + 1 || g.rice < w.cost || (w.tier === 2 && !g.bossDefeated)} onClick={() => { forgeWeapon(g); save(); redraw(); }}>锻造 · {w.cost} 夜市钱</button>}</div>
           </div>
 ))}
           <button data-game-primary className={styles.primary} onClick={backPanel}>携刃出发</button>
@@ -421,7 +433,7 @@ onClick={() => {
       </section></div>
 )}
       {g.mode === 'interlude' && <Interlude state={g} done={() => { continueExploring(g); showPanel(null); resetCamera(); save(); }} guide={() => { continueExploring(g); guideTo(mainTarget(g)); resetCamera(); save(); }} />}
-      {notice && !panel && <div key={notice.id} className={`${styles.soulNotice} ${notice.kind === 'death' ? styles.deathNotice : ''}`} role="status" data-soul-notice={notice.kind}><small>{notice.kind === 'death' ? 'YOU DIED' : 'BONFIRE LIT'}</small><strong>{notice.kind === 'death' ? '身 死' : '雨 灯 初 燃'}</strong><span>{notice.label}</span></div>}
+      {notice && !panel && <div key={notice.id} className={`${styles.soulNotice} ${notice.kind === 'death' ? styles.deathNotice : ''}`} role="status" data-soul-notice={notice.kind}><small>{notice.kind === 'death' ? 'YOU DIED' : notice.kind === 'area' ? '发现支路 · 地下秘境' : 'BONFIRE LIT'}</small><strong>{notice.kind === 'death' ? '身 死' : notice.kind === 'area' ? notice.label : '雨 灯 初 燃'}</strong><span>{notice.kind === 'area' ? '深处有人守灯，也有一条归路。' : notice.label}</span></div>}
       {((g.mode === 'dead' && notice?.kind !== 'death') || g.mode === 'ending') && (
 <div className={styles.scrim}><section className={styles.panel} data-menu-id={g.mode} data-game-menu>
         <p className={styles.eyebrow}>{g.mode === 'dead' ? '雨灯未熄' : g.haven.ending ? '归灯暗线 · 灯下无名' : g.valleyComplete ? '第二关完成 · 雾河回响' : g.chapterComplete ? '第一关完成 · 长夜归灯' : '旅居手记 · 夜市小憩'}</p>

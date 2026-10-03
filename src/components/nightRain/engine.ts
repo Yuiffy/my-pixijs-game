@@ -1,7 +1,8 @@
 import type { Action, AttackId, Effect, Enemy, EnemyKind, GameInput, GameState, Player, Vec3, WorldAccess } from './types';
 import { ceilingAt, deckBlocks, playerBlocked, projectileBlocked, supportAt, canOccupy, REST_POINTS, ENEMY_SPAWNS, AMBUSH_ENEMIES, LANDMARKS, lineClear, regionAt, SPAWN, WORLD_BOUNDS } from './world';
 import { enemyRole, isBoss } from './encounters';
-import { DUNGEON_BOSSES, DUNGEON_ENEMIES, DUNGEON_PORTALS, giantScale } from './dungeons';
+import { DUNGEON_BOSSES, DUNGEON_ENEMIES, DUNGEON_PORTALS, DUNGEONS, giantScale, undergroundId } from './dungeons';
+import { discoverDungeon, liftPosition, migrateUnderground, updateLift, validLift } from './dungeonTravel';
 import { ARMORS, validEquipment } from './equipment';
 import { bestiaryKey } from './bestiary';
 import { freshHaven, HAVEN_ENEMIES, HAVEN_FERRIES, HAVEN_GATES, HAVEN_LORE, havenAvailable } from './haven';
@@ -93,6 +94,8 @@ player: makePlayer(SPAWN),
 enemies: makeEnemies(),
 projectiles: [],
 bestiary: [],
+liftRide: null,
+discoveredDungeons: [],
 effects: [],
 nextEffectId: 1,
     time: 0,
@@ -105,7 +108,7 @@ bankedRice: 0,
 level: 0,
 charm: false,
 shortcut: false,
-    worldVersion: 9,
+    worldVersion: 10,
 gear: { armor: 'traveler', talisman: 'none' },
 weaponLevel: 0,
 weapon: 'umbrella',
@@ -179,7 +182,7 @@ before = p.y + p.jumpHeight;
     p.y = floor; p.jumpHeight = 0; p.jumpVelocity = 0; p.landing = 0.18;
     p.lastGround = { x: p.x, y: floor, z: p.z }; p.fallPeak = floor;
     if (damage) { p.hp = Math.max(0, p.hp - damage); p.action = 'hurt'; p.actionTime = 0; p.attack = null; p.buffer = null; effect(s, p, 'hit', `−${damage}`); if (p.hp === 0)die(s); } else effect(s, p, 'dodge');
-  } else { p.jumpHeight = after - p.y; if (after < -8) { die(s); } }
+  } else { p.jumpHeight = after - p.y; if (after < (undergroundId(p.lastGround) ? p.lastGround.y - 8 : -8)) { die(s); } }
 }
 function move(s: GameState, entity: Vec3, dx: number, dz: number, radius = 0.33): void {
   if (entity === s.player) { movePlayer(s, dx, dz); return; }
@@ -533,10 +536,11 @@ function nearLandmark(s: GameState, l: typeof LANDMARKS[number]): boolean {
 }
 
 function updatePrompt(s: GameState): void {
+  discoverDungeon(s);
   s.region = regionAt(s.player.x, s.player.z, s.player.y + s.player.jumpHeight);
   if (!s.visited.includes(s.region)) s.visited.push(s.region);
   s.prompt = ''; s.nearbyId = null;
-  if (s.mode !== 'playing') return;
+  if (s.mode !== 'playing' || s.liftRide) return;
   if (s.bloodstain && distance(s.player, s.bloodstain) < 1.85 && Math.abs(s.player.y - s.bloodstain.y) < 0.8) { s.prompt = '取回遗落的夜市钱'; s.nearbyId = 'bloodstain'; return; }
   const broken = s.enemies.find(e => e.action === 'stagger' && inCone(s, s.player, e, 2.55, 1.65));
   if (broken) { s.prompt = '破架处决'; s.nearbyId = broken.id; return; }
@@ -549,7 +553,7 @@ function updatePrompt(s: GameState): void {
 export function stepGame(s: GameState, dtMs: number, input: GameInput = NEUTRAL): void {
   if (s.mode !== 'playing' || s.paused || !Number.isFinite(dtMs) || dtMs <= 0) return;
   const safeInput = { ...input, x: finite(input.x, -1000, 1000) ? input.x : 0, z: finite(input.z, -1000, 1000) ? input.z : 0 };
-  actionInput(s, safeInput);
+  if (!s.liftRide) actionInput(s, safeInput);
   if (s.paused) return;
   let remaining = Math.min(dtMs / 1000, 5);
   while (remaining > 0.000001 && s.mode === 'playing') {
@@ -559,6 +563,7 @@ export function stepGame(s: GameState, dtMs: number, input: GameInput = NEUTRAL)
     s.messageTime = Math.max(0, s.messageTime - dt);
     for (const fx of s.effects) fx.life -= dt;
     s.effects = s.effects.filter(fx => fx.life > 0);
+    if (s.liftRide) { updateLift(s, dt); continue; }
     updatePlayer(s, dt, safeInput);
     for (const enemy of s.enemies) { if (s.mode === 'playing') updateEnemy(s, enemy, dt); }
     if (s.mode === 'playing') updateProjectiles(s, dt);
@@ -571,7 +576,7 @@ function safeToRest(s: GameState): boolean {
 }
 
 export function interact(s: GameState): void {
-  if (s.mode !== 'playing' || s.paused || s.player.action !== 'idle' || isAirborne(s.player)) return;
+  if (s.mode !== 'playing' || s.paused || s.liftRide || s.player.action !== 'idle' || isAirborne(s.player)) return;
   if (execute(s)) return;
   updatePrompt(s);
   const { nearbyId } = s;
@@ -580,11 +585,14 @@ export function interact(s: GameState): void {
   if (!landmark) return;
   const portal = DUNGEON_PORTALS[landmark.id];
   if (portal) {
-    if (!safeToRest(s)) { say(s, '先甩开追兵，再穿过石门。'); return; }
+    if (!safeToRest(s)) { say(s, '先甩开追兵，再踏上升降台。'); return; }
     if (portal.chapter && !s.chapterComplete) { say(s, '先听王寺钟声，再循雾河找到洞窟。'); return; }
-    const { hp, stamina, flasks } = s.player;
-    s.player = { ...makePlayer(portal.destination), hp, stamina, flasks }; s.lockedId = null; s.projectiles = [];
-    say(s, landmark.label, 6, 'event'); updatePrompt(s); return;
+    const id = landmark.id.startsWith('crypt') ? 'crypt' : 'cave';
+    if (distance(s.player, landmark) > 1.35) { say(s, '站到中央的石质踏板上，再压下机关。'); return; }
+    s.liftRide = { dungeon: id, direction: landmark.id.endsWith('entrance') ? 'down' : 'up', elapsed: 0 };
+    Object.assign(s.player, liftPosition(s.liftRide), { attack: null, charge: 0, buffer: null, combo: 0 });
+    s.lockedId = null; s.projectiles = [];
+    say(s, s.liftRide.direction === 'down' ? '铁链缓缓松开，雨声留在了头顶。' : '踏板回升，地面的微光越来越近。', 8, 'event'); updatePrompt(s); return;
   }
   const guardedLoot = ['grave-spear', 'grave-seal'].includes(landmark.id) ? 'crypt-colossus' : ['stone-maul', 'tide-knot'].includes(landmark.id) ? 'cave-sentinel' : null;
   if (guardedLoot && !s.defeatedGuests.includes(guardedLoot)) { say(s, '金光仍被守望者护着，先回应它的挑战。'); return; }
@@ -767,6 +775,9 @@ export function clearHeldActions(s: GameState): void {
 export function setPaused(s: GameState, paused: boolean): void { if (s.mode === 'playing') { s.paused = paused; if (paused) clearHeldActions(s); } }
 
 export function getObjective(s: GameState): string {
+  if (s.liftRide) return s.liftRide.direction === 'down' ? '升降台下行 · 雨声渐远' : '升降台上行 · 返回地面';
+  const dungeon = undergroundId(s.player);
+  if (dungeon) return `${DUNGEONS[dungeon].name} · 可自由探索支路，乘升降台返回地面`;
   if (s.haven.ending) return '灯下暗线已完成 · 回归灯庭听听归人的回应';
   if (s.valleyComplete) return '两关完成 · 长夜归灯 / 雾河回响 · 旅馆南桥的归灯庭还有人在等你';
   if (s.chapterComplete) {
@@ -834,7 +845,7 @@ export function saveGame(s: GameState): string { return JSON.stringify(s); }
 function validPosition(p: unknown, shortcut: WorldAccess): p is Vec3 {
   if (!p || typeof p !== 'object') return false;
   const v = p as Vec3;
-  return finite(v.x, WORLD_BOUNDS.x1, WORLD_BOUNDS.x2) && finite(v.y, -1, WORLD_BOUNDS.maxY) && finite(v.z, WORLD_BOUNDS.z1, WORLD_BOUNDS.z2)
+  return finite(v.x, WORLD_BOUNDS.x1, WORLD_BOUNDS.x2) && finite(v.y, WORLD_BOUNDS.minY, WORLD_BOUNDS.maxY) && finite(v.z, WORLD_BOUNDS.z1, WORLD_BOUNDS.z2)
     && canOccupy(v.x, v.z, v.y, shortcut, 0.05) && Math.abs((supportAt(v.x, v.z, v.y + 0.1) ?? -100) - v.y) < 0.08;
 }
 
@@ -857,7 +868,7 @@ export function loadGame(raw: string | null): GameState | null {
     if (!s || s.version !== 1 || !['title', 'playing', 'dead', 'ending', 'interlude'].includes(s.mode) || typeof s.paused !== 'boolean') return null;
     const legacyMotion = s.motionVersion === undefined;
     if (!legacyMotion && s.motionVersion !== 1) return null;
-    if (s.worldVersion !== undefined && ![2, 3, 4, 5, 6, 7, 8, 9].includes(s.worldVersion)) return null;
+    if (s.worldVersion !== undefined && ![2, 3, 4, 5, 6, 7, 8, 9, 10].includes(s.worldVersion)) return null;
     const oldWorld = s.worldVersion === undefined; const oldDistrict = (s.worldVersion ?? 0) < 4; const oldChapter = (s.worldVersion ?? 0) < 5; const oldValley = (s.worldVersion ?? 0) < 6; const oldHaven = (s.worldVersion ?? 0) < 7;
     if (oldWorld) { s.templeGate = false; s.flaskUpgrade = false; s.litLamps = s.checkpoint === 'courtyard' ? ['courtyard'] : []; }
     if ((s.worldVersion as number) === 2) {
@@ -876,7 +887,9 @@ export function loadGame(raw: string | null): GameState | null {
     if (oldExperience) { s.weaponLevel = 0; s.weapon = 'umbrella'; }
     const oldJourneys = (s.worldVersion ?? 0) < 9;
     if (oldJourneys) { s.gear = { armor: 'traveler', talisman: s.charm ? 'goldBell' : 'none' }; s.bestiary = Array.isArray(s.enemies) ? Array.from(new Set(s.enemies.filter(e => e.hp === 0).map(bestiaryKey))) : []; }
-    s.worldVersion = 9;
+    const oldUnderground = (s.worldVersion ?? 0) < 10;
+    if (oldUnderground) migrateUnderground(s);
+    s.worldVersion = 10;
     if (!finite(s.weaponLevel, 0, 2) || !Number.isInteger(s.weaponLevel) || !Object.hasOwn(WEAPONS, s.weapon) || !weaponUnlocked(s, s.weapon) || (s.weaponLevel === 2 && !s.bossDefeated)) return null;
     if (!Array.isArray(s.valleyGates) || new Set(s.valleyGates).size !== s.valleyGates.length || s.valleyGates.some(id => !VALLEY_GATES.some(g => g.id === id)) || typeof s.valleyComplete !== 'boolean') return null;
     if (!Array.isArray(s.chapterGates) || new Set(s.chapterGates).size !== s.chapterGates.length || s.chapterGates.some(id => !CHAPTER_GATES.some(g => g.id === id)) || typeof s.chapterComplete !== 'boolean') return null;
@@ -918,12 +931,13 @@ export function loadGame(raw: string | null): GameState | null {
     if (!finite(s.hitstop, 0, 0.1) || (p.attack !== null && !Object.hasOwn(ATTACKS, p.attack))) return null;
     if (p.fallPeak === undefined)p.fallPeak = p.y + p.jumpHeight;
     if (p.lastGround === undefined)p.lastGround = { x: p.x, y: p.y, z: p.z };
-    if (!finite(p.fallPeak, -1, WORLD_BOUNDS.maxY + 10) || !validPosition(p.lastGround, s) || !finite(p.jumpHeight, -60, 2)) return null;
+    if (!Array.isArray(s.discoveredDungeons) || new Set(s.discoveredDungeons).size !== s.discoveredDungeons.length || s.discoveredDungeons.some(id => !Object.hasOwn(DUNGEONS, id)) || !validLift(s)) return null;
+    if (!finite(p.fallPeak, WORLD_BOUNDS.minY, WORLD_BOUNDS.maxY + 10) || !validPosition(p.lastGround, s) || !finite(p.jumpHeight, -60, 2)) return null;
     for (const key of ['charge', 'landing', 'sprintTime', 'guardImpact', 'parryFlash'] as const) if (!finite(p[key], 0, 2)) return null;
     if (!finite(p.jumpVelocity, -40, 7) || !finite(p.airX, -6, 6) || !finite(p.airZ, -6, 6) || !finite(p.attackFacing, -100, 100) || !finite(p.combo, 0, 3) || !Number.isInteger(p.combo) || !finite(p.comboUntil, 0, 10000010) || !finite(p.dashTime, 0, 10)) return null;
     if (typeof p.dashDown !== 'boolean' || typeof p.dashUsed !== 'boolean' || typeof p.airAttackUsed !== 'boolean') return null;
     if (p.buffer !== null && (!['light', 'heavy', 'dodge', 'parry', 'jump'].includes(p.buffer.action) || !finite(p.buffer.until, 0, 10000010))) return null;
-    if (!(isAirborne(p) ? finite(p.x, WORLD_BOUNDS.x1, WORLD_BOUNDS.x2) && finite(p.z, WORLD_BOUNDS.z1, WORLD_BOUNDS.z2) && finite(p.y, -1, WORLD_BOUNDS.maxY) && p.y + p.jumpHeight >= -9 : validPosition(p, s)) || !finite(p.hp, 0, maxHp(s)) || !finite(p.stamina, 0, maxStamina(s)) || !finite(p.facing, -100, 100)) return null;
+    if (!(s.liftRide ? validLift(s) : isAirborne(p) ? finite(p.x, WORLD_BOUNDS.x1, WORLD_BOUNDS.x2) && finite(p.z, WORLD_BOUNDS.z1, WORLD_BOUNDS.z2) && finite(p.y, WORLD_BOUNDS.minY, WORLD_BOUNDS.maxY) && p.y + p.jumpHeight >= (undergroundId(p.lastGround) ? p.lastGround.y - 9 : -9) : validPosition(p, s)) || !finite(p.hp, 0, maxHp(s)) || !finite(p.stamina, 0, maxStamina(s)) || !finite(p.facing, -100, 100)) return null;
     if (!Object.hasOwn(DURATIONS, p.action) || !finite(p.actionTime, 0, 5) || !finite(p.invulnerable, 0, 1.1) || !finite(p.staminaDelay, 0, 1)) return null;
     if (!finite(p.flasks, 0, maxFlasks(s)) || !Number.isInteger(p.flasks) || !finite(p.dodgeX, -1, 1) || !finite(p.dodgeZ, -1, 1) || typeof p.hitDone !== 'boolean') return null;
     if ((s.mode === 'dead') !== (p.hp === 0) || (s.mode === 'dead') !== (p.action === 'dead')) return null;

@@ -29,7 +29,7 @@ import InterludeView from './InterludeView';
 import DungeonView from './DungeonView';
 import DiscoveryView from './DiscoveryView';
 import ProjectileView from './ProjectileView';
-import { giantScale } from './dungeons';
+import { DUNGEONS, DUNGEON_PORTALS, giantScale, undergroundId } from './dungeons';
 import { ARMORS } from './equipment';
 import { combatPose, rollPose, CHARGE_TIME } from './combat';
 import type { Companion } from './companion';
@@ -525,14 +525,23 @@ function FoodStall() {
 }
 
 function CityContent() {
+  const water = useMemo(() => {
+    const shape = new THREE.Shape();
+    shape.moveTo(-500, -245); shape.lineTo(300, -245); shape.lineTo(300, 605); shape.lineTo(-500, 605); shape.closePath();
+    for (const d of Object.values(DUNGEONS)) {
+      const hole = new THREE.Path(); const { x } = d.upper; const z = -d.upper.z;
+      hole.moveTo(x - 3.3, z - 3.3); hole.lineTo(x - 3.3, z + 3.3); hole.lineTo(x + 3.3, z + 3.3); hole.lineTo(x + 3.3, z - 3.3); hole.closePath(); shape.holes.push(hole);
+    }
+    return shape;
+  }, []);
   return (
     <group name="night-city">
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
-        position={[-100, -1.25, -180]}
+        position={[0, -1.25, 0]}
         receiveShadow
       >
-        <planeGeometry args={[800, 850]} />
+        <shapeGeometry args={[water]} />
         <meshStandardMaterial
           color="#213f49"
           roughness={0.42}
@@ -556,7 +565,7 @@ function CityContent() {
       <Sign position={[20.7, 3.55, -30]} rotation={[0, -Math.PI / 2, 0]} text="潮汐港" width={2.5} />
       {[14.6, 20.8, 24.5, 29].map(x => <group key={`tide-lights-${x}`}><Lantern position={[x, 0, -32.5]} /><Lantern position={[x, 0, -27.5]} /></group>)}
       {STRUCTURES.map(p => <group key={p.id} position={p.position} rotation={[0, p.yaw ?? 0, 0]}><Block position={[0, 0, 0]} size={p.size} rotation={[0, 0, p.tilt ?? 0]} color={p.color} /></group>)}
-      {SURFACES.map((s) => (
+      {SURFACES.filter(s => !s.id.endsWith('foyer')).map((s) => (
         <Deck key={s.id} surface={s} />
       ))}
 
@@ -1067,7 +1076,7 @@ function Landmarks({ stateRef }: { stateRef: StateRef }) {
             <pointLight ref={el => { pickupLights.current[i] = el; }} position={[l.x, l.y + 0.6, l.z]} color={LOOT_STYLE[lootTier(l)].color} intensity={2} distance={3} />
           </group>
           );
-        if (l.kind === 'ferry') return <group key={l.id} position={[l.x, l.y, l.z]}><mesh position={[0, 1, -0.5]}><cylinderGeometry args={[0.045, 0.055, 2, 6]} /><meshStandardMaterial color="#9c8964" /></mesh><mesh position={[0, 2, -0.5]}><octahedronGeometry args={[0.2]} /><meshBasicMaterial color="#9adcd2" /></mesh></group>;
+        if (l.kind === 'ferry' && !Object.hasOwn(DUNGEON_PORTALS, l.id)) return <group key={l.id} position={[l.x, l.y, l.z]}><mesh position={[0, 1, -0.5]}><cylinderGeometry args={[0.045, 0.055, 2, 6]} /><meshStandardMaterial color="#9c8964" /></mesh><mesh position={[0, 2, -0.5]}><octahedronGeometry args={[0.2]} /><meshBasicMaterial color="#9adcd2" /></mesh></group>;
         if (l.kind === "note") return (
             <group key={l.id} position={[l.x, l.y + 0.04, l.z]}>
               <Block
@@ -1632,8 +1641,8 @@ function Weather({ stateRef }: { stateRef: StateRef }) {
   useFrame(() => {
     const p = stateRef.current.player;
     const { time } = stateRef.current;
-    if (lines.current) lines.current.visible = p.x < 80;
-    if (p.x > 80) return;
+    if (lines.current) lines.current.visible = !undergroundId(p) && !stateRef.current.liftRide;
+    if (undergroundId(p) || stateRef.current.liftRide) return;
     for (let i = 0; i < 480; i += 1) {
       const x = p.x + pseudoRandom(i + 700) * 38 - 19;
       const z = p.z + pseudoRandom(i + 1300) * 38 - 19;
@@ -1709,6 +1718,7 @@ function CameraRig({
       pitch = 0.3;
     }
     if (state.mode === 'interlude') { yaw = state.chapterComplete ? 0.65 : 0.92; distance = state.chapterComplete ? 7.5 : 4; pitch = state.chapterComplete ? 0.35 : 0.22; }
+    if (state.liftRide) { yaw = Math.PI / 4; distance = 4.2; pitch = 0.65; }
     target.set(p.x, p.y + 1.3 + p.jumpHeight, p.z);
     if (locked) { target.x += (locked.x - p.x) * 0.38; target.z += (locked.z - p.z) * 0.38; target.y += (giantScale(locked.id) - 1) * 0.7; }
     desired.set(
@@ -1741,7 +1751,7 @@ function CameraRig({
     }
     // Also test actual static artwork: parapets, awnings and roof edges must not
     // slice through the camera when the player turns beside a ledge.
-    const city = scene.getObjectByName(p.x > 80 ? 'optional-dungeons' : 'night-city');
+    const city = scene.getObjectByName(undergroundId(p) || state.liftRide ? 'optional-dungeons' : 'night-city');
     let obstructed = false;
     if (city) {
       direction.subVectors(desired, target); const length = direction.length();

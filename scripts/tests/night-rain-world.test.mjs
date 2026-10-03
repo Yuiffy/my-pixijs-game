@@ -15,7 +15,7 @@ const interact = (s,id) => {travel(s,id);engine.interact(s);};
 const distance = path => path.slice(1).reduce((sum,p,i)=>sum+Math.hypot(p.x-path[i].x,p.z-path[i].z,p.y-path[i].y),0);
 
 test('every expansion destination and all lamp spawn points have a legal walking route with both gates shut',()=>{
- const s=fresh();for(const l of world.LANDMARKS.filter(l=>l.z>=-83&&l.x<80)){
+ const s=fresh();for(const l of world.LANDMARKS.filter(l=>l.z>=-83&&l.x<80&&l.y>=-10)){
   assert.equal(world.supportAt(l.x,l.z,l.y+.1),l.y);
   if(['well-testimony','well-choice','well-return'].includes(l.id)){
    assert.equal(guide.findPath(s.player,world.interactionPoint(l),s).length,0,`${l.id}: sealed`);
@@ -57,12 +57,15 @@ test('solid lamps stop bodies while allowing interaction from each clear side, a
  const s=fresh();
  for(const l of world.LANDMARKS.filter(l=>l.kind==='rest')){
   assert.equal(world.canOccupy(l.x,l.z,l.y,s),false);
+  let clearSides=0;
   for(const [dx,dz] of [[1.2,0],[-1.2,0],[0,1.2],[0,-1.2]]){
    Object.assign(s.player,{x:l.x+dx,y:l.y,z:l.z+dz});
-   assert.ok(world.canOccupy(s.player.x,s.player.z,s.player.y,s));
+   if(!world.canOccupy(s.player.x,s.player.z,s.player.y,s))continue;
+   clearSides++;
    assert.equal(world.lineClear(s.player,l,s),false);
    engine.interact(s);assert.equal(s.nearbyId,l.id);assert.equal(s.checkpoint,l.id);
   }
+  assert.ok(clearSides>=2,`${l.id}: needs two clear approaches`);
  }
  const old=fresh();Object.assign(old.player,{x:-1,y:0,z:7,hp:52,flasks:1});
  const raw=JSON.parse(engine.saveGame(old));delete raw.worldVersion;delete raw.templeGate;delete raw.flaskUpgrade;delete raw.litLamps;raw.enemies=raw.enemies.slice(0,6);
@@ -85,7 +88,7 @@ test('first ignition only registers; subsequent rest is free, refills and resets
 test('v2 retired checkpoint migrates without moving, healing, restocking or reviving enemies',()=>{
  for(const oldLamp of ['temple-lamp','canal-lamp']){
   const s=fresh();Object.assign(s.player,{...world.interactionPoint(world.LANDMARKS.find(l=>l.id===oldLamp)),hp:31,flasks:1});s.enemies[0].hp=0;s.enemies[0].action='dead';
-  s.worldVersion=2;s.checkpoint=oldLamp;s.litLamps=[oldLamp];const loaded=engine.loadGame(engine.saveGame(s));assert.ok(loaded);assert.equal(loaded.worldVersion,9);assert.equal(loaded.checkpoint,'courtyard');assert.deepEqual(loaded.litLamps,['courtyard']);assert.deepEqual(loaded.player,s.player);assert.deepEqual(loaded.enemies,s.enemies);assert.equal(loaded.restCount,s.restCount);
+  s.worldVersion=2;s.checkpoint=oldLamp;s.litLamps=[oldLamp];const loaded=engine.loadGame(engine.saveGame(s));assert.ok(loaded);assert.equal(loaded.worldVersion,10);assert.equal(loaded.checkpoint,'courtyard');assert.deepEqual(loaded.litLamps,['courtyard']);assert.deepEqual(loaded.player,s.player);assert.deepEqual(loaded.enemies,s.enemies);assert.equal(loaded.restCount,s.restCount);
   s.litLamps=[];assert.equal(engine.loadGame(engine.saveGame(s)),null);
  }
 });

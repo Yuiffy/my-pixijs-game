@@ -5,6 +5,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { GameState } from './types';
 import GeometryBatch, { type StoneBox } from './GeometryBatch';
+import { DUNGEONS } from './dungeons';
 
 function Grove() {
   const trunks = useRef<THREE.InstancedMesh>(null);
@@ -58,6 +59,13 @@ function RiverMechanisms({ stateRef }: { stateRef: MutableRefObject<GameState> }
 }
 
 function ValleyView({ stateRef }: { stateRef: MutableRefObject<GameState> }) {
+  const water = useMemo(() => {
+    const shape = new THREE.Shape(); const p = DUNGEONS.cave.upper;
+    shape.moveTo(-306, 285); shape.lineTo(4, 285); shape.lineTo(4, 615); shape.lineTo(-306, 615); shape.closePath();
+    const hole = new THREE.Path();
+    hole.moveTo(p.x - 3.3, -p.z - 3.3); hole.lineTo(p.x - 3.3, -p.z + 3.3); hole.lineTo(p.x + 3.3, -p.z + 3.3); hole.lineTo(p.x + 3.3, -p.z - 3.3); hole.closePath(); shape.holes.push(hole);
+    return shape;
+  }, []);
   const boxes = useMemo(() => {
     const b: StoneBox[] = [];
     for (let x = -183; x < -149; x += 4) {
@@ -83,7 +91,7 @@ function ValleyView({ stateRef }: { stateRef: MutableRefObject<GameState> }) {
   }, []);
   return (
 <group name="mist-river-valley">
-    <mesh position={[-151, -1.24, -450]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[310, 330]} /><meshStandardMaterial color="#365d62" roughness={0.28} metalness={0.35} /></mesh>
+    <mesh position={[0, -1.24, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><shapeGeometry args={[water]} /><meshStandardMaterial color="#365d62" roughness={0.28} metalness={0.35} /></mesh>
     <GeometryBatch boxes={boxes} /><Grove /><RiverMechanisms stateRef={stateRef} />
     {/* Roofed long-tail boats mark the actual, labelled ferry endpoints. */}
     {([[-130, 0.3, -366.5], [-178.3, 0.3, -398], [17, -0.7, -34.5]] as const).map(([x, y, z]) => (

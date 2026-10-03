@@ -5,7 +5,7 @@ import { CHAPTER_ENEMIES, CHAPTER_LANDMARKS, CHAPTER_OBSTACLES, CHAPTER_REST_POI
 import { VALLEY_ENEMIES, VALLEY_LANDMARKS, VALLEY_OBSTACLES, VALLEY_REST_POINTS, VALLEY_SURFACES } from './valley';
 
 import { HAVEN_ENEMIES, HAVEN_LANDMARKS, HAVEN_OBSTACLES, HAVEN_REST_POINTS, HAVEN_SURFACES } from './haven';
-import { DUNGEON_ENEMIES, DUNGEON_LANDMARKS, DUNGEON_OBSTACLES, DUNGEON_REST_POINTS, DUNGEON_SURFACES } from './dungeons';
+import { DUNGEON_ENEMIES, DUNGEON_FOYERS, DUNGEON_LANDMARKS, DUNGEON_OBSTACLES, DUNGEON_REST_POINTS, DUNGEON_SURFACES } from './dungeons';
 
 // Metres. +x east, +z south, +y up. Ramp endY is the height at z2.
 // Solid parapets bound the walkable network; no hidden teleport links.
@@ -54,6 +54,7 @@ export const SURFACES: Surface[] = [
   ...VALLEY_SURFACES,
   ...HAVEN_SURFACES,
   ...DUNGEON_SURFACES,
+  ...DUNGEON_FOYERS,
 ];
 
 export const OBSTACLES: Obstacle[] = [
@@ -164,7 +165,7 @@ export function gateOpen(o: Obstacle, access: WorldAccess): boolean {
   return o.kind === 'gate' && (o.gateId === 'harbor' ? typeof access !== 'boolean' && !!access.harborGate : o.gateId === 'temple' ? typeof access !== 'boolean' && access.templeGate : typeof access === 'boolean' ? access : access.shortcut);
 }
 
-export const WORLD_BOUNDS = { x1: -295, x2: 130, z1: -545, z2: 163, maxY: 50 };
+export const WORLD_BOUNDS = { x1: -295, x2: 130, z1: -545, z2: 163, minY: -46, maxY: 50 };
 
 function spatialIndex<T>(items: T[], bounds: (item: T) => { x1: number; x2: number; z1: number; z2: number }) {
   const buckets = new Map<string, T[]>();
@@ -193,7 +194,10 @@ export function canOccupy(x: number, z: number, fromY: number, shortcut: WorldAc
   const y = supportAt(x, z, fromY + 0.6);
   if (y === null || Math.abs(y - fromY) > 0.6 || deckBlocks(x, z, fromY) || architectureBlocked(x, z, fromY, radius)) return false;
   // Four probes keep feet inside the visible parapets without sealing connected stairs.
-  if ([[radius, 0], [-radius, 0], [0, radius], [0, -radius]].some(([dx, dz]) => supportAt(x + dx, z + dz, fromY + 0.6) === null)) return false;
+  if ([[radius, 0], [-radius, 0], [0, radius], [0, -radius]].some(([dx, dz]) => {
+    const foot = supportAt(x + dx, z + dz, fromY + 0.6);
+    return foot === null || (foot < -10) !== (y < -10);
+  })) return false;
   return !nearbyObstacles(x, z).some(o => !(ignoredLandmark && o.landmarkId === ignoredLandmark) && !gateOpen(o, shortcut)
     && Math.abs(y - o.y) < 2 && Math.abs(x - o.x) < o.w / 2 + radius && Math.abs(z - o.z) < o.d / 2 + radius);
 }
@@ -240,8 +244,8 @@ count = Math.ceil(span / 0.5);
       const dx = vertical ? (edge === 0 ? -0.15 : 0.15) : 0; const
 dz = vertical ? 0 : (edge === 2 ? -0.15 : 0.15);
       const current = y + ((endY - y) * (z - z1)) / (z2 - z1);
-      const neighbor = heightAt(x + dx, z + dz); const
-inside = heightAt(x - dx, z - dz);
+      const neighbor = y < -10 ? supportAt(x + dx, z + dz, current + 0.6) : heightAt(x + dx, z + dz); const
+inside = y < -10 ? supportAt(x - dx, z - dz, current + 0.6) : heightAt(x - dx, z - dz);
       if ((inside !== null && inside > current + 0.4) || (neighbor !== null && Math.abs(neighbor - current) < 0.5)) continue;
       result.push({ x, z, y: current, w: vertical ? 0.2 : span / count + 0.02, d: vertical ? span / count + 0.02 : 0.2, slope: vertical ? (endY - y) / (z2 - z1) : 0 });
     }

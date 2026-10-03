@@ -1,6 +1,7 @@
 import voices from './voiceManifest.json';
 import type { CompanionSkin } from './companion';
 import type { GameState } from './types';
+import { DUNGEONS, dungeonFoyer } from './dungeons';
 
 export type AudioSettings = { music: number; effects: number; narration: number; muted: boolean };
 type Track = 'exploration' | 'haven' | 'boss';
@@ -29,6 +30,8 @@ export class NightAudio {
   private stepAt = 0;
   private lastPosition: { x: number; z: number } | null = null;
   private lastProjectile = 0;
+  private chainAt = -10;
+  private windAt = -10;
   private quiet = false;
   private disposed = false;
   private voiceSerial = 0;
@@ -120,10 +123,10 @@ export class NightAudio {
   sound(name: string) {
     if (!this.context || !this.unlocked || this.quiet || document.hidden || this.settings.muted || !this.settings.effects) return;
     const pitches: Record<string, [number, number, number]> = { light: [480, 100, 0.1], heavy: [240, 45, 0.22], hit: [160, 60, 0.1], parry: [1800, 640, 0.3], block: [720, 260, 0.16], dodge: [280, 100, 0.12], jump: [190, 350, 0.13], heal: [380, 900, 0.45], pickup: [880, 1320, 0.38], lamp: [440, 880, 0.7], death: [160, 35, 0.8], step: [90, 50, 0.035], menu: [600, 750, 0.07], shot: [1100, 200, 0.16] };
-    const [from, to, duration] = pitches[name] ?? pitches.hit; const now = this.context.currentTime;
+    const [from, to, duration] = name === 'chain' ? [960, 370, 0.12] : name === 'wind' ? [145, 210, 1.5] : pitches[name] ?? pitches.hit; const now = this.context.currentTime;
     const osc = this.context.createOscillator(); const gain = this.context.createGain();
     osc.type = name === 'parry' || name === 'block' ? 'triangle' : 'sine'; osc.frequency.setValueAtTime(from, now); osc.frequency.exponentialRampToValueAtTime(to, now + duration);
-    gain.gain.setValueAtTime(0.0001, now); gain.gain.exponentialRampToValueAtTime(this.settings.effects * (name === 'step' ? 0.04 : 0.15), now + 0.005); gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    gain.gain.setValueAtTime(0.0001, now); gain.gain.exponentialRampToValueAtTime(this.settings.effects * (name === 'step' || name === 'wind' ? 0.04 : name === 'chain' ? 0.075 : 0.15), now + (name === 'wind' ? 0.5 : 0.005)); gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
     osc.connect(gain); gain.connect(this.analyser!); osc.start(); osc.stop(now + duration + 0.01);
     osc.onended = () => { osc.disconnect(); gain.disconnect(); }; this.event(name);
   }
@@ -136,6 +139,9 @@ export class NightAudio {
     if (action !== this.lastAction && ['light', 'heavy', 'dodge', 'heal'].includes(action)) this.sound(action);
     if (s.mode === 'dead' && this.lastMode !== 'dead') { const quietBefore = this.quiet; this.quiet = false; this.sound('death'); this.quiet = quietBefore; }
     this.lastAction = action; this.lastMode = s.mode;
+    if (s.liftRide && s.time - this.chainAt > 0.65) { this.sound('chain'); this.chainAt = s.time; }
+    const mouth = DUNGEONS.cave.upper;
+    if (!s.liftRide && s.time - this.windAt > 2.4 && Math.abs(s.player.y - mouth.y) < 2 && (dungeonFoyer(s.player) === 'cave' || Math.hypot(s.player.x - mouth.x, s.player.z - mouth.z) < 11)) { this.sound('wind'); this.windAt = s.time; }
     for (const fx of s.effects) if (fx.id > this.lastFx) {
       this.lastFx = fx.id;
       this.sound(fx.kind === 'reward' ? fx.text ? 'pickup' : 'lamp' : fx.kind === 'parry' && !fx.text ? 'heavy' : fx.kind);
@@ -151,6 +157,6 @@ export class NightAudio {
     return { unlocked: this.unlocked, context: this.context?.state ?? 'locked', track: this.track, voiceLine: this.voiceLine, settings: this.settings, events: this.events, recent: this.recent, rms, status: this.status };
   }
   suspend() { this.decks.forEach(d => d.audio.pause()); this.cancelVoice(); }
-  reset() { this.lastFx = 0; this.lastProjectile = 0; this.lastPosition = null; this.lastAction = ''; this.lastMode = ''; this.cancelVoice(); }
+  reset() { this.lastFx = 0; this.lastProjectile = 0; this.chainAt = -10; this.windAt = -10; this.lastPosition = null; this.lastAction = ''; this.lastMode = ''; this.cancelVoice(); }
   dispose() { this.disposed = true; this.listeners.forEach(fn => fn()); this.suspend(); this.decks.forEach(d => { d.audio.removeAttribute('src'); d.audio.load(); }); this.narration?.removeAttribute('src'); this.context?.close().catch(() => {}); }
 }

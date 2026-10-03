@@ -39,7 +39,7 @@ const route = (s, targets) => {
 
 test('authentic v6 save migrates with all previous progress and six new living enemies', () => {
   const before = JSON.parse(fixture); const s = fresh();
-  assert.equal(s.worldVersion, 9); assert.deepEqual(s.player, before.player);
+  assert.equal(s.worldVersion, 10); assert.deepEqual(s.player, before.player);
   assert.deepEqual(s.enemies.slice(0, before.enemies.length), expectedLegacyEnemies(before.enemies));
   for (const key of ['rice', 'bankedRice', 'level', 'litLamps', 'checkpoint', 'collected', 'chapterGates', 'valleyGates', 'valleyComplete', 'defeatedGuests', 'deaths']) assert.deepEqual(s[key], before[key], key);
   assert.equal(s.enemies.length - before.enemies.length, 16);

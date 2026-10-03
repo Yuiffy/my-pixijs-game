@@ -1,9 +1,9 @@
 import type { GameState, Vec3, WorldAccess } from './types';
-import { canOccupy, supportAt, interactionPoint, LANDMARKS } from './world';
+import { canOccupy, playerBlocked, supportAt, interactionPoint, LANDMARKS } from './world';
 import { CHAPTER_GATES, CHAPTER_LANDMARKS } from './chapter';
 import { HAVEN_GATES, HAVEN_LANDMARKS, havenAvailable, havenTarget } from './haven';
 import { riverSeals, VALLEY_GATES, VALLEY_LANDMARKS } from './valley';
-import { DUNGEON_LANDMARKS, DUNGEON_ENEMIES } from './dungeons';
+import { DUNGEON_LANDMARKS, DUNGEON_ENEMIES, dungeonFoyer, navigationLayer, undergroundId } from './dungeons';
 
 export type CompanionSkin = 'biscuit' | 'otter';
 export type Companion = {
@@ -71,8 +71,7 @@ boss: '栞栞守着的夜市入口',
 export const targetLabel = (id: string | null) => (id ? labels[id] ?? id : '下一处发现');
 export function guideTargets(s: GameState) {
   return LANDMARKS.filter(l => {
-    if ((s.player.x > 80) !== (l.x > 80)) return false;
-    if (s.player.x > 80 && (s.player.z > 88) !== (l.z > 88)) return false;
+    if (navigationLayer(s.player) !== navigationLayer(l)) return false;
     if (l.id === 'cave-entrance' && !s.chapterComplete) return false;
     if (!havenAvailable(s, l.id)) return false;
     if (HAVEN_LANDMARKS.some(h => h.id === l.id)) {
@@ -103,7 +102,9 @@ export function guideTargets(s: GameState) {
   });
 }
 export function mainTarget(s: GameState): string {
-  if (s.player.x > 80) return s.player.z > 88 ? !s.defeatedGuests.includes('cave-sentinel') ? 'cave-sentinel' : !s.collected.includes('stone-maul') ? 'stone-maul' : 'cave-exit' : !s.defeatedGuests.includes('crypt-colossus') ? 'crypt-colossus' : !s.collected.includes('grave-spear') ? 'grave-spear' : 'crypt-exit';
+  const dungeon = undergroundId(s.player);
+  if (dungeon) return dungeon === 'cave' ? !s.defeatedGuests.includes('cave-sentinel') ? 'cave-sentinel' : !s.collected.includes('stone-maul') ? 'stone-maul' : 'cave-exit' : !s.defeatedGuests.includes('crypt-colossus') ? 'crypt-colossus' : !s.collected.includes('grave-spear') ? 'grave-spear' : 'crypt-exit';
+  const foyer = dungeonFoyer(s.player); if (foyer) return `${foyer}-entrance`;
   if (s.valleyComplete) return havenTarget(s);
   if (s.chapterComplete && !s.valleyComplete) {
     if (!s.valleyGates.includes('valley-entry')) return 'valley-entry';
@@ -142,7 +143,7 @@ export function walkSegment(a: Vec3, b: Vec3, shortcut: WorldAccess, maxStep = 0
   let { y } = a;
   for (let i = 1; i <= count; i += 1) {
     const t = i / count; const x = a.x + (b.x - a.x) * t; const z = a.z + (b.z - a.z) * t;
-    if (!canOccupy(x, z, y, shortcut, radius)) return false;
+    if (!canOccupy(x, z, y, shortcut, radius) || playerBlocked(x, z, y, shortcut, radius)) return false;
     const nextY = supportAt(x, z, y + 0.6) ?? y;
     // Navigation leaves clearance at stair edges; followers do not hit exact
     // mathematical waypoints and must not be sent over the step-height limit.
@@ -152,6 +153,7 @@ export function walkSegment(a: Vec3, b: Vec3, shortcut: WorldAccess, maxStep = 0
   return Math.abs(y - b.y) < 0.6;
 }
 export function findPath(start: Vec3, destination: Vec3, shortcut: WorldAccess): Vec3[] {
+  if (navigationLayer(start) !== navigationLayer(destination)) return [];
   const step = 0.5;
   const key = (x: number, z: number, y: number) => `${x},${z},${Math.round(y * 10)}`;
   const points = new Map<string, Vec3>(); const previous = new Map<string, string>();
@@ -241,8 +243,9 @@ export function stopLeading(c: Companion, s: GameState) {
 export function updateCompanion(c: Companion, s: GameState, dt: number) {
   if (!c.enabled || s.mode !== 'playing' || s.paused || dt <= 0) return;
   const p = s.player;
+  if (s.liftRide || navigationLayer(c.position) !== navigationLayer(p)) { c.position = { x: p.x - (s.liftRide ? 1.1 : 0), y: p.y, z: p.z - (s.liftRide ? 0.8 : 0) }; c.path = []; c.targetId = null; c.status = 'following'; c.lastPlayer = { ...p }; return; }
   const moved = distance(p, c.lastPlayer); c.still = moved < 0.025 ? c.still + dt : 0; c.lastPlayer = { ...p };
-  const danger = s.enemies.find(e => e.hp > 0 && e.aggro && distance(e, p) < 8);
+  const danger = s.enemies.find(e => e.hp > 0 && e.aggro && distance(e, p) < 8 && Math.abs(e.y - p.y) < 1.8);
   const discoveries = guideTargets(s).filter(v => ['cache', 'charm', 'flask'].includes(v.kind)).sort((a, b) => distance(p, a) - distance(p, b));
   for (const l of discoveries) {
     const seen = c.seen[l.id] ?? { nearest: Infinity, stage: 0 };
