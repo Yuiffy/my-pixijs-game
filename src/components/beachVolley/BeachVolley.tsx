@@ -12,9 +12,12 @@ import {
 } from "@ant-design/icons";
 import {
   CHARACTERS,
+  CHARACTER_IDS,
   HEIGHT,
   STEP,
   WIDTH,
+  SHOT_NAMES,
+  DEPTH_NAMES,
   createGame,
   describeGame,
   emptyInput,
@@ -35,6 +38,13 @@ import { loadAssets, renderGame } from "./renderer";
 import type { Assets } from "./renderer";
 import BeachAudio from "./audio";
 import { createControls } from "./controls";
+import { nextCinematic, selectCinematic } from "./cinematics";
+import type {
+  CinemaKind,
+  CinemaMode,
+  Cinematic,
+  MediaManifest,
+} from "./cinematics";
 import styles from "./beachVolley.module.css";
 
 type GameWindow = Window & {
@@ -50,6 +60,8 @@ const KEY_MAP: Record<string, [Side, Action]> = {
   KeyA: [0, "left"],
   KeyD: [0, "right"],
   KeyW: [0, "jump"],
+  KeyI: [0, "aimUp"],
+  KeyS: [0, "aimDown"],
   Space: [0, "jump"],
   KeyJ: [0, "hit"],
   KeyK: [0, "dive"],
@@ -57,6 +69,9 @@ const KEY_MAP: Record<string, [Side, Action]> = {
   ArrowLeft: [1, "left"],
   ArrowRight: [1, "right"],
   ArrowUp: [1, "jump"],
+  ArrowDown: [1, "aimDown"],
+  Numpad8: [1, "aimUp"],
+  Numpad5: [1, "aimDown"],
   Numpad1: [1, "hit"],
   Numpad2: [1, "dive"],
   Numpad3: [1, "special"],
@@ -67,6 +82,7 @@ const KEY_MAP: Record<string, [Side, Action]> = {
 const INITIAL: Options = {
   mode: "solo",
   character: "sui",
+  opponent: "shiori",
   difficulty: "normal",
   target: 7,
 };
@@ -85,8 +101,17 @@ export default function BeachVolley() {
   const [muted, setMuted] = useState(false);
   const [best, setBest] = useState(0);
   const helpRef = useRef(false);
-  const [cinematic, setCinematic] = useState(false);
-  const [videoAvailable, setVideoAvailable] = useState(false);
+  const [cinematic, setCinematic] = useState<Cinematic | null>(null);
+  const [cinemaMode, setCinemaMode] = useState<CinemaMode>("all");
+  const [cinemaPaused, setCinemaPaused] = useState(false);
+  const cinemaPauseRef = useRef(false);
+  const mediaRef = useRef<MediaManifest | null>(null);
+  const modeRef = useRef<CinemaMode>("all");
+  const playbackRef = useRef<Cinematic | null>(null);
+  const cinemaSerialRef = useRef(0);
+  const seenEventRef = useRef(0);
+  const returnPausedRef = useRef(false);
+  const helpCinemaPausedRef = useRef(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const sync = useCallback(() => setView(describeGame(gameRef.current)), []);
   const resetInput = useCallback(() => {
@@ -104,53 +129,127 @@ export default function BeachVolley() {
     }
   };
   const cinemaRef = useRef(false);
+  const choose = (next: Partial<Options>) => {
+    const merged = { ...options, ...next };
+    if (next.character && merged.character === merged.opponent) merged.opponent = options.character;
+    setOptions(merged);
+    gameRef.current = createGame(merged);
+    sync();
+  };
+  const showCinema = useCallback(
+    (kind: CinemaKind, side: Side = 0, pausedStart = false) => {
+      const g = gameRef.current;
+      const plan = selectCinematic(
+        g,
+        mediaRef.current,
+        modeRef.current,
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+        kind,
+        side,
+      );
+      if (!plan) return false;
+      plan.sequenceId = `${plan.sequenceId}:${++cinemaSerialRef.current}`;
+      plan.id = `${plan.sequenceId}:0`;
+      resetInput();
+      returnPausedRef.current = pausedStart;
+      g.paused = true;
+      playbackRef.current = plan;
+      cinemaRef.current = true;
+      cinemaPauseRef.current = pausedStart;
+      setCinemaPaused(pausedStart);
+      setCinematic(plan);
+      return true;
+    },
+    [resetInput],
+  );
+  const begin = (showIntro = true) => {
+    audioRef.current?.unlock();
+    resetInput();
+    gameRef.current = createGame(options, Date.now() % 4294967296);
+    seenEventRef.current = 0;
+    startGame(gameRef.current);
+    if (showIntro) showCinema("intro");
+    sync();
+  };
+  const finishCinema = useCallback(
+    (expectedId?: string) => {
+      const plan = playbackRef.current;
+      if (!plan || (expectedId && expectedId !== plan.id)) return;
+      resetInput();
+      playbackRef.current = null;
+      cinemaRef.current = false;
+      setCinematic(null);
+      setCinemaPaused(false);
+      cinemaPauseRef.current = false;
+      const g = gameRef.current;
+      if (plan.kind !== "result") skipTransition(g);
+      g.paused = document.hidden || helpRef.current || returnPausedRef.current;
+      if (plan.kind === "point" && g.event?.type === "win") {
+        seenEventRef.current = g.event.id;
+        showCinema("result", g.event.side, g.paused);
+      }
+      sync();
+    },
+    [resetInput, showCinema, sync],
+  );
+  const endClip = useCallback(
+    (expectedId: string) => {
+      const plan = playbackRef.current;
+      if (!plan || plan.id !== expectedId) return;
+      const next = nextCinematic(plan);
+      if (!next) finishCinema(expectedId);
+      else {
+        playbackRef.current = next;
+        setCinematic(next);
+      }
+    },
+    [finishCinema],
+  );
+  const playCinema = useCallback(() => {
+    const id = playbackRef.current?.id;
+    if (!id) return;
+    videoRef.current?.play().catch((reason) => {
+      // Pausing or replacing a video intentionally aborts its pending play promise.
+      if (reason?.name !== "AbortError") endClip(id);
+    });
+  }, [endClip]);
   const pause = useCallback(() => {
-    if (helpRef.current || cinemaRef.current) return;
+    if (helpRef.current) return;
+    if (cinemaRef.current) {
+      const next = !cinemaPauseRef.current;
+      cinemaPauseRef.current = next;
+      setCinemaPaused(next);
+      if (next) videoRef.current?.pause();
+      else {
+        returnPausedRef.current = false;
+        playCinema();
+      }
+      return;
+    }
     const g = gameRef.current;
     if (g.phase === "menu" || g.phase === "result") return;
     g.paused = !g.paused;
     resetInput();
     sync();
-  }, [resetInput, sync]);
-  const choose = (next: Partial<Options>) => {
-    const merged = { ...options, ...next };
-    setOptions(merged);
-    gameRef.current = createGame(merged);
-    sync();
-  };
-  const begin = (showIntro = true) => {
-    audioRef.current?.unlock();
-    resetInput();
-    gameRef.current = createGame(options, Date.now() % 4294967296);
-    startGame(gameRef.current);
-    if (
-      showIntro &&
-      videoAvailable &&
-      !window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
-      gameRef.current.paused = true;
-      cinemaRef.current = true;
-      setCinematic(true);
-    }
-    sync();
-  };
-  const finishCinema = useCallback(() => {
-    resetInput();
-    cinemaRef.current = false;
-    setCinematic(false);
-    gameRef.current.paused = document.hidden || helpRef.current;
-    sync();
-  }, [resetInput, sync]);
+  }, [playCinema, resetInput, sync]);
   const menu = () => {
     resetInput();
     cinemaRef.current = false;
-    setCinematic(false);
+    playbackRef.current = null;
+    setCinematic(null);
+    seenEventRef.current = 0;
     gameRef.current = createGame(options);
     sync();
   };
   const openHelp = () => {
+    helpCinemaPausedRef.current = cinemaPauseRef.current;
     helpRef.current = true;
     setHelp(true);
+    videoRef.current?.pause();
+    if (cinemaRef.current) {
+      cinemaPauseRef.current = true;
+      setCinemaPaused(true);
+    }
     if (gameRef.current.phase !== "menu") gameRef.current.paused = true;
     resetInput();
     sync();
@@ -158,11 +257,27 @@ export default function BeachVolley() {
   const closeHelp = () => {
     helpRef.current = false;
     setHelp(false);
+    if (
+      cinemaRef.current &&
+      !document.hidden &&
+      !returnPausedRef.current &&
+      !helpCinemaPausedRef.current
+    ) {
+      cinemaPauseRef.current = false;
+      playCinema();
+      setCinemaPaused(false);
+    }
     sync();
   };
   const press = (source: string, side: Side, action: Action) => {
     const g = gameRef.current;
-    if (helpRef.current || cinemaRef.current || g.paused || g.phase === "menu" || g.phase === "result") return;
+    if (
+      helpRef.current ||
+      cinemaRef.current ||
+      g.paused ||
+      g.phase === "menu" ||
+      g.phase === "result"
+    ) return;
     controlsRef.current.press(source, side, action);
     audioRef.current?.unlock();
   };
@@ -182,12 +297,23 @@ export default function BeachVolley() {
       const ctx = canvasRef.current?.getContext("2d");
       if (ctx && assetsRef.current) renderGame(ctx, assetsRef.current, gameRef.current, reduced.matches);
     };
+    const step = () => {
+      const g = gameRef.current;
+      stepGame(g, controlsRef.current.inputs, STEP);
+      const { event } = g;
+      if (event && event.id !== seenEventRef.current && !cinemaRef.current) {
+        seenEventRef.current = event.id;
+        if (event.type === "special") showCinema("special", event.side);
+        else if (event.type === "point") showCinema("point", event.side);
+        else if (event.type === "win") showCinema("result", event.side);
+      }
+    };
     const advance = (ms: number) => {
       const steps = Math.max(
         0,
         Math.round(Math.min(120000, ms) / (STEP * 1000)),
       );
-      for (let i = 0; i < steps; i++) stepGame(gameRef.current, controlsRef.current.inputs, STEP);
+      for (let i = 0; i < steps; i++) step();
       draw();
       sync();
     };
@@ -195,6 +321,20 @@ export default function BeachVolley() {
         ...describeGame(gameRef.current),
         assetsReady: !!assetsRef.current,
         inputs: controlsRef.current.inputs,
+        cinematic: playbackRef.current
+          ? {
+              id: playbackRef.current.id,
+              kind: playbackRef.current.kind,
+              side: playbackRef.current.side,
+              character: playbackRef.current.character,
+              src: playbackRef.current.src,
+              paused: cinemaPauseRef.current,
+              outcome: playbackRef.current.outcome,
+              index: playbackRef.current.index,
+              count: playbackRef.current.clips.length,
+            }
+          : null,
+        cinemaMode: modeRef.current,
       });
     target.advanceTime = advance;
     if (process.env.NODE_ENV !== "production") {
@@ -223,12 +363,17 @@ export default function BeachVolley() {
     fetch("/games/beach-volley/media.json")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (alive && data?.intro) setVideoAvailable(true);
+        if (alive && data?.characters) mediaRef.current = data;
       })
       .catch(() => {});
     try {
       const saved = Number(localStorage.getItem("beach-volley-best") || 0);
       if (Number.isFinite(saved)) setBest(saved);
+      const mode = localStorage.getItem("beach-volley-cinema");
+      if (mode === "all" || mode === "key" || mode === "off") {
+        modeRef.current = mode;
+        setCinemaMode(mode);
+      }
     } catch {
       /* Storage is optional. */
     }
@@ -238,7 +383,7 @@ export default function BeachVolley() {
       if (!manual && assetsRef.current) {
         accumulator += elapsed;
         while (accumulator >= STEP) {
-          stepGame(gameRef.current, controlsRef.current.inputs, STEP);
+          step();
           accumulator -= STEP;
         }
       }
@@ -253,13 +398,27 @@ export default function BeachVolley() {
     frame = requestAnimationFrame(loop);
     const keyDown = (event: KeyboardEvent) => {
       if (
-        event.defaultPrevented || event.isComposing || event.ctrlKey || event.metaKey || event.altKey ||
-        (event.target instanceof HTMLElement && event.target.isContentEditable) ||
+        event.defaultPrevented ||
+        event.isComposing ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.altKey ||
+        (event.target instanceof HTMLElement &&
+          event.target.isContentEditable) ||
         event.target instanceof HTMLTextAreaElement ||
         event.target instanceof HTMLSelectElement ||
         event.target instanceof HTMLInputElement
       ) return;
       const g = gameRef.current;
+      if (
+        cinemaRef.current &&
+        !helpRef.current &&
+        (event.code === "Enter" || event.code === "Escape")
+      ) {
+        event.preventDefault();
+        if (!event.repeat) finishCinema();
+        return;
+      }
       if (event.code === "Escape" || event.code === "KeyP") {
         if (!event.repeat && !helpRef.current) pause();
         return;
@@ -269,9 +428,18 @@ export default function BeachVolley() {
         return;
       }
       // Keep native Enter/Space activation on menus, toolbars and dialogs.
-      if ((event.code === "Enter" || event.code === "Space") &&
-        event.target instanceof Element && event.target.closest("button, a")) return;
-      if (helpRef.current || cinemaRef.current || g.paused || g.phase === "menu" || g.phase === "result") return;
+      if (
+        (event.code === "Enter" || event.code === "Space") &&
+        event.target instanceof Element &&
+        event.target.closest("button, a")
+      ) return;
+      if (
+        helpRef.current ||
+        cinemaRef.current ||
+        g.paused ||
+        g.phase === "menu" ||
+        g.phase === "result"
+      ) return;
       if (event.code === "Enter") {
         if (!event.repeat) skipTransition(g);
         event.preventDefault();
@@ -289,6 +457,12 @@ export default function BeachVolley() {
     };
     const blur = () => {
       resetInput();
+      if (cinemaRef.current) {
+        returnPausedRef.current = true;
+        cinemaPauseRef.current = true;
+        videoRef.current?.pause();
+        setCinemaPaused(true);
+      }
       const g = gameRef.current;
       if (g.phase !== "menu" && g.phase !== "result") {
         g.paused = true;
@@ -314,7 +488,7 @@ export default function BeachVolley() {
       delete target.advanceTime;
       delete target.beachVolley;
     };
-  }, [pause, resetInput, sync]);
+  }, [finishCinema, pause, resetInput, showCinema, sync]);
   useEffect(() => {
     audioRef.current?.setEnabled(!muted);
   }, [muted]);
@@ -329,8 +503,19 @@ export default function BeachVolley() {
     }
   }, [view.bestRally, best]);
   useEffect(() => {
-    if (cinematic) videoRef.current?.play().catch(finishCinema);
-  }, [cinematic, finishCinema]);
+    if (cinematic) {
+      if (cinemaPauseRef.current) videoRef.current?.pause();
+      else playCinema();
+    }
+  }, [cinematic, playCinema]);
+  useEffect(() => {
+    if (!cinematic || cinemaPaused || help) return;
+    const timeout = window.setTimeout(
+      () => endClip(cinematic.id),
+      (cinematic.duration + 12) * 1000,
+    );
+    return () => window.clearTimeout(timeout);
+  }, [cinematic, cinemaPaused, help, endClip]);
 
   const isMenu = view.phase === "menu";
   const isResult = view.phase === "result";
@@ -380,7 +565,7 @@ export default function BeachVolley() {
   return (
     <div
       ref={rootRef}
-      className={`${styles.root} ${isResult ? styles.resultRoot : ""}`}
+      className={`${styles.root} ${isResult && !cinematic ? styles.resultRoot : ""}`}
     >
       <header className={styles.header}>
         <Link href="/demos" className={styles.back}>
@@ -417,23 +602,37 @@ export default function BeachVolley() {
           >
             <ExpandOutlined />
           </button>
-          {active && (
+          {(active || cinematic) && (
             <button
               type="button"
-              aria-label={view.paused ? "继续比赛" : "暂停比赛"}
+              aria-label={
+                cinematic
+                  ? cinemaPaused
+                    ? "继续演出"
+                    : "暂停演出"
+                  : view.paused
+                    ? "继续比赛"
+                    : "暂停比赛"
+              }
               onClick={pause}
             >
-              {view.paused ? "▶" : <PauseOutlined />}
+              {(cinematic ? cinemaPaused : view.paused) ? (
+                "▶"
+              ) : (
+                <PauseOutlined />
+              )}
             </button>
           )}
         </div>
       </header>
-      <main className={`${styles.stage} ${isMenu ? styles.menuStage : ""}`}>
+      <main
+        className={`${styles.stage} ${isMenu ? styles.menuStage : ""} ${view.phase === "intro" || view.phase === "point" || view.freeze > 0 ? styles.closeupStage : ""}`}
+      >
         <canvas
           ref={canvasRef}
           width={WIDTH}
           height={HEIGHT}
-          aria-label="岁己和栞栞的沙滩排球场"
+          aria-label={`${CHARACTERS[options.character].name}和${CHARACTERS[options.opponent].name}的沙滩排球场`}
         >
           请使用支持 Canvas 的浏览器。
         </canvas>
@@ -450,16 +649,19 @@ export default function BeachVolley() {
         )}
         {ready && isMenu && (
           <section className={styles.menu} aria-label="比赛设置">
-            <div className={styles.eyebrow}>SUI × SHIORI · SUMMER RALLY</div>
+            <div className={styles.eyebrow}>
+              {CHARACTERS[options.character].latin} ×{" "}
+              {CHARACTERS[options.opponent].latin} · SUMMER RALLY
+            </div>
             <h1>
               晴海<span>双打</span>
               <b>BEACH VOLLEY</b>
             </h1>
             <p className={styles.tagline}>海风正好。下一球，轮到你。</p>
             <div className={styles.selection}>
-              <span className={styles.label}>01 / 选择你的搭档</span>
+              <span className={styles.label}>01 / 选择你的角色</span>
               <div className={styles.characters}>
-                {(["sui", "shiori"] as Character[]).map((id) => (
+                {CHARACTER_IDS.map((id) => (
                   <button
                     type="button"
                     key={id}
@@ -491,6 +693,43 @@ export default function BeachVolley() {
                 ))}
               </div>
               <div className={styles.settings}>
+                <label htmlFor="beach-opponent">
+                  对阵
+                  <select
+                    id="beach-opponent"
+                    aria-label="对阵角色"
+                    value={options.opponent}
+                    onChange={(event) => choose({ opponent: event.target.value as Character })}
+                  >
+                    {CHARACTER_IDS.map((id) => (
+                      <option key={id} value={id}>
+                        {CHARACTERS[id].name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label htmlFor="beach-cinema">
+                  演出
+                  <select
+                    id="beach-cinema"
+                    aria-label="演出模式"
+                    value={cinemaMode}
+                    onChange={(event) => {
+                      const mode = event.target.value as CinemaMode;
+                      modeRef.current = mode;
+                      setCinemaMode(mode);
+                      try {
+                        localStorage.setItem("beach-volley-cinema", mode);
+                      } catch {
+                        /* Optional. */
+                      }
+                    }}
+                  >
+                    <option value="all">完整</option>
+                    <option value="key">精彩</option>
+                    <option value="off">关闭</option>
+                  </select>
+                </label>
                 {options.mode !== "local" && (
                   <label htmlFor="beach-difficulty">
                     对手{" "}
@@ -560,7 +799,7 @@ export default function BeachVolley() {
                 <small>
                   {view.players[0].energy >= 100
                     ? "L · 必杀就绪"
-                    : `晴空能量 ${view.players[0].energy}%`}
+                    : `${CHARACTERS[view.players[0].character].energyName}能量 ${view.players[0].energy}%`}
                 </small>
               </div>
               <div className={styles.score}>
@@ -584,12 +823,26 @@ export default function BeachVolley() {
                 <small>
                   {view.players[1].energy >= 100
                     ? "必杀就绪"
-                    : `潮汐能量 ${view.players[1].energy}%`}
+                    : `${CHARACTERS[view.players[1].character].energyName}能量 ${view.players[1].energy}%`}
                 </small>
               </div>
             </div>
             <div className={styles.rally}>
-              {view.rally >= 3 ? `${view.rally} RALLY` : "SUI × SHIORI"}
+              {view.rally >= 3
+                ? `${view.rally} RALLY`
+                : `${CHARACTERS[options.character].latin} × ${CHARACTERS[options.opponent].latin}`}
+            </div>
+            <div className={styles.aimReadout} aria-label="击球方向">
+              <span data-aim="0">
+                1P · {SHOT_NAMES[view.players[0].aim.lift]} /{" "}
+                {DEPTH_NAMES[view.players[0].aim.depth]}
+              </span>
+              {options.mode === "local" && (
+                <span data-aim="1">
+                  2P · {SHOT_NAMES[view.players[1].aim.lift]} /{" "}
+                  {DEPTH_NAMES[view.players[1].aim.depth]}
+                </span>
+              )}
             </div>
             {(view.phase === "intro" ||
               view.phase === "point" ||
@@ -608,28 +861,49 @@ export default function BeachVolley() {
           </>
         )}
         {cinematic && (
-          <div className={styles.cinema}>
+          <div
+            className={styles.cinema}
+            data-cinematic={cinematic.kind}
+            data-character={cinematic.character}
+          >
             <video
+              key={cinematic.id}
               ref={videoRef}
-              src="/games/beach-volley/intro.mp4"
-              poster="/games/beach-volley/intro.webp"
+              src={cinematic.src}
+              poster={cinematic.poster}
+              preload="auto"
               playsInline
               muted={muted}
-              onEnded={finishCinema}
-              onError={finishCinema}
+              onEnded={() => endClip(cinematic.id)}
+              onError={() => endClip(cinematic.id)}
             >
               <track kind="captions" />
             </video>
             <div>
-              <span>晴海双打</span>
-              <p>「这一局，输了请喝汽水！」</p>
+              <small>
+                {cinematic.kind === "intro"
+                  ? "SUMMER ENTRANCE"
+                  : cinematic.kind === "special"
+                    ? "SPECIAL MOVE"
+                    : cinematic.kind === "point"
+                      ? "RALLY MOMENT"
+                      : "SUMMER FINALE"}
+              </small>
+              <span>{cinematic.title}</span>
+              <p>{cinematic.line}</p>
+              {cinemaPaused && (
+                <button type="button" onClick={pause}>
+                  继续演出 ▶
+                </button>
+              )}
             </div>
             <button
               type="button"
               className={styles.skip}
-              onClick={finishCinema}
+              onClick={() => finishCinema()}
             >
-              跳过开场 ↗
+              {cinematic.kind === "intro" ? "跳过开场" : "跳过特写"} ↗{" "}
+              <small>Enter</small>
             </button>
           </div>
         )}
@@ -653,7 +927,7 @@ export default function BeachVolley() {
             </section>
           </div>
         )}
-        {isResult && (
+        {isResult && !cinematic && (
           <div className={styles.result}>
             <div className={styles.resultArt} />
             <section className={styles.resultText}>
@@ -738,7 +1012,11 @@ export default function BeachVolley() {
                 </div>
                 <div>
                   <dt>J</dt>
-                  <dd>发球 / 击球 · 空中扣杀</dd>
+                  <dd>发球 / 击球 · 同时按方向选球路</dd>
+                </div>
+                <div>
+                  <dt>W / I · S</dt>
+                  <dd>向上高吊 · 向下下压，松开为平抽</dd>
                 </div>
                 <div>
                   <dt>K</dt>
@@ -754,12 +1032,16 @@ export default function BeachVolley() {
                 </div>
               </dl>
               <p className={styles.helpTip}>
-                向前 + J 打远球，向后 + J
-                打轻吊球。不断接球积蓄能量，再用必杀一锤定音。
+                向前 + J 打底线，向后 + J 打近网；上 / 下方向选择高吊和下压。
+                例如 D + S + J 压向底线，A + I + J 轻吊近网。空格起跳后用 S + J
+                打出陡扣。
+                发球同样可瞄准，虚线显示球路；击球时锁定方向，接球积蓄必杀能量。
               </p>
               <p className={styles.helpTip}>
                 同机 2P：方向键移动 / ↑ 跳，数字小键盘 1 / 2 / 3 或斜杠 /、句点
-                .、逗号 , 击球、扑救、必杀。手机可用触屏按钮，横屏更舒适。
+                .、逗号 , 击球、扑救、必杀；↓ 下压，小键盘 8 高吊、5 下压。
+                手机可同时按方向与击球。Enter / Esc
+                可跳过视频；完整演出含小分反应，精彩模式省略小分，关闭模式直接比赛。
               </p>
               <button
                 type="button"
@@ -774,12 +1056,13 @@ export default function BeachVolley() {
       </main>
       <footer className={styles.footer}>
         <span>
-          岁己 × 栞栞 <i>·</i> 晴海沙滩
+          {CHARACTERS[options.character].name} ×{" "}
+          {CHARACTERS[options.opponent].name} <i>·</i> 晴海沙滩
         </span>
         {active ? (
           <span className={styles.keyboardHint}>
             A D 移动 <i>·</i> 空格 跳跃 <i>·</i> J 扣杀 <i>·</i> K 扑救 <i>·</i>{" "}
-            L 必杀
+            L 必杀 <i>·</i> 方向 + J 瞄准
           </span>
         ) : (
           <span>一场球，一整个夏天。</span>
@@ -791,6 +1074,8 @@ export default function BeachVolley() {
           <div>
             {controlButton("left", "←")}
             {controlButton("right", "→")}
+            {controlButton("aimUp", "高吊")}
+            {controlButton("aimDown", "下压")}
           </div>
           <div>
             {controlButton("dive", "扑救")}
@@ -802,6 +1087,8 @@ export default function BeachVolley() {
             <div className={styles.secondTouch}>
               {controlButton("left", "←", 1)}
               {controlButton("right", "→", 1)}
+              {controlButton("aimUp", "高", 1)}
+              {controlButton("aimDown", "压", 1)}
               {controlButton("jump", "跳", 1)}
               {controlButton("dive", "扑救", 1)}
               {controlButton("hit", "击", 1)}

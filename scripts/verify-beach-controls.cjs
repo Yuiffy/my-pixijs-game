@@ -95,8 +95,10 @@ const allReleased = s => s.inputs.flatMap(Object.values).every(v => !v);
     await p.keyboard.down('Numpad1'); await p.keyboard.down('Slash'); await p.keyboard.up('Slash');
     assert.equal((await state(p)).inputs[1].hit, true); await p.keyboard.up('Numpad1');
     await capture(p, '03-local');
-    // Public inputs only: let both automatic receivers play a complete match.
+    // Public inputs only: move receivers toward the net so deep balls can score.
+    await p.keyboard.down('KeyD'); await p.keyboard.down('ArrowLeft');
     for (let i = 0; i < 600 && (await state(p)).phase !== 'result'; i++) await advance(p, 5000);
+    await p.keyboard.up('KeyD'); await p.keyboard.up('ArrowLeft');
     const result = await state(p); assert.equal(result.phase, 'result'); assert.ok(result.winner === 0 || result.winner === 1);
     await capture(p, '04-result');
     await p.getByRole('button', { name: '再来一场' }).focus(); await p.keyboard.press('Enter');
@@ -163,13 +165,19 @@ const allReleased = s => s.inputs.flatMap(Object.values).every(v => !v);
     await cinema.locator('#beach-start').click();
     await cinema.locator('video').waitFor({ state: 'visible' });
     await cinema.keyboard.press('KeyP'); assert.equal((await state(cinema)).paused, true, 'cannot unpause behind intro');
+    assert.equal((await state(cinema)).cinematic.paused, true, 'P pauses the movie');
+    await cinema.keyboard.press('KeyP');
+    await cinema.waitForFunction(() => document.querySelector('video')?.currentTime > 0.3);
     await cinema.getByRole('button', { name: '玩法说明', exact: true }).click();
-    await cinema.locator('video').waitFor({ state: 'detached', timeout: 15000 });
-    assert.equal((await state(cinema)).paused, true, 'video completion respects open help');
+    const cinemaTime = await cinema.locator('video').evaluate(v => v.currentTime);
+    await cinema.waitForTimeout(300);
+    assert.ok(Math.abs(await cinema.locator('video').evaluate(v => v.currentTime) - cinemaTime) < 0.05, 'help freezes the movie');
+    assert.equal((await state(cinema)).paused, true, 'help keeps physics paused');
     await cinema.getByRole('button', { name: '明白，去接球' }).click();
-    await cinema.getByRole('button', { name: '继续比赛', exact: true }).last().click();
+    await cinema.waitForFunction(() => !document.querySelector('video'), { timeout: 15000 });
     assert.equal((await state(cinema)).paused, false);
-    checks.push('intro cannot be unpaused by P; natural video ending keeps open help paused');
+    assert.equal((await state(cinema)).phase, 'serve');
+    checks.push('P pauses only the movie; help freezes it, closing help resumes, natural ending returns directly to serve');
     assert.deepEqual(errors, []);
     console.log(JSON.stringify({ checks, screenshots: screenshots.map(s => s.name), errors }, null, 2));
   } finally {

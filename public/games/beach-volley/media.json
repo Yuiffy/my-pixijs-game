@@ -1,1 +1,146 @@
-{"intro":true,"duration":5.088,"model":"seedance_2.0_fast_vip"}
+{
+  "version": 3,
+  "characters": {
+    "sui": {
+      "intro": {
+        "src": "/games/beach-volley/intro-sui-v3.mp4",
+        "poster": "/games/beach-volley/special-sui-v2.webp",
+        "duration": 4
+      },
+      "special": {
+        "src": "/games/beach-volley/special-sui-v2.mp4",
+        "poster": "/games/beach-volley/special-sui-v2.webp",
+        "duration": 4
+      },
+      "point": {
+        "win": {
+          "src": "/games/beach-volley/point-sui-win-v3.mp4",
+          "poster": "/games/beach-volley/special-sui-v2.webp",
+          "duration": 2.85
+        },
+        "lose": {
+          "src": "/games/beach-volley/point-sui-lose-v3.mp4",
+          "poster": "/games/beach-volley/special-sui-v2.webp",
+          "duration": 2.75
+        }
+      },
+      "result": {
+        "win": {
+          "src": "/games/beach-volley/result-sui-win-v3.mp4",
+          "poster": "/games/beach-volley/special-sui-v2.webp",
+          "duration": 4.9
+        },
+        "lose": {
+          "src": "/games/beach-volley/result-sui-lose-v3.mp4",
+          "poster": "/games/beach-volley/special-sui-v2.webp",
+          "duration": 1.6
+        }
+      }
+    },
+    "shiori": {
+      "intro": {
+        "src": "/games/beach-volley/intro-shiori-v3.mp4",
+        "poster": "/games/beach-volley/special-shiori-v2.webp",
+        "duration": 4
+      },
+      "special": {
+        "src": "/games/beach-volley/special-shiori-v2.mp4",
+        "poster": "/games/beach-volley/special-shiori-v2.webp",
+        "duration": 4
+      },
+      "point": {
+        "win": {
+          "src": "/games/beach-volley/point-shiori-win-v3.mp4",
+          "poster": "/games/beach-volley/special-shiori-v2.webp",
+          "duration": 2.85
+        },
+        "lose": {
+          "src": "/games/beach-volley/point-shiori-lose-v3.mp4",
+          "poster": "/games/beach-volley/special-shiori-v2.webp",
+          "duration": 2.75
+        }
+      },
+      "result": {
+        "win": {
+          "src": "/games/beach-volley/result-shiori-win-v3.mp4",
+          "poster": "/games/beach-volley/special-shiori-v2.webp",
+          "duration": 4.9
+        },
+        "lose": {
+          "src": "/games/beach-volley/result-shiori-lose-v3.mp4",
+          "poster": "/games/beach-volley/special-shiori-v2.webp",
+          "duration": 1.6
+        }
+      }
+    },
+    "nagisa": {
+      "intro": {
+        "src": "/games/beach-volley/intro-nagisa-v3.mp4",
+        "poster": "/games/beach-volley/special-nagisa-v2.webp",
+        "duration": 6
+      },
+      "special": {
+        "src": "/games/beach-volley/special-nagisa-v3.mp4",
+        "poster": "/games/beach-volley/special-nagisa-v2.webp",
+        "duration": 4
+      },
+      "point": {
+        "win": {
+          "src": "/games/beach-volley/point-nagisa-win-v3.mp4",
+          "poster": "/games/beach-volley/special-nagisa-v2.webp",
+          "duration": 4
+        },
+        "lose": {
+          "src": "/games/beach-volley/point-nagisa-lose-v3.mp4",
+          "poster": "/games/beach-volley/special-nagisa-v2.webp",
+          "duration": 4
+        }
+      },
+      "result": {
+        "win": {
+          "src": "/games/beach-volley/result-nagisa-win-v3.mp4",
+          "poster": "/games/beach-volley/special-nagisa-v2.webp",
+          "duration": 12
+        },
+        "lose": {
+          "src": "/games/beach-volley/result-nagisa-lose-v3.mp4",
+          "poster": "/games/beach-volley/special-nagisa-v2.webp",
+          "duration": 10
+        }
+      }
+    }
+  },
+  "pairs": {
+    "shiori:sui": {
+      "intro": {
+        "src": "/games/beach-volley/intro-v2.mp4",
+        "poster": "/games/beach-volley/intro-v2.webp",
+        "duration": 8
+      },
+      "point": {
+        "sui": {
+          "src": "/games/beach-volley/point-sui-v2.mp4",
+          "poster": "/games/beach-volley/intro-v2.webp",
+          "duration": 6
+        },
+        "shiori": {
+          "src": "/games/beach-volley/point-shiori-v2.mp4",
+          "poster": "/games/beach-volley/intro-v2.webp",
+          "duration": 6
+        }
+      },
+      "result": {
+        "sui": {
+          "src": "/games/beach-volley/result-sui-v2.mp4",
+          "poster": "/games/beach-volley/intro-v2.webp",
+          "duration": 12
+        },
+        "shiori": {
+          "src": "/games/beach-volley/result-shiori-v2.mp4",
+          "poster": "/games/beach-volley/intro-v2.webp",
+          "duration": 12
+        }
+      }
+    }
+  }
+}

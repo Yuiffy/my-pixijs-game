@@ -1,8 +1,12 @@
 {
-  "title": "晴海双打 · 岁己 × 栞栞",
-  "date": "2026-10-02",
+  "title": "晴海双打 · 岁己 × 栞栞 × 米汀",
+  "date": "2026-10-03",
   "imageMethod": "Built-in ImageGen; reference-based generation; final delivery losslessly preserves alpha with WebP alphaQuality 100",
-  "identityReferences": ["/images/livers/sui.png", "/images/livers/shiori.png"],
+  "identityReferences": [
+    "/images/livers/sui.png",
+    "/images/livers/shiori.png",
+    "/images/livers/nagisa.png"
+  ],
   "assets": [
     {
       "path": "beach.webp",
@@ -38,6 +42,378 @@
       "delivery": "1280x720 H.264, 30 fps, faststart; generated soundtrack removed",
       "quotedMaxCredits": 30,
       "prompt": "以参考图为首帧，制作高品质3D写实动漫沙滩排球游戏开场。保持两位成年运动员的人物、服装、发色一致。银发双马尾的岁己轻轻把手中的排球向上抛起后稳稳接住，金发侧辫的栞栞笑着点头，向球网走近一步。镜头缓缓向前推近，微风吹动发梢，海浪和棕榈叶自然活动，阳光温暖，友好的赛前竞争氛围，动作连贯真实。不要增加角色，不要变换服装，不要文字字幕，不要镜头切换，不要语音。"
+    },
+    {
+      "path": "sui-hero-v2.webp",
+      "method": "Built-in Codex ImageGen, reference-based generation and RGBA cleanup",
+      "sourceImage": "C:/Users/yuiffy/.codex/generated_images/01a0fb98-08fc-7952-888e-5a6e346df76f/exec-f577c558-debe-44a7-adc4-c61ce16756bd.png",
+      "use": "Full body adult athlete; roster menu and static close-ups",
+      "prompt": "Create one transparent full-body character cutout for the beach volleyball game. Reference image is identity and rendering style only: the silver-haired woman on the left, SUI, adult woman age 25, red eyes, silver twin ponytails, charcoal cat-ear cap with small turquoise heart. Premium realistic 3D anime game heroine with mature natural hourglass athletic proportions, long legs, defined waist, healthy full figure, sophisticated beautiful face. New coordinated beach volleyball costume: opaque charcoal and lavender supportive halter bikini-style sports top and matching opaque high-waisted high-cut athletic bikini bottoms, tasteful moderate coverage; barefoot. Confident hand-on-hip ready pose, other hand relaxed, facing three-quarter right, bright friendly expression. Fine hair, realistic softly sunlit skin and fabric. Entire body including both complete feet and cap inside frame with generous transparent margins. Single figure only; true transparent background, no environment, no shadows outside figure, no text, no logos, no props. Sports-game promotional presentation, fashion editorial elegance.",
+      "edits": [
+        {
+          "prompt": "Remove ALL background and ALL glow/halo from this full-body character image. Preserve the complete adult heroine exactly: face, cap, hair, athletic figure, pose, swimwear, every finger and foot. Outside the character must be exactly fully transparent alpha=0, including between limbs and around hair. No black backdrop, no gray backdrop, no warm gradient, no halo, no ground, no shadow. A clean true RGBA cutout suitable for layering on a beach game. Do not change the character, proportions, outfit, color, pose, scale or placement.",
+          "sourceImage": "C:/Users/yuiffy/.codex/generated_images/01a0fb98-08fc-7952-888e-5a6e346df76f/exec-9f082dd1-ce29-4fec-86c1-9dd07bb74c2d.png"
+        }
+      ],
+      "transparentBackground": true
+    },
+    {
+      "path": "shiori-hero-v2.webp",
+      "method": "Built-in Codex ImageGen, reference-based generation and RGBA cleanup",
+      "sourceImage": "C:/Users/yuiffy/.codex/generated_images/01a0fb98-08fc-7952-888e-5a6e346df76f/exec-a28f23be-2daa-4505-8450-416dad33bda2.png",
+      "use": "Full body adult athlete; roster menu and static close-ups",
+      "prompt": "Create one transparent full-body character cutout for the beach volleyball game. Reference image is identity and rendering style only: the blonde woman on the right, SHIORI, adult woman age 25, blue eyes, milk-blonde long side braid, brown headband, white ribbon and tiny pink hairclip. Premium realistic 3D anime game heroine with mature natural hourglass athletic proportions, long legs, defined waist, healthy full figure, sophisticated beautiful face. New coordinated beach volleyball costume: opaque ivory and turquoise supportive halter bikini-style sports top and matching opaque high-waisted high-cut athletic bikini bottoms with narrow pink side accents, tasteful moderate coverage; barefoot. Confident hand-on-hip ready pose, other hand relaxed, facing three-quarter right, warm smile. Fine hair, realistic softly sunlit skin and fabric. Entire body including both complete feet and head inside frame with generous transparent margins. Single figure only; true transparent background, no environment, no shadows outside figure, no text, no logos, no props. Sports-game promotional presentation, fashion editorial elegance.",
+      "edits": [
+        {
+          "prompt": "Remove ALL background and ALL glow/halo from this full-body character image. Preserve the complete adult heroine exactly: face, headband, braid, athletic figure, pose, swimwear, every finger and foot. Outside the character must be exactly fully transparent alpha=0, including between limbs and around hair. No black backdrop, no gray backdrop, no warm gradient, no halo, no ground, no shadow. A clean true RGBA cutout suitable for layering on a beach game. Do not change the character, proportions, outfit, color, pose, scale or placement.",
+          "sourceImage": "C:/Users/yuiffy/.codex/generated_images/01a0fb98-08fc-7952-888e-5a6e346df76f/exec-af52c117-3567-4ae5-92fa-af8d78b9e6c4.png"
+        }
+      ],
+      "transparentBackground": true
+    },
+    {
+      "path": "sui-atlas-v2.webp",
+      "method": "Built-in Codex ImageGen",
+      "sourceImage": "C:/Users/yuiffy/.codex/generated_images/01a0fb98-08fc-7952-888e-5a6e346df76f/exec-5d049685-052a-4566-888b-ed19887e8aa1.png",
+      "use": "Eight complete poses at one consistent scale",
+      "prompt": "Create a game sprite atlas, exact 4 columns by 2 rows, eight COMPLETE full-body poses of the SAME clearly adult age-25 athlete in the reference. Preserve her mature athletic hourglass proportions, face, hair, headwear, swimsuit colors and exact swimsuit design. Premium realistic 3D anime sports game rendering with clean sunlight. Every figure faces three-quarter RIGHT, identical scale, each centered inside its own equal rectangular cell with at least 8% EMPTY MARGIN all around. Keep every fingertip, hair and BOTH feet entirely inside its own cell. No overlapping cells. Row1: ready standing hands on hips; run left foot forward; run right foot forward; low receiving stance forearms joined. Row2: airborne jump one arm raised; overhead spike arm forward; cheering both arms up with joyful smile; disappointed standing hands on knees, shoulders relaxed. No ball or props, no ground, no background, no gradient, no glow, no text, no grid lines. Genuine transparent alpha=0 background outside the figures. This is a production animation sheet, not a poster. Wide landscape image with separated figures.",
+      "references": [
+        "C:/Users/yuiffy/.codex/generated_images/01a0fb98-08fc-7952-888e-5a6e346df76f/exec-f577c558-debe-44a7-adc4-c61ce16756bd.png"
+      ],
+      "transparentBackground": true
+    },
+    {
+      "path": "shiori-atlas-v2.webp",
+      "method": "Built-in Codex ImageGen",
+      "sourceImage": "C:/Users/yuiffy/.codex/generated_images/01a0fb98-08fc-7952-888e-5a6e346df76f/exec-c3c2dd8c-3624-4128-a331-c1255843e302.png",
+      "use": "Eight complete poses at one consistent scale",
+      "prompt": "Create a game sprite atlas, exact 4 columns by 2 rows, eight COMPLETE full-body poses of the SAME clearly adult age-25 athlete in the reference. Preserve her mature athletic hourglass proportions, face, hair, headwear, swimsuit colors and exact swimsuit design. Premium realistic 3D anime sports game rendering with clean sunlight. Every figure faces three-quarter RIGHT, identical scale, each centered inside its own equal rectangular cell with at least 8% EMPTY MARGIN all around. Keep every fingertip, hair and BOTH feet entirely inside its own cell. No overlapping cells. Row1: ready standing hands on hips; run left foot forward; run right foot forward; low receiving stance forearms joined. Row2: airborne jump one arm raised; overhead spike arm forward; cheering both arms up with joyful smile; disappointed standing hands on knees, shoulders relaxed. No ball or props, no ground, no background, no gradient, no glow, no text, no grid lines. Genuine transparent alpha=0 background outside the figures. This is a production animation sheet, not a poster. Wide landscape image with separated figures.",
+      "references": [
+        "C:/Users/yuiffy/.codex/generated_images/01a0fb98-08fc-7952-888e-5a6e346df76f/exec-a28f23be-2daa-4505-8450-416dad33bda2.png"
+      ],
+      "transparentBackground": true
+    },
+    {
+      "path": "intro-v2.webp",
+      "method": "Built-in Codex ImageGen",
+      "sourceImage": "C:/Users/yuiffy/.codex/generated_images/01a0fb98-08fc-7952-888e-5a6e346df76f/exec-b0f5ce2d-c490-4c25-a927-84384a404bf4.png",
+      "use": "Sui/Shiori paired poster",
+      "prompt": "Premium realistic 3D anime beach volleyball game cinematic frame, clearly adult women age 25, same faces, mature athletic hourglass figures, headwear, hairstyles, and opaque sports swimwear as the character references. Exquisite natural sunlit skin, fine hair, realistic fabrics. Bright tropical turquoise beach like the last reference. No text, logos, UI or additional people. Wide 16:9 hero poster. Silver twin-tail red-eye cat-cap SUI in charcoal/lavender sports swimsuit at left, blonde side-braid blue-eye SHIORI in ivory/turquoise swimsuit at right. Both in a confident full-body relaxed sporting stance beside the net. Camera at waist level, elegant athletic silhouettes and long legs; friendly rivalry smiles. Entire figures and feet visible, environment beautiful, medium wide shot.",
+      "references": [
+        "D:/workspace/myrepo/my-pixijs-game/public/games/beach-volley/sui-hero-v2.webp",
+        "D:/workspace/myrepo/my-pixijs-game/public/games/beach-volley/shiori-hero-v2.webp",
+        "D:/workspace/myrepo/my-pixijs-game/public/games/beach-volley/beach.webp"
+      ],
+      "transparentBackground": false
+    },
+    {
+      "path": "special-sui-v2.webp",
+      "method": "Built-in Codex ImageGen",
+      "sourceImage": "C:/Users/yuiffy/.codex/generated_images/01a0fb98-08fc-7952-888e-5a6e346df76f/exec-2a753cd7-fdcd-44a8-8b91-c14d13cf56b2.png",
+      "use": "Single-character special poster",
+      "prompt": "Premium realistic 3D anime beach volleyball game cinematic frame, clearly adult women age 25, same faces, mature athletic hourglass figures, headwear, hairstyles, and opaque sports swimwear as the character references. Exquisite natural sunlit skin, fine hair, realistic fabrics. Bright tropical turquoise beach like the last reference. No text, logos, UI or additional people. Only SUI from the first reference appears. Wide 16:9 sports action keyframe, knees-up medium shot from slightly low camera, she prepares an overhead spike, one arm raised, confident red-eyed smile, silver hair flowing, charcoal/lavender swimsuit consistent. Figure occupies middle-right two thirds. Left third is calm ocean and sky for game caption overlay; no built-in text. Dynamic but anatomically realistic athletic pose.",
+      "references": [
+        "D:/workspace/myrepo/my-pixijs-game/public/games/beach-volley/sui-hero-v2.webp",
+        "D:/workspace/myrepo/my-pixijs-game/public/games/beach-volley/beach.webp"
+      ],
+      "transparentBackground": false
+    },
+    {
+      "path": "special-shiori-v2.webp",
+      "method": "Built-in Codex ImageGen",
+      "sourceImage": "C:/Users/yuiffy/.codex/generated_images/01a0fb98-08fc-7952-888e-5a6e346df76f/exec-2793aaec-8b0a-40ff-ab24-2a15a75293a7.png",
+      "use": "Single-character special poster",
+      "prompt": "Premium realistic 3D anime beach volleyball game cinematic frame, clearly adult women age 25, same faces, mature athletic hourglass figures, headwear, hairstyles, and opaque sports swimwear as the character references. Exquisite natural sunlit skin, fine hair, realistic fabrics. Bright tropical turquoise beach like the last reference. No text, logos, UI or additional people. Only SHIORI from the first reference appears. Wide 16:9 sports action keyframe, knees-up medium shot from slightly low camera, she prepares to leap with one arm raised, warm determined blue-eyed smile, blonde braid flowing, ivory/turquoise swimsuit consistent. Figure occupies middle-right two thirds. Left third is calm ocean and sky for game caption overlay; no built-in text. Dynamic but anatomically realistic athletic pose.",
+      "references": [
+        "D:/workspace/myrepo/my-pixijs-game/public/games/beach-volley/shiori-hero-v2.webp",
+        "D:/workspace/myrepo/my-pixijs-game/public/games/beach-volley/beach.webp"
+      ],
+      "transparentBackground": false
+    },
+    {
+      "path": "sui-victory-v2.webp",
+      "method": "Built-in Codex ImageGen",
+      "sourceImage": "C:/Users/yuiffy/.codex/generated_images/01a0fb98-08fc-7952-888e-5a6e346df76f/exec-9aa9572a-0dfe-4898-9b67-cb3757f72891.png",
+      "use": "Dedicated complete victory pose",
+      "prompt": "Single COMPLETE FULL-BODY victory-pose character cutout of the same adult age25 SUI heroine as the reference, exact cap, face, silver twin tails, mature athletic proportions and charcoal/lavender opaque sports swimsuit. She cheers with both fists raised, happy smile, one knee bent, the other complete leg and foot planted. VERY IMPORTANT both complete legs and BOTH FEET must be entirely visible; plenty of empty margin above fists and below feet. High-end realistic 3D anime game, natural sunny lighting. Genuine transparent background, no glow, no gradient, no ground, no props, no text. One figure, not an atlas.",
+      "references": [
+        "D:/workspace/myrepo/my-pixijs-game/public/games/beach-volley/sui-hero-v2.webp"
+      ],
+      "transparentBackground": true
+    },
+    {
+      "path": "nagisa-hero-v2.webp",
+      "method": "Built-in Codex ImageGen",
+      "sourceImage": "C:/Users/yuiffy/.codex/generated_images/01a0fb98-08fc-7952-888e-5a6e346df76f/exec-fd7e03ae-1571-479c-b9d0-6b2a79aae175.png",
+      "use": "Nagisa full-body menu and close-up",
+      "prompt": "Create one complete full-body transparent character cutout for a premium beach volleyball videogame. First reference is character identity: NAGISA (米汀), reimagined as a clearly adult woman age 25. Preserve her long silver-gray hair with a thin side braid, blue-gray eyes, and ivory beret with a black band and small dark ribbon details. Second reference is rendering quality and mature athletic proportions only. Sophisticated realistic 3D anime game heroine, natural athletic hourglass figure, long legs, defined waist, mature beautiful face. Coordinated opaque ivory and charcoal supportive halter sports swimsuit top and opaque high-waisted high-cut athletic bikini bottoms, tasteful moderate coverage, tiny silver star detail at waist. Barefoot, no jacket, no boots, no leg bands. Confident relaxed hands-on-hips ready stance, facing three-quarter right, composed warm smile. Natural sunny skin lighting, fine hair and fabric. Entire head, beret, every fingertip and BOTH COMPLETE FEET fully inside frame with generous margins. A clean true RGBA cutout: outside the single figure exactly alpha=0. No gradient, no background, no halo, no ground, no shadows outside figure, no text, no logo, no props. Sports-game promotional presentation.",
+      "references": [
+        "/images/livers/nagisa.png",
+        "/games/beach-volley/sui-hero-v2.webp"
+      ],
+      "transparentBackground": true
+    },
+    {
+      "path": "nagisa-atlas-v2.webp",
+      "method": "Built-in Codex ImageGen",
+      "sourceImage": "C:/Users/yuiffy/.codex/generated_images/01a0fb98-08fc-7952-888e-5a6e346df76f/exec-054618a0-194a-4796-8e16-d1b1a0308263.png",
+      "use": "Nagisa eight-pose animation sheet",
+      "prompt": "Production sprite atlas, exact 4 columns by 2 rows, eight complete full-body poses of the SAME clearly adult age25 NAGISA athlete in the first reference. Preserve mature athletic hourglass proportions, face, silver-gray long hair, thin side braid, ivory black-band beret and EXACT opaque ivory/charcoal sports swimsuit with silver waist-star. Premium realistic 3D anime sports videogame rendering, clean sunshine. All figures face three-quarter RIGHT, identical scale, each centered within its own equal rectangular cell, at least 8% empty margin. ALL hair, fingers and BOTH COMPLETE FEET entirely inside each cell; no overlap. Row1: ready hands on hips; run left foot forward; run right foot forward; low receiving stance forearms joined. Row2: airborne jump one arm raised; overhead volleyball spike arm forward; joyous cheering with both fists raised; disappointed standing hands on knees. Genuine transparent alpha=0 outside the figures, no gradient, halo, ground, grid, ball, props, text or logo. Wide landscape animation sheet.",
+      "references": [
+        "/games/beach-volley/nagisa-hero-v2.webp"
+      ],
+      "transparentBackground": true
+    },
+    {
+      "path": "special-nagisa-v2.webp",
+      "method": "Built-in Codex ImageGen",
+      "sourceImage": "C:/Users/yuiffy/.codex/generated_images/01a0fb98-08fc-7952-888e-5a6e346df76f/exec-111edb8c-1f4e-4316-a5d2-ea7a44f4df0f.png",
+      "use": "Nagisa single-character special poster",
+      "prompt": "Premium realistic 3D anime beach volleyball game cinematic frame of ONLY NAGISA from the first reference, clearly adult woman age25. Preserve face, mature athletic hourglass figure, long silver-gray hair, thin side braid, ivory black-band beret and exact opaque ivory/charcoal sports swimsuit with silver waist-star. Natural sunlit skin and detailed realistic hair/fabric. Tropical turquoise beach matches second reference. Wide 16:9 sports action keyframe, knees-up medium shot, she prepares an elegant overhead spike, raised arm, poised blue-gray-eyed smile, hair flowing. Single figure occupies center-right two-thirds; left third calm ocean and sky for caption overlay. Anatomically correct athletic pose, tasteful sporting presentation. No other people, no text, logos, UI, split panels.",
+      "references": [
+        "/games/beach-volley/nagisa-hero-v2.webp",
+        "/games/beach-volley/beach.webp"
+      ],
+      "transparentBackground": false
+    },
+    {
+      "path": "intro-v2.mp4",
+      "method": "Dreamina CLI 1.0.1, seedance_2.0_fast_vip, m2v",
+      "job": "docs/beach-volley-v2-media-job.json",
+      "use": "双人出场",
+      "sourceResourceId": "f2864af5-64c3-41d5-bb90-a191334a7c50",
+      "durationSeconds": 8.033333,
+      "quotedMaxCredits": 48,
+      "delivery": "1280x720 H.264, 30 fps, faststart; generated soundtrack removed",
+      "prompt": "高品质写实3D动漫沙滩排球游戏镜头。人物均为25岁成年女运动员，保持参考图的脸、成熟运动身形、发型、头饰和不透明运动泳装完全一致。银发红眼猫耳帽岁己穿黑紫泳装，金发蓝眼侧辫栞栞穿白青泳装。阳光、细腻皮肤与布料、真实头发、明亮海滩、漂亮自然的运动姿态。镜头突出全身比例、腰线与长腿，也有脸和上半身特写，专业体育游戏宣传片的构图。不要文字、不要字幕、不要新人物、不要换衣、不要裸露、不要语音。两人分别从沙滩左右走向球网，镜头从完整站姿推到腰上中景，岁己转头微笑，栞栞整理侧辫。切换岁己自信的脸部特写，再切栞栞温柔又坚定的脸部特写，最后双人中远景互相点头，准备开赛。友好竞争，镜头平稳。"
+    },
+    {
+      "path": "special-sui-v2.mp4",
+      "method": "Dreamina CLI 1.0.1, seedance_2.0_fast_vip, m2v",
+      "job": "docs/beach-volley-v2-media-job.json",
+      "use": "岁己 晴空流星必杀",
+      "sourceResourceId": "8acadae5-9055-41e8-8a2a-64d3fac0f604",
+      "durationSeconds": 4.033333,
+      "quotedMaxCredits": 24,
+      "delivery": "1280x720 H.264, 30 fps, faststart; generated soundtrack removed",
+      "prompt": "高品质写实3D动漫沙滩排球游戏镜头。人物均为25岁成年女运动员，保持参考图的脸、成熟运动身形、发型、头饰和不透明运动泳装完全一致。银发红眼猫耳帽岁己穿黑紫泳装，金发蓝眼侧辫栞栞穿白青泳装。阳光、细腻皮肤与布料、真实头发、明亮海滩、漂亮自然的运动姿态。镜头突出全身比例、腰线与长腿，也有脸和上半身特写，专业体育游戏宣传片的构图。不要文字、不要字幕、不要新人物、不要换衣、不要裸露、不要语音。只有岁己出镜。从腰上准备动作中景开始，轻微低机位展示完整肩腰比例，银发随起跳扬起，迅速切脸部坚定微笑特写，再到全身跃起举臂扣杀排球，紫色短暂光轨跟随排球飞向右方。最后落回沙滩，动作连贯有力量。"
+    },
+    {
+      "path": "special-shiori-v2.mp4",
+      "method": "Dreamina CLI 1.0.1, seedance_2.0_fast_vip, m2v",
+      "job": "docs/beach-volley-v2-media-job.json",
+      "use": "栞栞 潮汐回旋必杀",
+      "sourceResourceId": "334de491-4f32-4df3-930b-c59525fb3acc",
+      "durationSeconds": 4.033333,
+      "quotedMaxCredits": 24,
+      "delivery": "1280x720 H.264, 30 fps, faststart; generated soundtrack removed",
+      "prompt": "高品质写实3D动漫沙滩排球游戏镜头。人物均为25岁成年女运动员，保持参考图的脸、成熟运动身形、发型、头饰和不透明运动泳装完全一致。银发红眼猫耳帽岁己穿黑紫泳装，金发蓝眼侧辫栞栞穿白青泳装。阳光、细腻皮肤与布料、真实头发、明亮海滩、漂亮自然的运动姿态。镜头突出全身比例、腰线与长腿，也有脸和上半身特写，专业体育游戏宣传片的构图。不要文字、不要字幕、不要新人物、不要换衣、不要裸露、不要语音。只有栞栞出镜。从腰上中景和侧辫微动开始，切到蓝眼自信微笑特写，随后全身轻盈起跳，伸臂将排球打出优雅的弧线，青色水纹环绕球的光轨。落地时轻轻转身，动作连贯自然。"
+    },
+    {
+      "path": "point-sui-v2.mp4",
+      "method": "Dreamina CLI 1.0.1, seedance_2.0_fast_vip, m2v",
+      "job": "docs/beach-volley-v2-media-job.json",
+      "use": "岁己小分胜 栞栞小分负",
+      "sourceResourceId": "fe5f4fe3-57ab-4e62-ad9e-4d7f6161f3f6",
+      "durationSeconds": 6.033333,
+      "quotedMaxCredits": 36,
+      "delivery": "1280x720 H.264, 30 fps, faststart; generated soundtrack removed",
+      "prompt": "高品质写实3D动漫沙滩排球游戏镜头。人物均为25岁成年女运动员，保持参考图的脸、成熟运动身形、发型、头饰和不透明运动泳装完全一致。银发红眼猫耳帽岁己穿黑紫泳装，金发蓝眼侧辫栞栞穿白青泳装。阳光、细腻皮肤与布料、真实头发、明亮海滩、漂亮自然的运动姿态。镜头突出全身比例、腰线与长腿，也有脸和上半身特写，专业体育游戏宣传片的构图。不要文字、不要字幕、不要新人物、不要换衣、不要裸露、不要语音。小分结束后的双人反应镜头。前3秒镜头从岁己全身运动站姿推近到腰上：岁己握拳庆祝、俏皮微笑。后3秒切到栞栞从膝盖上方到脸的中景：栞栞轻轻垂肩，擦一下额头，再露出不服输的笑容。海风吹发，不要重复击球，不要夸张肢体。"
+    },
+    {
+      "path": "point-shiori-v2.mp4",
+      "method": "Dreamina CLI 1.0.1, seedance_2.0_fast_vip, m2v",
+      "job": "docs/beach-volley-v2-media-job.json",
+      "use": "栞栞小分胜 岁己小分负",
+      "sourceResourceId": "f1be923c-9949-4837-8f88-e29073bda0a6",
+      "durationSeconds": 6.033333,
+      "quotedMaxCredits": 36,
+      "delivery": "1280x720 H.264, 30 fps, faststart; generated soundtrack removed",
+      "prompt": "高品质写实3D动漫沙滩排球游戏镜头。人物均为25岁成年女运动员，保持参考图的脸、成熟运动身形、发型、头饰和不透明运动泳装完全一致。银发红眼猫耳帽岁己穿黑紫泳装，金发蓝眼侧辫栞栞穿白青泳装。阳光、细腻皮肤与布料、真实头发、明亮海滩、漂亮自然的运动姿态。镜头突出全身比例、腰线与长腿，也有脸和上半身特写，专业体育游戏宣传片的构图。不要文字、不要字幕、不要新人物、不要换衣、不要裸露、不要语音。小分结束后的双人反应镜头。前3秒镜头从栞栞完整运动站姿推近到腰上：栞栞高举手臂庆祝，笑着看向对手。后3秒切到岁己从膝盖上方到脸的中景：岁己双手叉腰，稍微低头喘气，再抬头露出自信的笑。海风吹发，不要重复击球。"
+    },
+    {
+      "path": "result-sui-v2.mp4",
+      "method": "Dreamina CLI 1.0.1, seedance_2.0_fast_vip, m2v",
+      "job": "docs/beach-volley-v2-media-job.json",
+      "use": "岁己最终胜 栞栞最终负",
+      "sourceResourceId": "d23fe309-8850-4fb0-b498-3f56d396fd8b",
+      "durationSeconds": 12.033333,
+      "quotedMaxCredits": 72,
+      "delivery": "1280x720 H.264, 30 fps, faststart; generated soundtrack removed",
+      "prompt": "高品质写实3D动漫沙滩排球游戏镜头。人物均为25岁成年女运动员，保持参考图的脸、成熟运动身形、发型、头饰和不透明运动泳装完全一致。银发红眼猫耳帽岁己穿黑紫泳装，金发蓝眼侧辫栞栞穿白青泳装。阳光、细腻皮肤与布料、真实头发、明亮海滩、漂亮自然的运动姿态。镜头突出全身比例、腰线与长腿，也有脸和上半身特写，专业体育游戏宣传片的构图。不要文字、不要字幕、不要新人物、不要换衣、不要裸露、不要语音。最终赛后12秒完整演出。0至4秒岁己完整全身站在阳光沙滩，双臂欢呼，轻轻跳起庆祝；镜头平稳环绕四分之一圈，突出运动身形和细腻光照。4至7秒岁己腰上中景和微笑脸部特写，向镜头挥手。7至10秒切到栞栞完整站姿和膝盖以上中景，她短暂垂肩、呼吸，再抬头笑着承认输掉比赛。10至12秒双人中远景，岁己和栞栞轻轻击掌，海浪在身后。友谊和竞争，不要额外人物。"
+    },
+    {
+      "path": "result-shiori-v2.mp4",
+      "method": "Dreamina CLI 1.0.1, seedance_2.0_fast_vip, m2v",
+      "job": "docs/beach-volley-v2-media-job.json",
+      "use": "栞栞最终胜 岁己最终负",
+      "sourceResourceId": "63b1ddec-1b18-4068-9f21-7ec589f55168",
+      "durationSeconds": 12.033333,
+      "quotedMaxCredits": 72,
+      "delivery": "1280x720 H.264, 30 fps, faststart; generated soundtrack removed",
+      "prompt": "高品质写实3D动漫沙滩排球游戏镜头。人物均为25岁成年女运动员，保持参考图的脸、成熟运动身形、发型、头饰和不透明运动泳装完全一致。银发红眼猫耳帽岁己穿黑紫泳装，金发蓝眼侧辫栞栞穿白青泳装。阳光、细腻皮肤与布料、真实头发、明亮海滩、漂亮自然的运动姿态。镜头突出全身比例、腰线与长腿，也有脸和上半身特写，专业体育游戏宣传片的构图。不要文字、不要字幕、不要新人物、不要换衣、不要裸露、不要语音。最终赛后12秒完整演出。0至4秒栞栞完整全身站在阳光沙滩，举起双手欢呼，转身微笑；镜头平稳环绕四分之一圈，突出运动身形和细腻光照。4至7秒栞栞腰上中景和蓝眼笑容特写，向镜头挥手。7至10秒切到岁己完整站姿和膝盖以上中景，她双手扶膝短暂喘气，再站直露出不服输的笑。10至12秒双人中远景，两人轻轻击掌，海浪在身后。友谊和竞争，不要额外人物。"
+    },
+    {
+      "path": "intro-sui-v3.mp4",
+      "method": "Dreamina CLI 1.0.1, seedance_2.0_fast_vip, m2v",
+      "job": "docs/beach-volley-roster-media-job.json",
+      "use": "岁己单人出场",
+      "sourceResourceId": "f2788a68-8d87-414c-868a-c0ad28937f6d",
+      "durationSeconds": 4.033333,
+      "quotedMaxCredits": 24,
+      "delivery": "1280x720 H.264, 30 fps, faststart; generated soundtrack removed",
+      "prompt": "高品质写实3D动漫沙滩排球游戏单人镜头。仅有参考图中的这一位25岁成年女运动员，保持她的脸、成熟运动身形、头饰、发型、不透明运动泳装完全一致。细腻自然的阳光与皮肤布料，真实头发，明亮热带沙滩。专业体育游戏宣传片构图，突出自然全身比例、运动腰线与长腿，也有脸和上半身特写。不要其他人物，不要双人同屏，不要换衣，不要裸露，不要文字字幕或语音。银发双马尾红眼猫耳帽的岁己，黑紫运动泳装。完整全身走到球场，手扶腰看向镜头，推近到自信脸部微笑，再回到膝盖以上准备姿态。只出现岁己。"
+    },
+    {
+      "path": "intro-shiori-v3.mp4",
+      "method": "Dreamina CLI 1.0.1, seedance_2.0_fast_vip, m2v",
+      "job": "docs/beach-volley-roster-media-job.json",
+      "use": "栞栞单人出场",
+      "sourceResourceId": "049d66c6-4088-499a-aaf8-f0df881d870b",
+      "durationSeconds": 4.033333,
+      "quotedMaxCredits": 24,
+      "delivery": "1280x720 H.264, 30 fps, faststart; generated soundtrack removed",
+      "prompt": "高品质写实3D动漫沙滩排球游戏单人镜头。仅有参考图中的这一位25岁成年女运动员，保持她的脸、成熟运动身形、头饰、发型、不透明运动泳装完全一致。细腻自然的阳光与皮肤布料，真实头发，明亮热带沙滩。专业体育游戏宣传片构图，突出自然全身比例、运动腰线与长腿，也有脸和上半身特写。不要其他人物，不要双人同屏，不要换衣，不要裸露，不要文字字幕或语音。金发侧辫蓝眼的栞栞，白青运动泳装、棕色发带和白色辫子丝带。完整全身走到球场，整理侧辫，镜头推近温柔而坚定的脸部笑容，再到膝盖以上准备姿态。只出现栞栞。"
+    },
+    {
+      "path": "intro-nagisa-v3.mp4",
+      "method": "Dreamina CLI 1.0.1, seedance_2.0_fast_vip, m2v",
+      "job": "docs/beach-volley-roster-media-job.json",
+      "use": "米汀单人出场",
+      "sourceResourceId": "b76c5bd7-146b-4589-ac89-b751da24040b",
+      "durationSeconds": 6.033333,
+      "quotedMaxCredits": 36,
+      "delivery": "1280x720 H.264, 30 fps, faststart; generated soundtrack removed",
+      "prompt": "高品质写实3D动漫沙滩排球游戏单人镜头。仅有参考图中的这一位25岁成年女运动员，保持她的脸、成熟运动身形、头饰、发型、不透明运动泳装完全一致。细腻自然的阳光与皮肤布料，真实头发，明亮热带沙滩。专业体育游戏宣传片构图，突出自然全身比例、运动腰线与长腿，也有脸和上半身特写。不要其他人物，不要双人同屏，不要换衣，不要裸露，不要文字字幕或语音。米汀，灰银长发、细侧辫、蓝灰眼睛，白色黑边贝雷帽，白黑运动泳装，腰部银色星饰。完整全身从沙滩走到球网旁，轻扶贝雷帽，镜头平稳推到腰上中景，她从容抬头微笑，再切蓝灰眼睛的脸部特写。最后膝盖以上运动准备姿态。"
+    },
+    {
+      "path": "special-nagisa-v3.mp4",
+      "method": "Dreamina CLI 1.0.1, seedance_2.0_fast_vip, m2v",
+      "job": "docs/beach-volley-roster-media-job.json",
+      "use": "米汀 星屑折光必杀",
+      "sourceResourceId": "ad2ec940-a77b-404d-a74b-2d1fe440b074",
+      "durationSeconds": 4.033333,
+      "quotedMaxCredits": 24,
+      "delivery": "1280x720 H.264, 30 fps, faststart; generated soundtrack removed",
+      "prompt": "高品质写实3D动漫沙滩排球游戏单人镜头。仅有参考图中的这一位25岁成年女运动员，保持她的脸、成熟运动身形、头饰、发型、不透明运动泳装完全一致。细腻自然的阳光与皮肤布料，真实头发，明亮热带沙滩。专业体育游戏宣传片构图，突出自然全身比例、运动腰线与长腿，也有脸和上半身特写。不要其他人物，不要双人同屏，不要换衣，不要裸露，不要文字字幕或语音。米汀，灰银长发、细侧辫、蓝灰眼睛，白色黑边贝雷帽，白黑运动泳装，腰部银色星饰。腰上准备姿态开始，脸部坚定微笑特写，切全身起跳伸臂扣杀，银蓝色星屑光轨跟随排球划过优雅锐利的折光弧线。落地时保持平衡，动作流畅、解剖自然。"
+    },
+    {
+      "path": "point-nagisa-win-v3.mp4",
+      "method": "Dreamina CLI 1.0.1, seedance_2.0_fast_vip, m2v",
+      "job": "docs/beach-volley-roster-media-job.json",
+      "use": "米汀单人小分胜利",
+      "sourceResourceId": "490b9685-3813-4d04-b672-77572090387f",
+      "durationSeconds": 4.033333,
+      "quotedMaxCredits": 24,
+      "delivery": "1280x720 H.264, 30 fps, faststart; generated soundtrack removed",
+      "prompt": "高品质写实3D动漫沙滩排球游戏单人镜头。仅有参考图中的这一位25岁成年女运动员，保持她的脸、成熟运动身形、头饰、发型、不透明运动泳装完全一致。细腻自然的阳光与皮肤布料，真实头发，明亮热带沙滩。专业体育游戏宣传片构图，突出自然全身比例、运动腰线与长腿，也有脸和上半身特写。不要其他人物，不要双人同屏，不要换衣，不要裸露，不要文字字幕或语音。米汀，灰银长发、细侧辫、蓝灰眼睛，白色黑边贝雷帽，白黑运动泳装，腰部银色星饰。小分得分反应：完整全身握拳轻轻庆祝，镜头推到腰上中景与温暖脸部微笑。她抬手向场外对手示意下一球，眼神自信。不出现对手。"
+    },
+    {
+      "path": "point-nagisa-lose-v3.mp4",
+      "method": "Dreamina CLI 1.0.1, seedance_2.0_fast_vip, m2v",
+      "job": "docs/beach-volley-roster-media-job.json",
+      "use": "米汀单人小分失利",
+      "sourceResourceId": "f306a6ca-6263-4c76-874e-16e3a1236219",
+      "durationSeconds": 4.033333,
+      "quotedMaxCredits": 24,
+      "delivery": "1280x720 H.264, 30 fps, faststart; generated soundtrack removed",
+      "prompt": "高品质写实3D动漫沙滩排球游戏单人镜头。仅有参考图中的这一位25岁成年女运动员，保持她的脸、成熟运动身形、头饰、发型、不透明运动泳装完全一致。细腻自然的阳光与皮肤布料，真实头发，明亮热带沙滩。专业体育游戏宣传片构图，突出自然全身比例、运动腰线与长腿，也有脸和上半身特写。不要其他人物，不要双人同屏，不要换衣，不要裸露，不要文字字幕或语音。米汀，灰银长发、细侧辫、蓝灰眼睛，白色黑边贝雷帽，白黑运动泳装，腰部银色星饰。小分失利反应：完整全身稍微垂肩，双手扶膝短暂喘气，再站直整理一下帽子。镜头从膝盖以上推到脸部，她露出不服输的从容微笑，准备下一球。不出现对手。"
+    },
+    {
+      "path": "result-nagisa-win-v3.mp4",
+      "method": "Dreamina CLI 1.0.1, seedance_2.0_fast_vip, m2v",
+      "job": "docs/beach-volley-roster-media-job.json",
+      "use": "米汀单人最终胜利",
+      "sourceResourceId": "78cc693f-bbb2-428b-b926-da32063b4d48",
+      "durationSeconds": 12.033333,
+      "quotedMaxCredits": 72,
+      "delivery": "1280x720 H.264, 30 fps, faststart; generated soundtrack removed",
+      "prompt": "高品质写实3D动漫沙滩排球游戏单人镜头。仅有参考图中的这一位25岁成年女运动员，保持她的脸、成熟运动身形、头饰、发型、不透明运动泳装完全一致。细腻自然的阳光与皮肤布料，真实头发，明亮热带沙滩。专业体育游戏宣传片构图，突出自然全身比例、运动腰线与长腿，也有脸和上半身特写。不要其他人物，不要双人同屏，不要换衣，不要裸露，不要文字字幕或语音。米汀，灰银长发、细侧辫、蓝灰眼睛，白色黑边贝雷帽，白黑运动泳装，腰部银色星饰。最终赛后12秒单人演出：前4秒完整全身举起双手庆祝，轻轻转身，镜头平稳环绕四分之一圈，展示运动比例和自然光照。中间4秒膝盖以上、腰上与蓝灰眼睛脸部微笑特写，她轻扶帽檐并向镜头挥手。最后4秒回到完整站姿，轻松笑着把手放在腰侧，海风吹动长发和细辫，缓缓推近到腰上。只出现米汀，不要击掌，不要对手。"
+    },
+    {
+      "path": "result-nagisa-lose-v3.mp4",
+      "method": "Dreamina CLI 1.0.1, seedance_2.0_fast_vip, m2v",
+      "job": "docs/beach-volley-roster-media-job.json",
+      "use": "米汀单人最终失利",
+      "sourceResourceId": "aa258fe9-572a-4184-9230-04263cf986a6",
+      "durationSeconds": 10.033333,
+      "quotedMaxCredits": 60,
+      "delivery": "1280x720 H.264, 30 fps, faststart; generated soundtrack removed",
+      "prompt": "高品质写实3D动漫沙滩排球游戏单人镜头。仅有参考图中的这一位25岁成年女运动员，保持她的脸、成熟运动身形、头饰、发型、不透明运动泳装完全一致。细腻自然的阳光与皮肤布料，真实头发，明亮热带沙滩。专业体育游戏宣传片构图，突出自然全身比例、运动腰线与长腿，也有脸和上半身特写。不要其他人物，不要双人同屏，不要换衣，不要裸露，不要文字字幕或语音。米汀，灰银长发、细侧辫、蓝灰眼睛，白色黑边贝雷帽，白黑运动泳装，腰部银色星饰。最终失利10秒单人演出：前3秒完整全身双手扶膝短暂喘气，肩膀放松。中间4秒慢慢站直、整理帽子，镜头从膝盖以上推到腰上中景，表情由失落变为温柔而坚定的微笑。最后3秒脸部特写，她点头向场外对手致意，然后回到轻松站姿。只出现米汀，不要对手、不要击掌，友好体育精神。"
+    },
+    {
+      "path": "point-sui-win-v3.mp4",
+      "method": "Local ffmpeg cut from existing accepted footage; no new generation credits",
+      "sourceVideo": "point-sui-v2.mp4",
+      "startSeconds": 0,
+      "durationSeconds": 2.85,
+      "use": "Single-character reusable reaction; exact actor and outcome from filename",
+      "delivery": "1280x720 H.264, 30 fps, faststart; no audio"
+    },
+    {
+      "path": "point-shiori-lose-v3.mp4",
+      "method": "Local ffmpeg cut from existing accepted footage; no new generation credits",
+      "sourceVideo": "point-sui-v2.mp4",
+      "startSeconds": 3.25,
+      "durationSeconds": 2.75,
+      "use": "Single-character reusable reaction; exact actor and outcome from filename",
+      "delivery": "1280x720 H.264, 30 fps, faststart; no audio"
+    },
+    {
+      "path": "result-sui-win-v3.mp4",
+      "method": "Local ffmpeg cut from existing accepted footage; no new generation credits",
+      "sourceVideo": "result-sui-v2.mp4",
+      "startSeconds": 0,
+      "durationSeconds": 4.9,
+      "use": "Single-character reusable reaction; exact actor and outcome from filename",
+      "delivery": "1280x720 H.264, 30 fps, faststart; no audio"
+    },
+    {
+      "path": "result-shiori-lose-v3.mp4",
+      "method": "Local ffmpeg cut from existing accepted footage; no new generation credits",
+      "sourceVideo": "result-sui-v2.mp4",
+      "startSeconds": 6.9,
+      "durationSeconds": 1.6,
+      "use": "Single-character reusable reaction; exact actor and outcome from filename",
+      "delivery": "1280x720 H.264, 30 fps, faststart; no audio"
+    },
+    {
+      "path": "point-shiori-win-v3.mp4",
+      "method": "Local ffmpeg cut from existing accepted footage; no new generation credits",
+      "sourceVideo": "point-shiori-v2.mp4",
+      "startSeconds": 0,
+      "durationSeconds": 2.85,
+      "use": "Single-character reusable reaction; exact actor and outcome from filename",
+      "delivery": "1280x720 H.264, 30 fps, faststart; no audio"
+    },
+    {
+      "path": "point-sui-lose-v3.mp4",
+      "method": "Local ffmpeg cut from existing accepted footage; no new generation credits",
+      "sourceVideo": "point-shiori-v2.mp4",
+      "startSeconds": 3.25,
+      "durationSeconds": 2.75,
+      "use": "Single-character reusable reaction; exact actor and outcome from filename",
+      "delivery": "1280x720 H.264, 30 fps, faststart; no audio"
+    },
+    {
+      "path": "result-shiori-win-v3.mp4",
+      "method": "Local ffmpeg cut from existing accepted footage; no new generation credits",
+      "sourceVideo": "result-shiori-v2.mp4",
+      "startSeconds": 0,
+      "durationSeconds": 4.9,
+      "use": "Single-character reusable reaction; exact actor and outcome from filename",
+      "delivery": "1280x720 H.264, 30 fps, faststart; no audio"
+    },
+    {
+      "path": "result-sui-lose-v3.mp4",
+      "method": "Local ffmpeg cut from existing accepted footage; no new generation credits",
+      "sourceVideo": "result-shiori-v2.mp4",
+      "startSeconds": 6.9,
+      "durationSeconds": 1.6,
+      "use": "Single-character reusable reaction; exact actor and outcome from filename",
+      "delivery": "1280x720 H.264, 30 fps, faststart; no audio"
     }
-  ]
+  ],
+  "cinematicPolicy": "New footage is single-character. Sui/Shiori pair override preserves existing paired videos. Other matches compose actual winner then actual loser clips.",
+  "generationCreditCeilingThisUpdate": 600
 }

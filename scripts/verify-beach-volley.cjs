@@ -45,6 +45,7 @@ async function rig(page, scenario) {
     await page.goto(url, { waitUntil: 'networkidle' });
     await page.waitForFunction(() => window.beachVolley && JSON.parse(window.render_game_to_text()).assetsReady);
     await page.evaluate(() => window.beachVolley.manual(true));
+    await page.locator('#beach-cinema').selectOption('off');
     await capture(page, '01-menu');
     if (process.env.SMOKE_ONLY === '1') { console.log(JSON.stringify({ screenshots, errors })); return; }
     await page.getByRole('button', { name: '玩法说明', exact: true }).click();
@@ -123,6 +124,7 @@ async function rig(page, scenario) {
     await mobile.goto(url, { waitUntil: 'networkidle' });
     await mobile.waitForFunction(() => window.beachVolley && JSON.parse(window.render_game_to_text()).assetsReady);
     await mobile.evaluate(() => window.beachVolley.manual(true));
+    await mobile.locator('#beach-cinema').selectOption('off');
     await mobile.locator('#beach-start').click();
     if (await mobile.getByRole('button', { name: '跳过开场' }).isVisible()) await mobile.getByRole('button', { name: '跳过开场' }).click();
     await advance(mobile, 3500);

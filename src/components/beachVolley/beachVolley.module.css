@@ -127,7 +127,8 @@
   color: #f4eee2;
   background: transparent;
   text-align: left;
-  width: 50%;
+  flex: 1;
+  min-width: 0;
   padding: 7px 0 10px;
   cursor: pointer;
   opacity: 0.54;
@@ -172,7 +173,8 @@
 }
 .settings {
   display: flex;
-  gap: 22px;
+  flex-wrap: wrap;
+  gap: 8px 16px;
   margin: 16px 0;
   align-items: center;
 }
@@ -293,6 +295,11 @@
   box-shadow: 0 9px 35px #0d405f15;
   backdrop-filter: blur(10px);
 }
+.closeupStage .scoreboard,
+.closeupStage .aimReadout,
+.closeupStage .rally {
+  display: none;
+}
 .team {
   flex: 1;
   min-width: 0;
@@ -356,6 +363,21 @@
   letter-spacing: 3px;
   font-weight: 700;
   color: #396671;
+}
+.aimReadout {
+  position: absolute;
+  bottom: 8%;
+  left: 4%;
+  display: flex;
+  gap: 12px;
+  color: #184d58;
+  font-size: 11px;
+  font-weight: 700;
+}
+.aimReadout span {
+  padding: 6px 10px;
+  border-radius: 3px;
+  background: #fff7dfd9;
 }
 .skip {
   position: absolute;
@@ -555,8 +577,15 @@
   bottom: 0;
   inset-inline: 0;
   text-align: center;
-  padding: 40px;
+  padding: 50px 6% 25px;
   background: linear-gradient(transparent, #062d46d0);
+}
+.cinema > div > small {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: #ffdf88;
 }
 .cinema > div span {
   font-size: 22px;
@@ -564,6 +593,20 @@
 }
 .cinema p {
   font-size: 16px;
+  margin: 10px 0 0;
+}
+.cinema > .skip {
+  top: 4%;
+  bottom: auto;
+}
+.cinema > div button {
+  margin-top: 12px;
+  padding: 9px 17px;
+  border: 1px solid #ffe3a580;
+  background: #0e343ee6;
+  color: #ffe3a5;
+  border-radius: 3px;
+  cursor: pointer;
 }
 .touchControls {
   display: none;
@@ -644,11 +687,17 @@
     width: min(100%, calc((100svh - 68px) * 16 / 9));
   }
   .menu {
-    top: 5%;
+    top: 4%;
+    width: 43%;
+    line-height: 1.25;
+  }
+  .selection {
+    width: 100%;
   }
   .menu h1 {
-    font-size: 38px;
+    font-size: 34px;
     margin-top: 7px;
+    margin-bottom: 12px;
   }
   .menu h1 b {
     font-size: 12px;
@@ -656,8 +705,7 @@
     margin-top: 5px;
   }
   .tagline {
-    margin: 9px 0 12px;
-    font-size: 9px;
+    display: none;
   }
   .label {
     font-size: 8px;
@@ -670,6 +718,12 @@
   }
   .characters button span {
     font-size: 16px;
+    display: block;
+    margin: 0 0 3px;
+  }
+  .characters button small {
+    font-size: 7px;
+    letter-spacing: 1px;
   }
   .modes {
     margin-top: 5px;
@@ -679,12 +733,21 @@
     font-size: 9px;
   }
   .settings {
-    margin: 6px 0;
-    gap: 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    margin: 8px 0;
+    gap: 6px;
   }
   .settings label,
   .settings select {
     font-size: 9px;
+  }
+  .settings label {
+    gap: 5px;
+  }
+  .settings select {
+    min-width: 0;
+    padding: 3px 2px;
   }
   .start {
     padding: 8px 12px;
@@ -692,6 +755,7 @@
   }
   .start span {
     font-size: 17px;
+    line-height: 1;
   }
   .menuFoot {
     margin-top: 8px;
@@ -761,6 +825,8 @@
     font-size: 10px;
   }
   .touchControls {
+    display: flex;
+    flex-wrap: wrap;
     position: absolute;
     bottom: 10px;
     left: 0;
@@ -772,6 +838,14 @@
   }
   .touchControls > div {
     pointer-events: auto;
+  }
+  .aimReadout {
+    font-size: 8px;
+    bottom: 18%;
+    gap: 8px;
+  }
+  .aimReadout span {
+    padding: 4px 6px;
   }
   .touchControls button {
     width: 43px;
@@ -818,7 +892,7 @@
   }
   .menuStage {
     aspect-ratio: auto;
-    min-height: 800px;
+    min-height: 0;
     background: #225861;
   }
   .menuStage canvas {
@@ -832,7 +906,9 @@
     object-fit: cover;
   }
   .menu {
-    inset: 310px 0 auto;
+    position: relative;
+    inset: auto;
+    margin-top: 310px;
     width: 100%;
     padding: 0 26px 25px;
     background: linear-gradient(transparent, #1b515d 32px);
@@ -857,6 +933,8 @@
   }
   .characters button span {
     font-size: 23px;
+    display: block;
+    margin: 0 0 5px;
   }
   .label {
     font-size: 9px;
@@ -867,6 +945,7 @@
   }
   .settings {
     margin: 17px 0;
+    gap: 9px 14px;
   }
   .start {
     padding: 16px 18px;
@@ -967,7 +1046,8 @@
     gap: 40px;
   }
   .touchControls {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     padding: 23px 15px;
     gap: 13px;
     flex-wrap: wrap;
@@ -977,16 +1057,42 @@
     height: 49px;
   }
   .touchControls > div {
-    gap: 5px;
+    display: grid;
+    grid-template-columns: repeat(2, 49px);
+    gap: 7px;
+    justify-content: start;
+  }
+  .touchControls > div:nth-child(2) {
+    justify-content: end;
+  }
+  .touchControls > .secondTouch {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(4, 49px);
+    justify-content: center;
+  }
+  .aimReadout {
+    bottom: 10px;
+    left: 8px;
+    font-size: 7px;
+    gap: 4px;
+  }
+  .aimReadout span {
+    padding: 3px 5px;
   }
   .cinema > div {
     padding: 12px;
   }
   .cinema > div span {
     font-size: 13px;
+    letter-spacing: 1px;
+  }
+  .cinema > div > small {
+    font-size: 7px;
+    margin-bottom: 4px;
   }
   .cinema p {
     font-size: 10px;
+    margin-top: 5px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1017,8 +1123,14 @@
   }
 }
 
-.team > span { white-space: nowrap; }
-@media (max-height: 520px) and (orientation: landscape) { .stage { width: min(100%, calc((100svh - 68px) * 16 / 9)); } }
+.team > span {
+  white-space: nowrap;
+}
+@media (max-height: 520px) and (orientation: landscape) {
+  .stage {
+    width: min(100%, calc((100svh - 68px) * 16 / 9));
+  }
+}
 
 .secondTouch button {
   flex: 1 1 0;

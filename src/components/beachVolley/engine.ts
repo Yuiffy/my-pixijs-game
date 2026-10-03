@@ -1,9 +1,25 @@
-export type Character = "sui" | "shiori";
+export type Character = keyof typeof CHARACTERS;
 export type Side = 0 | 1;
 export type Mode = "solo" | "local" | "practice";
 export type Difficulty = "easy" | "normal" | "hard";
 export type Phase = "menu" | "intro" | "serve" | "rally" | "point" | "result";
-export type Action = "left" | "right" | "jump" | "hit" | "dive" | "special";
+export type Action =
+  | "left"
+  | "right"
+  | "jump"
+  | "hit"
+  | "dive"
+  | "special"
+  | "aimUp"
+  | "aimDown";
+export type ShotLift = "lob" | "drive" | "down";
+export type ShotDepth = "near" | "middle" | "deep";
+export interface ShotAim {
+  lift: ShotLift;
+  depth: ShotDepth;
+}
+export const SHOT_NAMES = { lob: "高吊", drive: "平抽", down: "下压" };
+export const DEPTH_NAMES = { near: "近网", middle: "中场", deep: "底线" };
 export type Input = Record<Action, boolean>;
 export const WIDTH = 1280;
 export const HEIGHT = 720;
@@ -20,6 +36,11 @@ export const CHARACTERS = {
     color: "#a898e6",
     special: "晴空流星",
     line: "这一球，飞到晴空去！",
+    energyName: "晴空",
+    ballSpeed: 980,
+    gravityBefore: 1,
+    gravityAfter: 1,
+    victoryImage: "sui-victory-v2.webp",
   },
   shiori: {
     name: "栞栞",
@@ -27,11 +48,30 @@ export const CHARACTERS = {
     color: "#62c6c0",
     special: "潮汐回旋",
     line: "听见了吗？海浪的声音。",
+    energyName: "潮汐",
+    ballSpeed: 765,
+    gravityBefore: 0.7,
+    gravityAfter: 1.52,
+    victoryImage: null,
+  },
+  nagisa: {
+    name: "米汀",
+    latin: "NAGISA",
+    color: "#c4d4e7",
+    special: "星屑折光",
+    line: "找到破绽了。看这道星光！",
+    energyName: "星屑",
+    ballSpeed: 865,
+    gravityBefore: 0.9,
+    gravityAfter: 1.18,
+    victoryImage: null,
   },
 };
+export const CHARACTER_IDS = Object.keys(CHARACTERS) as Character[];
 export interface Options {
   mode: Mode;
   character: Character;
+  opponent: Character;
   difficulty: Difficulty;
   target: number;
 }
@@ -51,6 +91,8 @@ export interface Player {
   lastInput: Input;
   aiTarget: number;
   aiTimer: number;
+  aim: ShotAim;
+  shotAim: ShotAim | null;
 }
 export interface Ball {
   x: number;
@@ -61,6 +103,7 @@ export interface Ball {
   lastHit: Side | null;
   lock: number;
   power: Character | null;
+  shot?: ShotAim;
 }
 export interface Effect {
   x: number;
@@ -117,7 +160,79 @@ export const emptyInput = (): Input => ({
   hit: false,
   dive: false,
   special: false,
+  aimUp: false,
+  aimDown: false,
 });
+export function readAim(input: Input, side: Side): ShotAim {
+  const forward = side === 0 ? input.right : input.left;
+  const backward = side === 0 ? input.left : input.right;
+  return {
+    lift: input.aimDown ? "down" : input.aimUp || input.jump ? "lob" : "drive",
+    depth: forward === backward ? "middle" : forward ? "deep" : "near",
+  };
+}
+// Solve an arc to the chosen landing point, then give it enough airtime to clear the net.
+// The same vector powers the real shot and its preview.
+export function shotVector(
+  ball: Pick<Ball, "x" | "y">,
+  side: Side,
+  aim: ShotAim,
+  power: Character | null = null,
+) {
+  const dir = side === 0 ? 1 : -1;
+  const target = NET_X + dir * { near: 140, middle: 325, deep: 545 }[aim.depth];
+  const distance = Math.max(80, Math.abs(target - ball.x));
+  const clearance = NET_TOP - BALL_RADIUS - 22;
+  if (power) {
+    const vx =
+      dir *
+      CHARACTERS[power].ballSpeed *
+      { near: 0.76, middle: 1, deep: 1.1 }[aim.depth];
+    const toNet = Math.max(90, Math.abs(NET_X - ball.x)) / Math.abs(vx);
+    const needed =
+      (clearance -
+        ball.y -
+        (GRAVITY * CHARACTERS[power].gravityBefore * toNet * toNet) / 2) /
+      toNet;
+    const vy = Math.max(
+      -1100,
+      Math.min(
+        aim.lift === "lob" ? -680 : aim.lift === "down" ? 230 : -70,
+        needed - (aim.lift === "lob" ? 160 : 30),
+      ),
+    );
+    return { vx, vy, target, time: distance / Math.abs(vx) };
+  }
+  // Clear the entire net collision band, including the descending far edge.
+  const minimum = Math.max(
+    ...[-1, 1].map((edge) => {
+      const fraction = clamp(
+        ((NET_X + dir * edge * (BALL_RADIUS + 10) - ball.x) * dir) / distance,
+        0.025,
+        0.975,
+      );
+      return Math.sqrt(
+        Math.max(
+          0,
+          (2 *
+            (ball.y + (FLOOR - BALL_RADIUS - ball.y) * fraction - clearance)) /
+            (GRAVITY * fraction * (1 - fraction)),
+        ),
+      );
+    }),
+  );
+  const preferred = { lob: 1.5, drive: 0.94, down: 0.61 }[aim.lift];
+  const time = Math.max(
+    minimum + { lob: 0.4, drive: 0.16, down: 0.025 }[aim.lift],
+    preferred,
+  );
+  return {
+    vx: (dir * distance) / time,
+    vy: (FLOOR - BALL_RADIUS - ball.y - (GRAVITY * time * time) / 2) / time,
+    target,
+    time,
+  };
+}
 export const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
 const other = (side: Side): Side => (side === 0 ? 1 : 0);
 const random = (g: Game) => {
@@ -141,12 +256,16 @@ function player(character: Character, side: Side): Player {
     lastInput: emptyInput(),
     aiTarget: side === 0 ? 295 : 985,
     aiTimer: 0,
+    aim: { lift: "drive", depth: "middle" },
+    shotAim: null,
   };
 }
 export function createGame(options: Partial<Options> = {}, seed = 74129): Game {
   const config: Options = {
     mode: "solo",
     character: "sui",
+    opponent:
+      options.character && options.character !== "sui" ? "sui" : "shiori",
     difficulty: "normal",
     target: 7,
     ...options,
@@ -157,10 +276,7 @@ export function createGame(options: Partial<Options> = {}, seed = 74129): Game {
     phaseTime: 0,
     time: 0,
     paused: false,
-    players: [
-      player(config.character, 0),
-      player(config.character === "sui" ? "shiori" : "sui", 1),
-    ],
+    players: [player(config.character, 0), player(config.opponent, 1)],
     ball: {
       x: 295,
       y: FLOOR - 230,
@@ -216,6 +332,8 @@ export function prepareServe(g: Game) {
     p.cooldown = 0;
     p.pose = 0;
     p.lastInput = emptyInput();
+    p.aim = { lift: "drive", depth: "middle" };
+    p.shotAim = null;
   });
   const p = g.players[g.server];
   g.ball = {
@@ -323,7 +441,8 @@ export function aiInput(g: Game, side: Side, dt: number): Input {
     const own = side === 0 ? b.x < NET_X : b.x > NET_X;
     p.aiTarget =
       own || (side === 0 ? b.vx < -50 : b.vx > 50)
-        ? predictLanding(b, FLOOR - 125) + (random(g) - 0.5) * error * 2
+        ? predictLanding(b, FLOOR - (setting === "easy" ? 125 : 280)) +
+          (random(g) - 0.5) * error * 2
         : side === 0
           ? 360
           : 920;
@@ -340,17 +459,24 @@ export function aiInput(g: Game, side: Side, dt: number): Input {
   const difference = p.aiTarget - p.x;
   input.left = difference < -16;
   input.right = difference > 16;
-  const close = Math.abs(b.x - p.x) < 110;
+  const close = Math.abs(b.x - p.x) < (setting === "easy" ? 110 : 165);
   const onOwn = side === 0 ? b.x < NET_X - 15 : b.x > NET_X + 15;
   input.jump =
     close &&
     onOwn &&
-    b.y < FLOOR - 210 &&
+    b.y < FLOOR - (setting === "easy" ? 210 : 290) &&
     b.y > 160 &&
     b.vy > -170 &&
     p.y >= FLOOR - 1;
   input.hit = close && onOwn && b.y > p.y - 250 && b.y < p.y - 60;
   input.special = input.hit && p.energy >= 100 && setting !== "easy";
+  input.aimDown = input.hit && b.y < NET_TOP - 30 && setting !== "easy";
+  input.aimUp = input.hit && !input.aimDown && setting === "easy";
+  if (input.hit && !p.lastInput.hit && setting !== "easy") {
+    const deep = Math.abs(g.players[other(side)].x - NET_X) < 325;
+    input.left = side === 0 ? !deep : deep;
+    input.right = !input.left;
+  }
   input.dive =
     onOwn &&
     b.y > FLOOR - 90 &&
@@ -363,6 +489,8 @@ function movePlayer(g: Game, p: Player, side: Side, input: Input, dt: number) {
   p.dive = Math.max(0, p.dive - dt);
   p.cooldown = Math.max(0, p.cooldown - dt);
   p.special = Math.max(0, p.special - dt);
+  p.aim = readAim(input, side);
+  if (p.swing <= 0 && p.special <= 0) p.shotAim = null;
   const axis = Number(input.right) - Number(input.left);
   const speed =
     side === 1 && g.options.mode !== "local"
@@ -375,10 +503,14 @@ function movePlayer(g: Game, p: Player, side: Side, input: Input, dt: number) {
     particles(g, p.x, FLOOR, "#e9c28c", 9, 95);
     emit(g, "jump", side);
   }
-  if (input.hit && !p.lastInput.hit && p.swing <= 0) p.swing = 0.27;
+  if (input.hit && !p.lastInput.hit && p.swing <= 0) {
+    p.swing = 0.27;
+    p.shotAim = { ...p.aim };
+  }
   if (input.special && !p.lastInput.special && p.energy >= 100) {
     p.special = 1.0;
     p.swing = 0.4;
+    p.shotAim = { ...p.aim };
   }
   if (input.dive && !p.lastInput.dive && p.cooldown <= 0 && p.y >= FLOOR - 10) {
     p.dive = 0.42;
@@ -418,9 +550,7 @@ function hitBall(g: Game, p: Player, side: Side) {
   b.vx =
     dir *
     (charged
-      ? p.character === "sui"
-        ? 980
-        : 765
+      ? CHARACTERS[p.character].ballSpeed
       : smash
         ? 700
         : 450 + Math.abs(p.vx) * 0.13);
@@ -432,10 +562,14 @@ function hitBall(g: Game, p: Player, side: Side) {
       ? Math.min(160, needed - 25)
       : Math.min(-570, needed - 35);
   b.vy = Math.max(-940, b.vy);
-  if ((p.lastInput.left && side === 1) || (p.lastInput.right && side === 0)) b.vx *= 1.08;
-  if ((p.lastInput.left && side === 0) || (p.lastInput.right && side === 1)) {
-    b.vx *= 0.78;
-    b.vy -= 80;
+  const aim = p.shotAim;
+  if (aim) {
+    const vector = shotVector(b, side, aim, charged ? p.character : null);
+    b.vx = vector.vx;
+    b.vy = vector.vy;
+    b.shot = { ...aim };
+  } else {
+    b.shot = undefined;
   }
   b.lock = 0.2;
   b.lastHit = side;
@@ -448,11 +582,13 @@ function hitBall(g: Game, p: Player, side: Side) {
   g.bestRally = Math.max(g.bestRally, g.rally);
   g.message = charged
     ? CHARACTERS[p.character].special
-    : smash
-      ? "漂亮扣杀！"
-      : g.rally >= 5
-        ? `${g.rally} 连续回合`
-        : "接得漂亮";
+    : aim
+      ? `${SHOT_NAMES[aim.lift]} · ${DEPTH_NAMES[aim.depth]}`
+      : smash
+        ? "漂亮扣杀！"
+        : g.rally >= 5
+          ? `${g.rally} 连续回合`
+          : "接得漂亮";
   particles(
     g,
     b.x,
@@ -475,12 +611,15 @@ function updateBall(g: Game, dt: number) {
   const oldX = b.x;
   const oldY = b.y;
   b.lock = Math.max(0, b.lock - dt);
-  b.vy += GRAVITY * dt;
-  // Shiori's tidal shot floats, then accelerates down on the far side.
-  if (b.power === "shiori" && b.lastHit !== null) {
+  if (b.power && b.lastHit !== null) {
     const crossed = b.lastHit === 0 ? b.x > NET_X + 45 : b.x < NET_X - 45;
-    b.vy += GRAVITY * (crossed ? 0.52 : -0.3) * dt;
-  }
+    b.vy +=
+      GRAVITY *
+      (crossed
+        ? CHARACTERS[b.power].gravityAfter
+        : CHARACTERS[b.power].gravityBefore) *
+      dt;
+  } else b.vy += GRAVITY * dt;
   b.x += b.vx * dt;
   b.y += b.vy * dt;
   b.spin += (b.vx * dt) / 65;
@@ -556,6 +695,7 @@ export function stepGame(g: Game, inputs: [Input, Input], dt = STEP) {
   ];
   if (g.phase === "serve") {
     const p = g.players[g.server];
+    p.aim = readAim(activeInputs[g.server], g.server);
     g.ball.x = p.x;
     g.ball.y = FLOOR - 223 + Math.sin(g.time * 3) * 5;
     if (
@@ -565,8 +705,10 @@ export function stepGame(g: Game, inputs: [Input, Input], dt = STEP) {
     ) {
       g.phase = "rally";
       g.phaseTime = 0;
-      g.ball.vx = g.server === 0 ? 420 : -420;
-      g.ball.vy = -630;
+      const shot = shotVector(g.ball, g.server, p.aim);
+      g.ball.vx = shot.vx;
+      g.ball.vy = shot.vy;
+      g.ball.shot = { ...p.aim };
       g.ball.lastHit = g.server;
       g.ball.lock = 0.35;
       p.swing = 0.25;
@@ -604,6 +746,8 @@ export function describeGame(g: Game) {
       pose: p.pose,
       diving: p.dive > 0,
       specialArmed: p.special > 0,
+      aim: p.aim,
+      armedAim: p.shotAim,
     })),
     hits: g.hits,
     specials: g.specials,

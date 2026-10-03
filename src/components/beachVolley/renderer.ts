@@ -1,44 +1,25 @@
 import {
   BALL_RADIUS,
   CHARACTERS,
+  CHARACTER_IDS,
   FLOOR,
   HEIGHT,
   NET_TOP,
   NET_X,
   WIDTH,
   clamp,
+  shotVector,
 } from "./engine";
 import type { Character, Game, Player } from "./engine";
+import { FRAMES } from "./frames";
 
 export interface Assets {
   beach: HTMLImageElement;
-  sui: HTMLImageElement;
-  shiori: HTMLImageElement;
-  suiVictory: HTMLImageElement;
+  atlases: Record<Character, HTMLImageElement>;
+  victories: Partial<Record<Character, HTMLImageElement>>;
+  heroes: Record<Character, HTMLImageElement>;
+  specials: Record<Character, HTMLImageElement>;
 }
-// Atlas frames follow their actual alpha bounds, rather than a guessed uniform grid.
-const FRAMES: Record<Character, number[][]> = {
-  sui: [
-    [90, 2, 214, 540],
-    [461, 5, 253, 521],
-    [836, 5, 240, 523],
-    [1183, 79, 303, 457],
-    [50, 521, 292, 467],
-    [438, 550, 325, 397],
-    [846, 533, 246, 491],
-    [1264, 590, 206, 427],
-  ],
-  shiori: [
-    [87, 7, 196, 502],
-    [472, 8, 234, 496],
-    [838, 10, 234, 481],
-    [1187, 74, 326, 433],
-    [34, 492, 286, 522],
-    [419, 546, 356, 407],
-    [859, 514, 247, 510],
-    [1253, 591, 214, 431],
-  ],
-};
 export async function loadAssets(): Promise<Assets> {
   const load = (file: string) => new Promise<HTMLImageElement>((resolve, reject) => {
       const img = new Image();
@@ -46,13 +27,37 @@ export async function loadAssets(): Promise<Assets> {
       img.onerror = () => reject(new Error(`无法加载素材：${file}`));
       img.src = `/games/beach-volley/${file}`;
     });
-  const [beach, sui, shiori, suiVictory] = await Promise.all([
+  const [beach, characters] = await Promise.all([
     load("beach.webp"),
-    load("sui-atlas.webp"),
-    load("shiori-atlas.webp"),
-    load("sui-victory.webp"),
+    Promise.all(
+      CHARACTER_IDS.map(async (id) => {
+        const victory = CHARACTERS[id].victoryImage;
+        const [atlas, hero, special, celebration] = await Promise.all([
+          load(`${id}-atlas-v2.webp`),
+          load(`${id}-hero-v2.webp`),
+          load(`special-${id}-v2.webp`),
+          victory ? load(victory) : null,
+        ]);
+        return { id, atlas, hero, special, celebration };
+      }),
+    ),
   ]);
-  return { beach, sui, shiori, suiVictory };
+  return {
+    beach,
+    atlases: Object.fromEntries(
+      characters.map((c) => [c.id, c.atlas]),
+    ) as Record<Character, HTMLImageElement>,
+    heroes: Object.fromEntries(characters.map((c) => [c.id, c.hero])) as Record<
+      Character,
+      HTMLImageElement
+    >,
+    specials: Object.fromEntries(
+      characters.map((c) => [c.id, c.special]),
+    ) as Record<Character, HTMLImageElement>,
+    victories: Object.fromEntries(
+      characters.filter((c) => c.celebration).map((c) => [c.id, c.celebration]),
+    ),
+  };
 }
 const ellipse = (
   ctx: CanvasRenderingContext2D,
@@ -78,9 +83,11 @@ export function drawCharacter(
   flip: boolean,
   time: number,
 ) {
-  const victory = p.character === "sui" && pose === 6;
-  const frame = victory ? [170, 9, 676, 1495] : FRAMES[p.character][pose];
-  const base = victory ? 0.136 : p.character === "sui" ? 0.38 : 0.413;
+  const victory = pose === 6 ? assets.victories[p.character] : null;
+  const frame = victory
+    ? [0, 0, victory.width, victory.height]
+    : FRAMES[p.character][pose];
+  const base = victory ? 265 / victory.height : 232 / FRAMES[p.character][0][3];
   const size = base * scale;
   const w = frame[2] * size;
   const h = frame[3] * size;
@@ -96,22 +103,8 @@ export function drawCharacter(
     ctx.translate(0, -27);
     ctx.rotate(0.53);
   }
-  // A raised fingertip shares an atlas row with the preceding pose's feet.
-  // Clip only that empty corner, preserving the jump hand and excluding its neighbour.
-  if (pose === 4) {
-    const margin = 24 * size;
-    ctx.beginPath();
-    ctx.moveTo(-w / 2, -h + margin);
-    ctx.lineTo(w * 0.29, -h + margin);
-    ctx.lineTo(w * 0.29, -h);
-    ctx.lineTo(w / 2, -h);
-    ctx.lineTo(w / 2, 0);
-    ctx.lineTo(-w / 2, 0);
-    ctx.closePath();
-    ctx.clip();
-  }
   ctx.drawImage(
-    victory ? assets.suiVictory : assets[p.character],
+    victory || assets.atlases[p.character],
     frame[0],
     frame[1],
     frame[2],
@@ -121,6 +114,71 @@ export function drawCharacter(
     w,
     h,
   );
+  ctx.restore();
+}
+function drawHero(
+  ctx: CanvasRenderingContext2D,
+  assets: Assets,
+  character: Character,
+  x: number,
+  y: number,
+  scale: number,
+  time: number,
+  flip = false,
+) {
+  const image = assets.heroes[character];
+  const height = 232 * scale;
+  const width = (height * image.width) / image.height;
+  ctx.save();
+  ctx.translate(x, y + Math.sin(time * 2.2) * 2);
+  if (flip) ctx.scale(-1, 1);
+  ctx.drawImage(image, -width / 2, -height, width, height);
+  ctx.restore();
+}
+function drawAim(ctx: CanvasRenderingContext2D, g: Game) {
+  const side = g.phase === "serve" ? g.server : g.ball.lastHit;
+  if (side === null || (side === 1 && g.options.mode !== "local")) return;
+  const p = g.players[side];
+  if (g.phase !== "serve" && (!p.shotAim || g.ball.lock <= 0)) return;
+  const vector = g.phase === "serve" ? shotVector(g.ball, side, p.aim) : g.ball;
+  ctx.save();
+  ctx.setLineDash([6, 10]);
+  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = "rgba(255,249,212,.85)";
+  ctx.beginPath();
+  ctx.moveTo(g.ball.x, g.ball.y);
+  let { x } = g.ball;
+  let { y } = g.ball;
+  let { vx } = vector;
+  let { vy } = vector;
+  for (let i = 0; i < 90; i++) {
+    const crossed = side === 0 ? x > NET_X + 45 : x < NET_X - 45;
+    const gravity = g.ball.power
+      ? crossed
+        ? CHARACTERS[g.ball.power].gravityAfter
+        : CHARACTERS[g.ball.power].gravityBefore
+      : 1;
+    vy += 1270 * gravity * 0.025;
+    x += vx * 0.025;
+    y += vy * 0.025;
+    if (x < BALL_RADIUS || x > WIDTH - BALL_RADIUS) {
+      x = clamp(x, BALL_RADIUS, WIDTH - BALL_RADIUS);
+      vx *= -0.83;
+    }
+    if (y < BALL_RADIUS + 12) {
+      y = BALL_RADIUS + 12;
+      vy = Math.abs(vy) * 0.7;
+    }
+    ctx.lineTo(x, Math.min(y, FLOOR - BALL_RADIUS));
+    if (y >= FLOOR - BALL_RADIUS) break;
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.strokeStyle = CHARACTERS[p.character].color;
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.ellipse(x, FLOOR, 23, 7, 0, 0, Math.PI * 2);
+  ctx.stroke();
   ctx.restore();
 }
 function drawBackground(
@@ -356,8 +414,17 @@ export function renderGame(
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
     ellipse(ctx, 859, 667, 92, 13, "rgba(66,48,29,.22)");
     ellipse(ctx, 1110, 649, 89, 12, "rgba(66,48,29,.18)");
-    drawCharacter(ctx, assets, g.players[1], 1100, 646, 2.17, 0, true, t + 1.5);
-    drawCharacter(ctx, assets, g.players[0], 846, 670, 2.5, 0, false, t);
+    drawHero(
+      ctx,
+      assets,
+      g.players[1].character,
+      1100,
+      646,
+      2.2,
+      t + 1.5,
+      true,
+    );
+    drawHero(ctx, assets, g.players[0].character, 846, 670, 2.65, t);
     return;
   }
   drawCourt(ctx);
@@ -373,7 +440,7 @@ export function renderGame(
       g.players[win],
       866,
       660 - bounce,
-      2.65,
+      2.3,
       6,
       false,
       t,
@@ -392,7 +459,7 @@ export function renderGame(
     return;
   }
   g.players.forEach((p, i) => {
-    if (g.phase === "intro") return;
+    if (g.phase === "intro" || g.phase === "point") return;
     const h = FLOOR - p.y;
     ellipse(
       ctx,
@@ -409,7 +476,8 @@ export function renderGame(
     ctx.fillStyle = "rgba(24,77,79,.75)";
     ctx.fillText(CHARACTERS[p.character].name, p.x, FLOOR + 27);
   });
-  if (g.phase !== "intro") drawBall(ctx, g);
+  if (g.phase !== "intro" && g.phase !== "point") drawBall(ctx, g);
+  if (g.phase === "serve" || g.phase === "rally") drawAim(ctx, g);
   if (g.options.mode === "practice" && g.phase === "rally") {
     const { ball } = g;
     const time =
@@ -435,7 +503,16 @@ export function renderGame(
   ctx.globalAlpha = 1;
   if (g.phase === "serve") {
     caption(ctx, g.message, 225, 30);
-    caption(ctx, g.server === 0 ? "按 J / 空格发球" : g.options.mode === "local" ? "2P · 按 / 或数字 1 发球" : "准备接球", 258, 15);
+    caption(
+      ctx,
+      g.server === 0
+        ? "方向 + J 发球 · 上高吊 / 下压球"
+        : g.options.mode === "local"
+          ? "2P · 方向 + / 或数字 1 发球"
+          : "准备接球",
+      258,
+      15,
+    );
   }
   if (g.phase === "intro") {
     const a = clamp(g.phaseTime * 2, 0, 1);
@@ -450,6 +527,21 @@ export function renderGame(
     ctx.restore();
   }
   if (g.phase === "point") {
+    const side = g.pointWinner ?? 0;
+    ctx.fillStyle = "rgba(8,42,51,.35)";
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+    drawCharacter(ctx, assets, g.players[side], 925, 682, 2.3, 6, false, t);
+    drawCharacter(
+      ctx,
+      assets,
+      g.players[side === 0 ? 1 : 0],
+      1150,
+      677,
+      1.4,
+      7,
+      true,
+      t,
+    );
     const rise = reduced ? 0 : Math.max(0, 15 - g.phaseTime * 75);
     caption(ctx, g.message, 232 + rise, 36);
     caption(ctx, `${g.score[0]}   :   ${g.score[1]}`, 292 + rise, 43);
@@ -460,26 +552,20 @@ export function renderGame(
     ctx.save();
     ctx.fillStyle = "rgba(7,38,59,.72)";
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
-    const band = ctx.createLinearGradient(0, 0, WIDTH, 0);
-    band.addColorStop(0, "#18365e");
-    band.addColorStop(0.8, info.color);
-    band.addColorStop(1, "#fff2d4");
-    ctx.fillStyle = band;
-    ctx.beginPath();
-    ctx.moveTo(0, 265);
-    ctx.lineTo(WIDTH, 174);
-    ctx.lineTo(WIDTH, 502);
-    ctx.lineTo(0, 582);
-    ctx.fill();
-    drawCharacter(ctx, assets, p, 300, 728, 3.05, 5, false, t);
+    ctx.drawImage(assets.specials[p.character], 0, 0, WIDTH, HEIGHT);
+    const shade = ctx.createLinearGradient(0, 0, 900, 0);
+    shade.addColorStop(0, "rgba(8,38,48,.92)");
+    shade.addColorStop(1, "rgba(8,38,48,0)");
+    ctx.fillStyle = shade;
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
     ctx.fillStyle = "#fffdf0";
     ctx.textAlign = "left";
     ctx.font = "700 17px sans-serif";
-    ctx.fillText("SUMMER SPECIAL", 640, 321);
+    ctx.fillText("SUMMER SPECIAL", 85, 321);
     ctx.font = '900 57px "Microsoft YaHei", sans-serif';
-    ctx.fillText(info.special, 632, 401);
+    ctx.fillText(info.special, 80, 401);
     ctx.font = '18px "Microsoft YaHei", sans-serif';
-    ctx.fillText(info.line, 640, 450);
+    ctx.fillText(info.line, 85, 450);
     ctx.restore();
   }
 }
