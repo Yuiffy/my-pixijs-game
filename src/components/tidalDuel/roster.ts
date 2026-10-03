@@ -1,5 +1,26 @@
 export type HitHeight = "high" | "mid" | "low";
-export type MoveKind = "strike" | "throw" | "super";
+export type MoveKind = "strike" | "throw" | "super" | "skill";
+export type Animation =
+  | "idle"
+  | "walk"
+  | "crouch"
+  | "guard"
+  | "jump"
+  | "punch"
+  | "kick"
+  | "low"
+  | "skill"
+  | "rise"
+  | "hurt"
+  | "down"
+  | "victory";
+export interface SkinDefinition {
+  id: string;
+  name: string;
+  seed: string;
+  motion: string;
+  combat: string;
+}
 export interface MoveDefinition {
   id: string;
   name: string;
@@ -18,7 +39,12 @@ export interface MoveDefinition {
   critical?: boolean;
   meter?: number;
   advance?: number;
-  followups?: Partial<Record<"punch" | "kick", string>>;
+  followups?: Partial<Record<"punch" | "kick" | "skill", string>>;
+  animation?: Animation;
+  blockStun?: number;
+  guardDamage?: number;
+  invulnerability?: number;
+  projectile?: { speed: number; radius: number; lifetime: number };
 }
 export interface CharacterDefinition {
   id: string;
@@ -38,6 +64,10 @@ export interface CharacterDefinition {
   power: number;
   superName: string;
   moves: Readonly<Record<string, MoveDefinition>>;
+  skins?: readonly SkinDefinition[];
+  role?: string;
+  strengths?: string;
+  weakness?: string;
 }
 
 // Frame data is expressed in seconds and game-world pixels, independent of the renderer.
@@ -248,6 +278,79 @@ const COMMON: Record<string, MoveDefinition> = {
     tracking: true,
     knockdown: true,
   },
+  signature: {
+    id: "signature",
+    name: "猫步连掌",
+    kind: "skill",
+    height: "mid",
+    startup: 11 / 60,
+    active: 4 / 60,
+    recovery: 20 / 60,
+    damage: 20,
+    reach: 172,
+    stun: 0.36,
+    push: 14,
+    advance: 78,
+    blockStun: 0.23,
+    guardDamage: 17,
+    animation: "skill",
+    followups: { skill: "signature2" },
+  },
+  signature2: {
+    id: "signature2",
+    name: "破浪连掌",
+    kind: "skill",
+    height: "mid",
+    startup: 9 / 60,
+    active: 4 / 60,
+    recovery: 21 / 60,
+    damage: 23,
+    reach: 176,
+    stun: 0.39,
+    push: 12,
+    advance: 34,
+    blockStun: 0.21,
+    guardDamage: 20,
+    animation: "skill",
+    followups: { skill: "signature3" },
+  },
+  signature3: {
+    id: "signature3",
+    name: "夜猫破浪",
+    kind: "skill",
+    height: "mid",
+    startup: 14 / 60,
+    active: 5 / 60,
+    recovery: 31 / 60,
+    damage: 31,
+    reach: 194,
+    stun: 0.34,
+    push: 90,
+    advance: 36,
+    blockStun: 0.21,
+    guardDamage: 24,
+    animation: "skill",
+    knockdown: true,
+  },
+  reversal: {
+    id: "reversal",
+    name: "猫跃升击",
+    kind: "skill",
+    height: "mid",
+    startup: 7 / 60,
+    active: 7 / 60,
+    recovery: 31 / 60,
+    damage: 28,
+    reach: 160,
+    stun: 0.34,
+    push: 10,
+    blockStun: 0.23,
+    guardDamage: 16,
+    animation: "rise",
+    launcher: true,
+    meter: 25,
+    invulnerability: 10 / 60,
+  },
 };
 function moves(
   overrides: Partial<Record<string, Partial<MoveDefinition>>>,
@@ -286,6 +389,25 @@ export const FIGHTERS: readonly CharacterDefinition[] = [
       [1264, 590, 206, 427],
     ],
     superName: "月下猫步",
+    role: "近身 · 连掌",
+    strengths: "快拳与猫步突进，命中后连掌压制",
+    weakness: "远距吃亏，终段落空容易被反击",
+    skins: [
+      {
+        id: "original",
+        name: "小猫帽 · 原皮",
+        seed: "/games/tidal-duel/pixel/sui-original-seed.webp",
+        motion: "/games/tidal-duel/pixel/sui-original-motion.webp",
+        combat: "/games/tidal-duel/pixel/sui-original-combat.webp",
+      },
+      {
+        id: "resort",
+        name: "晴海 · 轻装",
+        seed: "/games/tidal-duel/pixel/sui-seed.webp",
+        motion: "/games/tidal-duel/pixel/sui-resort-motion.webp",
+        combat: "/games/tidal-duel/pixel/sui-resort-combat.webp",
+      },
+    ],
     moves: moves({
       super: { name: "月下猫步", damage: 64, reach: 255 },
       launcher: { name: "猫跃升踢" },
@@ -316,14 +438,57 @@ export const FIGHTERS: readonly CharacterDefinition[] = [
       [1253, 591, 214, 431],
     ],
     superName: "白昼潮汐",
+    role: "控距 · 迎击",
+    strengths: "长腿牵制与潮波，升潮踢迎击跳入",
+    weakness: "招式收招较长，贴身容易被抢招",
+    skins: [
+      {
+        id: "original",
+        name: "月色 · 旅装",
+        seed: "/games/tidal-duel/pixel/shiori-original-seed.webp",
+        motion: "/games/tidal-duel/pixel/shiori-original-motion.webp",
+        combat: "/games/tidal-duel/pixel/shiori-original-combat.webp",
+      },
+      {
+        id: "resort",
+        name: "晴海 · 轻装",
+        seed: "/games/tidal-duel/pixel/shiori-seed.webp",
+        motion: "/games/tidal-duel/pixel/shiori-resort-motion.webp",
+        combat: "/games/tidal-duel/pixel/shiori-resort-combat.webp",
+      },
+    ],
     moves: moves({
       kick: { name: "潮汐旋踢", reach: 215 },
       kick2: { name: "流心回旋", reach: 225 },
       super: { name: "白昼潮汐", damage: 67, reach: 237 },
       throw: { name: "流心摔", damage: 37 },
+      signature: {
+        name: "流心潮波",
+        startup: 13 / 60,
+        active: 4 / 60,
+        recovery: 25 / 60,
+        damage: 22,
+        reach: 720,
+        advance: 0,
+        push: 40,
+        stun: 0.28,
+        blockStun: 0.22,
+        projectile: { speed: 590, radius: 28, lifetime: 1.55 },
+        followups: {},
+        animation: "skill",
+      },
+      reversal: { name: "升潮踢", reach: 188, damage: 30, recovery: 34 / 60 },
     }),
   },
 ];
 export function getFighter(id: string): CharacterDefinition {
   return FIGHTERS.find((fighter) => fighter.id === id) ?? FIGHTERS[0];
+}
+export function getSkin(
+  character: CharacterDefinition,
+  id = "original",
+): SkinDefinition | undefined {
+  return (
+    character.skins?.find((skin) => skin.id === id) ?? character.skins?.[0]
+  );
 }

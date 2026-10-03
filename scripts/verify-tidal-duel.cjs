@@ -15,7 +15,7 @@ const gamepadOnly = process.env.TIDAL_DUEL_GAMEPAD_ONLY === '1';
 const state = page => page.evaluate(() => JSON.parse(window.render_game_to_text()));
 const advance = (page, ms) => page.evaluate(ms => window.advanceTime(ms), ms);
 const button = (page, name) => page.getByRole('button', { name, exact: true });
-const actions = ['left', 'right', 'jump', 'crouch', 'punch', 'kick', 'guard', 'hold', 'throw', 'sidestep', 'special'];
+const actions = ['left', 'right', 'jump', 'crouch', 'punch', 'kick', 'guard', 'hold', 'throw', 'sidestep', 'special', 'skill', 'rise', 'burst'];
 const P1 = { left: 'KeyA', right: 'KeyD', jump: 'KeyW', crouch: 'KeyS',
   punch: 'KeyJ', kick: 'KeyK', guard: 'KeyL', hold: 'KeyU', throw: 'KeyI', sidestep: 'ShiftLeft', special: 'KeyO' };
 const dismissHelp = page => button(page, '明白了，去过招 →').click();
@@ -124,6 +124,8 @@ async function returnToMenu(page) {
 
 async function smoke(page, report) {
   if (publicMatch) assert.equal(await page.evaluate(() => typeof window.tidalDuel), 'undefined', 'production has no mutable developer game hook');
+  assert.equal((await state(page)).art, 'tidal-pixel-v2', 'production uses the current pixel renderer');
+  assert.ok((await state(page)).fighters.every(f => f.skin === 'original'), 'production defaults to original costumes');
   await capture(page, report, '01-desktop-menu');
   await button(page, '玩法').click();
   await page.getByRole('dialog').waitFor();
@@ -150,7 +152,10 @@ async function smoke(page, report) {
   await capture(page, report, '03-desktop-pause');
   await button(page, '继续对决').click();
   await returnToMenu(page);
-  if (publicMatch) await publicVersus(page, report);
+  if (publicMatch) {
+    await publicVersus(page, report);
+    await publicPixelCostumes(page, report);
+  }
   for (const [name, viewport] of [
     ['04-phone-menu', { width: 390, height: 844 }],
     ['05-small-menu', { width: 320, height: 740 }],
@@ -158,9 +163,47 @@ async function smoke(page, report) {
   ]) {
     await page.setViewportSize(viewport);
     await capture(page, report, name);
+    if (name === '06-landscape-menu') {
+      const canvas = await page.locator('canvas').boundingBox();
+      assert.ok(canvas.width >= viewport.width - 1, 'landscape selection uses the full width rather than the short battle viewport limit');
+    }
   }
   report.checks.push('Production public controls: boot, rules, practice, keyboard movement/strikes/jump, pause/resume, return to selection, 1440/390/320/844 layouts');
   if (publicMatch) await libraryNavigation(page, report);
+}
+
+async function publicPixelCostumes(page, report) {
+  await page.locator('#duel-skin').selectOption('resort');
+  await page.locator('#duel-opponent-skin').selectOption('resort');
+  assert.ok((await state(page)).fighters.every(f => f.skin === 'resort'));
+  await capture(page, report, '09-production-resort-selection');
+  await page.getByRole('button', { name: /栞栞.*SHIORI/ }).click();
+  await page.locator('#duel-skin').selectOption('original');
+  await page.locator('#duel-opponent').selectOption('sui');
+  await page.locator('#duel-opponent-skin').selectOption('original');
+  await start(page, 'training');
+  await keys(page, ['KeyH'], 300);
+  assert.ok((await state(page)).projectiles.some(p => p.side === 0), 'public Shiori shortcut creates a travelling wave');
+  await capture(page, report, '10-production-original-wave');
+  await button(page, '重置站位').click();
+  await keys(page, ['KeyY'], 160);
+  const rise = await state(page);
+  assert.equal(rise.fighters[0].move, 'reversal');
+  assert.equal(rise.fighters[0].meter, 75, 'public reversal spends 25 energy');
+  await capture(page, report, '11-production-reversal');
+  await returnToMenu(page);
+  await page.locator('#duel-opponent').selectOption('shiori');
+  await page.locator('#duel-opponent-skin').selectOption('resort');
+  await start(page, 'training');
+  const mirror = await state(page);
+  assert.ok(mirror.fighters.every(f => f.character === 'shiori'));
+  assert.deepEqual(mirror.fighters.map(f => f.skin), ['original', 'resort']);
+  await capture(page, report, '12-production-costume-mirror');
+  await returnToMenu(page);
+  await page.getByRole('button', { name: /岁己.*SUI/ }).click();
+  await page.locator('#duel-skin').selectOption('original');
+  await page.locator('#duel-opponent-skin').selectOption('original');
+  report.checks.push('Production original defaults, both optional costumes, independent Shiori costume mirror, real travel-wave and 25-energy reversal via public controls');
 }
 
 async function libraryNavigation(page, report) {
@@ -314,7 +357,7 @@ async function development(page, browser, report) {
   assert.ok(after.fighters[0].hp < 300, 'low hold reverses low strike damage');
   await rig(page);
   await input(page, 1, 'hold', true); await advance(page, 20);
-  await keys(page, [P1.throw], 210);
+  await keys(page, [P1.throw], 390);
   after = await state(page);
   assert.ok(after.fighters[1].hp < 260, 'throw punishes a committed hold');
   assert.ok(after.events.some(event => event.type === 'throw'), 'throw event identifies punish');
@@ -468,7 +511,8 @@ async function portraitHud(page, report) {
     const rect = el.getBoundingClientRect();
     return { text: el.innerText, rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
       bold: [...el.querySelectorAll('b')].map(node => ({ text: node.textContent, fontSize: parseFloat(getComputedStyle(node).fontSize) })),
-      health: [...el.querySelectorAll('i')].map(node => ({ width: node.clientWidth, height: node.clientHeight })) };
+      health: [...el.querySelectorAll('[class*="mobileHealth"] > i')].map(node => ({ width: node.clientWidth, height: node.clientHeight })),
+      guard: [...el.querySelectorAll('[class*="mobileGuard"] > i')].map(node => ({ width: node.clientWidth, height: node.clientHeight })) };
   });
   for (const fighter of text.fighters) {
     assert.ok(info.text.includes(fighter.name), 'portrait HUD shows readable character names');
@@ -477,7 +521,10 @@ async function portraitHud(page, report) {
   }
   assert.ok(info.text.includes('∞'), 'practice portrait HUD displays unlimited time');
   assert.ok(info.bold[0].fontSize >= 12 && info.bold[2].fontSize >= 12 && info.bold[1].fontSize >= 20, 'portrait HUD does not scale names and timer down with the canvas');
+  assert.equal(info.health.length, 2, 'portrait has one health bar per fighter');
   assert.ok(info.health.every(bar => bar.width > 30 && bar.height >= 4), 'portrait health bars remain visible');
+  assert.equal(info.guard.length, 2, 'portrait has one guard gauge per fighter');
+  assert.ok(info.guard.every(bar => bar.width > 30 && bar.height >= 2), 'portrait guard gauges remain visible');
   const canvas = await page.locator('canvas').boundingBox();
   assert.ok(info.rect.y + info.rect.height <= canvas.y + 1, 'portrait HUD leaves the playfield unobstructed');
   (report.portraitHud ||= []).push(info);
@@ -581,7 +628,7 @@ async function rig(page, options = {}) {
     g.phase = 'fight'; g.phaseTime = 0; g.paused = false; g.freeze = 0; g.super = null;
     g.options.mode = 'local'; g.roundTimer = options.timer ?? 60;
     g.round = options.round ?? 1; g.wins = options.wins ?? [0, 0]; g.winner = null;
-    g.events = []; g.camera.shake = 0;
+    g.events = []; g.camera.shake = 0; g.projectiles = []; g.grabs = [];
     const clear = Object.fromEntries(actions.map(action => [action, false]));
     for (let side = 0; side < 2; side++) {
       for (const action of actions) window.tidalDuel.input(side, action, false);
@@ -593,6 +640,7 @@ async function rig(page, options = {}) {
         comboTime: 0, stun: 0, critical: 0, juggle: 0, invincible: 0, holdHeight: 'mid',
         holdCooldown: 0, stepCooldown: 0, buffer: [], previous: { ...clear },
         aiTimer: 0, aiPlan: { ...clear }, lastDamage: 0,
+        contact: 'none', guardGauge: 100, guardDelay: 0, burstReady: true, throwTech: 0, directions: [], history: [],
       });
       if (options.characters) g.fighters[side].character = options.characters[side];
     }

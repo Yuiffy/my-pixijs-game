@@ -72,9 +72,9 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
       {
         title: '晴海对决 · 岁己 vs 栞栞',
         href: '/game/tidal-duel',
-        description: '拳脚、投技与反击，读懂对手的下一招，在晴海擂台一决胜负。',
+        description: '暮色栈道上的像素格斗：猫步连掌、流心潮波，换上喜欢的衣装，读招拆投、一决胜负。',
         image: '/games/tidal-duel/poster.webp',
-        meta: '海岛格斗 · 单人 / 同机双人 · 连招与反击',
+        meta: '像素格斗 · 单人 / 同机双人 · 换肤与练习',
         releaseDate: '2026-10-03',
       },
     ],

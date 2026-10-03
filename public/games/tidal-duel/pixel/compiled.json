@@ -1,0 +1,114 @@
+[
+  {
+    "file": "sui-original-motion.webp",
+    "frames": 16,
+    "size": [
+      1280,
+      1280
+    ],
+    "alpha": "binary",
+    "anchor": [
+      160,
+      312
+    ],
+    "bodyHeight": 184
+  },
+  {
+    "file": "sui-original-combat.webp",
+    "frames": 24,
+    "size": [
+      1280,
+      1920
+    ],
+    "alpha": "binary",
+    "anchor": [
+      160,
+      312
+    ],
+    "bodyHeight": 184
+  },
+  {
+    "file": "sui-resort-motion.webp",
+    "frames": 16,
+    "size": [
+      1280,
+      1280
+    ],
+    "alpha": "binary",
+    "anchor": [
+      160,
+      312
+    ],
+    "bodyHeight": 184
+  },
+  {
+    "file": "sui-resort-combat.webp",
+    "frames": 24,
+    "size": [
+      1280,
+      1920
+    ],
+    "alpha": "binary",
+    "anchor": [
+      160,
+      312
+    ],
+    "bodyHeight": 184
+  },
+  {
+    "file": "shiori-original-motion.webp",
+    "frames": 16,
+    "size": [
+      1280,
+      1280
+    ],
+    "alpha": "binary",
+    "anchor": [
+      160,
+      312
+    ],
+    "bodyHeight": 184
+  },
+  {
+    "file": "shiori-original-combat.webp",
+    "frames": 24,
+    "size": [
+      1280,
+      1920
+    ],
+    "alpha": "binary",
+    "anchor": [
+      160,
+      312
+    ],
+    "bodyHeight": 184
+  },
+  {
+    "file": "shiori-resort-motion.webp",
+    "frames": 16,
+    "size": [
+      1280,
+      1280
+    ],
+    "alpha": "binary",
+    "anchor": [
+      160,
+      312
+    ],
+    "bodyHeight": 184
+  },
+  {
+    "file": "shiori-resort-combat.webp",
+    "frames": 24,
+    "size": [
+      1280,
+      1920
+    ],
+    "alpha": "binary",
+    "anchor": [
+      160,
+      312
+    ],
+    "bodyHeight": 184
+  }
+]

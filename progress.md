@@ -11,6 +11,19 @@ Original prompt: 必杀应该不能跳过，因为仍在游戏过程中，不要
 在独立检出顺序完成 `pnpm run check` 与 `pnpm run build`，保留构建 ESLint。生产版仅用公开键盘和固定步长时钟打出 11 次接球，在 0:0 的正常对局中积满能量触发栞栞必杀，确认无开发修改钩子、不可跳过、自然播完、完整反应窗口、防守移动、挥击后出球及能量 / 比分保持；3 张生产暂停截图也逐张目检，错误为空。总计 42 张截图。
 
 验证器 `scripts/verify-beach-special.cjs`；证据 `tmp/beach-special-{dev,full-dev,controls-dev,production}/report.json`，日志 `tmp/beach-special-{tests,check,build}.log`。提交前已整合最新 master `4f786ee`，再次顺序通过完整 check / build，日志 `tmp/beach-special-master-{check,build}.log`。开发服务已停止并移除本任务临时类型路径。生产试玩为 `http://localhost:4012/game/beach-volley`，最终目录 `.next-beach-special-master-build`；本轮独立提交目标为 `origin/master`。
+## 2026-10-03 · 晴海对决「潮夜」像素重制（已完成）
+
+Original prompt: demos增加入口，提交到master远端；旧版太粗糙，希望调研、策划、实现精致且有角色魅力、特色战斗、平衡与交互的像素格斗。后续要求默认不用泳装，采用小猫帽原皮岁己，也可以换皮肤或不同角色。
+
+已完成官方 AIR / CNS / HitDef、Ikemen 和 Infil 术语资料读取；四套服装的 160 帧像素动作与 640×360 暮色栈道接入选人、对局、超杀和单胜者结算。默认小猫帽原皮岁己、月色旅装栞栞，晴海轻装为独立可选皮肤，支持镜像且不改数值。素材来源、14 次生成提示词与机械轮廓/条带比例/脚底支撑锚点保存在 pixel/assets.json 与编译规格，原 PNG 保留。大厅入口文案和海报同步为当前原皮像素版本。
+
+实现猫步三段连掌、流心潮波、双方 236P / 623K 指令与快捷键、消耗 25 升击、0.14 秒拆投、命中确认取消、50 能量命中侧闪取消和每回合一次硬直脱身、护盾破防/恢复、实际判定框与接触帧优势。波 serial、投中断/拆投队列清理、追击与回合终止清理均有规则覆盖。14 触控按钮、手柄新映射和暂停持有输入释放均已接入。
+
+39 项规则测试与 6 项大厅回归通过；208 场种子 CPU 完整对局无卡局/非法资源，三级难度岁己胜 24/38/24、栞栞胜 40/26/40，各 64 场，加 16 场镜像。CPU 统计仅用于诊断，不能证明真人对战平衡。最终开发完整 12 组、像素专项 4 组与静音通用客户端通过，28+1 张截图及八张最终图集预览均已打开目检，公开状态/DOM/Canvas/错误交叉核对通过。手柄以真实浏览器轮询的 API 模拟验证，未使用实体手柄。
+
+生产公开控制 4 组通过，真实键盘打完两次 K.O.、两回合、结算与重赛，确认不提供开发状态修改钩子。原皮/可选服装/独立镜像、潮波/升击、练习/暂停、320/390/844 布局和大厅搜索/海报解码均通过；横屏选人修正为完整画面宽度。12 张生产截图逐张目检并与公开状态、DOM、Canvas 尺寸核对，页面与控制台错误为空。总计 41 张游戏截图。
+
+修改源文件 ESLint、完整 `pnpm run check` 与随后顺序执行的 `pnpm run build` 通过，保留构建 ESLint；剩余为其他游戏既有未使用变量与浏览器数据过期提示。在独立检出整合最新 master `b27d765`，保留排球和雨夜提交后再次顺序通过完整 check / build，日志 `tmp/tidal-pixel-master-{eslint,check,build}.log`，临时 tsconfig 类型路径已清理。生产试玩为 `http://localhost:4038/game/tidal-duel`，最终目录 `.next-tidal-pixel-master-build`。证据在 `tmp/tidal-pixel-{base-dev,v2-dev,shared,balance,production}/`；设计与复跑见 `docs/tidal-duel-v2-design.md` 和 `docs/tidal-duel.md`。本轮独立提交目标为 `origin/master`；其他任务正在修改的文件保留。
 
 ## 2026-10-03 · 晴海双打方向击球、米汀与单人视频（已完成）
 

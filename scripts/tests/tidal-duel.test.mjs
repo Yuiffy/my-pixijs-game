@@ -182,11 +182,11 @@ test("blockstun prevents immediate guard-to-hold cancellation while preserving a
 test("strike/hold/throw triangle works independently of player slot", () => {
   for (const side of [0, 1]) {
     const game = close(); const attacks = side === 0 ? [{ throw: true }, { guard: true }] : [{ guard: true }, { throw: true }];
-    tick(game, attacks[0], attacks[1], 30);
+    tick(game, attacks[0], attacks[1], 50);
     assert.ok(game.fighters[1 - side].hp < 300);
     assert.equal(game.fighters[1 - side].state, "down");
   }
-  const punish = close(); tick(punish, { throw: true }, { hold: true }, 30);
+  const punish = close(); tick(punish, { throw: true }, { hold: true }, 50);
   assert.equal(punish.fighters[1].hp, 247, "failed holds incur increased throw damage");
   const strike = close(); tick(strike, { punch: true }, { throw: true }, 30);
   assert.equal(strike.fighters[0].hp, 300); assert.ok(strike.fighters[1].hp < 300);
