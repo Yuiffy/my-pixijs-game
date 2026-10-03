@@ -20,6 +20,9 @@ import {
   modelEdition,
   proClosed,
   canKeepPro,
+  availableTiers,
+  planCapacity,
+  dotAccount,
   activeAccount,
   CATEGORIES,
   createGame,
@@ -1263,7 +1266,7 @@ export default function ResetRush() {
                     </button>
                     <div className={s.quota}>
                       <strong>
-                        {quotaPercent(a)}<small>%</small>
+                        {quotaPercent(a, game)}<small>%</small>
                       </strong>
                       <span>
                         {activeAccount(game, a) ? "剩余额度" : "订阅到期"}
@@ -1272,7 +1275,7 @@ export default function ResetRush() {
                     <div className={s.quotaBar}>
                       <i
                         style={{
-                          width: `${quotaPercent(a)}%`,
+                          width: `${quotaPercent(a, game)}%`,
                         }}
                       />
                     </div>
@@ -1310,9 +1313,9 @@ export default function ResetRush() {
                     <details className={s.meter} data-testid="quota-observation">
                       <summary>用量观察 · 自动估算</summary>
                       <p>套餐 {PLANS[a.tier].capacity / PLANS[20].capacity}× · 只公布百分比，实际容量会波动。</p>
-                      <p>{quotaObservation(a).config ?? "运行付费任务后开始采样"}</p>
-                      <p>本段 {fmt(quotaObservation(a).tokens)}k token · 掉额 {Math.max(0, quotaObservation(a).drop)} 个百分点</p>
-                      <p>{quotaObservation(a).fullLow === null ? "至少观察 2 个百分点后给出范围。" : `按本段配置，满额约 ${fmt(quotaObservation(a).fullLow!)}–${fmt(quotaObservation(a).fullHigh!)}k token。`}</p>
+                      <p>{quotaObservation(a, game).config ?? "运行付费任务后开始采样"}</p>
+                      <p>本段 {fmt(quotaObservation(a, game).tokens)}k token · 掉额 {Math.max(0, quotaObservation(a, game).drop)} 个百分点</p>
+                      <p>{quotaObservation(a, game).fullLow === null ? "至少观察 2 个百分点后给出范围。" : `按本段配置，满额约 ${fmt(quotaObservation(a, game).fullLow!)}–${fmt(quotaObservation(a, game).fullHigh!)}k token。`}</p>
                       <small>游戏模拟 token；重置、换配置或口径变化会重新采样，估计不保证未来用量。</small>
                     </details>
                     {!activeAccount(game, a) && (
@@ -1357,8 +1360,23 @@ export default function ResetRush() {
               </div>
               <div className={s.platformStrip} data-testid="platform-status">
                 <strong>{(["luna", "sol", "astra"] as Model[]).map(m => modelEdition(game, m).name).join(" / ")}</strong>
-                <span>{proClosed(game) ? "$200 已停售 · 老号连续续费保留" : game.platform.proDeadline ? `$200 新开窗口：D${game.platform.proDeadline} 早晨关闭` : "套餐 1× / 5× / 20× · 新模型自动升级"}</span>
+                <span>{game.platform.news?.returned ? "$200 已回归 · 10× / $500 · 25×" : proClosed(game) ? "$200 已停售 · 老号连续续费保留" : game.platform.proDeadline ? `$200 新开窗口：D${game.platform.proDeadline} 早晨关闭` : "套餐 1× / 5× / 20× · 新模型自动升级"}</span>
               </div>
+              {game.platform.news?.dots && (
+                <details className={s.experienceNotes} data-testid="dots-night" open={game.event.id === "devday-dots"}>
+                  <summary>Dot 夜间委托 · 用额度换明早的进度</summary>
+                  <p>每天交接 1 精力，只做选中的项目；收工后用有效 Pro 账号的剩余额度，Astra Standard 最多运行 120 分钟，再结算赠礼。次日继续交接，完成后自动停止。工作量包含自动返工。</p>
+                  <label htmlFor="dot-project">今晚跟进
+                    <select id="dot-project" value={human.dot?.project ?? 0} disabled={game.phase !== "plan"} onChange={e => send({ type: "dot", project: Number(e.target.value) || null })}>
+                      <option value={0}>{human.dot?.paidDay === game.day ? "取消委托 · 今天交接精力不退" : "不委托 · 保留精力与额度"}</option>
+                      {human.projects.map(project => <option key={project.id} value={project.id} disabled={!!actionError(game, 0, { type: "dot", project: project.id })}>{project.name}</option>)}
+                    </select>
+                  </label>
+                  {!dotAccount(game, human) && <p>夜间委托需要有效的 Pro 账号。</p>}
+                  {human.dot?.project != null && <p>{human.dot.paidDay === game.day ? "今天已交接 · 改任务不重复扣精力" : "尚未交接 · 需要有效 Pro 账号"}</p>}
+                  {human.dot?.report && <p data-testid="dot-report">D{human.dot.report.day} · {human.dot.report.project} · +{fmt(human.dot.report.work)} 工作量 · −{human.dot.report.percent}% 额度 · {human.dot.report.shipped ? "已交付" : "进度保留"}</p>}
+                </details>
+              )}
               <div className={s.studioSettings}>
                 <label className={s.threadCount} htmlFor="studio-threads">
                   <span>同时开几个 AI 对话 <b>{studio?.threads ?? 1}</b></span>
@@ -1455,11 +1473,12 @@ checked={config.turbo}
               <details className={s.experienceNotes} data-testid="model-roadmap">
                 <summary>近期模型路线 · 两到四周一次</summary>
                 <p>轻量：GPT-5.6 Luna → GPT-6 Luna</p>
-                <p>主力：GPT-5.6 Sol → GPT-6 Sol</p>
+                <p>主力：GPT-5.6 Sol → GPT-6 Sol / GPT-6.1 Sol</p>
                 <p>攻坚：GPT-6 Astra → GPT-6.1 Astra（虚构）</p>
-                <p>21 / 42 天局从近期模型起步，每隔 14–28 天出现一次模型消息，有时两款一起上线。全系到 GPT-6 后，后续 6.1 明确标为虚构推演。发布间隔、免费 Luna、Ultra 协作和配额倍率均为游戏设定，不是官方日程或计费规则。</p>
+                <p>常规模型每隔 14–28 天换代。套餐回归、补偿、Sol 6.1、后续打磨与 Dots 为独立随机新闻，可能整局不出现。Sol 6.1 为真实型号；6.1 Astra 仍是虚构未来。容量、性能、补偿金额与夜班时长均为游戏设定。</p>
                 <a href="https://developers.openai.com/api/docs/models/gpt-5.6-luna" target="_blank" rel="noreferrer">OpenAI · GPT-5.6 Luna</a>{" · "}
                 <a href="https://developers.openai.com/api/docs/models/gpt-6-luna" target="_blank" rel="noreferrer">OpenAI · GPT-6 Luna</a>
+                {" · "}<a href="https://learn.chatgpt.com/docs/whats-new/devday-2026" target="_blank" rel="noreferrer">OpenAI · DevDay 2026</a>
               </details>
               <details className={s.advancedSettings}>
                 <summary>手动配置 · 选择模型或强度会切回统一配置</summary>
@@ -1690,7 +1709,7 @@ keepAutomatic: true,
       )}
       <footer className={s.footer}>
         <span>
-          RESET / 开蹬！ <i>v0.9 · 近期模型</i>
+          RESET / 开蹬！ <i>v0.10 · 风向又变了</i>
         </span>
         <span>
           {game
@@ -1773,8 +1792,9 @@ keepAutomatic: true,
             一个账号可带多个 AI 对话
           </p>
           <p className={s.shopNotice} data-testid="subscription-notice">
-            {proClosed(game) ? "$200 已停止新开和升级。仅现有 $200 账号可连续续费；断订或实际降档后失去资格。" : game.platform.proDeadline ? `$200 将于 D${game.platform.proDeadline} 早晨停售；现在仍可开通或升级。` : "$20 = 1×，$100 = 5×，$200 = 20×。界面只显示剩余百分比，真实可用量以运行观察估计。"}
+            {game.platform.news?.returned ? game.platform.news.compensated ? "$200 现为 10×，$500 为 25×；符合资格的旧账号补偿已发放，可用余额补额。" : "$200 恢复开通，现为 10×；$500 为 25×。容量缩减保留剩余百分比，补偿另等到账消息。" : proClosed(game) ? "$200 已停止新开和升级。仅现有 $200 账号可连续续费；断订或实际降档后失去资格。" : game.platform.proDeadline ? `$200 将于 D${game.platform.proDeadline} 早晨停售；现在仍可开通或升级。` : "$20 = 1×，$100 = 5×，$200 = 20×。界面只显示剩余百分比，真实可用量以运行观察估计。"}
           </p>
+          {(game.platform.news?.returned || (human.credits ?? 0) > 0) && <p className={s.shopNotice} data-testid="credit-balance">补偿余额 <b>{fmt(human.credits ?? 0)}</b> 点 · 1 点补 1 额度 · 不参与现金计分，重置不清空</p>}
           <div className={s.managedAccounts}>
             {human.accounts.map((a, index) => (
               <section
@@ -1788,7 +1808,7 @@ keepAutomatic: true,
                   </h3>
                   <b>
                     {activeAccount(game, a)
-                      ? `${quotaPercent(a)}% 剩余 · ${PLANS[a.tier].capacity / PLANS[20].capacity}×`
+                      ? `${quotaPercent(a, game)}% 剩余 · ${planCapacity(game, a.tier) / PLANS[20].capacity}×`
                       : "已暂停"}
                   </b>
                 </div>
@@ -1806,7 +1826,8 @@ keepAutomatic: true,
                   >
                     为此账号补满 · 用 1 张券
                   </button>
-                  {([20, 100, 200] as Tier[])
+                  {(human.credits ?? 0) > 0 && <button disabled={!!actionError(game, 0, { type: "credit", account: a.id })} title={actionError(game, 0, { type: "credit", account: a.id }) ?? "只补缺口，不花时间或精力"} data-credit-account={a.id} onClick={() => send({ type: "credit", account: a.id })}>用补偿余额补额 · 最多 {fmt(Math.min(human.credits ?? 0, planCapacity(game, a.tier) - a.quota))} 点</button>}
+                  {availableTiers(game)
                     .filter((t) => !activeAccount(game, a) || t > a.tier)
                     .map((t) => {
                       const action: Action = {
@@ -1845,7 +1866,7 @@ keepAutomatic: true,
                             : (Number(e.target.value) as Tier),
                       })}
                   >
-                    {([20, 100, 200] as Tier[]).map((t) => (
+                    {availableTiers(game).map((t) => (
                       <option key={t} value={t} disabled={t === 200 && proClosed(game) && !canKeepPro(game, a)}>
                         ${t} / 30 天
                         {t < a.tier
@@ -1863,7 +1884,7 @@ keepAutomatic: true,
                   {a.renewal === null
                     ? "到期清空额度并停用，银行券仍按原日期过期。"
                     : activeAccount(game, a)
-                      ? `D${a.paidUntil + 1} 自动扣 $${a.renewal}，恢复 100%；余额不足则暂停。${a.tier === 200 ? "停售后请保持连续续费。" : ""}`
+                      ? `D${a.paidUntil + 1} 自动扣 $${a.renewal}，恢复 100%；余额不足则暂停。${a.tier === 200 && !game.platform.news?.returned ? "停售后请保持连续续费。" : ""}`
                       : "已暂停的账号需手动续开；仅改到期方案不会扣款。"}
                 </p>
               </section>
@@ -1873,12 +1894,12 @@ keepAutomatic: true,
             加一个新账号 <small>{human.accounts.length} / 3</small>
           </h3>
           <div className={s.shopPlans}>
-            {([20, 100, 200] as Tier[]).map((t) => (
+            {availableTiers(game).map((t) => (
               <div key={t}>
                 <span>{PLANS[t].name}</span>
                 <strong>${t}</strong>
                 <p>
-                  {PLANS[t].capacity / PLANS[20].capacity}× 额度 / 7 天<br />
+                  {planCapacity(game, t) / PLANS[20].capacity}× 额度 / 7 天<br />
                   订阅有效 30 天
                 </p>
                 <button

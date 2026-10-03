@@ -1,6 +1,6 @@
 /** RESET / 开蹬! — deterministic, serializable tabletop rules. All currency is fictional. */
 export type Category = "game" | "personal" | "open" | "company";
-export type Tier = 20 | 100 | 200;
+export type Tier = 20 | 100 | 200 | 500;
 // Stable save-slot IDs; player-facing names always come from modelEdition.
 export type Model = "luna" | "sol" | "astra";
 export type Effort = "low" | "medium" | "high" | "xhigh" | "max" | "ultra";
@@ -43,6 +43,7 @@ export const PLANS: Record<Tier, { name: string; capacity: number }> = {
   20: { name: "PLUS", capacity: 24 },
   100: { name: "PRO 100", capacity: 120 },
   200: { name: "PRO 200", capacity: 480 },
+  500: { name: "PRO 500", capacity: 600 },
 };
 export const MODELS: Record<
   Model,
@@ -155,6 +156,14 @@ export interface Account {
   banks: number[];
   lastBankDay: number;
   meter: { tokens: number; startPercent: number; config: string; revision: number } | null;
+  compensationDue?: boolean;
+}
+export interface IndustryNews {
+  returned: boolean;
+  compensated: boolean;
+  sol61: boolean;
+  solPolished: boolean;
+  dots: boolean;
 }
 export interface Platform {
   stage: number;
@@ -163,6 +172,12 @@ export interface Platform {
   // Hidden effective allowance. The UI observes integer percentages and token samples only.
   allowance: number;
   revision: number;
+  news?: IndustryNews;
+}
+export interface DotAssignment {
+  project: number | null;
+  paidDay: number;
+  report: { day: number; project: string; work: number; percent: number; shipped: boolean } | null;
 }
 export interface EnergyLedger {
   day: number;
@@ -193,6 +208,8 @@ export interface Player {
   energyLedger?: EnergyLedger;
   rested: boolean;
   lanes: Lane[];
+  credits?: number;
+  dot?: DotAssignment;
 }
 export interface EventCard {
   id: string;
@@ -200,7 +217,7 @@ export interface EventCard {
   quote: string;
   detail: string;
   chance: number;
-  effect: "signal" | "instant" | "bank" | "sale" | "jam" | "quiet" | "retire" | "limits" | "technology";
+  effect: "signal" | "instant" | "bank" | "sale" | "jam" | "quiet" | "retire" | "limits" | "technology" | "industry";
 }
 export interface Log {
   day: number;
@@ -225,6 +242,7 @@ export interface Game {
   workflowRules: 1;
   qualityRules: 1;
   modelRules: 1;
+  newsRules?: 1;
   platform: Platform;
   development: Development;
   studio: Studio;
@@ -263,6 +281,8 @@ export type Action =
   | { type: "test"; project: number }
   | { type: "claim"; project: number }
   | { type: "bank"; account: number }
+  | { type: "credit"; account: number }
+  | { type: "dot"; project: number | null }
   | { type: "buy"; tier: Tier }
   | { type: "renew"; account: number; tier: Tier }
   | { type: "renewal"; account: number; tier: Tier | null }
@@ -376,15 +396,32 @@ export const EVENTS: EventCard[] = [
   { id: "tech-3", title: "GPT-6 Sol 上线", quote: "主力模型换代了。", detail: "主力档从 GPT-5.6 Sol 更新为 GPT-6 Sol：游戏内能力 +1、速度 +25%，配额费率降到起步时的 50%。下一次模型消息至少间隔 14 天。", chance: 35, effect: "technology" },
   { id: "tech-4", title: "GPT-6 Luna 到来 · Sol 同步就绪", quote: "轻量与主力都进入 GPT-6。", detail: "轻量档更新为 GPT-6 Luna：游戏内能力 +1、速度 +50%，付费配置费率为起步时的 45%，免费慢跑保留。若 Sol 尚未换代，本次同时开放 GPT-6 Sol。", chance: 20, effect: "technology" },
   { id: "tech-5", title: "虚构推演：GPT-6.1 Astra", quote: "如果下一代攻坚模型提前来了呢？", detail: "这是虚构未来事件，并非真实发布。攻坚档升级为 GPT-6.1 Astra：游戏内能力 +1、速度 +20%，费率 85%；只会在全系进入 GPT-6 且再等待至少 14 天后出现。", chance: 50, effect: "technology" },
+  { id: "pro-return", title: "$200 回来了，但不是原来的配方", quote: "两百回归，五百登场。", detail: "$200 恢复新开与续开，容量从 20× 改为 10×，现有账号保留剩余百分比；$500 的 25× 档同时开放。旧 $200 账号的补偿另等到账消息，今天不会直接发放。", chance: 0, effect: "industry" },
+  { id: "credit-compensation", title: "补偿到账：这次可以慢慢用", quote: "额度没回来，余额先来了。", detail: "政策变更时有效的旧 $200 账号，每号补偿 120 余额点。可在账号管理中补充任意有效账号；不能买订阅，重置不会清掉。金额为游戏设定。", chance: 0, effect: "industry" },
+  { id: "sol-61", title: "GPT-6.1 Sol：主力开始追近 Astra", quote: "更低成本，接近 Astra 的表现。", detail: "主力档更新为真实发布的 GPT-6.1 Sol，游戏内速度提升、低费率保留。更适合用主力做复杂项目；后续打磨仍有随机性，不保证本局出现。", chance: 0, effect: "industry" },
+  { id: "sol-polish", title: "Sol 6.1 又打磨了一轮", quote: "这次更新，先跑项目再下结论。", detail: "游戏推演：Sol 6.1 的开发速度继续改善，费率与能力不变。试试用便宜的主力接近 Astra 的开发效率；这是游戏效果，不是官方性能保证。", chance: 0, effect: "industry" },
+  { id: "devday-dots", title: "DevDay：你的 Dot 可以值夜班了", quote: "你去休息，它继续跟进。", detail: "Dots 开放夜间委托：每天花 1 精力交接一项项目，收工后用有效 Pro 账号的剩余额度，以 Astra Standard 最多运行 120 分钟，再揭晓赠礼。可不委托，或随时取消。", chance: 0, effect: "industry" },
+  { id: "industry-news", title: "近期消息观察", quote: "今天会有新消息吗？", detail: "等待公开消息。", chance: 0, effect: "industry" },
 ];
 
 export const MODEL_RELEASES = { minDays: 14, maxDays: 28, bundleChance: 0.3 } as const;
-const initialPlatform = (): Platform => ({ stage: 2, nextRelease: 15, proDeadline: null, allowance: 1, revision: 0 });
-export const quotaPercent = (a: Account) => Math.max(0, Math.min(100, Math.ceil((a.quota / PLANS[a.tier].capacity) * 100 - EPS)));
-export const proClosed = (g: Game) => g.platform.proDeadline !== null && g.day >= g.platform.proDeadline;
+export const INDUSTRY_NEWS = { tickets: 5, headlineChance: 0.6, compensation: 120, nightMinutes: 120 } as const;
+const emptyNews = (): IndustryNews => ({ returned: false, compensated: false, sol61: false, solPolished: false, dots: false });
+const initialPlatform = (): Platform => ({ stage: 2, nextRelease: 15, proDeadline: null, allowance: 1, revision: 0, news: emptyNews() });
+export const planCapacity = (g: Game | undefined, tier: Tier) => (tier === 200 && g?.platform?.news?.returned ? 240 : PLANS[tier].capacity);
+export const availableTiers = (g: Game): Tier[] => (g.platform.news?.returned ? [20, 100, 200, 500] : [20, 100, 200]);
+export const quotaPercent = (a: Account, g?: Game) => Math.max(0, Math.min(100, Math.ceil((a.quota / planCapacity(g, a.tier)) * 100 - EPS)));
+export const proClosed = (g: Game) => !g.platform.news?.returned && g.platform.proDeadline !== null && g.day >= g.platform.proDeadline;
 export const canKeepPro = (g: Game, a: Account) => a.tier === 200 && activeAccount(g, a);
 export function modelEdition(g: Game, model: Model) {
   const { stage } = g.platform;
+  if (model === "sol" && g.platform.news?.sol61) return {
+    name: "GPT-6.1 Sol",
+    fictional: false,
+    ability: 1,
+    speed: g.platform.news.solPolished ? 1.6 : 1.4,
+    price: 0.5,
+  };
   const upgraded = stage >= (model === "luna" ? 4 : model === "sol" ? 3 : 5);
   return {
     name: upgraded ? ({ luna: "GPT-6 Luna", sol: "GPT-6 Sol", astra: "GPT-6.1 Astra · 虚构推演" })[model] : MODELS[model].name,
@@ -394,9 +431,9 @@ export function modelEdition(g: Game, model: Model) {
     price: upgraded ? ({ luna: 0.45, sol: 0.5, astra: 0.85 })[model] : 1,
   };
 }
-export function quotaObservation(a: Account) {
+export function quotaObservation(a: Account, g?: Game) {
   const sample = a.meter;
-  const drop = sample ? sample.startPercent - quotaPercent(a) : 0;
+  const drop = sample ? sample.startPercent - quotaPercent(a, g) : 0;
   // Integer percentages give a range, never the simulator's exact hidden allowance.
   return {
     tokens: sample?.tokens ?? 0,
@@ -405,6 +442,32 @@ export function quotaObservation(a: Account) {
     fullLow: sample && drop >= 2 ? (sample.tokens * 100) / (drop + 1) : null,
     fullHigh: sample && drop >= 2 ? (sample.tokens * 100) / (drop - 1) : null,
   };
+}
+function applyIndustryNews(g: Game) {
+  if (g.event.effect !== "industry") return;
+  const news = g.platform.news ?? (g.platform.news = emptyNews());
+  if (g.event.id === "pro-return" && !news.returned) {
+    for (const p of g.players) for (const a of p.accounts) if (a.tier === 200) {
+      a.compensationDue = activeAccount(g, a);
+      a.quota /= 2;
+    }
+    news.returned = true;
+  } else if (g.event.id === "credit-compensation" && news.returned && !news.compensated) {
+    for (const p of g.players) {
+      const count = p.accounts.filter(a => a.compensationDue).length;
+      p.credits = (p.credits ?? 0) + count * INDUSTRY_NEWS.compensation;
+      for (const a of p.accounts) a.compensationDue = false;
+      if (count) log(g, `${p.name} 收到 ${count * INDUSTRY_NEWS.compensation} 余额点补偿；现金与银行券不变。`, p.id);
+    }
+    news.compensated = true;
+  } else if (g.event.id === "sol-61") news.sol61 = true;
+  else if (g.event.id === "sol-polish" && news.sol61) news.solPolished = true;
+  else if (g.event.id === "devday-dots") news.dots = true;
+  g.platform.revision++;
+  for (const p of g.players) for (const a of p.accounts) a.meter = null;
+}
+export function dotAccount(g: Game, p: Player) {
+  return p.accounts.filter(a => a.tier >= 100 && activeAccount(g, a)).sort((a, b) => b.quota - a.quota || a.id - b.id)[0] ?? null;
 }
 export const TEMPLATES: [string, Category, number, number, number, Difficulty][] = [
   ["只有一条命", "game", 221, 23, 35, 2],
@@ -527,7 +590,7 @@ function account(g: Game, tier: Tier): Account {
   return {
     id: g.serial,
     tier,
-    quota: PLANS[tier].capacity,
+    quota: planCapacity(g, tier),
     nextReset: g.day + 7,
     paidUntil: g.day + 29,
     renewal: tier,
@@ -715,7 +778,7 @@ function observeWork(g: Game, p: Player, model: Model, work: number) {
 function renew(g: Game, p: Player, a: Account, tier: Tier) {
   p.cash -= tier;
   a.tier = tier;
-  a.quota = PLANS[tier].capacity;
+  a.quota = planCapacity(g, tier);
   a.meter = null;
   a.paidUntil = g.day + 29;
   a.nextReset = g.day + 7;
@@ -748,6 +811,7 @@ function release(g: Game, p: Player, job: Project) {
   p.cash += job.delivery.cash;
   if (job.category === "open") p.knowledge = Math.min(3, p.knowledge + 1);
   p.projects = p.projects.filter((x) => x.id !== job.id);
+  if (p.dot?.project === job.id) p.dot.project = null;
   cleanLanes(p);
   p.shipped.push(job);
   log(
@@ -769,9 +833,9 @@ function reset(g: Game, kind: "normal" | "bank"): Receipt {
           a.banks.push(g.day + 30);
           gained++;
         } else {
-          gained += PLANS[a.tier].capacity - a.quota;
+          gained += planCapacity(g, a.tier) - a.quota;
           unused += a.quota;
-          a.quota = PLANS[a.tier].capacity;
+          a.quota = planCapacity(g, a.tier);
           a.meter = null;
           if (a.lastBankDay === g.day) {
             collision = true;
@@ -804,18 +868,35 @@ function drawEvent(g: Game): EventCard {
   if (g.day <= 4) return { ...EVENTS.find(e => e.id === ["riddle", "promise", "quiet", "sale"][g.day - 1])! };
   if (g.platform.stage < 5 && g.day >= g.platform.nextRelease) {
     // Sometimes two real models arrive together; this is one announcement, not a shorter release interval.
-    const stage = g.platform.stage === 2 && random(g) < MODEL_RELEASES.bundleChance ? 4 : g.platform.stage + 1;
-    return { ...EVENTS.find(e => e.id === `tech-${stage}`)! };
+    const stage = g.platform.stage === 2 && (g.platform.news?.sol61 || random(g) < MODEL_RELEASES.bundleChance) ? 4 : g.platform.stage + 1;
+    const card = { ...EVENTS.find(e => e.id === `tech-${stage}`)! };
+    if (stage === 4 && g.platform.news?.sol61) card.detail = "轻量档更新为 GPT-6 Luna，免费慢跑保留；主力继续使用 GPT-6.1 Sol。";
+    return card;
   }
   if (!g.events.length) g.events = shuffle(
       g,
       [
-        ...EVENTS.filter(e => e.effect !== "technology" && e.effect !== "bank" && (e.effect !== "retire" || g.platform.proDeadline === null)).map(e => e.id),
-        // Five extra quiet cards: promotions should punctuate normal development days.
-        "quiet", "quiet", "quiet", "offline", "offline",
+        ...EVENTS.filter(e => e.effect !== "industry" && e.effect !== "technology" && e.effect !== "bank" && (e.effect !== "retire" || (g.platform.proDeadline === null && !g.platform.news?.returned))).map(e => e.id),
+        // News replaces the five extra quiet cards; failed tickets remain quiet.
+        ...Array<string>(INDUSTRY_NEWS.tickets).fill("industry-news"),
       ],
     );
   const id = g.events.shift();
+  if (id === "industry-news") {
+    const news = g.platform.news ?? emptyNews();
+    const candidates = [
+      !news.returned && proClosed(g) ? "pro-return" : null,
+      news.returned && !news.compensated && g.players.some(p => p.accounts.some(a => a.compensationDue)) ? "credit-compensation" : null,
+      !news.sol61 && g.day >= 8 ? "sol-61" : null,
+      news.sol61 && !news.solPolished ? "sol-polish" : null,
+      !news.dots && g.day >= 7 ? "devday-dots" : null,
+    ].filter((value): value is string => value !== null);
+    if (candidates.length && random(g) < INDUSTRY_NEWS.headlineChance) {
+      const headline = candidates[Math.floor(random(g) * candidates.length)];
+      return { ...EVENTS.find(e => e.id === headline)! };
+    }
+    return { ...EVENTS[2] };
+  }
   if (id === "pro-last-call" && g.platform.proDeadline !== null) return { ...EVENTS[2] };
   return { ...(EVENTS.find((e) => e.id === id) ?? EVENTS[2]) };
 }
@@ -858,8 +939,8 @@ function beginDay(g: Game) {
       }
       while (a.nextReset <= g.day) {
         if (activeAccount(g, a)) {
-          const gained = PLANS[a.tier].capacity - a.quota;
-          a.quota = PLANS[a.tier].capacity;
+          const gained = planCapacity(g, a.tier) - a.quota;
+          a.quota = planCapacity(g, a.tier);
           a.meter = null;
           p.resetGain += gained;
           log(
@@ -881,6 +962,7 @@ function beginDay(g: Game) {
     cleanLanes(p);
   });
   g.event = drawEvent(g);
+  applyIndustryNews(g);
   if (g.event.effect === "retire" && g.platform.proDeadline === null) g.platform.proDeadline = g.day + 2;
   if (g.event.effect === "technology") {
     g.platform.stage = Math.max(g.platform.stage, Number(g.event.id.split("-")[1]));
@@ -894,6 +976,12 @@ function beginDay(g: Game) {
   }
   // A new rate invalidates old measurements, without exposing the changed multiplier.
   if (g.event.effect === "technology" || g.event.effect === "limits") for (const p of g.players) for (const a of p.accounts) a.meter = null;
+  for (const p of g.players) {
+    if (p.dot?.project !== null && p.dot?.project !== undefined) {
+      if (!p.projects.some(j => j.id === p.dot!.project)) p.dot.project = null;
+      else if (dotAccount(g, p)) { p.energy--; p.energyLedger!.other++; p.dot.paidDay = g.day; }
+    }
+  }
   for (const p of g.players) for (const lane of p.lanes) if (lane.enabled && lane.projects.length) {
     if (p.id === 0 && g.studio.mode === "auto") lane.development = projectDevelopment(g, p, p.projects.find(j => j.id === lane.projects[0])!);
     prepareLane(g, p, lane);
@@ -913,6 +1001,7 @@ export function createGame(seed = 260926, length = 42): Game {
     workflowRules: 1,
     qualityRules: 1,
     modelRules: 1,
+    newsRules: 1,
     platform: initialPlatform(),
     development: { ...DEFAULT_DEVELOPMENT },
     studio: { mode: "auto", threads: 1, accountPolicy: "soon-reset", preferredAccount: 0, configuration: "fixed", collaboration: 2 },
@@ -969,6 +1058,8 @@ export function createGame(seed = 260926, length = 42): Game {
       energy: DAILY_ENERGY,
       rested: false,
       lanes: [],
+      credits: 0,
+      dot: { project: null, paidDay: 0, report: null },
     });
   });
   g.platform.nextRelease = g.day + MODEL_RELEASES.minDays + Math.floor(random(g) * (MODEL_RELEASES.maxDays - MODEL_RELEASES.minDays + 1));
@@ -1058,7 +1149,7 @@ function routeStudioAccounts(g: Game) {
       if (policy === "most-quota") return b.quota - a.quota ||
         (loads.get(a.id) ?? 0) - (loads.get(b.id) ?? 0) || a.id - b.id;
       if (policy === "late-expiry") return b.paidUntil - a.paidUntil || a.id - b.id;
-      const available = (x: Account) => (x.quota / PLANS[x.tier].capacity) /
+      const available = (x: Account) => (x.quota / planCapacity(g, x.tier)) /
         (1 + (loads.get(x.id) ?? 0));
       return available(b) - available(a) || a.id - b.id;
     });
@@ -1096,6 +1187,7 @@ export function developmentBlocker(g: Game): string | null {
   return p.projects.length ? "还没有运行中的 AI 对话。请增加对话数或恢复开发；也可手写外包。时间已停下。" : "手头项目已完成。可以接新项目、手写外包，或主动收工；时间已停下。";
 }
 export function energyCost(g: Game, p: Player, a: Action): number {
+  if (a.type === "dot") return a.project !== null && p.dot?.paidDay !== g.day ? 1 : 0;
   if (a.type === "claim" || a.type === "freelance") return 1;
   if (a.type === "test") return 2;
   if (a.type === "dispatch") {
@@ -1116,6 +1208,7 @@ export function actionError(g: Game, id: number, a: Action): string | null {
     "buy",
     "renew",
     "upgrade",
+    "credit",
   ].includes(a.type);
   if (!administrative && g.phase !== "plan") return "先进入下一天。";
   if (id === 0 && a.type === "next") return developmentBlocker(g);
@@ -1134,6 +1227,17 @@ export function actionError(g: Game, id: number, a: Action): string | null {
     return null;
   }
   if (a.type === "configure") return validDevelopment(a.development) ? null : "开发配置无效。";
+  if (a.type === "dot") {
+    if (!g.platform.news?.dots) return "Dots 尚未开放。";
+    if (a.project !== null && !p.projects.some(j => j.id === a.project)) return "请选择正在开发的自己的项目。";
+    if (a.project !== null && !dotAccount(g, p)) return "夜间委托需要有效的 Pro 账号。";
+  }
+  if (a.type === "credit") {
+    const acc = p.accounts.find(x => x.id === a.account);
+    if (!acc || !activeAccount(g, acc)) return "余额补额需要有效订阅。";
+    if ((p.credits ?? 0) <= EPS) return "没有可用的补偿余额。";
+    if (acc.quota >= planCapacity(g, acc.tier) - EPS) return "额度已经满了，留着这些余额。";
+  }
   if (a.type === "dispatch") {
     if (g.minute >= DAY_MINUTES) return "今天的时间用完了，先揭牌。";
     if (id === 0 && g.studio.mode === "auto") {
@@ -1180,10 +1284,11 @@ export function actionError(g: Game, id: number, a: Action): string | null {
     const acc = p.accounts.find((x) => x.id === a.account);
     if (!acc || !activeAccount(g, acc)) return "银行券需要有效订阅。";
     if (!acc.banks.some((d) => d > g.day)) return "这个账号没有有效银行券。";
-    if (acc.quota >= PLANS[acc.tier].capacity - EPS) return "额度已经满了，留着这张券。";
+    if (acc.quota >= planCapacity(g, acc.tier) - EPS) return "额度已经满了，留着这张券。";
   }
   if (a.type === "buy") {
     if (!PLANS[a.tier]) return "无效套餐。";
+    if (a.tier === 500 && !g.platform.news?.returned) return "$500 档尚未开放，等待套餐回归消息。";
     if (a.tier === 200 && proClosed(g)) return "$200 已停止新开，仅老号连续续费可保留。";
     if (p.accounts.length >= 3) return "最多持有 3 个账号，每号都可以带多条 AI 对话。";
     if (p.cash < a.tier) return "现金不够，接点外包吧。";
@@ -1191,6 +1296,7 @@ export function actionError(g: Game, id: number, a: Action): string | null {
   if (a.type === "renew" || a.type === "upgrade" || a.type === "renewal") {
     const acc = p.accounts.find((x) => x.id === a.account);
     if (!acc) return "账号不存在。";
+    if (a.tier === 500 && !g.platform.news?.returned) return "$500 档尚未开放，等待套餐回归消息。";
     if (a.tier === 200 && proClosed(g) && !canKeepPro(g, acc)) return "$200 已停止新开；降档或断订后不能恢复。";
     if (a.type === "renewal") return a.tier === null || PLANS[a.tier] ? null : "无效续订套餐。";
     if (!PLANS[a.tier]) return "无效套餐。";
@@ -1279,7 +1385,7 @@ function applyAction(g: Game, id: number, a: Action): boolean {
   } else if (a.type === "bank") {
     const acc = p.accounts.find((x) => x.id === a.account)!;
     acc.banks.sort((x, y) => x - y).shift();
-    acc.quota = PLANS[acc.tier].capacity;
+    acc.quota = planCapacity(g, acc.tier);
     acc.meter = null;
     acc.lastBankDay = g.day;
     p.banksUsed++;
@@ -1288,6 +1394,18 @@ function applyAction(g: Game, id: number, a: Action): boolean {
       `${p.name} 用掉银行券，恢复 100%。等待额度的 AI 对话可继续跑，自然重置仍在 D${acc.nextReset}。`,
       id,
     );
+  } else if (a.type === "credit") {
+    const acc = p.accounts.find(x => x.id === a.account)!;
+    const amount = Math.min(p.credits ?? 0, planCapacity(g, acc.tier) - acc.quota);
+    acc.quota += amount;
+    p.credits = Math.max(0, (p.credits ?? 0) - amount);
+    acc.meter = null;
+    log(g, `${p.name} 用 ${fmt(amount)} 余额点补额；剩余 ${fmt(p.credits)} 点，自然重置日期不变。`, id);
+  } else if (a.type === "dot") {
+    p.dot ??= { project: null, paidDay: 0, report: null };
+    p.dot.project = a.project;
+    if (a.project !== null) p.dot.paidDay = g.day;
+    log(g, a.project === null ? `${p.name} 取消夜间委托，今天的交接精力不退还。` : `${p.name} 委托 Dot 夜间跟进《${p.projects.find(j => j.id === a.project)!.name}》，今天交接共 1 精力。`, id);
   } else if (a.type === "buy") {
     p.cash -= a.tier;
     p.accounts.push(account(g, a.tier));
@@ -1313,7 +1431,7 @@ function applyAction(g: Game, id: number, a: Action): boolean {
   } else if (a.type === "upgrade") {
     const acc = p.accounts.find((x) => x.id === a.account)!;
     const price = a.tier - acc.tier;
-    acc.quota += PLANS[a.tier].capacity - PLANS[acc.tier].capacity;
+    acc.quota += planCapacity(g, a.tier) - planCapacity(g, acc.tier);
     acc.meter = null;
     p.cash -= price;
     if (acc.renewal === acc.tier) acc.renewal = a.tier;
@@ -1325,6 +1443,7 @@ function applyAction(g: Game, id: number, a: Action): boolean {
     );
   } else if (a.type === "abandon") {
     p.projects = p.projects.filter((j) => j.id !== a.project);
+    if (p.dot?.project === a.project) p.dot.project = null;
     cleanLanes(p);
     p.vp -= 2;
     log(g, `${p.name} 放弃项目，−2 声望。`, id);
@@ -1376,11 +1495,11 @@ function applyAction(g: Game, id: number, a: Action): boolean {
 }
 
 /** Integrate all lanes simultaneously, splitting at completions, risk checkpoints and shared-account exhaustion. */
-function runPlayer(g: Game, p: Player) {
-  let time = 1;
+function runPlayer(g: Game, p: Player, minutes = 1, schedule = true) {
+  let time = minutes;
   let guard = 0;
   while (time > EPS && guard++ < 1000) {
-    if (p.id === 0) {
+    if (p.id === 0 && schedule) {
       organizeStudio(g);
       routeStudioAccounts(g);
     }
@@ -1417,7 +1536,7 @@ function runPlayer(g: Game, p: Player) {
       if (cost > 0) {
         const key = `${r.stats.name} · 费率 ${modelEdition(g, r.lane.development.model).price}${g.event.effect === "sale" ? " · Turbo折扣日" : ""}`;
         if (!r.acc.meter || r.acc.meter.config !== key || r.acc.meter.revision !== g.platform.revision) r.acc.meter = {
-          tokens: 0, startPercent: quotaPercent(r.acc), config: key, revision: g.platform.revision,
+          tokens: 0, startPercent: quotaPercent(r.acc, g), config: key, revision: g.platform.revision,
         };
         r.acc.meter.tokens += work * r.stats.tokenCost;
       }
@@ -1513,12 +1632,18 @@ export function chooseAction(g: Game, id: number, strategy?: Strategy): Action {
   const style = strategy ?? p.strategy;
   if (g.phase !== "plan") return { type: "pass" };
   const remaining = g.length - g.day;
-  const target: Tier = style === "builder" || proClosed(g) ? 100 : 200;
+  const target: Tier = g.platform.news?.returned && style === "sprinter" && p.cash >= 650 && remaining > 14 ? 500 : style === "builder" || proClosed(g) ? 100 : 200;
   const upgrade = p.accounts.find(
     (a) => activeAccount(g, a) && a.tier < target,
   );
   if (upgrade && remaining > 9 && p.cash >= target - upgrade.tier + 70) return { type: "upgrade", account: upgrade.id, tier: target };
   const active = p.accounts.filter((a) => activeAccount(g, a));
+  const credit = active.find(a => a.quota < planCapacity(g, a.tier) * 0.08 && a.nextReset > g.day + 1);
+  if (credit && (p.credits ?? 0) > EPS && g.event.chance < 75) return { type: "credit", account: credit.id };
+  if (g.platform.news?.dots && p.energy >= 1 && !p.dot?.project && dotAccount(g, p)?.quota) {
+    const nightJob = [...p.projects].sort((a, b) => (a.deadline ?? 1000) - (b.deadline ?? 1000) || a.need - a.work - (b.need - b.work))[0];
+    if (nightJob) return { type: "dot", project: nightJob.id };
+  }
   if (!active.length && p.cash >= 20 && remaining > 1) return {
       type: "renew",
       account: p.accounts[0].id,
@@ -1536,7 +1661,7 @@ export function chooseAction(g: Game, id: number, strategy?: Strategy): Action {
     (style === "balanced" && g.day > 3 && p.cash >= 260)
   )) return { type: "buy", tier: style === "sprinter" && !proClosed(g) ? 200 : 100 };
   const bank = active.find(
-    (a) => a.quota < PLANS[a.tier].capacity * 0.08 &&
+    (a) => a.quota < planCapacity(g, a.tier) * 0.08 &&
       a.banks.length &&
       (a.nextReset > g.day + 1 || a.banks[0] <= g.day + 1) &&
       (g.event.chance < 75 || g.minute < 240),
@@ -1658,8 +1783,33 @@ function newResetDeck(g: Game): Game["resetDeck"] {
     ...Array<"bank">(RESET_SUPPLY.bank).fill("bank"),
   ]);
 }
+function runDots(g: Game) {
+  if (!g.platform.news?.dots) return;
+  for (let i = 0; i < g.players.length; i++) {
+    const p = g.players[(i + g.day) % g.players.length];
+    if (!p.dot || p.dot.project === null || p.dot.paidDay !== g.day) continue;
+    const job = p.projects.find(j => j.id === p.dot!.project);
+    if (!job) { p.dot.project = null; continue; }
+    const acc = dotAccount(g, p);
+    const beforeUsed = p.used;
+    const beforePercent = acc ? quotaPercent(acc, g) : 0;
+    if (acc) {
+      const dayLanes = p.lanes;
+      p.lanes = [{ id: -1, account: acc.id, development: { model: "astra", effort: "medium", turbo: false }, projects: [job.id], enabled: true, paidDay: g.day, attentionPaid: 2 }];
+      runPlayer(g, p, INDUSTRY_NEWS.nightMinutes, false);
+      p.lanes = dayLanes;
+      cleanLanes(p);
+    }
+    const work = Math.max(0, p.used - beforeUsed) / MODELS.astra.cost;
+    const shipped = p.shipped.some(j => j.id === job.id);
+    p.dot.report = { day: g.day, project: job.name, work, percent: Math.max(0, beforePercent - (acc ? quotaPercent(acc, g) : 0)), shipped };
+    if (shipped) p.dot.project = null;
+    log(g, `${p.name} 的 Dot 夜间推进《${job.name}》${fmt(work)} 工作量，消耗 ${p.dot.report.percent}% 额度${shipped ? "，已交付" : ""}。`, p.id);
+  }
+}
 function finishNight(g: Game) {
   if (g.phase !== "plan") return;
+  runDots(g);
   const trigger = g.event.chance > 0 && random(g) * 100 < g.event.chance;
   if (trigger) {
     if (!g.resetDeck.length) g.resetDeck = newResetDeck(g);
@@ -1751,6 +1901,8 @@ export function textState(g: Game) {
       stage: g.platform.stage,
       proDeadline: g.platform.proDeadline,
       proClosed: proClosed(g),
+      news: g.platform.news ?? emptyNews(),
+      plans: availableTiers(g).map(tier => ({ tier, multiplier: planCapacity(g, tier) / PLANS[20].capacity })),
       models: Object.fromEntries((Object.keys(MODELS) as Model[]).map(m => [m, modelEdition(g, m)])),
     },
     market: g.market.map(publicProject),
@@ -1760,7 +1912,7 @@ export function textState(g: Game) {
       shipped: p.shipped.map(publicProject),
       accounts: p.accounts.map((a) => {
         const { quota: _quota, meter: _meter, ...publicAccount } = a;
-        return { ...publicAccount, percent: quotaPercent(a), observation: quotaObservation(a) };
+        return { ...publicAccount, percent: quotaPercent(a, g), observation: quotaObservation(a, g) };
       }),
       score: score(g.players[p.id]),
       lanes: p.lanes.map((l) => ({ ...l,
@@ -1896,6 +2048,18 @@ collaboration: 1,
       !Number.isInteger(g.platform.nextRelease) || g.platform.nextRelease < 1 ||
       !(g.platform.proDeadline === null || (Number.isInteger(g.platform.proDeadline) && g.platform.proDeadline >= 1)) ||
       ![0.8, 1, 1.2].includes(g.platform.allowance) || !Number.isInteger(g.platform.revision) || g.platform.revision < 0) return null;
+    if (g.newsRules !== undefined && g.newsRules !== 1) return null;
+    if (g.newsRules === undefined) {
+      g.platform.news ??= emptyNews();
+      for (const p of g.players) {
+        p.credits ??= 0;
+        p.dot ??= { project: null, paidDay: 0, report: null };
+      }
+      g.newsRules = 1;
+    }
+    const { news } = g.platform;
+    if (!news || ![news.returned, news.compensated, news.sol61, news.solPolished, news.dots].every(x => typeof x === "boolean") ||
+      (news.compensated && !news.returned) || (news.solPolished && !news.sol61)) return null;
     if (g.workflowRules === undefined) {
       if (!g.studio || !g.players.every(p => p && Array.isArray(p.projects) && Array.isArray(p.shipped))) return null;
       g.studio.configuration = "fixed";
@@ -1973,6 +2137,15 @@ collaboration: 1,
     if (!g.market.every(validProject)) return null;
     for (let index = 0; index < g.players.length; index++) {
       const p = g.players[index];
+      if (!p || !Number.isFinite(p.credits) || p.credits! < 0 || !p.dot ||
+        !Number.isInteger(p.dot.paidDay) || p.dot.paidDay < 0 || p.dot.paidDay > g.day ||
+        !(p.dot.project === null || (Number.isInteger(p.dot.project) && p.projects?.some(j => j.id === p.dot!.project))) ||
+        (!news.dots && p.dot.project !== null)) return null;
+      const dotReport = p.dot.report;
+      if (dotReport !== null && (!dotReport || !Number.isInteger(dotReport.day) || dotReport.day < 1 || dotReport.day > g.day ||
+        typeof dotReport.project !== "string" || !Number.isFinite(dotReport.work) || dotReport.work < 0 ||
+        !Number.isInteger(dotReport.percent) || dotReport.percent < 0 || dotReport.percent > 100 || typeof dotReport.shipped !== "boolean")) return null;
+      if (!news.dots && (p.dot.paidDay > 0 || dotReport !== null)) return null;
       if (
         !p ||
         p.id !== index ||
@@ -2019,7 +2192,11 @@ collaboration: 1,
           !(a.renewal === null || PLANS[a.renewal]) ||
           !Number.isFinite(a.quota) ||
           a.quota < 0 ||
-          a.quota > PLANS[a.tier].capacity + EPS ||
+          a.quota > planCapacity(g, a.tier) + EPS ||
+          (a.tier === 500 && !news.returned) ||
+          (a.renewal === 500 && !news.returned) ||
+          (a.compensationDue !== undefined && typeof a.compensationDue !== "boolean") ||
+          (a.compensationDue && (!news.returned || news.compensated)) ||
           !(a.meter === null || (a.meter && Number.isFinite(a.meter.tokens) && a.meter.tokens >= 0 &&
             Number.isInteger(a.meter.startPercent) && a.meter.startPercent >= 0 && a.meter.startPercent <= 100 &&
             typeof a.meter.config === "string" && Number.isInteger(a.meter.revision) && a.meter.revision >= 0 && a.meter.revision <= g.platform.revision)) ||

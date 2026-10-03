@@ -304,7 +304,7 @@
 .muted { opacity: .6; }
 .modalCopy { font-size: 12px; line-height: 1.9; margin: 20px 0; }
 .modalButtons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 25px; flex-wrap: wrap; }
-.shopPlans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 25px 0; }
+.shopPlans { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 14px; margin: 25px 0; }
 .shopPlans > div { background: #dbe1cd; border-radius: 4px; padding: 18px; }
 .shopPlans span { font: 11px ui-monospace, monospace; }
 .shopPlans strong { display: block; font: 35px ui-monospace, monospace; margin: 12px 0; }
@@ -564,6 +564,8 @@
 .autoTurbo input { accent-color: var(--mint); }
 .experienceNotes { margin: 12px 0; border-top: 1px solid #9bb88640; padding: 12px 0; color: #bdcfaa; font-size: 11px; line-height: 1.8; }
 .experienceNotes summary { cursor: pointer; }
+.experienceNotes label { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.experienceNotes select { max-width: 100%; border: 1px solid #9bb88680; border-radius: 3px; padding: 8px; color: #e6eddb; background: #263e30; }
 .experienceNotes div { display: flex; flex-wrap: wrap; gap: 8px 24px; color: #d7e6c2; }
 
 .qualityNote {

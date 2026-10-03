@@ -66,6 +66,15 @@ test('browser preference resolves Chinese and English while preserving Chinese s
   assert.equal(translateResetText('你的开发履历', 'en'), 'Your portfolio');
 });
 
+test('composed studio risk and quality summaries translate each complete label', () => {
+  for (const risk of ['摸底中 · 已留安全余量', '摸底中 · 可能返工', '0% / 20 进度']) {
+    for (const quality of ['品质摸底中', '预计合格 · 基础收益', '预计精品 · 回款/声望 +40%']) {
+      const text = ` ·《极简记账本》${risk} · ${quality} · 2 精力/对话/天`;
+      assert.equal(hasChinese(translateResetText(text, 'en')), false, text);
+    }
+  }
+});
+
 test('every project, category and event has English presentation text', () => {
   const values = [
     ...engine.TEMPLATES.map(([name]) => name),
