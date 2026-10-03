@@ -38,6 +38,17 @@ test('calendar is contiguous, portable, and every published claim and picture ha
       assert.match(image.src, /^\/images\/sui-gifts\/[\w-]+\.webp$/);
       assert.ok(image.width > 100 && image.height > 100);
       assert.ok((await stat(new URL(`../../public${image.src}`, import.meta.url))).size > 1000);
+      const source = month.sources.find(item => item.id === image.source);
+      if (image.kind === 'official') {
+        assert.equal(source.kind, 'official-dynamic');
+        assert.match(source.url, /^https:\/\/www\.bilibili\.com\/opus\/\d+$/);
+        assert.equal(new URL(image.originalUrl).protocol, 'https:');
+        assert.match(new URL(image.originalUrl).hostname, /(^|\.)hdslb\.com$/);
+        assert.equal(image.time, undefined, 'official images must not inherit livestream offsets');
+      } else {
+        assert.equal(source.kind, 'subtitle');
+        assert.ok(image.time);
+      }
     }
   }
 });

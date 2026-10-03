@@ -13,6 +13,7 @@ const months = rawCatalog.months as GiftMonth[];
 const years = Array.from(new Set(months.map(month => month.month.slice(0, 4))));
 const populatedCount = months.filter(month => month.entries.length).length;
 const imageCount = months.reduce((sum, month) => sum + month.images.length, 0);
+const officialImageCount = months.reduce((sum, month) => sum + month.images.filter(image => image.kind === 'official').length, 0);
 
 function MonthRecord({ month, filters, onImage }: { month: GiftMonth; filters: Filters; onImage: (image: GiftImage, month: GiftMonth) => void }) {
   const entries = visibleEntries(month, filters);
@@ -58,8 +59,8 @@ function MonthRecord({ month, filters, onImage }: { month: GiftMonth; filters: F
               {month.images.map(img => (
                 <figure key={img.src}>
                   <button type="button" onClick={() => onImage(img, month)} aria-label={`放大：${img.caption}`}>
-                    <Image src={img.src} alt={img.caption} width={img.width} height={img.height} sizes="(max-width: 650px) 85vw, 320px" />
-                    <span className={styles.zoomHint}>查看大图 ↗</span>
+                    <Image className={img.height > img.width * 3 ? styles.longPreview : undefined} src={img.src} alt={img.caption} width={img.width} height={img.height} sizes="(max-width: 650px) 85vw, 320px" />
+                    <span className={styles.zoomHint}>{img.height > img.width * 3 ? '展开完整长图' : '查看大图'} ↗</span>
                   </button>
                   <figcaption>{img.caption}</figcaption>
                 </figure>
@@ -75,7 +76,7 @@ function MonthRecord({ month, filters, onImage }: { month: GiftMonth; filters: F
               {month.sources.map((source, index) => (
                 <li key={source.id}>
                   <div className={styles.sourceMeta}>
-                    <strong>[{index + 1}] {source.kind === 'subtitle' ? '录播字幕' : source.kind === 'danmaku' ? '观众弹幕 · 待核实' : '网络索引 · 待核实'}</strong>
+                    <strong>[{index + 1}] {source.kind === 'official-dynamic' ? '岁己官方动态' : source.kind === 'subtitle' ? '录播字幕' : source.kind === 'danmaku' ? '观众弹幕 · 待核实' : '网络索引 · 待核实'}</strong>
                     <span>{source.date}{source.start && ` · ${source.start}—${source.end}`}</span>
                   </div>
                   {source.file && <p className={styles.filename}>{source.file}</p>}
@@ -102,6 +103,7 @@ export default function GiftArchive() {
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
   const shown = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const selectedSource = selected?.month.sources.find(source => source.id === selected.image.source);
 
   useEffect(() => {
     const restore = () => { setFilters(parseFilters(new URLSearchParams(window.location.search))); setPage(1); };
@@ -137,9 +139,9 @@ export default function GiftArchive() {
       <div className={styles.shell}>
         <header className={styles.intro}>
           <div><p className={styles.eyebrow}>SUI / MONTHLY GIFTS</p><h1>岁己舰礼档案<span>。</span><BetaBadge /></h1>
-            <p className={styles.description}>按月查询舰长、提督与总督礼物，查看录播出处和展示图。</p>
+            <p className={styles.description}>按月查询舰长、提督与总督礼物，查看官方动态原图与录播出处。</p>
           </div>
-          <div className={styles.archiveMeta}><strong>{populatedCount}<span>个月有资料</span></strong><span>{imageCount} 张录播展示图</span><time dateTime={rawCatalog.updatedAt}>整理于 {rawCatalog.updatedAt}</time></div>
+          <div className={styles.archiveMeta}><strong>{populatedCount}<span>个月有资料</span></strong><span>{imageCount} 张展示图 · {officialImageCount} 张官方原图</span><time dateTime={rawCatalog.updatedAt}>整理于 {rawCatalog.updatedAt}</time></div>
         </header>
         <div className={styles.workspace}>
           <aside className={styles.sidebar}>
@@ -178,13 +180,22 @@ export default function GiftArchive() {
           </div>
         </div>
         <footer className={styles.footer}>
-          <p>整理自 {rawCatalog.coverage.srt.toLocaleString('zh-CN')} 份本地字幕、{rawCatalog.coverage.xml.toLocaleString('zh-CN')} 份弹幕文件及公开网页索引。早期资料、完整礼单与部分图片仍待补齐。</p>
-          <p>本页为资料档案，领取资格与最终礼单以岁己官方公告为准。图片来自直播展示，可能为设计稿或示意图。</p>
+          <p>整理自岁己官方动态、{rawCatalog.coverage.srt.toLocaleString('zh-CN')} 份本地字幕、{rawCatalog.coverage.xml.toLocaleString('zh-CN')} 份弹幕文件及公开网页索引。早期资料、完整礼单与部分图片仍待补齐。</p>
+          <p>本页为资料档案，领取资格与最终礼单以岁己官方公告为准。图片优先采用官方动态原图，可能为预告设计稿；未找到原图的保留直播展示并注明。</p>
           <a href="https://space.bilibili.com/1954091502" target="_blank" rel="noreferrer">岁己 SUI 的 B 站主页 ↗</a>
         </footer>
       </div>
       <dialog ref={dialog} className={styles.dialog} onCancel={() => setSelected(null)} onClose={() => setSelected(null)} aria-labelledby="gift-image-title">
-        {selected && <><div className={styles.dialogHeader}><h2 id="gift-image-title">{selected.month.month} · {selected.image.caption}</h2><button type="button" onClick={() => setSelected(null)} aria-label="关闭大图">关闭 ×</button></div><div className={styles.largeImage}><Image src={selected.image.src} alt={selected.image.caption} width={selected.image.width} height={selected.image.height} sizes="90vw" /></div><p className={styles.imageSource}>录播画面 {selected.image.time} · {selected.month.sources.find(source => source.id === selected.image.source)?.file}</p><a href={selected.image.src} target="_blank" rel="noreferrer">打开原尺寸图片 ↗</a></>}
+        {selected && (
+<>
+          <div className={styles.dialogHeader}><h2 id="gift-image-title">{selected.month.month} · {selected.image.caption}</h2><button type="button" onClick={() => setSelected(null)} aria-label="关闭大图">关闭 ×</button></div>
+          <div className={styles.imageSource}>
+            {selected.image.kind === 'official' ? <>岁己官方动态 · {selectedSource?.date} <a href={selectedSource?.url} target="_blank" rel="noreferrer">查看动态 ↗</a></> : <>录播画面 {selected.image.time} · {selectedSource?.file}</>}
+            <a href={selected.image.originalUrl || selected.image.src} target="_blank" rel="noreferrer">打开原尺寸图片 ↗</a>
+          </div>
+          <div className={`${styles.largeImage} ${selected.image.height > selected.image.width * 3 ? styles.longImage : ''}`}><Image src={selected.image.src} alt={selected.image.caption} width={selected.image.width} height={selected.image.height} sizes="90vw" /></div>
+        </>
+)}
       </dialog>
     </main>
   );

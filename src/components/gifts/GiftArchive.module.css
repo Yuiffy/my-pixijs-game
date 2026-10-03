@@ -69,6 +69,7 @@
 .gallery figure { min-width: 0; flex: 1; }
 .gallery button { display: block; width: 100%; position: relative; overflow: hidden; background: #eee8e5; }
 .gallery img { width: 100%; height: 250px; object-fit: contain; transition: transform .25s ease; }
+.gallery img.longPreview { object-fit: cover; object-position: center 25%; }
 .gallery button:hover img { transform: scale(1.035); }
 .zoomHint { position: absolute; left: 0; bottom: 0; right: 0; color: white; background: #30202cd9; padding: 7px 3px; font-size: 10px; opacity: 0; transform: translateY(100%); transition: opacity .2s, transform .2s; }
 .gallery button:hover .zoomHint, .gallery button:focus-visible .zoomHint { opacity: 1; transform: translateY(0); }
@@ -100,11 +101,13 @@
 .dialog { background: #f8f5f1; color: var(--ink); border: 0; border-radius: 4px; padding: 24px; width: min(1000px, 94vw); max-height: 94dvh; margin: auto; box-shadow: 0 24px 100px #0006; }
 .dialog::backdrop { background: #1d1424c9; backdrop-filter: blur(5px); }
 .dialog[open] { animation: arrive .2s ease-out; }
-.dialogHeader { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 20px; }
+.dialogHeader { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 20px; position: sticky; top: 0; background: #f8f5f1; z-index: 1; padding: 8px 0; }
 .dialogHeader h2 { font-size: 15px; }
 .dialogHeader button { flex-shrink: 0; border: 1px solid var(--line); padding: 8px 13px; border-radius: 3px; font-size: 12px; }
 .largeImage { display: flex; justify-content: center; background: #e9e2df; }
 .largeImage img { max-height: 70dvh; width: auto; height: auto; max-width: 100%; object-fit: contain; }
+.longImage img { max-height: none; width: 100%; }
+.imageSource a { display: inline-block; margin-left: 12px; color: var(--accent); }
 .imageSource { overflow-wrap: anywhere; font-size: 11px; color: var(--muted); margin: 15px 0 10px; line-height: 1.8; }
 .dialog > a { font-size: 12px; color: var(--accent); }
 @keyframes arrive { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }

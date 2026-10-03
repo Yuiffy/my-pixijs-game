@@ -25,7 +25,9 @@ export type GiftImage = {
   height: number;
   caption: string;
   source: string;
-  time: string;
+  time?: string;
+  kind?: 'official';
+  originalUrl?: string;
 };
 export type GiftMonth = {
   month: string;
