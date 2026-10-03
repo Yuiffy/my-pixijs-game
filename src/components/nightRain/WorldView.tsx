@@ -950,6 +950,7 @@ function RainShrine({ stateRef, id, position }: { stateRef: StateRef; id: string
 
 function Landmarks({ stateRef }: { stateRef: StateRef }) {
   const items = useRef<(THREE.Group | null)[]>([]);
+  const pickupLights = useRef<(THREE.PointLight | null)[]>([]);
   const laptop = useRef<THREE.Group>(null);
   const stain = useRef<THREE.Group>(null);
   useFrame(() => {
@@ -961,6 +962,8 @@ function Landmarks({ stateRef }: { stateRef: StateRef }) {
       if (l.kind === "cache" || l.kind === "charm" || l.kind === "flask") {
         item.rotation.y = state.time * 0.8;
         item.position.y = l.y + 0.6 + Math.sin(state.time * 2) * 0.09;
+        const light = pickupLights.current[i];
+        if (light) { light.intensity = item.visible ? 2 : 0; light.position.y = item.position.y; }
       }
     });
     if (laptop.current) laptop.current.rotation.x = state.collected.includes("laptop")
@@ -1021,8 +1024,8 @@ function Landmarks({ stateRef }: { stateRef: StateRef }) {
             </group>
           );
         if (l.kind === "cache" || l.kind === "charm" || l.kind === "flask") return (
+          <group key={l.id}>
             <group
-              key={l.id}
               ref={(el) => {
                 items.current[i] = el;
               }}
@@ -1042,8 +1045,10 @@ function Landmarks({ stateRef }: { stateRef: StateRef }) {
                 <ringGeometry args={[0.25, 0.3, 24]} />
                 <meshBasicMaterial color="#ffdf8a" />
               </mesh>
-              <pointLight color="#fbd079" intensity={2} distance={3} />
             </group>
+            {/* Keep the light in the render list: hiding it recompiles every lit material. */}
+            <pointLight ref={el => { pickupLights.current[i] = el; }} position={[l.x, l.y + 0.6, l.z]} color="#fbd079" intensity={2} distance={3} />
+          </group>
           );
         if (l.kind === 'ferry') return <group key={l.id} position={[l.x, l.y, l.z]}><mesh position={[0, 1, -0.5]}><cylinderGeometry args={[0.045, 0.055, 2, 6]} /><meshStandardMaterial color="#9c8964" /></mesh><mesh position={[0, 2, -0.5]}><octahedronGeometry args={[0.2]} /><meshBasicMaterial color="#9adcd2" /></mesh></group>;
         if (l.kind === "note") return (
