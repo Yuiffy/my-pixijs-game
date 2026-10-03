@@ -52,7 +52,7 @@ async function rig(p, kind, side = 0, score = [0, 0]) {
   await p.evaluate(({ kind, side, score }) => {
     const g = window.beachVolley.game();
     g.phase = kind === 'serve' ? 'serve' : 'rally'; g.phaseTime = 0;
-    g.paused = false; g.freeze = 0; g.cutin = null; g.score = score;
+    g.paused = false; g.freeze = 0; g.cutin = null; g.specialWindup = null; g.score = score;
     g.server = side; g.winner = null; g.pointWinner = null;
     const idle = { left: false, right: false, jump: false, hit: false, dive: false, special: false, aimUp: false, aimDown: false };
     g.players.forEach((p, i) => { Object.assign(p, { x: i ? 830 : 450, y: 378, vx: 0, vy: 0, swing: 0, special: 0, dive: 0, cooldown: 0, pose: 0, shotAim: null, lastInput: { ...idle } }); });
@@ -131,7 +131,10 @@ async function controlBounds(p) {
       const count = (await state(p)).specials[side];
       await movie(p, 'special', character, `05-special-${character}`);
       assert.equal((await state(p)).freeze, 0); assert.equal((await state(p)).paused, false);
-      await advance(p, 100); assert.equal((await state(p)).specials[side], count); assert.equal((await state(p)).cinematic, null);
+      assert.equal((await state(p)).specialWindup.remaining, 0.8);
+      await advance(p, 100); assert.equal((await state(p)).ball.vx, 0);
+      await advance(p, 700); assert.equal((await state(p)).specialWindup, null);
+      assert.equal((await state(p)).specials[side], count); assert.equal((await state(p)).cinematic, null);
     }
     for (const side of [0, 1]) {
       await rig(p, 'point', side); await advance(p, 30);
@@ -185,7 +188,8 @@ async function controlBounds(p) {
     await p.keyboard.press('Enter'); assert.equal((await state(p)).cinematic, null, 'skip bypasses entire two-clip intro');
     await rig(p, 'special', 1); await key(p, 'Numpad3');
     assert.equal((await state(p)).ball.power, 'nagisa'); assert.equal((await state(p)).cinematic.character, 'nagisa');
-    await p.keyboard.press('Enter');
+    await p.keyboard.press('Enter'); assert.equal((await state(p)).cinematic.kind, 'special');
+    await movie(p, 'special', 'nagisa');
     await load(p, '同机双人', 'all', 'nagisa', 'nagisa'); await begin(p);
     const firstMirror = (await state(p)).cinematic;
     await p.keyboard.press('KeyP');
@@ -243,17 +247,20 @@ async function controlBounds(p) {
     await p.waitForTimeout(250); assert.ok(Math.abs(await p.locator('video').evaluate(v => v.currentTime) - t) < 0.05);
     await p.getByRole('button', { name: '明白，去接球' }).click();
     await p.evaluate(() => window.dispatchEvent(new Event('blur'))); assert.equal((await state(p)).cinematic.paused, true);
-    await p.keyboard.press('Enter'); assert.equal((await state(p)).paused, true, 'skip after blur preserves gameplay pause');
-    await p.keyboard.press('KeyP'); assert.equal((await state(p)).paused, false);
+    await p.keyboard.press('Enter'); assert.equal((await state(p)).cinematic.paused, true, 'Enter cannot skip a paused special');
+    await p.keyboard.press('KeyP'); assert.equal((await state(p)).cinematic.paused, false);
+    await movie(p, 'special', 'sui'); assert.equal((await state(p)).paused, false);
     await rig(p, 'special'); await key(p, 'KeyL');
     await p.locator('video').evaluate(v => v.dispatchEvent(new Event('error')));
     assert.equal((await state(p)).cinematic, null); assert.equal((await state(p)).paused, false);
-    checks.push('movie pause/help/blur protection, Enter/Escape skip, and video-error fallback release physics safely');
+    assert.equal((await state(p)).specialWindup.remaining, 0.8); assert.equal((await state(p)).ball.vx, 0);
+    checks.push('movie pause/help/blur protection, mandatory specials and video-error fallback preserve full windup');
 
     await load(p, '同机双人', 'key', 'shiori'); await begin(p); await p.keyboard.press('Enter');
     await rig(p, 'point', 0); await advance(p, 50); assert.equal((await state(p)).cinematic, null);
     await rig(p, 'special'); await key(p, 'KeyL');
     assert.equal((await state(p)).cinematic.character, 'shiori'); await p.keyboard.press('Enter');
+    assert.equal((await state(p)).cinematic.kind, 'special'); await movie(p, 'special', 'shiori');
     await load(p, '同机双人', 'off'); await begin(p); assert.equal(await p.locator('video').count(), 0);
     await p.keyboard.press('Enter'); await rig(p, 'special'); await key(p, 'KeyL'); assert.equal((await state(p)).cinematic, null);
     await capture(p, '10-special-fallback');

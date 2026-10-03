@@ -90,7 +90,7 @@ test('directional serves use current aim; specials retain character speed and lo
       inputs[0] = { ...aimInput('down', depth, 0), special: true }; stepGame(g, inputs);
       assert.deepEqual(g.ball.shot, { lift: 'down', depth });
       assert.equal(g.ball.power, character); assert.equal(g.players[0].energy, 0);
-      velocities.push(g.ball.vx);
+      velocities.push(g.specialWindup.vx);
     }
     assert.ok(velocities[0] < velocities[1] && velocities[1] < velocities[2]);
   }
@@ -156,7 +156,7 @@ test('Nagisa can play on either side, uses a distinct charged shot, and seeded A
     g.players[side].energy = 100; const inputs = idle(); inputs[side].special = true;
     stepGame(g, inputs);
     assert.equal(g.ball.power, 'nagisa'); assert.equal(g.specials[side], 1);
-    assert.ok(Math.abs(g.ball.vx) > 765 && Math.abs(g.ball.vx) < 980);
+    assert.ok(Math.abs(g.specialWindup.vx) > 765 && Math.abs(g.specialWindup.vx) < 980);
     assert.equal(g.players[side].energy, 0);
   }
   for (const [character, opponent] of [['sui', 'nagisa'], ['shiori', 'nagisa'], ['nagisa', 'sui'], ['nagisa', 'shiori'], ['nagisa', 'nagisa']]) for (const difficulty of ['easy', 'normal', 'hard']) for (const seed of [8121, 922]) {

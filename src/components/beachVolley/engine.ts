@@ -28,6 +28,7 @@ export const NET_X = 640;
 export const NET_TOP = 366;
 export const BALL_RADIUS = 18;
 export const STEP = 1 / 120;
+export const SPECIAL_WINDUP_TIME = 0.8;
 const GRAVITY = 1270;
 export const CHARACTERS = {
   sui: {
@@ -105,6 +106,12 @@ export interface Ball {
   power: Character | null;
   shot?: ShotAim;
 }
+export interface SpecialWindup {
+  side: Side;
+  remaining: number;
+  vx: number;
+  vy: number;
+}
 export interface Effect {
   x: number;
   y: number;
@@ -148,6 +155,7 @@ export interface Game {
   trail: { x: number; y: number }[];
   freeze: number;
   cutin: Side | null;
+  specialWindup: SpecialWindup | null;
   message: string;
   event: GameEvent | null;
   eventId: number;
@@ -299,6 +307,7 @@ export function createGame(options: Partial<Options> = {}, seed = 74129): Game {
     trail: [],
     freeze: 0,
     cutin: null,
+    specialWindup: null,
     message: "把这个夏天，打成好球。",
     event: null,
     eventId: 0,
@@ -313,6 +322,9 @@ export function startGame(g: Game) {
   g.phase = "intro";
   g.phaseTime = 0;
   g.paused = false;
+  g.freeze = 0;
+  g.cutin = null;
+  g.specialWindup = null;
 }
 export function prepareServe(g: Game) {
   g.phase = "serve";
@@ -320,6 +332,7 @@ export function prepareServe(g: Game) {
   g.trail = [];
   g.freeze = 0;
   g.cutin = null;
+  g.specialWindup = null;
   g.rally = 0;
   g.players.forEach((p, i) => {
     p.x = i === 0 ? 295 : 985;
@@ -351,10 +364,12 @@ export function prepareServe(g: Game) {
 export function skipTransition(g: Game) {
   if (g.phase === "intro") prepareServe(g);
   else if (g.phase === "point") finishPoint(g);
-  else if (g.freeze > 0) {
-    g.freeze = 0;
-    g.cutin = null;
-  }
+}
+// Media completion only ends the presentation; the full playable windup follows.
+export function finishSpecialCinematic(g: Game) {
+  if (!g.specialWindup) return;
+  g.freeze = 0;
+  g.cutin = null;
 }
 function particles(
   g: Game,
@@ -386,6 +401,7 @@ function point(g: Game, side: Side) {
   g.phaseTime = 0;
   g.pointWinner = side;
   g.server = side;
+  g.specialWindup = null;
   g.score[side] += 1;
   g.bestRally = Math.max(g.bestRally, g.rally);
   g.players.forEach((p) => {
@@ -431,7 +447,8 @@ export function predictLanding(ball: Ball, atY = FLOOR - BALL_RADIUS): number {
 }
 export function aiInput(g: Game, side: Side, dt: number): Input {
   const p = g.players[side];
-  const b = g.ball;
+  const pending = g.specialWindup;
+  const b = pending ? { ...g.ball, vx: pending.vx, vy: pending.vy } : g.ball;
   const input = emptyInput();
   const setting = g.options.difficulty;
   const error = setting === "easy" ? 78 : setting === "hard" ? 9 : 32;
@@ -601,8 +618,17 @@ function hitBall(g: Game, p: Player, side: Side) {
     g.freeze = 0.75;
     g.cutin = side;
     g.specials[side] += 1;
+    g.specialWindup = { side, remaining: SPECIAL_WINDUP_TIME, vx: b.vx, vy: b.vy };
+    b.vx = 0;
+    b.vy = 0;
+    g.trail = [];
+    g.players[other(side)].aiTimer = 0;
     p.special = 0;
-    p.swing = 0.32;
+    p.swing = 0;
+    p.dive = 0;
+    p.vx = 0;
+    p.facing = dir;
+    p.pose = p.y < FLOOR - 8 ? 4 : 0;
     emit(g, "special", side);
   } else emit(g, smash ? "spike" : "hit", side);
 }
@@ -654,6 +680,7 @@ function updateBall(g: Game, dt: number) {
       ((b.x - p.x) / reachX) ** 2 + ((b.y - centerY) / reachY) ** 2;
     if (distance < 1 && (b.vy > -160 || p.swing > 0 || b.lastHit !== side)) hitBall(g, p, side);
   });
+  if (g.specialWindup) return;
   if (b.y >= FLOOR - BALL_RADIUS) point(g, b.x < NET_X ? 1 : 0);
   if (Math.floor(g.time * 60) !== Math.floor((g.time - dt) * 60)) {
     g.trail.unshift({ x: b.x, y: b.y });
@@ -693,6 +720,28 @@ export function stepGame(g: Game, inputs: [Input, Input], dt = STEP) {
     inputs[0],
     g.options.mode === "local" ? inputs[1] : aiInput(g, 1, dt),
   ];
+  if (g.specialWindup) {
+    const windup = g.specialWindup;
+    const attacker = g.players[windup.side];
+    const defender = other(windup.side);
+    movePlayer(g, g.players[defender], defender, activeInputs[defender], dt);
+    // Committed attacks hold their contact position and aim, including in midair.
+    attacker.lastInput = { ...activeInputs[windup.side] };
+    windup.remaining = Math.max(0, windup.remaining - dt);
+    attacker.pose = windup.remaining > SPECIAL_WINDUP_TIME * 0.4
+      ? attacker.y < FLOOR - 8 ? 4 : 0
+      : 5;
+    if (windup.remaining <= 1e-9) {
+      g.ball.vx = windup.vx;
+      g.ball.vy = windup.vy;
+      g.ball.lock = 0.2;
+      g.specialWindup = null;
+      attacker.swing = 0.32;
+      particles(g, g.ball.x, g.ball.y, CHARACTERS[attacker.character].color, 32, 390);
+      emit(g, "spike", windup.side);
+    }
+    return;
+  }
   if (g.phase === "serve") {
     const p = g.players[g.server];
     p.aim = readAim(activeInputs[g.server], g.server);
@@ -737,6 +786,11 @@ export function describeGame(g: Game) {
     message: g.message,
     cutin: g.cutin,
     freeze: +g.freeze.toFixed(2),
+    specialWindup: g.specialWindup ? {
+      side: g.specialWindup.side,
+      remaining: +g.specialWindup.remaining.toFixed(3),
+      progress: +(1 - g.specialWindup.remaining / SPECIAL_WINDUP_TIME).toFixed(3),
+    } : null,
     ball: { ...g.ball, x: +g.ball.x.toFixed(1), y: +g.ball.y.toFixed(1) },
     players: g.players.map((p) => ({
       character: p.character,

@@ -21,7 +21,7 @@ async function advance(page, ms) { await page.evaluate(ms => window.advanceTime(
 async function rig(page, scenario) {
   await page.evaluate(scenario => {
     const g = window.beachVolley.game();
-    g.paused = false; g.phase = 'rally'; g.phaseTime = 0; g.freeze = 0; g.cutin = null;
+    g.paused = false; g.phase = 'rally'; g.phaseTime = 0; g.freeze = 0; g.cutin = null; g.specialWindup = null;
     const p = g.players[0]; p.x = 430; p.y = 606; p.vx = 0; p.vy = 0; p.swing = 0; p.dive = 0;
     g.ball = { x: 440, y: 450, vx: -100, vy: 220, spin: 0, lastHit: 1, lock: 0, power: null };
     if (scenario === 'special') { p.y = 430; p.energy = 100; g.ball.y = 309; }
@@ -83,7 +83,8 @@ async function rig(page, scenario) {
     await rig(page, 'special'); await page.keyboard.down('KeyL'); await advance(page, 30); await page.keyboard.up('KeyL');
     assert.equal((await state(page)).specials[0], 1, 'special hits and charges once');
     assert.equal((await state(page)).players[0].energy, 0); await capture(page, '07-special-sui');
-    await advance(page, 1500); assert.equal((await state(page)).cutin, null);
+    await advance(page, 1600); assert.equal((await state(page)).cutin, null);
+    assert.equal((await state(page)).specialWindup, null, 'static presentation and full windup finish before flight');
     await rig(page, 'win'); await advance(page, 150); assert.equal((await state(page)).score[0], 7);
     await capture(page, '08-point-win'); await advance(page, 2400);
     assert.equal((await state(page)).winner, 0); await capture(page, '09-victory');

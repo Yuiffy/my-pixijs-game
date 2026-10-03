@@ -6,6 +6,7 @@ import {
   HEIGHT,
   NET_TOP,
   NET_X,
+  SPECIAL_WINDUP_TIME,
   WIDTH,
   clamp,
   shotVector,
@@ -136,6 +137,7 @@ function drawHero(
   ctx.restore();
 }
 function drawAim(ctx: CanvasRenderingContext2D, g: Game) {
+  if (g.specialWindup) return;
   const side = g.phase === "serve" ? g.server : g.ball.lastHit;
   if (side === null || (side === 1 && g.options.mode !== "local")) return;
   const p = g.players[side];
@@ -178,6 +180,21 @@ function drawAim(ctx: CanvasRenderingContext2D, g: Game) {
   ctx.lineWidth = 4;
   ctx.beginPath();
   ctx.ellipse(x, FLOOR, 23, 7, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+function drawWindup(ctx: CanvasRenderingContext2D, g: Game) {
+  if (!g.specialWindup || g.freeze > 0) return;
+  const progress = 1 - g.specialWindup.remaining / SPECIAL_WINDUP_TIME;
+  ctx.save();
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = "rgba(255,251,238,.55)";
+  ctx.beginPath();
+  ctx.arc(g.ball.x, g.ball.y, BALL_RADIUS + 12, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.strokeStyle = CHARACTERS[g.players[g.specialWindup.side].character].color;
+  ctx.beginPath();
+  ctx.arc(g.ball.x, g.ball.y, BALL_RADIUS + 12, -Math.PI / 2, -Math.PI / 2 + progress * Math.PI * 2);
   ctx.stroke();
   ctx.restore();
 }
@@ -470,15 +487,23 @@ export function renderGame(
       `rgba(88,66,36,${clamp(0.25 - h * 0.0005, 0.1, 0.25)})`,
     );
     const { pose } = p;
-    drawCharacter(ctx, assets, p, p.x, p.y, 1, pose, i === 1, t);
+    const windup = g.freeze <= 0 && g.specialWindup?.side === i ? g.specialWindup : null;
+    const progress = windup ? 1 - windup.remaining / SPECIAL_WINDUP_TIME : 0;
+    const lean = reduced || !windup ? 0 : Math.sin(progress * Math.PI) * 0.12 * (i === 0 ? -1 : 1);
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(lean);
+    drawCharacter(ctx, assets, p, 0, 0, 1, pose, i === 1, t);
+    ctx.restore();
     ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
     ctx.textAlign = "center";
     ctx.fillStyle = "rgba(24,77,79,.75)";
     ctx.fillText(CHARACTERS[p.character].name, p.x, FLOOR + 27);
   });
   if (g.phase !== "intro" && g.phase !== "point") drawBall(ctx, g);
+  drawWindup(ctx, g);
   if (g.phase === "serve" || g.phase === "rally") drawAim(ctx, g);
-  if (g.options.mode === "practice" && g.phase === "rally") {
+  if (g.options.mode === "practice" && g.phase === "rally" && !g.specialWindup) {
     const { ball } = g;
     const time =
       (-ball.vy +

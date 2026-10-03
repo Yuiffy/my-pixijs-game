@@ -364,6 +364,14 @@
   font-weight: 700;
   color: #396671;
 }
+.rally[data-special-windup] {
+  letter-spacing: 1px;
+  white-space: nowrap;
+  padding: 7px 12px;
+  color: #184d58;
+  background: #fff7dfeb;
+  border-radius: 3px;
+}
 .aimReadout {
   position: absolute;
   bottom: 8%;

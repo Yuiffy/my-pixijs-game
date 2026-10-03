@@ -21,6 +21,7 @@ import {
   createGame,
   describeGame,
   emptyInput,
+  finishSpecialCinematic,
   skipTransition,
   startGame,
   stepGame,
@@ -175,6 +176,7 @@ export default function BeachVolley() {
     (expectedId?: string) => {
       const plan = playbackRef.current;
       if (!plan || (expectedId && expectedId !== plan.id)) return;
+      if (plan.kind === "special" && !expectedId) return;
       resetInput();
       playbackRef.current = null;
       cinemaRef.current = false;
@@ -182,7 +184,8 @@ export default function BeachVolley() {
       setCinemaPaused(false);
       cinemaPauseRef.current = false;
       const g = gameRef.current;
-      if (plan.kind !== "result") skipTransition(g);
+      if (plan.kind === "special") finishSpecialCinematic(g);
+      else if (plan.kind !== "result") skipTransition(g);
       g.paused = document.hidden || helpRef.current || returnPausedRef.current;
       if (plan.kind === "point" && g.event?.type === "win") {
         seenEventRef.current = g.event.id;
@@ -416,7 +419,10 @@ export default function BeachVolley() {
         (event.code === "Enter" || event.code === "Escape")
       ) {
         event.preventDefault();
-        if (!event.repeat) finishCinema();
+        if (!event.repeat) {
+          if (playbackRef.current?.kind !== "special") finishCinema();
+          else if (event.code === "Escape") pause();
+        }
         return;
       }
       if (event.code === "Escape" || event.code === "KeyP") {
@@ -827,8 +833,10 @@ export default function BeachVolley() {
                 </small>
               </div>
             </div>
-            <div className={styles.rally}>
-              {view.rally >= 3
+            <div className={styles.rally} data-special-windup={view.specialWindup?.side}>
+              {view.specialWindup
+                ? `${CHARACTERS[view.players[view.specialWindup.side].character].special} · 准备接球！`
+                : view.rally >= 3
                 ? `${view.rally} RALLY`
                 : `${CHARACTERS[options.character].latin} × ${CHARACTERS[options.opponent].latin}`}
             </div>
@@ -844,9 +852,7 @@ export default function BeachVolley() {
                 </span>
               )}
             </div>
-            {(view.phase === "intro" ||
-              view.phase === "point" ||
-              view.freeze > 0) && (
+            {(view.phase === "intro" || view.phase === "point") && (
               <button
                 type="button"
                 className={styles.skip}
@@ -897,14 +903,16 @@ export default function BeachVolley() {
                 </button>
               )}
             </div>
-            <button
-              type="button"
-              className={styles.skip}
-              onClick={() => finishCinema()}
-            >
-              {cinematic.kind === "intro" ? "跳过开场" : "跳过特写"} ↗{" "}
-              <small>Enter</small>
-            </button>
+            {cinematic.kind !== "special" && (
+              <button
+                type="button"
+                className={styles.skip}
+                onClick={() => finishCinema()}
+              >
+                {cinematic.kind === "intro" ? "跳过开场" : "跳过特写"} ↗{" "}
+                <small>Enter</small>
+              </button>
+            )}
           </div>
         )}
         {active && view.paused && !help && !cinematic && (
@@ -1040,8 +1048,10 @@ export default function BeachVolley() {
               <p className={styles.helpTip}>
                 同机 2P：方向键移动 / ↑ 跳，数字小键盘 1 / 2 / 3 或斜杠 /、句点
                 .、逗号 , 击球、扑救、必杀；↓ 下压，小键盘 8 高吊、5 下压。
-                手机可同时按方向与击球。Enter / Esc
-                可跳过视频；完整演出含小分反应，精彩模式省略小分，关闭模式直接比赛。
+                手机可同时按方向与击球。Enter / Esc 可跳过开场与胜败视频；
+                必杀须完整播放，Esc / P 可暂停。特写后有 0.8 秒蓄力动作，
+                防守方可移动、跳跃或扑救；关闭演出也保留这段反应时间。
+                完整演出含小分反应，精彩模式省略小分。
               </p>
               <button
                 type="button"
