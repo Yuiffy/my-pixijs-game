@@ -26,14 +26,6 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
     title: '动作与探索',
     games: [
       {
-        title: '晴海对决 · 岁己 vs 栞栞',
-        href: '/game/tidal-duel',
-        description: '拳脚、投技与反击，读懂对手的下一招，在晴海擂台一决胜负。',
-        image: '/games/tidal-duel/poster.webp',
-        meta: '海岛格斗 · 单人 / 同机双人 · 连招与反击',
-        releaseDate: '2026-10-03',
-      },
-      {
         title: '岁己：今天也要动',
         href: '/game/sui-fitness',
         description: '躲开 DQ、牛肉干和果茶的追击，攒动力去健身、游泳、居家训练。减脂，也把肌肉留下。',
@@ -76,6 +68,14 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
         meta: '搜打撤 · 扮演探索者 · 搜索、交战、撤离',
         externalStats: true,
         releaseDate: '2026-07-18',
+      },
+      {
+        title: '晴海对决 · 岁己 vs 栞栞',
+        href: '/game/tidal-duel',
+        description: '拳脚、投技与反击，读懂对手的下一招，在晴海擂台一决胜负。',
+        image: '/games/tidal-duel/poster.webp',
+        meta: '海岛格斗 · 单人 / 同机双人 · 连招与反击',
+        releaseDate: '2026-10-03',
       },
     ],
   },
