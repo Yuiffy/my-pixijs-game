@@ -13,6 +13,11 @@ const advance = (p,ms) => p.evaluate(ms=>window.advanceTime(ms),ms);
 const ready = p => p.waitForFunction(()=>window.render_game_to_text && JSON.parse(window.render_game_to_text()).loaded);
 const capture = async(p,name) => {
   await p.evaluate(()=>document.fonts.ready);
+  await p.waitForFunction(()=>{
+    const height=[...document.querySelectorAll('span')].find(e=>e.textContent==='攀登高度')?.parentElement?.querySelector('strong');
+    return height && parseInt(height.textContent,10)===JSON.parse(window.render_game_to_text()).height;
+  });
+  await p.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   const layout = await p.evaluate(()=>{
     const canvas = document.querySelector('canvas').getBoundingClientRect();
     return {width:innerWidth,scroll:document.documentElement.scrollWidth,canvas:{x:canvas.x,right:canvas.right,width:canvas.width,height:canvas.height},overflow:[...document.querySelectorAll('h1,h2,p,button')].filter(e=>e.clientWidth&&e.scrollWidth>e.clientWidth+2).map(e=>e.textContent)};
@@ -82,7 +87,9 @@ async function pilot(p,floors) {
     await p.getByRole('button',{name:'切换全屏'}).click();await p.waitForFunction(()=>!!document.fullscreenElement);
     await capture(p,'desktop-fullscreen');
     await p.getByRole('button',{name:'切换全屏'}).click();await p.waitForFunction(()=>!document.fullscreenElement);
-    await p.keyboard.down('ArrowLeft');await advance(p,6000);await p.keyboard.up('ArrowLeft');
+    await p.keyboard.down('ArrowLeft');await advance(p,6000);
+    assert.ok(Object.values((await state(p)).input).every(v=>!v), 'game over clears held input before physical release');
+    await p.keyboard.up('ArrowLeft');
     assert.equal((await state(p)).phase,'over');
     const record=await p.evaluate(()=>JSON.parse(localStorage.getItem('sui-jump.records.v1')));
     assert.ok(record.height>=climbed.height);assert.equal(record.runs,1);

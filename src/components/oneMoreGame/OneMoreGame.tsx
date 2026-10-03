@@ -43,7 +43,7 @@ export default function OneMoreGame() {
   const modal = (open: boolean) => {
     if (open) {
       model.pause();
-      model.held.clear();
+      model.clearInputs();
       audio.stop();
     }
     settingsRef.current = open;
@@ -103,6 +103,7 @@ export default function OneMoreGame() {
           },
           fps: { target: 60, limit: 60 },
           audio: { noAudio: true },
+          input: { keyboard: false, mouse: false, touch: false, gamepad: false },
           scene: [scene],
         });
         game.canvas.setAttribute("aria-label", "岁己的三庭试炼");
@@ -131,13 +132,17 @@ export default function OneMoreGame() {
     };
     boot();
     const key = (event: KeyboardEvent, down: boolean) => {
-      if (down && (event.ctrlKey || event.metaKey || event.altKey)) return;
+      const source = `keyboard:${event.code}`;
+      // Release the original press even when focus or bindings have changed.
+      if (!down) {
+        model.releaseInput(source);
+        return;
+      }
+      if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
       const { target } = event;
-      if (
-        target instanceof HTMLInputElement ||
-        target instanceof HTMLSelectElement ||
-        target instanceof HTMLTextAreaElement
-      ) return;
+      if (target instanceof Element && target.closest('input, select, textarea, [contenteditable="true"]')) return;
+      const interactive = target instanceof Element && target.closest('button, a[href], [role="button"]');
+      if (interactive && event.code !== "Escape") return;
       if (
         (event.code === model.progress.bindings.pause ||
           (settingsRef.current && event.code === "Escape")) &&
@@ -159,6 +164,8 @@ export default function OneMoreGame() {
         return;
       }
       if (settingsRef.current) return;
+      // Native buttons retain Enter/Space activation and result-screen focus.
+      if (interactive) return;
       if (
         (event.code === "Enter" || event.code === "KeyR") &&
         down &&
@@ -184,7 +191,7 @@ export default function OneMoreGame() {
             ? "right"
             : undefined);
       if (input && input !== "pause") {
-        model.input(input, down);
+        model.input(input, true, source);
         if (model.state.phase === "fight") event.preventDefault();
       }
     };
@@ -192,7 +199,7 @@ export default function OneMoreGame() {
     const up = (event: KeyboardEvent) => key(event, false);
     const pause = () => {
       model.pause("离开庭中，先歇一会儿");
-      model.held.clear();
+      model.clearInputs();
       audio.stop();
       notify();
     };
@@ -209,6 +216,7 @@ export default function OneMoreGame() {
       window.removeEventListener("keyup", up);
       window.removeEventListener("blur", pause);
       document.removeEventListener("visibilitychange", visibility);
+      model.clearInputs();
       model.onSave = undefined;
       resize?.disconnect();
       game?.destroy(true);

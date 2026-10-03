@@ -16,12 +16,10 @@ import {
   FAB_ACTIONS,
   FAB_STYLES,
   fabBlocked,
-  fabForecast,
   createFab,
   endFabTurn,
   liquidation,
   FabStyle,
-  unitCost,
 } from "./fabEngine";
 import {
   advanceSnack,
@@ -48,6 +46,7 @@ import AgiTurnPanel from "./AgiTurnPanel";
 import { readGameSave } from "./save";
 import { SNACK_SKINS, SNACK_SKIN_STORAGE_KEY, SnackSkin } from "./snackSkins";
 import { SnackControls, SnackControlMode, SNACK_CONTROL_STORAGE_KEY } from "./snackControls";
+import { FabForecastPanel, FabQuarterPanel } from "./FabFinancePanel";
 import styles from "./miniGames.module.css";
 
 const TITLES = { agi: "智能纪元", fab: "晶圆周期", snack: "主播，别嚼了！" };
@@ -505,7 +504,6 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
       window.scrollTo({ top: window.scrollY + slot.getBoundingClientRect().top - resourceHeight - 12, behavior: 'instant' });
     }
   }, [ended, kind]);
-  const forecast = game.kind === "fab" ? fabForecast(game) : null;
   const startPanel =
     !started || (game.kind === "snack" && game.phase === "ready");
   const skinName = SNACK_SKINS.find((option) => option.id === skin)!.name;
@@ -617,9 +615,9 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
               detail="低于 40 启动将失控"
             />
             <Metric
-              label="季度收入"
+              label="收入基数"
               value={money(aiIncome(game))}
-              detail={`算力 ${game.compute} / 效率 ${game.efficiency}`}
+              detail="结算另计市场与监管调整"
             />
             <Metric label="社区" value={`${game.community}`} detail="用户与开发者生态" />
             <Metric label="信誉" value={`${game.reputation}`} detail="市场信任与口碑" />
@@ -644,7 +642,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
               detail={`满产 ${capacity(game.player)} 批 / 季`}
             />
             <Metric
-              label="上季净收益"
+              label={game.lastQuarter ? `第 ${game.lastQuarter.turn} 季经营净额` : "上季经营净额"}
               value={money(game.player.profit)}
               detail={`制程 ${game.player.tech} 级 · ${game.player.fabs} 座厂`}
             />
@@ -850,6 +848,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
                 </p>
               </div>
             )}
+            {game.kind === "fab" && game.lastQuarter && <FabQuarterPanel report={game.lastQuarter} />}
             {game.kind === "fab" && started && (
 <section className={styles.standings}>
               <h2>清算资金排名</h2>
@@ -992,7 +991,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
             ) : (
               <>
                 {game.kind === "agi" && <AgiTurnPanel game={game} change={commit} />}
-                {game.kind === "fab" && forecast && (
+                {game.kind === "fab" && (
                   <>
                     <div className={styles.controlHeading}>
                       <h2>生产与销售</h2>
@@ -1047,19 +1046,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
                         ))}
                       </fieldset>
                     ))}
-                    <div className={styles.forecast}>
-                      <strong>
-                        本季生产 {forecast.produced} 批 · 挂单{" "}
-                        {forecast.offered} 批
-                      </strong>
-                      <p>
-                        报价 {money(forecast.quote)} / 批<br />
-                        生产、维护与利息 {money(forecast.cost)}
-                        <br />
-                        单位成本 {unitCost(game.player).toFixed(2)} M · 仓储另计
-                      </p>
-                      <small>挂单不保证成交，订单由所有厂商竞争。</small>
-                    </div>
+                    <FabForecastPanel game={game} />
                     <div className={styles.controlHeading}>
                       <h2>资本决策</h2>
                       <span>{game.actions} 次可用</span>
@@ -1199,11 +1186,12 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
                           aria-label={control.id === "eat" ? "吃一口" : `${controlMode === "toggle" ? "切换" : "按住"}${control.title}`}
                         >
                           <kbd>{control.key}</kbd>
-                          <strong>{control.title}{controlMode === "toggle" && control.id !== "eat" && snackGame.inputs[control.id] ? " · 已开启" : ""}</strong>
-                          <small>{control.hint}</small>
+                          <strong>{control.title}</strong>
+                          <small>{controlMode === "toggle" && control.id !== "eat" && snackGame.inputs[control.id] ? "已开启 · 再点关闭" : control.hint}</small>
                         </button>
                       ))}
                     </div>
+                    {storage !== "本机自动存档" && <p className={styles.footnote} role="status">{storage}</p>}
                     <p className={styles.footnote}>
                       点一下吃一份；{controlMode === "toggle" ? "说话、静音点一下保持，再点关闭。暂停后需重新开启。" : "说话、静音需按住，聚焦按钮后也可按住空格或 Enter。"}嘴里有食物也能接话，但会增加怀疑。
                       1–4 选零食。

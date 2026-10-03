@@ -4,10 +4,11 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import GameShareButton from '@/app/game/GameShareButton';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { escapeStuck, continueExploring, clearHeldActions, createGame, enemyAttack, getObjective, loadGame, maxFlasks, healAmount, maxHp, maxStamina, respawn, saveGame, setPaused, startGame, stepGame, upgrade, upgradeCost, travelToLamp } from './engine';
+import { escapeStuck, continueExploring, clearHeldActions, createGame, enemyAttack, getObjective, loadGame, maxFlasks, healAmount, maxHp, maxStamina, respawn, saveGame, setPaused, startGame, stepGame, upgrade, upgradeCost, travelToLamp, chooseConversation } from './engine';
 import { companionName, createCompanion, guideTargets, leadTo, mainTarget, recommendedTarget, speak, stopLeading, targetLabel, updateCompanion } from './companion';
 import type { CameraControl, GameInput, GameState, PlayerSkin } from './types';
 import { LANDMARKS } from './world';
+import HavenPanel from './HavenPanel';
 import WorldMap from './WorldMap';
 import { riverSeals } from './valley';
 import { ActionControls } from './controls';
@@ -16,7 +17,7 @@ import styles from './nightRain.module.css';
 
 const WorldView = dynamic(() => import('./WorldView'), { ssr: false });
 const STORAGE = 'night-rain-v1';
-type Panel = 'pause' | 'map' | 'companion' | null;
+type Panel = 'pause' | 'map' | 'companion' | 'story' | 'journal' | null;
 type GameWindow = Window & { render_game_to_text?: () => string; advanceTime?: (ms: number) => void; nightRain?: {
   getState: () => GameState; input: (action: GameInput) => void; resetCamera: () => void; save: () => void;
 } };
@@ -57,6 +58,7 @@ export default function NightRain() {
     } catch { setStorageError(true); return false; }
   }, []);
   const showPanel = useCallback((next: Panel) => {
+    if (next !== 'story') stateRef.current.haven.talking = null;
     panelRef.current = next; setPanelState(next); setPaused(stateRef.current, !!next);
     clearInput(); cancelVoice(); redraw();
     if (next) controls.current?.release(); else controls.current?.capture();
@@ -85,22 +87,24 @@ sprint: pad?.sprint,
       heavyHeld: held.has('k') || controls.current?.heavyHeld,
       aim: Math.atan2(-Math.sin(yaw), -Math.cos(yaw)),
     };
-    const previousLamps = s.litLamps.length; const previousRest = s.restCount; const previousCollected = s.collected.length; const previousDoors = Number(s.shortcut) + Number(s.templeGate) + Number(s.harborGate) + s.chapterGates.length + s.valleyGates.length;
+    const previousLamps = s.litLamps.length; const previousRest = s.restCount; const previousCollected = s.collected.length; const previousDoors = Number(s.shortcut) + Number(s.templeGate) + Number(s.harborGate) + s.chapterGates.length + s.valleyGates.length + s.haven.gates.length;
     const previousPosition = { x: s.player.x, z: s.player.z };
+    const previousEchoes = s.haven.echoes;
     const before = s.time; const previousMessage = s.messageSerial;
     stepGame(s, ms, action);
+    if (s.haven.talking) showPanel('story');
     if (Math.hypot(s.player.x - previousPosition.x, s.player.z - previousPosition.z) > 30) {
       cc.position = { ...s.player }; cc.path = []; cc.targetId = null; cc.status = 'following';
       camera.current.reset += 1; save();
     }
     updateCompanion(cc, s, s.time - before);
-    if ((s.litLamps.length !== previousLamps || s.restCount !== previousRest || s.collected.length !== previousCollected || previousDoors !== Number(s.shortcut) + Number(s.templeGate) + Number(s.harborGate) + s.chapterGates.length + s.valleyGates.length) && save() && (s.restCount !== previousRest || s.litLamps.length !== previousLamps)) setRecordedAt(s.time);
+    if ((s.haven.echoes !== previousEchoes || s.litLamps.length !== previousLamps || s.restCount !== previousRest || s.collected.length !== previousCollected || previousDoors !== Number(s.shortcut) + Number(s.templeGate) + Number(s.harborGate) + s.chapterGates.length + s.valleyGates.length + s.haven.gates.length) && save() && (s.restCount !== previousRest || s.litLamps.length !== previousLamps)) setRecordedAt(s.time);
     if (cc.enabled && s.messageSerial !== previousMessage && (s.interpretation || s.messageKind === 'hint')) speak(cc, s, s.interpretation || s.message, 8);
     pending.current = { x: 0, z: 0 };
     // Public input is one action per advance, never a mutation hook.
     if (external.current) external.current = { x: action.x, z: action.z, sprint: action.sprint, dashHeld: action.dashHeld, heavyHeld: action.heavyHeld, guardHeld: action.guardHeld, aim: action.aim };
     if (s.mode !== 'playing') { controls.current?.release(); clearInput(); cancelVoice(); save(); }
-  }, [cancelVoice, clearInput, save]);
+  }, [cancelVoice, clearInput, save, showPanel]);
   useEffect(() => {
     try {
       saved.current = loadGame(localStorage.getItem(STORAGE)); setCanResume(!!saved.current && saved.current.mode !== 'title');
@@ -140,7 +144,7 @@ sprint: pad?.sprint,
       if (key === 'escape' && document.pointerLockElement === root.current) { event.preventDefault(); if (!event.repeat) showPanel('pause'); return; }
       if (key === 'escape' || key === 'p') { event.preventDefault(); if (!event.repeat) showPanel(panelRef.current ? null : 'pause'); return; }
       if (event.target instanceof HTMLElement && /INPUT|SELECT|TEXTAREA/.test(event.target.tagName)) return;
-      if (key === 'm' || key === 'c') { event.preventDefault(); if (!event.repeat && stateRef.current.mode === 'playing') showPanel(panelRef.current ? null : key === 'm' ? 'map' : 'companion'); return; }
+      if (key === 'm' || key === 'c' || key === 'n') { event.preventDefault(); if (!event.repeat && stateRef.current.mode === 'playing') showPanel(panelRef.current ? null : key === 'm' ? 'map' : key === 'n' ? 'journal' : 'companion'); return; }
       if (key === 'f10') { event.preventDefault(); if (!event.repeat) fullscreen(); return; }
       if (panelRef.current || stateRef.current.mode !== 'playing' || devices.altHeld || event.altKey) return;
       if (event.target instanceof HTMLButtonElement && (key === ' ' || key === 'enter')) return;
@@ -222,7 +226,7 @@ sprint: pad?.sprint,
   );
   const error = useCallback(() => { setSceneError(true); showPanel('pause'); }, [showPanel]);
   const sceneReady = useCallback(() => setReady(true), []);
-  const boss = g.enemies.find(e => ['boss', 'nana', 'azi', 'captain', 'regent', 'warden', 'abbot', 'serpent'].includes(e.kind) && e.aggro && e.hp > 0);
+  const boss = g.enemies.find(e => ['boss', 'nana', 'azi', 'captain', 'regent', 'warden', 'abbot', 'serpent', 'elegist'].includes(e.kind) && e.aggro && e.hp > 0);
   const locked = g.enemies.find(e => e.id === g.lockedId);
   const usingPad = controls.current?.source === 'gamepad';
   const threat = c.enabled ? g.enemies.find(e => e.action === 'windup' && e.timer < 0.3 && Math.abs(e.y - g.player.y) < 1 && Math.hypot(e.x - g.player.x, e.z - g.player.z) < 4) : undefined;
@@ -290,18 +294,19 @@ onPointerCancel={() => { drag.current = null; }}
           {c.enabled && <div className={styles.keyHelp}>{usingPad ? '左摇杆移动 · 右摇杆视角 · RB / RT 攻击 · LB 轻按弹反 / 按住防御 · A 跳跃 · B 轻按闪避 / 按住跑 · R3 锁定 · Menu 暂停' : `${controls.current?.locked ? '鼠标转视角 · 按住 Alt 显示光标' : controls.current?.altHeld ? '松开 Alt 返回视角控制' : controls.current?.lockMessage || '点击画面捕获鼠标'} · WASD 移动 · 左 / 右键攻击 · 空格跳跃 · Shift 轻按闪避 / 按住跑`}</div>}
         </>
 )}
-        {boss && !panel && <div className={styles.boss}><p>{boss.name}<span>{boss.kind === 'serpent' ? boss.phase === 2 ? '千流逆行' : '沉殿守愿' : boss.kind === 'warden' ? boss.phase === 2 ? '沉舟起浪' : '缆锁西流' : boss.kind === 'abbot' ? boss.phase === 2 ? '无声回杖' : '山寺听澜' : boss.kind === 'regent' ? boss.phase === 2 ? '百灯尽燃' : '长夜守灯' : boss.kind === 'captain' ? boss.phase === 2 ? '铜印碎甲' : '象门守印' : boss.kind === 'nana' ? boss.phase === 2 ? '七潮叠浪' : '潮声初起' : boss.kind === 'azi' ? boss.phase === 2 ? '夜曲 · 变奏' : '夜曲 · 序拍' : boss.phase === 2 ? '第二式 · 铁伞破裂' : '守街第一式'}</span></p><div className={styles.meter}><i style={{ width: `${(boss.hp / boss.maxHp) * 100}%` }} /></div><div className={`${styles.meter} ${styles.posture}`}><i style={{ width: `${(boss.posture / boss.maxPosture) * 100}%` }} /></div></div>}
+        {boss && !panel && <div className={styles.boss}><p>{boss.name}<span>{boss.kind === 'elegist' ? boss.phase === 2 ? '抹名余烬' : '末灯守簿' : boss.kind === 'serpent' ? boss.phase === 2 ? '千流逆行' : '沉殿守愿' : boss.kind === 'warden' ? boss.phase === 2 ? '沉舟起浪' : '缆锁西流' : boss.kind === 'abbot' ? boss.phase === 2 ? '无声回杖' : '山寺听澜' : boss.kind === 'regent' ? boss.phase === 2 ? '百灯尽燃' : '长夜守灯' : boss.kind === 'captain' ? boss.phase === 2 ? '铜印碎甲' : '象门守印' : boss.kind === 'nana' ? boss.phase === 2 ? '七潮叠浪' : '潮声初起' : boss.kind === 'azi' ? boss.phase === 2 ? '夜曲 · 变奏' : '夜曲 · 序拍' : boss.phase === 2 ? '第二式 · 铁伞破裂' : '守街第一式'}</span></p><div className={styles.meter}><i style={{ width: `${(boss.hp / boss.maxHp) * 100}%` }} /></div><div className={`${styles.meter} ${styles.posture}`}><i style={{ width: `${(boss.posture / boss.maxPosture) * 100}%` }} /></div></div>}
       </>
 )}
       {panel && g.mode === 'playing' && (
-<div className={styles.scrim}><section className={`${styles.panel} ${panel === 'map' ? styles.mapPanel : ''}`} role="dialog" aria-modal="true" aria-label={panel === 'map' ? '旧城与雾河地图' : panel === 'companion' ? '与精灵交谈' : '旅程暂停'}>
+<div className={styles.scrim}><section className={`${styles.panel} ${panel === 'map' ? styles.mapPanel : ''}`} role="dialog" aria-modal="true" aria-label={panel === 'story' ? '与归人交谈' : panel === 'journal' ? '归灯手记' : panel === 'map' ? '旧城与雾河地图' : panel === 'companion' ? '与精灵交谈' : '旅程暂停'}>
         <button className={styles.close} onClick={() => showPanel(null)} aria-label="关闭">×</button>
         <p className={styles.eyebrow}>雨暂时停在这一刻</p>
-        <h2>{panel === 'map' ? '旧城与雾河地图' : panel === 'companion' ? '我陪你慢慢找' : '歇一会儿'}</h2>
-        {panel === 'map' ? (
+        {panel !== 'story' && <h2>{panel === 'journal' ? '归灯手记' : panel === 'map' ? '旧城与雾河地图' : panel === 'companion' ? '我陪你慢慢找' : '歇一会儿'}</h2>}
+        {panel === 'story' || panel === 'journal' ? <><HavenPanel state={g} mode={panel} guide={id => { if (!c.enabled) c.enabled = true; guideTo(id); }} choose={choice => { if (chooseConversation(g, choice)) { save(); redraw(); if (!g.haven.talking) showPanel(null); } }} /><button onClick={() => showPanel(panel === 'story' ? 'journal' : null)}>{panel === 'story' ? '翻开归灯手记' : '继续旅程'}</button></> : panel === 'map' ? (
 <>
           <p>{getObjective(g)}</p>
           {g.chapterComplete && <p className={styles.mapLegend}>西岸水闸 {g.collected.includes('mill-sluice') ? '已开' : '未开'} · 东岸水闸 {g.collected.includes('monastery-sluice') ? '已开' : '未开'} · 渡船 {g.collected.includes('ferry-winch') ? '已恢复' : '待修缆'}</p>}
+          <button onClick={() => showPanel('journal')}>归灯手记 · 人物与支路 N</button>
           <WorldMap state={g} />
           {c.enabled && <button onClick={() => guideTo(g.collected.includes('food') ? mainTarget(g) : 'castle-note')}>沿主线带路 · {targetLabel(g.collected.includes('food') ? mainTarget(g) : 'castle-note')}</button>}
           {LANDMARKS.some(l => l.id === g.nearbyId && l.kind === 'rest' && g.litLamps.includes(l.id)) && g.litLamps.length > 1 && (
@@ -314,7 +319,7 @@ onClick={() => {
 ))}<small className={styles.mapLegend}>保留血量和药瓶；补给请与雨灯交互。</small></div>
 )}
           <button onClick={rescue}>脱离卡死 · 返回{g.checkpoint === 'room' ? '旅馆' : targetLabel(g.checkpoint)}</button>
-          <small className={styles.mapLegend}>白点 · 你 · 菱灯 · 休息处 · 红线 · 闭门 · 青舟 · 渡埠<br />归灯 · {g.checkpoint === 'room' ? '旅馆' : targetLabel(g.checkpoint)} · 近道 {Number(g.shortcut) + Number(g.templeGate) + Number(g.harborGate) + g.chapterGates.filter(id => id !== 'archive-door').length + g.valleyGates.filter(id => ['cliff-gate', 'reed-gate'].includes(id)).length + Number(g.collected.includes('ferry-winch'))} / 10</small>
+          <small className={styles.mapLegend}>白点 · 你 · 菱灯 · 休息处 · 红线 · 闭门 · 青舟 · 渡埠<br />归灯 · {g.checkpoint === 'room' ? '旅馆' : targetLabel(g.checkpoint)} · 近道 {Number(g.shortcut) + Number(g.templeGate) + Number(g.harborGate) + g.chapterGates.filter(id => id !== 'archive-door').length + g.valleyGates.filter(id => ['cliff-gate', 'reed-gate'].includes(id)).length + Number(g.collected.includes('ferry-winch')) + g.haven.gates.filter(id => id !== 'well-door').length + Number(g.haven.recruits.includes('boatwright'))} / 13</small>
         </>
 ) : panel === 'companion' ? (
 <>
@@ -334,6 +339,7 @@ onClick={() => {
 <>
           <p>{getObjective(g)}</p><button className={styles.primary} onClick={() => showPanel(null)}>继续旅程</button>
           {settings}
+          <button onClick={() => showPanel('journal')}>归灯手记 · 人物与支路 N</button>
           <button onClick={rescue}>脱离卡死 · 返回{g.checkpoint === 'room' ? '旅馆' : targetLabel(g.checkpoint)}</button>
           <p className={styles.rescueNote}>回到记录的落脚点，保留当前血量、药瓶与探索进度。</p>
           <details><summary>镜头设置</summary><div className={styles.lookSettings}>
@@ -342,7 +348,7 @@ onClick={() => {
             <label className={styles.toggle} htmlFor="invert-look"><input id="invert-look" type="checkbox" checked={controls.current?.lookSettings.invertY ?? false} onChange={e => { controls.current?.setLook({ invertY: e.target.checked }); redraw(); }} />反转上下视角</label>
             <small>手柄十字键上下选择，左右调节速度。</small>
           </div></details>
-          <details><summary>操作与战斗手记</summary><p>WASD 移动，鼠标直接转视角，按住 Alt 显示光标，松开继续。点击画面可重新捕获鼠标，Esc 释放并暂停。滚轮缩放，左键 / J 轻击，右键 / K 重击（按住蓄力），中键 / Q 锁定，空格跳跃，Shift 轻按松开闪避、按住疾跑，F 轻按弹反、按住防御（L 备用）、R 喝药回血、E 交互。</p><p>手柄：左摇杆移动、L3 切换奔跑（停下结束），右摇杆视角、R3 锁定。RB 轻击、RT 重击（按住蓄力）、LB 轻按弹反 / 按住防御、B 轻按松开闪避／按住疾跑、A 跳跃、Y 交互、X 喝药回血、LT 找精灵，雨灯旁十字键↑整备。View 看地图，Menu 暂停。菜单用十字键或左摇杆选择，A 确认、B 返回。按钮按 Xbox 标准标注，其他标准手柄使用对应位置。</p><p>连续轻击可接横斩、返斩、挑斩。按住重击蓄力，金光亮起后松手释放；疾跑中攻击会突刺或回旋，空中攻击会横斩或下砸。攻击起手可用方向键／摇杆或镜头修正朝向，出手后转向减弱。看清敌人抬手再弹反。持续按住可架伞防住正面攻击，消耗体力并受少量伤害；体力不足会破防。背后攻击与红色横扫无法防住。打空或贪刀会消耗体力；红色横扫用闪避。架势打满后靠近轻击处决。中庭雨灯首次交互只点火、记录复活点，不补给也不刷新敌人；再次交互免费休息，补满生命与药瓶并复活普通敌人。强化装备才消耗夜市钱。所有已开启的门、宝箱和药瓶升级会保留。中庭、榕树、经院、王寺、雾河渡村、竹寺与汇流台各有一盏补给雨灯；在灯旁打开地图，可前往已经点亮的雨灯。残钟雨寺、蓄水院和听瀑莲亭藏着提升瓶数的露瓶。第一关敲钟后，从钟台东侧后山门进入第二关。水车院与山寺两岸可任意顺序探索，亲手转动两闸后可进沉殿。修复水车院系缆后，渡船连接旧城、渡村与水车院。灵竹露增加每瓶恢复量，行装可升到十五级。</p><p>手机左侧方向移动，右侧拖动镜头，动作按钮出招。C 找精灵，M 看地图，F10 全屏。</p></details>
+          <details><summary>操作与战斗手记</summary><p>WASD 移动，鼠标直接转视角，按住 Alt 显示光标，松开继续。点击画面可重新捕获鼠标，Esc 释放并暂停。滚轮缩放，左键 / J 轻击，右键 / K 重击（按住蓄力），中键 / Q 锁定，空格跳跃，Shift 轻按松开闪避、按住疾跑，F 轻按弹反、按住防御（L 备用）、R 喝药回血、E 交互。</p><p>手柄：左摇杆移动、L3 切换奔跑（停下结束），右摇杆视角、R3 锁定。RB 轻击、RT 重击（按住蓄力）、LB 轻按弹反 / 按住防御、B 轻按松开闪避／按住疾跑、A 跳跃、Y 交互、X 喝药回血、LT 找精灵，雨灯旁十字键↑整备。View 看地图，Menu 暂停。菜单用十字键或左摇杆选择，A 确认、B 返回。按钮按 Xbox 标准标注，其他标准手柄使用对应位置。</p><p>连续轻击可接横斩、返斩、挑斩。按住重击蓄力，金光亮起后松手释放；疾跑中攻击会突刺或回旋，空中攻击会横斩或下砸。攻击起手可用方向键／摇杆或镜头修正朝向，出手后转向减弱。看清敌人抬手再弹反。持续按住可架伞防住正面攻击，消耗体力并受少量伤害；体力不足会破防。背后攻击与红色横扫无法防住。打空或贪刀会消耗体力；红色横扫用闪避。架势打满后靠近轻击处决。中庭雨灯首次交互只点火、记录复活点，不补给也不刷新敌人；再次交互免费休息，补满生命与药瓶并复活普通敌人。强化装备才消耗夜市钱。所有已开启的门、宝箱和药瓶升级会保留。中庭、榕树、经院、王寺、雾河渡村、竹寺与汇流台各有一盏补给雨灯；在灯旁打开地图，可前往已经点亮的雨灯。残钟雨寺、蓄水院和听瀑莲亭藏着提升瓶数的露瓶。第一关敲钟后，从钟台东侧后山门进入第二关。水车院与山寺两岸可任意顺序探索，亲手转动两闸后可进沉殿。修复水车院系缆后，渡船连接旧城、渡村与水车院。灵竹露增加每瓶恢复量，行装可升到十五级。旅馆南桥通往归灯庭：阿莲提供寄存钱币，庭灯可以休息和行旅。旧寺书房与盐仓船坞有可邀请的归人，按 N 查看手记与重读线索；交谈会暂停战斗。</p><p>手机左侧方向移动，右侧拖动镜头，动作按钮出招。C 找精灵，M 看地图，F10 全屏。</p></details>
           <div className={styles.row}><button onClick={fullscreen}>切换全屏</button><button onClick={resetCamera}>镜头归正</button><button onClick={() => setRestartConfirm(true)}>重新开始</button><Link href="/demos">离开旧城</Link></div>
         </>
 )}
@@ -350,11 +356,11 @@ onClick={() => {
 )}
       {(g.mode === 'dead' || g.mode === 'ending') && (
 <div className={styles.scrim}><section className={styles.panel} data-game-menu>
-        <p className={styles.eyebrow}>{g.mode === 'dead' ? '雨灯未熄' : g.valleyComplete ? '第二关完成 · 雾河回响' : g.chapterComplete ? '第一关完成 · 长夜归灯' : '旅居手记 · 夜市小憩'}</p>
-        <h2>{g.mode === 'dead' ? '再走一次就好' : g.valleyComplete ? '钟声越山，愿灯归水' : g.chapterComplete ? '整座城，等到了钟声' : '吃饱了，继续北行'}</h2>
-        <p>{g.mode === 'dead' ? (c.enabled ? '夜市钱留在倒下的地方。记住那一下起手，下次我们一起过去。' : '雨收走余温，灯替归人守夜。') : g.valleyComplete ? '两岸的水重新汇流。渡船又能回城，竹林里的风铃，也等到了归人。灯随雾河而下，我们仍可以沿路回去。' : g.chapterComplete ? '归夜钟终于响了。钟台东侧的后山门已经可以打开，沿山阶下去，第二关「雾河回响」正在等你。' : '炉火暖了胃。香料街在夜市北口，王寺的灯仍照着长夜。下一程，去城的高处。'}</p>
-        <p>发现 {g.collected.filter(id => id !== 'laptop').length} 处 · 弹反 {g.parries} 次 · 开启近道 {Number(g.shortcut) + Number(g.templeGate) + Number(g.harborGate) + g.chapterGates.filter(id => id !== 'archive-door').length + g.valleyGates.filter(id => ['cliff-gate', 'reed-gate'].includes(id)).length + Number(g.collected.includes('ferry-winch'))} / 10 · 归灯 {g.checkpoint === 'room' ? '旅馆' : targetLabel(g.checkpoint)}</p>
-        {g.mode === 'dead' ? <button data-game-primary className={styles.primary} onClick={() => { respawn(g); c.position = { ...g.player }; c.path = []; c.targetId = null; c.status = 'following'; showPanel(null); resetCamera(); save(); }}>回到雨灯</button> : <><button data-game-primary className={styles.primary} onClick={() => { continueExploring(g); showPanel(null); save(); }}>{g.valleyComplete ? '继续探索两岸' : '继续探索旧城'}</button>{g.chapterComplete && !g.valleyComplete && <button onClick={() => { continueExploring(g); guideTo('valley-entry'); save(); }}>去雾河第二关</button>}{c.enabled && <button onClick={() => { continueExploring(g); guideTo('tide-note'); save(); }}>让精灵带我去潮汐港</button>}<button onClick={() => setRestartConfirm(true)}>再走一场雨夜</button><Link href="/demos">回到游戏实验室</Link></>}
+        <p className={styles.eyebrow}>{g.mode === 'dead' ? '雨灯未熄' : g.haven.ending ? '归灯暗线 · 灯下无名' : g.valleyComplete ? '第二关完成 · 雾河回响' : g.chapterComplete ? '第一关完成 · 长夜归灯' : '旅居手记 · 夜市小憩'}</p>
+        <h2>{g.mode === 'dead' ? '再走一次就好' : g.haven.ending ? g.haven.ending === 'remember' ? '庭灯有名，归路有声' : '愿灯远行，空椅留温' : g.valleyComplete ? '钟声越山，愿灯归水' : g.chapterComplete ? '整座城，等到了钟声' : '吃饱了，继续北行'}</h2>
+        <p>{g.mode === 'dead' ? (c.enabled ? '夜市钱留在倒下的地方。记住那一下起手，下次我们一起过去。' : '雨收走余温，灯替归人守夜。') : g.haven.ending ? g.haven.ending === 'remember' ? '你把被删掉的名字刻回庭灯。获得记名结：最大体力 +15。回到归灯庭，弥音、温叔与阿莲都有新的话想对你说。' : '你让未尽的愿灯顺水离开。获得归水结：每瓶恢复 +15。归灯庭会留下空椅，也会迎来新的归人。' : g.valleyComplete ? '两岸的水重新汇流。渡船又能回城，竹林里的风铃，也等到了归人。灯随雾河而下，我们仍可以沿路回去。' : g.chapterComplete ? '归夜钟终于响了。钟台东侧的后山门已经可以打开，沿山阶下去，第二关「雾河回响」正在等你。' : '炉火暖了胃。香料街在夜市北口，王寺的灯仍照着长夜。下一程，去城的高处。'}</p>
+        <p>发现 {g.collected.filter(id => id !== 'laptop').length} 处 · 弹反 {g.parries} 次 · 开启近道 {Number(g.shortcut) + Number(g.templeGate) + Number(g.harborGate) + g.chapterGates.filter(id => id !== 'archive-door').length + g.valleyGates.filter(id => ['cliff-gate', 'reed-gate'].includes(id)).length + Number(g.collected.includes('ferry-winch')) + g.haven.gates.filter(id => id !== 'well-door').length + Number(g.haven.recruits.includes('boatwright'))} / 13 · 归灯 {g.checkpoint === 'room' ? '旅馆' : targetLabel(g.checkpoint)}</p>
+        {g.mode === 'dead' ? <button data-game-primary className={styles.primary} onClick={() => { respawn(g); c.position = { ...g.player }; c.path = []; c.targetId = null; c.status = 'following'; showPanel(null); resetCamera(); save(); }}>回到雨灯</button> : <><button data-game-primary className={styles.primary} onClick={() => { continueExploring(g); showPanel(null); save(); }}>{g.haven.ending ? '回到旅途 · 重访归灯庭' : g.valleyComplete ? '继续探索两岸' : '继续探索旧城'}</button>{g.chapterComplete && !g.valleyComplete && <button onClick={() => { continueExploring(g); guideTo('valley-entry'); save(); }}>去雾河第二关</button>}{c.enabled && <button onClick={() => { continueExploring(g); guideTo('tide-note'); save(); }}>让精灵带我去潮汐港</button>}<button onClick={() => setRestartConfirm(true)}>再走一场雨夜</button><Link href="/demos">回到游戏实验室</Link></>}
       </section></div>
 )}
       {sceneError && <div className={styles.scrim}><section className={styles.panel} role="alertdialog" aria-label="恢复游戏画面"><h2>画面暂时中断</h2><p>旅程已暂停，试试重新载入画面。</p><button className={styles.primary} onClick={() => { setSceneError(false); setReady(false); setSceneVersion(v => v + 1); }}>重新载入 3D 画面</button></section></div>}

@@ -601,4 +601,8 @@
 .energyActions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 8px; }
 .energyActions button { padding: 8px 10px; min-height: 40px; border: 1px solid #adbf8b55; border-radius: 3px; background: #213d30; color: #d6e2c2; font-size: 11px; }
 .energyActions a { color: #c8dfaa; text-underline-offset: 3px; }
+.saveNotice { margin: 20px 0; padding: 18px; border: 1px solid #d5af6d; border-radius: 4px; background: #263d30; color: #f0e1bb; font-size: 13px; line-height: 1.8; overflow-wrap: anywhere; }
+.saveNotice p { margin: 8px 0; }
+.saveNotice > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.saveNotice button { min-height: 44px; max-width: 100%; padding: 8px 14px; border: 1px solid #d5af6d80; border-radius: 3px; background: #20382b; color: #f0e1bb; white-space: normal; }
 @media (max-width: 680px) { .energyGuide { scroll-margin-top: 20px; } }

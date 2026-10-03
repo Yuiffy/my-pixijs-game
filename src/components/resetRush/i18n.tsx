@@ -30,6 +30,22 @@ export function createResetI18n() {
 }
 
 const EN: Record<string, string> = {
+  存档需要恢复: "Save recovery needed",
+  牌局尚未保存: "Game not saved yet",
+  "旧存档无法读取，原文已保留。可恢复上一份进度，或另开仅本页游玩的新局。选择替换前不会自动保存。": "Your save could not be read. The original is preserved. Recover a previous position or play a new game on this page without saving. Nothing is overwritten until you choose to replace it.",
+  "无法读取设备存储。本页仍可游玩，暂不自动保存；恢复访问后请重试。": "Device storage cannot be read. You can still play on this page without autosave. Retry when access is restored.",
+  "保存失败，当前进度仍在页面中。请重试保存，或先下载牌局再离开。": "Saving failed. Your current progress is still on this page. Retry saving or download your game before leaving.",
+  下载原存档: "Download original save",
+  恢复上一份可用存档: "Recover previous valid save",
+  下载当前牌局: "Download current game",
+  以当前牌局替换存档: "Replace save with current game",
+  重试保存: "Retry saving",
+  重新读取存档: "Read saves again",
+  确认恢复与保存: "Confirm recovery and saving",
+  "确认后将以选中的牌局继续。无法读取的原文会先另存保留，可用的旧进度也会保留备份；本页其他未保存进度会被替换。": "Continue with the selected game. Unreadable originals will be preserved separately and valid previous progress will be backed up first. Other unsaved progress on this page will be replaced.",
+  "保存仍不可用，原存档未被替换。可先下载备份，稍后再试。": "Saving is still unavailable. The original save has not been replaced. Download a copy and try again later.",
+  确认使用并保存: "Use this game and save",
+  暂不替换: "Keep the original for now",
   近期模型工作室: "Modern model studio",
   "从最近的模型时代开始。": "Start in the recent model era.",
   "开局已配备 GPT-5.6 Luna、GPT-5.6 Sol 和 GPT-6 Astra；不再从早期型号一路追赶。": "Start with GPT-5.6 Luna, GPT-5.6 Sol and GPT-6 Astra, without replaying years of releases.",

@@ -1,7 +1,8 @@
 export const zh = {
   pageTitle: "RESET / 开蹬！ · 开发者的额度桌游",
   language: "语言",
-  restartCopy: "当前牌局的自动存档会被新局替换。新局从 $20 账号起步，可重新选择赛程和种子。",
+  saveCandidate: "可用牌局：第 {{day}} 天 · {{minute}}",
+  restartCopy: "回到准备页会保留当前存档，直到新局成功保存才替换。新局从 $20 账号起步，可重新选择赛程和种子。",
   rules: {
     lead: "人负责安排，模型负责跑。把重置前的每一分钟变成作品。",
     dayTitle: "每天 480 分钟、12 精力。",
@@ -41,7 +42,8 @@ export const zh = {
 export const en = {
   pageTitle: "RESET / Build On! · A Developer Board Game",
   language: "Language",
-  restartCopy: "This new game will replace your autosave. You will start with a $20 account and can choose a new game length and seed.",
+  saveCandidate: "Available game: day {{day}} · {{minute}}",
+  restartCopy: "Returning to setup keeps your current save. A successfully saved new game will replace your autosave. You will start with a $20 account and can choose a new game length and seed.",
   rules: {
     lead: "You make the decisions. The models do the work. Turn every minute before the next reset into something you can ship.",
     dayTitle: "480 minutes and 12 energy each day.",

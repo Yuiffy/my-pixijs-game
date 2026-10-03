@@ -46,6 +46,22 @@ function Resident({ id, stateRef }: { id: string; stateRef: StateRef }) {
 );
 }
 
+function MooredBoat({ x, z, stateRef }: { x: number; z: number; stateRef: StateRef }) {
+  const root = useRef<THREE.Group>(null);
+  useFrame(() => { if (root.current) root.current.position.y = -0.2 + Math.sin(stateRef.current.time * 0.7 + x) * 0.08; });
+  return (
+    <group ref={root} position={[x, -0.2, z]}>
+      <mesh castShadow><boxGeometry args={[3.4, 0.65, 8]} /><meshStandardMaterial color="#75533b" /></mesh>
+      {[-1, 1].map(side => <mesh key={side} position={[0, 0.15, side * 4.3]} rotation={[(side * Math.PI) / 2, Math.PI / 4, 0]} scale={[1, 1, 0.35]} castShadow><coneGeometry args={[2.4, 3.5, 4]} /><meshStandardMaterial color="#896748" /></mesh>)}
+      <mesh position={[0, 0.38, 0]}><boxGeometry args={[2.9, 0.1, 7.4]} /><meshStandardMaterial color="#334940" /></mesh>
+      {[-2.5, 0, 2.5].map(seat => <mesh key={seat} position={[0, 0.68, seat]} castShadow><boxGeometry args={[3.1, 0.18, 0.65]} /><meshStandardMaterial color="#b89461" /></mesh>)}
+      {[-1.5, 1.5].flatMap(px => [-2, 2].map(pz => <mesh key={`${px}-${pz}`} position={[px, 1.7, pz]} castShadow><boxGeometry args={[0.12, 2.8, 0.12]} /><meshStandardMaterial color="#ba9c70" /></mesh>))}
+      <mesh position={[0, 3.1, 0]} castShadow><boxGeometry args={[3.8, 0.16, 4.8]} /><meshStandardMaterial color="#b4a175" /></mesh>
+      <mesh position={[0, 2.4, 1.7]}><boxGeometry args={[0.35, 0.55, 0.35]} /><meshStandardMaterial color="#f0c888" emissive="#c5904e" emissiveIntensity={1.3} /></mesh>
+    </group>
+  );
+}
+
 function HavenView({ stateRef }: { stateRef: StateRef }) {
   const lights = useRef<(THREE.Mesh | null)[]>([]);
   const names = useRef<THREE.Group>(null);
@@ -56,7 +72,15 @@ function HavenView({ stateRef }: { stateRef: StateRef }) {
       b.push({ position: [x, 7.4, z], size: [0.5, 0.08, 0.5], color: '#c1a166' });
     }
     for (let x = -35; x < -25; x += 2) for (let y = 5; y < 8; y += 0.6) b.push({ position: [x, y, 55.9], size: [1.8, 0.12, 0.35], color: '#c8b898' });
-    for (const [x, z] of [[-15, 52], [10, 52], [-32, 44]]) b.push({ position: [x, 4.48, z], size: [2.2, 0.16, 0.7], color: '#b49260' });
+    for (const [x, z] of [[-15, 52], [10, 52], [-32, 44]]) b.push({ position: [x, 5.2, z + 0.27], size: [2.2, 0.45, 0.12], color: '#b49260' });
+    // Books and bundled name slips remain on the physical tables after recruiting.
+    for (const [x, y, z] of [[-31, 5.3, 51], [-272, 9.2, -394]]) for (let i = 0; i < 10; i += 1) b.push({ position: [x - 1.5 + (i % 5) * 0.65, y + Math.floor(i / 5) * 0.16, z], size: [0.45, 0.13, 0.7], color: ['#bea37a', '#708b8a', '#b39283'][i % 3] });
+    for (let i = 0; i < 20; i += 1) b.push({ position: [-66.75, 6.45 + (i % 3) * 0.76, -33 + Math.floor(i / 3) * 1.2], size: [0.5, 0.53, 0.7], color: ['#baa17d', '#8b898f', '#879e8c'][i % 3] });
+    for (let i = 0; i < 16; i += 1) b.push({ position: [-22.5, 0.5 + (i % 3) * 0.82, 108 + Math.floor(i / 3) * 2], size: [0.4, 0.6, 1.1], color: '#b3a48a' });
+    for (const x of [-20, 2]) for (let z = 124; z <= 150; z += 5) {
+      b.push({ position: [x, 6.9, z], size: [0.04, 2.2, 0.04], color: '#b4ac89' });
+      b.push({ position: [x, 5.55, z], size: [0.55, 0.7, 0.55], color: '#ceb887' });
+    }
     for (let z = 108; z <= 148; z += 8) for (const x of [-22, 4]) {
       b.push({ position: [x, 2.5, z], size: [0.6, 5, 0.6], color: '#8d9b86' });
       b.push({ position: [x, 4.5, z], size: [1, 0.3, 1], color: '#b6a774' });
@@ -71,12 +95,14 @@ function HavenView({ stateRef }: { stateRef: StateRef }) {
   return (
 <group name="returning-lantern-sanctuary">
     <GeometryBatch boxes={boxes} />
+    <MooredBoat x={35.5} z={58} stateRef={stateRef} /><MooredBoat x={-291} z={-351} stateRef={stateRef} />
+    <group position={[-20.4, 5.15, 41]}><mesh castShadow><cylinderGeometry args={[0.55, 0.43, 0.55, 12]} /><meshStandardMaterial color="#c2a878" metalness={0.35} roughness={0.6} /></mesh><mesh position={[0, -0.17, 0]} rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.48, 0.06, 6, 12]} /><meshStandardMaterial color="#efb55f" emissive="#c27133" emissiveIntensity={1.7} /></mesh></group>
     {HAVEN_LANDMARKS.filter(l => l.kind === 'npc' && l.id !== 'well-choice').map(l => <Resident key={l.id} id={l.id} stateRef={stateRef} />)}
     {[-17, -5, 7].map((x, i) => (
 <group key={x} position={[x, 4, 60]}>
       <mesh position={[0, 0.35, 0]}><cylinderGeometry args={[0.7, 0.85, 0.7, 10]} /><meshStandardMaterial color="#9f9275" /></mesh>
       <mesh ref={m => { lights.current[i] = m; }} position={[0, 1.3, 0]}><octahedronGeometry args={[0.38]} /><meshStandardMaterial color="#d6c69a" emissive="#654327" emissiveIntensity={1.8} /></mesh>
-      <Plaque position={[0, 2.4, 0]} text={['钟', '水', '名'][i]} width={1.6} />
+      <Plaque position={[0, 0.45, -0.76]} text={['钟', '水', '名'][i]} width={0.8} />
     </group>
 ))}
     {Array.from({ length: 14 }, (_, i) => <mesh key={i} ref={m => { lights.current[i + 3] = m; }} position={[i % 2 ? -21 : 17, 7.1, 34 + Math.floor(i / 2) * 5]}><boxGeometry args={[0.38, 0.55, 0.38]} /><meshStandardMaterial color="#f2d3a2" emissive="#e4a65c" emissiveIntensity={1.4} /></mesh>)}

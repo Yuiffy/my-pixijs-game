@@ -66,6 +66,8 @@ export const HAVEN_FERRIES: Record<string, { label: string; position: Vec3 }> = 
 export const HAVEN_OBSTACLES: Obstacle[] = [
   ...HAVEN_GATES.map(g => ({ ...g, h: 4.6, kind: 'gate' as const, gateId: g.id })),
   { x: -5, z: 45, y: 4, w: 0.9, d: 0.9, h: 2.8, kind: 'shrine', landmarkId: 'haven-lamp' },
+  ...[-17, -5, 7].map((x, i) => ({ x, z: 60, y: 4, w: 1.5, d: 1.5, h: 1.9, kind: 'shrine' as const, landmarkId: ['haven-bell', 'haven-water', 'haven-name'][i] })),
+  { x: -9, z: 153, y: 0, w: 1.8, d: 1.8, h: 1.7, kind: 'shrine', landmarkId: 'well-choice' },
 ];
 export const HAVEN_ENEMIES: (Vec3 & { id: string; kind: EnemyKind; name: string; facing: number })[] = [
   { id: 'names-watch', kind: 'duelist', name: '删名巡册人', x: -56, y: 6, z: -25, facing: Math.PI / 2 },
@@ -80,12 +82,31 @@ export const HAVEN_STRUCTURES: Solid[] = [
   { id: 'haven-west-roof', position: [-29, 11.4, 47.5], size: [18, 0.3, 21], color: '#926747' },
   { id: 'haven-east-roof', position: [25, 10, 49], size: [14, 0.3, 17], color: '#886443' },
   { id: 'haven-keeper-roof', position: [-16, 10, 39], size: [12, 0.3, 11], color: '#926747' },
-  ...[-37, -24].flatMap(x => [39, 56].map(z => ({ id: `haven-pillar-${x}-${z}`, position: [x, 7.6, z] as [number, number, number], size: [0.45, 7.2, 0.45] as [number, number, number], color: '#b1a07c' }))),
+  ...[[-15, 52], [10, 52], [-32, 44]].map(([x, z]) => ({ id: `haven-seat-${x}`, position: [x, 4.5, z] as [number, number, number], size: [2.2, 1, 0.7] as [number, number, number], color: '#9a774d' })),
+  { id: 'haven-table', position: [-31, 4.65, 51], size: [4.5, 1.3, 1.6], color: '#826948' },
+  { id: 'haven-stove', position: [-20.4, 4.5, 41], size: [1.4, 1, 1.4], color: '#6a6356' },
+  { id: 'loft-workbench', position: [-272, 8.6, -394], size: [6, 1.2, 1.5], color: '#806a4a' },
+  { id: 'well-shelves', position: [-23, 1.4, 114], size: [0.65, 2.8, 13], color: '#685b47' },
+  ...[
+    { id: 'haven-west', xs: [-37, -24], zs: [39, 56], floor: 4, top: 11.25 },
+    { id: 'haven-east', xs: [19, 31], zs: [42, 56], floor: 4, top: 9.85 },
+    { id: 'haven-keeper', xs: [-21, -11], zs: [34.5, 43.5], floor: 4, top: 9.85 },
+    { id: 'names', xs: [-67, -51], zs: [-36, -24], floor: 6, top: 11.875 },
+    { id: 'boatyard-loft', xs: [-285, -265], zs: [-395, -384], floor: 8, top: 13.85 },
+    { id: 'well-archive', xs: [-23, 5], zs: [105, 121], floor: 0, top: 7.8 },
+  ].flatMap(roof => roof.xs.flatMap(x => roof.zs.map(z => ({
+    id: `${roof.id}-pillar-${x}-${z}`,
+    position: [x, (roof.floor + roof.top) / 2, z] as [number, number, number],
+    size: [0.45, roof.top - roof.floor, 0.45] as [number, number, number],
+    color: '#b1a07c',
+  })))),
   { id: 'names-roof', position: [-59, 12, -30], size: [19, 0.25, 14], color: '#786347' },
   { id: 'names-shelves', position: [-67.2, 7.5, -29], size: [0.5, 3, 10], color: '#806d4b' },
   { id: 'boatyard-loft-roof', position: [-275, 14, -389], size: [25, 0.3, 13], color: '#78614a' },
   { id: 'well-archive-roof', position: [-9, 8, 113], size: [31, 0.4, 19], color: '#59776f' },
-  ...[-24, 6].map(x => ({ id: `well-wall-${x}`, position: [x, 4, 136] as [number, number, number], size: [0.4, 8, 27] as [number, number, number], color: '#789288' })),
+  { id: 'well-wall-west', position: [-24, 4, 136], size: [0.4, 8, 27], color: '#789288' },
+  { id: 'well-wall-east-north', position: [6, 4, 129.5], size: [0.4, 8, 15], color: '#789288' },
+  { id: 'well-wall-east-south', position: [6, 4, 152], size: [0.4, 8, 10], color: '#789288' },
   { id: 'well-end-wall', position: [-9, 5, 157], size: [30, 10, 0.4], color: '#64857b' },
 ];
 export const HAVEN_HOUSES: House[] = [
@@ -103,7 +124,7 @@ export function havenAvailable(s: GameState, id: string): boolean {
 export function havenTarget(s: GameState): string {
   if (!s.litLamps.includes('haven-lamp')) return 'haven-lamp';
   if (!s.haven.recruits.includes('scribe')) return s.collected.includes('names-register') ? 'scribe-field' : 'names-register';
-  if (!s.haven.recruits.includes('boatwright')) return s.collected.includes('keel-rubbing') ? 'boatwright-field' : 'keel-rubbing';
+  if (!s.haven.recruits.includes('boatwright')) return !s.collected.includes('keel-rubbing') ? 'keel-rubbing' : !s.collected.includes('ferry-winch') ? 'ferry-winch' : 'boatwright-field';
   if (s.haven.echoes < 3) return ['haven-bell', 'haven-water', 'haven-name'][s.haven.echoes];
   if (!s.haven.gates.includes('well-door')) return 'well-door';
   return s.haven.ending ? 'haven-keeper' : 'well-choice';

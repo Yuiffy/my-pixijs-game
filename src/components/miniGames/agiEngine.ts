@@ -381,18 +381,33 @@ export function aiIncome(s: AiState) {
       (s.industry.promotion ? 1.2 : 1),
   );
 }
-export const aiUpkeep = (s: AiState) => 4 +
-  s.compute * 2 +
-  (s.industry.service === "research"
-    ? 2
-    : s.industry.service === "consumer"
-      ? 6
-      : 3) +
-  (s.industry.route
-    ? (s.industry.company === "router" ? 4 : 8) +
-      (s.industry.licensedData ? 4 : 0)
-    : 0) +
-  (s.industry.scrutiny > 0 ? 6 : 0) + s.industry.defense;
+export function aiUpkeepParts(s: AiState) {
+  return {
+    base: 4,
+    compute: s.compute * 2,
+    service: s.industry.service === "research" ? 2 : s.industry.service === "consumer" ? 6 : 3,
+    routing: s.industry.route ? (s.industry.company === "router" ? 4 : 8) : 0,
+    samples: s.industry.route && s.industry.licensedData ? 4 : 0,
+    scrutiny: s.industry.scrutiny > 0 ? 6 : 0,
+    defense: s.industry.defense,
+  };
+}
+export const aiUpkeep = (s: AiState) => Object.values(aiUpkeepParts(s)).reduce((total, cost) => total + cost, 0);
+const aiRefund = (s: AiState) => (s.industry.hype > s.industry.reliability + 15 ? 8 : 0);
+
+// Uses only the visible current position; never advances rivals or reads the RNG.
+export function aiQuarterBudget(s: AiState) {
+  const baseIncome = aiIncome(s);
+  const marketMultiplier = AI_EVENTS[s.event].revenue;
+  const safetyMultiplier = s.event === 4 && s.safety < 40 ? 0.5 : 1;
+  const income = round(baseIncome * marketMultiplier * safetyMultiplier);
+  const costs = aiUpkeepParts(s);
+  const upkeep = aiUpkeep(s);
+  const refund = aiRefund(s);
+  const net = round(income - upkeep - refund);
+  const cashAfter = round(round(s.cash + income - upkeep) - refund);
+  return { baseIncome, marketMultiplier, safetyMultiplier, income, costs, upkeep, refund, net, cashAfter };
+}
 export function aiBlocked(s: AiState, action: AiAction): string {
   if (s.ending) return "本局已结束";
   if (!AI_ACTIONS.some((a) => a.id === action)) return "未知经营行动";
@@ -554,12 +569,7 @@ export function endAiTurn(state: AiState): AiState {
   for (const entry of s.competition.feed) {
     if (entry.response === "pending" && entry.turn < s.turn) entry.response = "expired";
   }
-  const revenue = round(
-    aiIncome(s) *
-      AI_EVENTS[s.event].revenue *
-      (s.event === 4 && s.safety < 40 ? 0.5 : 1),
-  );
-  const upkeep = aiUpkeep(s);
+  const { income: revenue, upkeep } = aiQuarterBudget(s);
   s.industry.lastIncome = revenue;
   s.industry.lastCosts = upkeep;
   s.cash = round(s.cash + revenue - upkeep);
@@ -735,8 +745,9 @@ function settleIndustry(s: AiState) {
     s.reputation = clamp(s.reputation - 4);
     log(s, `交付不稳引发退订：社区 −${lost}、信誉 −4；后训练可提高可靠性。`);
   }
-  if (i.hype > i.reliability + 15) {
-    s.cash = round(s.cash - 8);
+  const refund = aiRefund(s);
+  if (refund) {
+    s.cash = round(s.cash - refund);
     i.hype = clamp(i.hype - 12);
     s.reputation = clamp(s.reputation - 6);
     log(s, "市场预期反噬：宣传超过交付能力，退款支出 8 M、信誉 −6。");

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { GlobalOutlined } from "@ant-design/icons";
 import { I18nextProvider, useTranslation } from "react-i18next";
 import Link from "next/link";
@@ -15,14 +15,11 @@ import {
   developmentBlocker,
   fmt,
   timeLabel,
-  V3_SAVE_KEY,
-  V4_SAVE_KEY,
   quotaPercent,
   quotaObservation,
   modelEdition,
   proClosed,
   canKeepPro,
-  V2_SAVE_KEY,
   activeAccount,
   CATEGORIES,
   createGame,
@@ -42,13 +39,10 @@ import {
   riskAssessment,
   modelExperience,
   collaborationSpeed,
-  LEGACY_SAVE_KEY,
   nextDay,
   PLANS,
   RESET_SUPPLY,
   TEMPLATES,
-  restoreGame,
-  SAVE_KEY,
   score,
   textState,
   type Action,
@@ -63,6 +57,7 @@ import {
   type Development,
 } from "./engine";
 import s from "./resetRush.module.css";
+import { readResetSave, writeResetSave, type SaveIssue } from './save';
 import { resetLanguageNames } from "./messages";
 import { browserLocale, createResetI18n, LOCALE_KEY, ResetLocaleContext, Translated, translateResetText, type ResetLocale } from "./i18n";
 
@@ -75,7 +70,7 @@ const ACCOUNT_POLICIES: { id: AccountPolicy; name: string; detail: string }[] = 
   { id: "late-expiry", name: "晚到期优先", detail: "先花订阅期限更长的账号" },
   { id: "balanced", name: "按比例均衡", detail: "按套餐剩余比例分散 AI 对话" },
 ];
-type ModalKind = "rules" | "shop" | "restart" | "portfolio" | "finish" | null;
+type ModalKind = "rules" | "shop" | "restart" | "portfolio" | "finish" | "recover" | null;
 
 function Art({ kind }: { kind: Category }) {
   return (
@@ -417,6 +412,9 @@ export default function ResetRush() {
   const [game, setGame] = useState<Game | null>(null);
   const [ready, setReady] = useState(false);
   const [saved, setSaved] = useState(true);
+  const [saveIssue, setSaveIssue] = useState<SaveIssue | null>(null);
+  const [pendingRecovery, setPendingRecovery] = useState<Game | null>(null);
+  const [recoveryFailed, setRecoveryFailed] = useState(false);
   const [length, setLength] = useState(42);
   const [seed, setSeed] = useState("260926");
   const [modal, setModal] = useState<ModalKind>(null);
@@ -446,30 +444,45 @@ export default function ResetRush() {
     try { localStorage.setItem(LOCALE_KEY, next); } catch { /* The choice still applies to this session. */ }
   };
 
-  useEffect(() => {
+  const readSave = useCallback(() => {
     try {
-      const restored =
-        restoreGame(localStorage.getItem(SAVE_KEY)) ??
-        restoreGame(localStorage.getItem(V4_SAVE_KEY)) ??
-        restoreGame(localStorage.getItem(V3_SAVE_KEY)) ??
-        restoreGame(localStorage.getItem(V2_SAVE_KEY)) ??
-        restoreGame(localStorage.getItem(LEGACY_SAVE_KEY));
+      const { game: restored, issue } = readResetSave(localStorage);
+      setSaveIssue(issue);
+      setSaved(!issue);
       setGame(restored);
       if (restored) setSelectedProjects(restored.players[0].projects.slice(0, 1).map((j) => j.id));
     } catch {
+      setSaveIssue({ kind: 'unavailable', unread: [], candidate: null });
       setSaved(false);
     }
     setReady(true);
   }, []);
-  useEffect(() => {
-    if (!ready || !game) return;
+  useEffect(() => { readSave(); }, [readSave]);
+  const persist = useCallback((current: Game, replaceDamaged = false) => {
     try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify(game));
-      setSaved(true);
+      const result = writeResetSave(localStorage, current, replaceDamaged);
+      setSaved(result.ok);
+      setSaveIssue(result.ok ? null : result.issue);
+      return result.ok;
     } catch {
       setSaved(false);
+      setSaveIssue({ kind: 'unavailable', unread: [], candidate: null });
+      return false;
     }
-  }, [game, ready]);
+  }, []);
+  useEffect(() => {
+    if (ready && game && !saveIssue) persist(game);
+  }, [game, ready, saveIssue, persist]);
+
+  const downloadSave = (raw: string, name: string) => {
+    const url = URL.createObjectURL(new Blob([raw], { type: 'application/json' }));
+    const link = document.createElement('a');
+    link.href = url; link.download = name; link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  const chooseRecovery = (candidate: Game) => {
+    setPendingRecovery(candidate); setRecoveryFailed(false); setModal('recover');
+  };
   useEffect(() => {
     const w = window as Window & {
       render_game_to_text?: () => string;
@@ -477,8 +490,8 @@ export default function ResetRush() {
     };
     w.render_game_to_text = () => JSON.stringify(
         game
-          ? textState(game)
-          : { title: "RESET / 开蹬！", phase: "intro", ready },
+          ? { ...textState(game), storage: { saved, issue: saveIssue?.kind ?? null } }
+          : { title: "RESET / 开蹬！", phase: "intro", ready, storage: { saved, issue: saveIssue?.kind ?? null } },
       );
     w.advanceTime = (ms: number) => {
       // Explicit test hook: one simulated minute per 60,000 ms, never a wall-clock timer.
@@ -489,7 +502,7 @@ export default function ResetRush() {
       delete w.render_game_to_text;
       delete w.advanceTime;
     };
-  }, [game, ready]);
+  }, [game, ready, saved, saveIssue]);
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (
@@ -598,6 +611,27 @@ export default function ResetRush() {
           )}
         </div>
       </header>
+
+      {ready && (!saved || saveIssue) && (
+        <section className={s.saveNotice} role="status" data-testid="save-notice">
+          <strong>{saveIssue?.kind === 'damaged' ? '存档需要恢复' : '牌局尚未保存'}</strong>
+          <p>{saveIssue?.kind === 'damaged'
+            ? '旧存档无法读取，原文已保留。可恢复上一份进度，或另开仅本页游玩的新局。选择替换前不会自动保存。'
+            : saveIssue?.kind === 'unavailable'
+              ? '无法读取设备存储。本页仍可游玩，暂不自动保存；恢复访问后请重试。'
+              : '保存失败，当前进度仍在页面中。请重试保存，或先下载牌局再离开。'}</p>
+          {saveIssue?.candidate && <p>{i18n.t('saveCandidate', { day: saveIssue.candidate.day, minute: timeLabel(saveIssue.candidate.minute) })}</p>}
+          <div>
+            {saveIssue?.unread.map((entry, index) => <button key={entry.key} onClick={() => downloadSave(entry.raw, `${entry.key}-unread.json`)}>下载原存档{saveIssue.unread.length > 1 ? ` ${index + 1}` : ''}</button>)}
+            {saveIssue?.candidate && <button onClick={() => chooseRecovery(saveIssue.candidate!)}>恢复上一份可用存档</button>}
+            {game && <button onClick={() => downloadSave(JSON.stringify(game), 'reset-rush-current.json')}>下载当前牌局</button>}
+            {game && (saveIssue?.kind === 'damaged'
+              ? <button onClick={() => chooseRecovery(game)}>以当前牌局替换存档</button>
+              : <button onClick={() => persist(game)}>重试保存</button>)}
+            {!game && <button onClick={readSave}>重新读取存档</button>}
+          </div>
+        </section>
+      )}
 
       {!game ? (
         <section className={s.intro}>
@@ -1693,15 +1727,7 @@ keepAutomatic: true,
                 setGame(null);
                 setModal(null);
                 setSeed(String((Number(seed) || 260926) + 1));
-                try {
-                  localStorage.removeItem(SAVE_KEY);
-                  localStorage.removeItem(V4_SAVE_KEY);
-                  localStorage.removeItem(V3_SAVE_KEY);
-                  localStorage.removeItem(LEGACY_SAVE_KEY);
-                  localStorage.removeItem(V2_SAVE_KEY);
-                } catch {
-                  setSaved(false);
-                }
+                // Keep the previous position until a new game can actually be saved.
               }}
             >
               回到准备页
@@ -1709,6 +1735,25 @@ keepAutomatic: true,
             <button className={s.textButton} onClick={close}>
               继续这一局
             </button>
+          </div>
+        </Modal>
+      )}
+      {modal === 'recover' && pendingRecovery && (
+        <Modal title="确认恢复与保存" close={close}>
+          <p className={s.modalCopy}>确认后将以选中的牌局继续。无法读取的原文会先另存保留，可用的旧进度也会保留备份；本页其他未保存进度会被替换。</p>
+          <p className={s.modalCopy}>{i18n.t('saveCandidate', { day: pendingRecovery.day, minute: timeLabel(pendingRecovery.minute) })}</p>
+          {recoveryFailed && <p className={s.modalCopy} role="alert">保存仍不可用，原存档未被替换。可先下载备份，稍后再试。</p>}
+          <div className={s.modalButtons}>
+            <button
+              className={s.primary}
+              onClick={() => {
+                if (!persist(pendingRecovery, true)) { setRecoveryFailed(true); return; }
+                setGame(pendingRecovery);
+                setSelectedProjects(pendingRecovery.players[0].projects.slice(0, 1).map(j => j.id));
+                setSelectedAccount(0); close();
+              }}
+            >确认使用并保存</button>
+            <button className={s.textButton} onClick={close}>暂不替换</button>
           </div>
         </Modal>
       )}

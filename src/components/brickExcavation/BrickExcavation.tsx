@@ -25,6 +25,7 @@ import {
   hasLegalMove, hasStrandedTreasure, shuffleRemaining, strike, Treasure,
 } from "./engine";
 import { navigatePlayable, nearestPlayable } from "./controls";
+import { SESSION_KEY, restoreExcavation, type ExcavationAction } from "./save";
 import styles from "./brickExcavation.module.css";
 
 const BEST_KEY = "brick-excavation-best-v2";
@@ -139,6 +140,13 @@ function publicState(game: GameState) {
 export default function BrickExcavation() {
   const [game, setGame] = useState<GameState>(() => createGame(0));
   const [history, setHistory] = useState<GameState[]>([]);
+  const [actions, setActions] = useState<ExcavationAction[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [saveStatus, setSaveStatus] = useState('正在读取本机进度…');
+  const [saveFailed, setSaveFailed] = useState(false);
+  const [unreadSave, setUnreadSave] = useState<string | null>(null);
+  const [readBlocked, setReadBlocked] = useState(false);
+  const [retry, setRetry] = useState(0);
   const [hovered, setHovered] = useState<number | null>(null);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [muted, setMuted] = useState(true);
@@ -165,6 +173,51 @@ export default function BrickExcavation() {
       // The game remains playable when local storage is unavailable.
     }
   }, []);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SESSION_KEY);
+      if (raw !== null) {
+        const restored = restoreExcavation(raw);
+        if (restored) {
+          setGame(restored.game);
+          setHistory(restored.history);
+          setActions(restored.save.actions);
+          setPreviewFirst(restored.save.previewFirst);
+          setAnnouncement('已恢复上次矿层，撤销记录也已恢复。');
+        } else {
+          setUnreadSave(raw);
+          setSaveStatus('旧进度无法读取，原存档已保留。本局暂不自动保存。');
+        }
+      }
+    } catch {
+      setReadBlocked(true);
+      setSaveStatus('无法读取本机进度。本局可继续游玩，暂不自动保存。');
+    }
+    setLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!loaded || unreadSave !== null || readBlocked) return;
+    try {
+      localStorage.setItem(SESSION_KEY, JSON.stringify({ version: 1, seed: game.seed, actions, previewFirst }));
+      setSaveFailed(false);
+      setSaveStatus('本机自动续局 · 含撤销记录');
+    } catch {
+      setSaveFailed(true);
+      setSaveStatus('保存失败，当前进度仍在页面中。刷新前请重试保存。');
+    }
+  }, [loaded, unreadSave, readBlocked, game.seed, actions, previewFirst, retry]);
+
+  function downloadUnreadSave() {
+    if (unreadSave === null) return;
+    const url = URL.createObjectURL(new Blob([unreadSave], { type: 'application/json' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'brick-excavation-unread-save.json';
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
 
   useEffect(() => {
     if (game.status === "playing") return;
@@ -307,11 +360,12 @@ export default function BrickExcavation() {
   }
 
   function hit(index: number, keepFocus = false) {
-    if (rulesOpen) return;
+    if (rulesOpen || !loaded) return;
     const next = strike(game, index);
     if (next === game) return;
     if (keepFocus) pendingFocus.current = index;
     setHistory((previous) => [...previous, game]);
+    setActions((previous) => [...previous, index]);
     setGame(next);
     setHovered(null);
     setSelected(null);
@@ -329,6 +383,7 @@ export default function BrickExcavation() {
     if (history.length === 1 && document.activeElement === undoRef.current) pendingFocus.current = game.lastMove?.index ?? focused;
     setGame(history[history.length - 1]);
     setHistory(history.slice(0, -1));
+    setActions(actions.slice(0, -1));
     setHovered(null);
     setSelected(null);
     setAnnouncement("已撤销上一步，可重新选择。");
@@ -338,6 +393,7 @@ export default function BrickExcavation() {
     const next = shuffleRemaining(game);
     if (next === game) return;
     setHistory((previous) => [...previous, game]);
+    setActions((previous) => [...previous, 'shuffle']);
     setGame(next);
     setHovered(null);
     setSelected(null);
@@ -348,6 +404,7 @@ export default function BrickExcavation() {
   function restart() {
     setGame(createGame(game.seed));
     setHistory([]);
+    setActions([]);
     setHovered(null);
     setSelected(null);
     setFocused(0);
@@ -357,6 +414,7 @@ export default function BrickExcavation() {
   function newMap() {
     setGame(createGame(game.seed + 1));
     setHistory([]);
+    setActions([]);
     setHovered(null);
     setSelected(null);
     setFocused(0);
@@ -488,6 +546,12 @@ export default function BrickExcavation() {
 
       <div className={styles.workspace} data-game-surface="">
         <section className={styles.boardColumn} aria-label="发掘棋盘">
+          <div className={styles.saveNotice} data-testid="save-notice" data-warning={saveFailed || unreadSave !== null || readBlocked}>
+            <span role="status">{saveStatus}</span>
+            {saveFailed && <button type="button" onClick={() => setRetry(value => value + 1)}>重试保存</button>}
+            {unreadSave !== null && <button type="button" onClick={downloadUnreadSave}>下载原存档</button>}
+            {(unreadSave !== null || readBlocked) && <button type="button" onClick={() => { setUnreadSave(null); setReadBlocked(false); }}>保存本局并替换旧进度</button>}
+          </div>
           <div className={styles.boardHeading}>
             <span>
               矿层 <b>{String(game.seed + 1).padStart(3, "0")}</b>

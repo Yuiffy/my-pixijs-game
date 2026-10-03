@@ -1,0 +1,46 @@
+{
+  "title": "晴海对决 · 岁己 vs 栞栞",
+  "date": "2026-10-03",
+  "method": "Built-in ImageGen, reference identity generation. Alpha preserved in WebP delivery.",
+  "identityReferences": [
+    "/games/beach-volley/sui-atlas.webp",
+    "/games/beach-volley/shiori-atlas.webp"
+  ],
+  "assets": [
+    {
+      "path": "sui-combat.webp",
+      "source": "exec-eb171b8c-a339-4dfc-ab71-631e23b98866.png",
+      "use": "Eight dedicated martial arts poses, Sui",
+      "prompt": "Use case: stylized-concept. Asset type: production fighting-game sprite sheet. Input image is identity and rendering reference, not edit target. Create exactly EIGHT full-body fighting poses of the SAME clearly adult mid-twenties SUI athlete, matching the reference silver twin ponytails, red eyes, black cat-ear sports cap, lavender and charcoal opaque sports crop top and high-waisted athletic shorts, barefoot, realistic 3D anime videogame quality with detailed skin, face, hair and cloth. Nonsexual martial arts sports presentation. Genuine TRANSPARENT RGBA background. Arrange exactly 4 columns by 2 rows in a wide 2048x1024 sheet, every figure confined to its own equal cell, at identical natural adult proportions and same scale. All figures face SIDE-ON to the RIGHT, three-quarter profile, cinematic soft sunlight from upper left. Keep every hand and BOTH feet visible inside each cell, abundant margin between poses. Row1 from left to right: 0 balanced fighting ready stance fists raised guarding face; 1 fully extended straight forward punch at chest height, fist pointing RIGHT; 2 dynamic high SIDE KICK extending right leg horizontally to the RIGHT, stable left leg down; 3 low sweeping kick to RIGHT in a deep crouch. Row2 left to right: 4 solid defense standing with BOTH forearms raised shielding face; 5 martial arts counter stance right palm extended RIGHT, left hand protecting chest; 6 recoiling from a hit, torso arched back slightly, arms opened, feet planted; 7 knocked-down figure lying horizontally on her side on ground, head left feet right, full body intact. No background, NO backdrop, NO checkerboard painted in image, no floor, no ground shadow, no glow, no effects, no text, no grid lines, no weapons, no extra people. Maintain SAME outfit and face in all cells. Every pose must be anatomically clear, no merged hands, no extra fingers or limbs. This sheet is for slicing into individual sprites; do NOT let poses intersect."
+    },
+    {
+      "path": "shiori-combat.webp",
+      "source": "exec-9c8541d3-252a-4e12-be93-016ef58eab50.png",
+      "use": "Eight dedicated martial arts poses, Shiori",
+      "prompt": "Use case: stylized-concept. Asset type: production fighting-game sprite sheet. Input image is identity and rendering reference, not edit target. Create exactly EIGHT full-body fighting poses of the SAME clearly adult mid-twenties SHIORI athlete, matching the reference milk-blonde hair with long side braid, ocean blue eyes, brown headband, pink hairclip and white braid ribbon; ivory and muted turquoise opaque sports crop top and high-waisted athletic shorts with pink side stripe, barefoot, realistic 3D anime videogame quality with detailed skin, face, hair and cloth. Nonsexual martial arts sports presentation. Genuine TRANSPARENT RGBA background. Arrange exactly 4 columns by 2 rows in a wide 2048x1024 sheet, every figure confined to its own equal cell, at identical natural adult proportions and same scale. All figures face SIDE-ON to the RIGHT, three-quarter profile, cinematic soft sunlight from upper left. Keep every hand and BOTH feet visible inside each cell, abundant margin between poses. Row1 from left to right: 0 balanced fighting ready stance fists raised guarding face; 1 fully extended straight forward punch at chest height, fist pointing RIGHT; 2 dynamic high SIDE KICK extending right leg horizontally to the RIGHT, stable left leg down; 3 low sweeping kick to RIGHT in a deep crouch. Row2 left to right: 4 solid defense standing with BOTH forearms raised shielding face; 5 martial arts counter stance right palm extended RIGHT, left hand protecting chest; 6 recoiling from a hit, torso arched back slightly, arms opened, feet planted; 7 knocked-down figure lying horizontally on her side on ground, head left feet right, full body intact. No background, NO backdrop, NO checkerboard painted in image, no floor, no ground shadow, no glow, no effects, no text, no grid lines, no weapons, no extra people. Maintain SAME outfit and face in all cells. Every pose must be anatomically clear, no merged hands, no extra fingers or limbs. This sheet is for slicing into individual sprites; do NOT let poses intersect."
+    }
+    ,
+    {
+      "path": "poster.webp",
+      "source": "exec-5a9a31a0-e842-402d-9693-449b06fa186e.png",
+      "use": "Game library promotional art",
+      "prompt": "Use case: stylized-concept. Asset type: wide 16:9 poster for a premium beach martial arts fighting game, no UI. Input1 SUI identity, Input2 SHIORI identity, Input3 island beach setting. Both are clearly adult mid-twenties athletic martial artists. Render SUI silver twin tails red eyes black cat-ear sport cap charcoal/lavender sports crop top and fitted athletic shorts on LEFT, SHIORI blonde side braid blue eyes brown headband ivory/turquoise sports crop top and athletic shorts on RIGHT. Barefoot. They face each other in balanced fighting ready stances, hands raised to guard face, intent but friendly competitive expressions. Full bodies with both feet grounded on pale sand, central separation and open sky. Dynamic low camera, elegant high-end realistic 3D anime videogame style, natural adult proportions, detailed realistic hair skin fabric. Exquisite sunlit turquoise island sea and palms, warm backlighting and subtle flying sand; tasteful nonsexual sports depiction. NO volleyball, NO net, no ball, NO text, no trademarks, NO UI or panels, no extra people. One unified cinematic image, landscape 16:9."
+    }
+  ],
+  "reused": [
+    "/games/beach-volley/beach.webp",
+    "/games/beach-volley/sui-atlas.webp",
+    "/games/beach-volley/shiori-atlas.webp",
+    "/games/beach-volley/sui-victory.webp"
+  ],
+  "poseOrder": [
+    "ready",
+    "punch",
+    "side kick",
+    "low sweep",
+    "guard",
+    "counter/throw",
+    "hurt",
+    "knockdown"
+  ]
+}

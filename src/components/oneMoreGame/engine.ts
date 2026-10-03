@@ -191,6 +191,7 @@ const initial = (index: number): FightState => ({
 export class Sparring {
   state: FightState;
   held = new Set<Input>();
+  private inputSources = new Map<string, Input>();
   progress: Progress;
   onSave?: (progress: Progress) => void;
   private accumulator = 0;
@@ -302,7 +303,7 @@ export class Sparring {
     );
     if (other) this.progress.bindings[other.id] = this.progress.bindings[action];
     this.progress.bindings[action] = code;
-    this.held.clear();
+    this.clearInputs();
     this.save();
   }
   setDifficulty(value: Difficulty) {
@@ -354,7 +355,7 @@ export class Sparring {
     const index = this.progress.campaign.bossIndex;
     this.state = initial(index);
     this.state.phase = "fight";
-    this.held.clear();
+    this.clearInputs();
     this.accumulator = 0;
     this.rng = createSeededRandom(this.progress.campaign.seed + index * 3571);
     this.progress.campaign.checkpoint = "ready";
@@ -366,29 +367,42 @@ export class Sparring {
   }
   ready() {
     this.state = initial(this.progress.campaign.bossIndex);
-    this.held.clear();
+    this.clearInputs();
     this.accumulator = 0;
   }
   pause(reason = "歇一口气") {
     if (this.state.phase !== "fight") return;
     this.state.phase = "paused";
     this.state.pauseReason = reason;
-    this.held.clear();
+    this.clearInputs();
     this.accumulator = 0;
   }
   resume() {
     if (this.state.phase === "paused") {
       this.state.phase = "fight";
-      this.held.clear();
+      this.clearInputs();
     }
   }
 
-  input(key: Input, down: boolean) {
+  clearInputs() {
+    this.inputSources.clear();
+    this.held.clear();
+  }
+  releaseInput(source: string) {
+    const key = this.inputSources.get(source);
+    if (!key) return;
+    this.inputSources.delete(source);
+    if (!Array.from(this.inputSources.values()).includes(key)) this.held.delete(key);
+  }
+  input(key: Input, down: boolean, source = `direct:${key}`) {
     if (!down) {
-      this.held.delete(key);
+      this.releaseInput(source);
       return;
     }
-    if (this.state.phase !== "fight" || this.held.has(key)) return;
+    if (this.state.phase !== "fight" || this.inputSources.has(source)) return;
+    this.inputSources.set(source, key);
+    // A second held source must not restart a parry window or spend stamina.
+    if (this.held.has(key)) return;
     this.held.add(key);
     const { player: p, t } = this.state;
     if (key === 'attack') {
@@ -805,7 +819,7 @@ export class Sparring {
     const s = this.state;
     const { campaign } = this.progress;
     s.phase = won ? (campaign.bossIndex === 2 ? "ending" : "won") : "lost";
-    this.held.clear();
+    this.clearInputs();
     this.progress.bestDamage = Math.max(
       this.progress.bestDamage,
       this.damagePercent,
@@ -881,6 +895,7 @@ export class Sparring {
       lastParry:
         [...s.events].reverse().find((event) => event.cue === "parry") ?? null,
       bindings: { ...this.progress.bindings },
+      held: Array.from(this.held),
       player: {
         ...s.player,
         guarding: this.held.has("guard"),

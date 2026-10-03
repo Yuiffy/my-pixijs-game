@@ -52,6 +52,7 @@ for (const lock of e.LOCKS) {
   const action = { tool: 'lock', cells: [], source: lock.index };
   assert.equal(e.quoteTerrain(game, action).error, null); game = e.applyTerrainAction(game, action);
 }
+assert.deepEqual(e.restoreTerrain(JSON.stringify(game)), JSON.parse(JSON.stringify(game)), 'Completed construction, funding and locks restore exactly');
 survey = e.surveyTerrain(game);
 assert(survey.route, 'A fully excavated three-lock canal must pass the route survey');
 assert(e.LOCKS.every(l => e.lockCells(l.index).every(id => survey.route.cells.includes(id))), 'All lock chambers are adopted');

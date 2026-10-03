@@ -1118,3 +1118,8 @@
     transition: none !important;
   }
 }
+
+.canvas:focus-visible { outline: 3px solid #fff2b8; outline-offset: -5px; }
+.keyboardHelp { display: flex; flex-wrap: wrap; gap: 4px 12px; padding-top: 9px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.keyboardHelp strong { color: var(--ink); font-weight: 600; }
+@media (pointer: coarse) { .keyboardHelp { display: none; } }

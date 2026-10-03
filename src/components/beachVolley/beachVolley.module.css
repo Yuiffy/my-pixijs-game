@@ -1019,3 +1019,9 @@
 
 .team > span { white-space: nowrap; }
 @media (max-height: 520px) and (orientation: landscape) { .stage { width: min(100%, calc((100svh - 68px) * 16 / 9)); } }
+
+.secondTouch button {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 54px;
+}

@@ -231,6 +231,15 @@ function spots(c: Ctx, s: GameState) {
     if (s.phase === "cool") fill = p.cooled;
     c.save();
     c.translate(p.x, p.y);
+    if (s.keyboardSpot === p.id) {
+      c.strokeStyle = "#fff7cf";
+      c.lineWidth = 3;
+      c.beginPath();
+      c.arc(0, 0, 28, 0, Math.PI * 2);
+      c.stroke();
+      label(c, String(p.id + 1), 0, -36, 12, "#244c43", "center");
+    }
+
     if (
       (s.phase === "numb" && p.cream > 0) ||
       (s.phase === "wipe" && p.wiped < 1)

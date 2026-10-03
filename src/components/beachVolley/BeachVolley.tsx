@@ -27,7 +27,6 @@ import type {
   Character,
   Difficulty,
   Game,
-  Input,
   Mode,
   Options,
   Side,
@@ -35,6 +34,7 @@ import type {
 import { loadAssets, renderGame } from "./renderer";
 import type { Assets } from "./renderer";
 import BeachAudio from "./audio";
+import { createControls } from "./controls";
 import styles from "./beachVolley.module.css";
 
 type GameWindow = Window & {
@@ -75,7 +75,7 @@ export default function BeachVolley() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameRef = useRef<Game>(createGame());
   const assetsRef = useRef<Assets | null>(null);
-  const inputsRef = useRef<[Input, Input]>([emptyInput(), emptyInput()]);
+  const controlsRef = useRef(createControls());
   const audioRef = useRef<BeachAudio | null>(null);
   const [options, setOptions] = useState<Options>(INITIAL);
   const [ready, setReady] = useState(false);
@@ -90,7 +90,10 @@ export default function BeachVolley() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const sync = useCallback(() => setView(describeGame(gameRef.current)), []);
   const resetInput = useCallback(() => {
-    inputsRef.current = [emptyInput(), emptyInput()];
+    controlsRef.current.clear();
+    gameRef.current.players.forEach((player) => {
+      player.lastInput = emptyInput();
+    });
   }, []);
   const fullscreen = async () => {
     try {
@@ -100,7 +103,9 @@ export default function BeachVolley() {
       /* Browser may not expose fullscreen on this device. */
     }
   };
+  const cinemaRef = useRef(false);
   const pause = useCallback(() => {
+    if (helpRef.current || cinemaRef.current) return;
     const g = gameRef.current;
     if (g.phase === "menu" || g.phase === "result") return;
     g.paused = !g.paused;
@@ -124,17 +129,21 @@ export default function BeachVolley() {
       !window.matchMedia("(prefers-reduced-motion: reduce)").matches
     ) {
       gameRef.current.paused = true;
+      cinemaRef.current = true;
       setCinematic(true);
     }
     sync();
   };
   const finishCinema = useCallback(() => {
+    resetInput();
+    cinemaRef.current = false;
     setCinematic(false);
-    gameRef.current.paused = document.hidden;
+    gameRef.current.paused = document.hidden || helpRef.current;
     sync();
-  }, [sync]);
+  }, [resetInput, sync]);
   const menu = () => {
     resetInput();
+    cinemaRef.current = false;
     setCinematic(false);
     gameRef.current = createGame(options);
     sync();
@@ -151,10 +160,11 @@ export default function BeachVolley() {
     setHelp(false);
     sync();
   };
-  const touch = (side: Side, action: Action, down: boolean) => {
-    if (helpRef.current || gameRef.current.paused) return;
-    inputsRef.current[side][action] = down;
-    if (down) audioRef.current?.unlock();
+  const press = (source: string, side: Side, action: Action) => {
+    const g = gameRef.current;
+    if (helpRef.current || cinemaRef.current || g.paused || g.phase === "menu" || g.phase === "result") return;
+    controlsRef.current.press(source, side, action);
+    audioRef.current?.unlock();
   };
 
   useEffect(() => {
@@ -177,20 +187,22 @@ export default function BeachVolley() {
         0,
         Math.round(Math.min(120000, ms) / (STEP * 1000)),
       );
-      for (let i = 0; i < steps; i++) stepGame(gameRef.current, inputsRef.current, STEP);
+      for (let i = 0; i < steps; i++) stepGame(gameRef.current, controlsRef.current.inputs, STEP);
       draw();
       sync();
     };
     target.render_game_to_text = () => JSON.stringify({
         ...describeGame(gameRef.current),
         assetsReady: !!assetsRef.current,
+        inputs: controlsRef.current.inputs,
       });
     target.advanceTime = advance;
     if (process.env.NODE_ENV !== "production") {
       target.beachVolley = {
         game: () => gameRef.current,
         input: (s, a, down) => {
-          inputsRef.current[s][a] = down;
+          if (down) controlsRef.current.press(`debug:${s}:${a}`, s, a);
+          else controlsRef.current.release(`debug:${s}:${a}`);
         },
         manual: (value) => {
           manual = value;
@@ -226,7 +238,7 @@ export default function BeachVolley() {
       if (!manual && assetsRef.current) {
         accumulator += elapsed;
         while (accumulator >= STEP) {
-          stepGame(gameRef.current, inputsRef.current, STEP);
+          stepGame(gameRef.current, controlsRef.current.inputs, STEP);
           accumulator -= STEP;
         }
       }
@@ -241,6 +253,9 @@ export default function BeachVolley() {
     frame = requestAnimationFrame(loop);
     const keyDown = (event: KeyboardEvent) => {
       if (
+        event.defaultPrevented || event.isComposing || event.ctrlKey || event.metaKey || event.altKey ||
+        (event.target instanceof HTMLElement && event.target.isContentEditable) ||
+        event.target instanceof HTMLTextAreaElement ||
         event.target instanceof HTMLSelectElement ||
         event.target instanceof HTMLInputElement
       ) return;
@@ -253,9 +268,12 @@ export default function BeachVolley() {
         if (!event.repeat) fullscreen();
         return;
       }
-      if (helpRef.current || g.phase === "menu" || g.phase === "result") return;
+      // Keep native Enter/Space activation on menus, toolbars and dialogs.
+      if ((event.code === "Enter" || event.code === "Space") &&
+        event.target instanceof Element && event.target.closest("button, a")) return;
+      if (helpRef.current || cinemaRef.current || g.paused || g.phase === "menu" || g.phase === "result") return;
       if (event.code === "Enter") {
-        skipTransition(g);
+        if (!event.repeat) skipTransition(g);
         event.preventDefault();
         return;
       }
@@ -263,15 +281,11 @@ export default function BeachVolley() {
       if (mapping) {
         event.preventDefault();
         const side = g.options.mode === "local" ? mapping[0] : 0;
-        inputsRef.current[side][mapping[1]] = true;
+        if (!event.repeat) controlsRef.current.press(`key:${event.code}`, side, mapping[1]);
       }
     };
     const keyUp = (event: KeyboardEvent) => {
-      const mapping = KEY_MAP[event.code];
-      if (mapping) {
-        const side = gameRef.current.options.mode === "local" ? mapping[0] : 0;
-        inputsRef.current[side][mapping[1]] = false;
-      }
+      controlsRef.current.release(`key:${event.code}`);
     };
     const blur = () => {
       resetInput();
@@ -334,16 +348,31 @@ export default function BeachVolley() {
       aria-label={`${side === 0 ? "玩家一" : "玩家二"}${text}`}
       data-control={`${side}-${action}`}
       onPointerDown={(event) => {
+        if (event.button !== 0) return;
         event.preventDefault();
         if (
           event.currentTarget.hasPointerCapture(event.pointerId) ||
           event.nativeEvent.isTrusted
         ) event.currentTarget.setPointerCapture(event.pointerId);
-        touch(side, action, true);
+        press(`pointer:${event.pointerId}`, side, action);
       }}
-      onPointerUp={() => touch(side, action, false)}
-      onPointerCancel={() => touch(side, action, false)}
-      onLostPointerCapture={() => touch(side, action, false)}
+      onPointerUp={(event) => controlsRef.current.release(`pointer:${event.pointerId}`)}
+      onPointerCancel={(event) => controlsRef.current.release(`pointer:${event.pointerId}`)}
+      onLostPointerCapture={(event) => controlsRef.current.release(`pointer:${event.pointerId}`)}
+      onKeyDown={(event) => {
+        if (event.code !== "Enter" && event.code !== "Space") return;
+        event.preventDefault();
+        if (!event.repeat) press(`button:${side}:${action}:${event.code}`, side, action);
+      }}
+      onKeyUp={(event) => {
+        if (event.code !== "Enter" && event.code !== "Space") return;
+        event.preventDefault();
+        controlsRef.current.release(`button:${side}:${action}:${event.code}`);
+      }}
+      onBlur={() => {
+        controlsRef.current.release(`button:${side}:${action}:Enter`);
+        controlsRef.current.release(`button:${side}:${action}:Space`);
+      }}
     >
       {text}
     </button>
@@ -774,6 +803,7 @@ export default function BeachVolley() {
               {controlButton("left", "←", 1)}
               {controlButton("right", "→", 1)}
               {controlButton("jump", "跳", 1)}
+              {controlButton("dive", "扑救", 1)}
               {controlButton("hit", "击", 1)}
               {controlButton("special", "必杀", 1)}
             </div>

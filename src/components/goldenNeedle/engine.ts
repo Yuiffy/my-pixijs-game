@@ -25,6 +25,7 @@ export type GameState = {
   tool: Tool;
   spots: Spot[];
   pointer: Point;
+  keyboardSpot: number | null;
   hand: Point;
   angle: number;
   turning: number;
@@ -142,6 +143,7 @@ export function createGame(
       angle: difficulty === "gentle" ? 0 : ((id % 3) - 1) * 15,
     })),
     pointer: { x: 592, y: 450 },
+    keyboardSpot: null,
     hand: { x: 592, y: 450 },
     angle: 0,
     turning: 0,
@@ -216,6 +218,28 @@ function mistake(s: GameState, message: string, cost = 9) {
     ["等、等一下！", "脸不是打卡机！", "你也紧张了吗？"][s.mistakes % 3],
   );
   if (s.risk >= 100 || s.pain >= 100) stop(s);
+}
+
+/** Keyboard targeting uses the same hand, timing and scoring as touch. */
+export function selectKeyboardSpot(s: GameState, key = "current") {
+  if (s.paused || s.down || s.curtain > 0 || ["welcome", "result"].includes(s.phase)) return;
+  const current = s.spots[s.keyboardSpot ?? 0];
+  let index = current.id;
+  if (key === "Home") index = 0;
+  if (key === "End") index = s.spots.length - 1;
+  if (key === "ArrowRight") index = (index + 1) % s.spots.length;
+  if (key === "ArrowLeft") index = (index + s.spots.length - 1) % s.spots.length;
+  if (key === "ArrowUp" || key === "ArrowDown") {
+    const direction = key === "ArrowUp" ? -1 : 1;
+    const candidates = s.spots.filter(p => (p.y - current.y) * direction > 1);
+    candidates.sort((a, b) => Math.hypot((a.x - current.x) * 1.5, a.y - current.y) -
+      Math.hypot((b.x - current.x) * 1.5, b.y - current.y) || a.id - b.id);
+    index = candidates[0]?.id ?? index;
+  }
+  const target = s.spots[index];
+  s.keyboardSpot = index;
+  s.pointer = { x: target.x, y: target.y };
+  s.hand = { ...s.pointer };
 }
 
 export function selectTool(s: GameState, tool: Tool) {
@@ -452,6 +476,7 @@ export function snapshot(s: GameState) {
       angle: Math.round(s.angle),
     },
     pointer: s.pointer,
+    keyboardSpot: s.keyboardSpot,
     down: s.down,
     pulse: s.pulse,
     timingWindow: DIFFICULTIES[s.difficulty].window,

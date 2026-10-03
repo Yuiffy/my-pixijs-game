@@ -1448,6 +1448,8 @@
   }
 }
 @media (max-width: 360px) and (orientation: portrait) {
+  .header { gap: 8px; }
+  .identity h1 { font-size: 22px; white-space: nowrap; }
   .bossHealth > .bossSub:nth-child(3) { display: none; }
   .chapterIntro {
     top: 29%;

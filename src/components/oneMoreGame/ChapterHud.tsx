@@ -122,16 +122,31 @@ export default function ChapterHud({
   };
   const pointer = (input: Input) => ({
     onPointerDown: (event: React.PointerEvent<HTMLButtonElement>) => {
+      if (event.button !== 0) return;
       event.preventDefault();
       event.currentTarget.setPointerCapture(event.pointerId);
-      model.input(input, true);
+      model.input(input, true, `pointer:${event.pointerId}`);
     },
     onPointerUp: (event: React.PointerEvent<HTMLButtonElement>) => {
-      model.input(input, false);
+      model.releaseInput(`pointer:${event.pointerId}`);
       if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
     },
-    onPointerCancel: () => model.input(input, false),
-    onLostPointerCapture: () => model.input(input, false),
+    onPointerCancel: (event: React.PointerEvent<HTMLButtonElement>) => model.releaseInput(`pointer:${event.pointerId}`),
+    onLostPointerCapture: (event: React.PointerEvent<HTMLButtonElement>) => model.releaseInput(`pointer:${event.pointerId}`),
+    onKeyDown: (event: React.KeyboardEvent<HTMLButtonElement>) => {
+      if (event.code !== "Enter" && event.code !== "Space") return;
+      event.preventDefault();
+      if (!event.repeat && !event.ctrlKey && !event.altKey && !event.metaKey) model.input(input, true, `button:${input}:${event.code}`);
+    },
+    onKeyUp: (event: React.KeyboardEvent<HTMLButtonElement>) => {
+      if (event.code !== "Enter" && event.code !== "Space") return;
+      event.preventDefault();
+      model.releaseInput(`button:${input}:${event.code}`);
+    },
+    onBlur: () => {
+      model.releaseInput(`button:${input}:Enter`);
+      model.releaseInput(`button:${input}:Space`);
+    },
   });
   const copy = async () => {
     const url = challengeUrl(window.location.origin, progress);
@@ -734,7 +749,7 @@ export default function ChapterHud({
                   className={styles.textButton}
                   onClick={() => act(() => {
                       progress.bindings = { ...DEFAULT_BINDINGS };
-                      model.held.clear();
+                      model.clearInputs();
                       model.save();
                     })}
                 >

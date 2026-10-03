@@ -18,6 +18,7 @@ import {
   press,
   release,
   selectTool,
+  selectKeyboardSpot,
   setPaused,
   snapshot,
   Tool,
@@ -188,7 +189,16 @@ export default function GoldenNeedle() {
   const dialog = useRef<HTMLDialogElement>(null);
   const scene = useRef<Scene | null>(null);
   const pausedBeforePanel = useRef(false);
-  const refresh = useCallback(() => setView({ ...state.current }), []);
+  const holdOwner = useRef<string | null>(null);
+  const refresh = useCallback(() => {
+    if (!state.current.down) holdOwner.current = null;
+    setView({ ...state.current });
+  }, []);
+  const cancelInput = useCallback(() => {
+    holdOwner.current = null;
+    cancelPress(state.current);
+    refresh();
+  }, [refresh]);
 
   useEffect(() => {
     try {
@@ -252,6 +262,7 @@ export default function GoldenNeedle() {
 
   useEffect(() => {
     const keyDown = (event: KeyboardEvent) => {
+      if (event.target === host.current && [" ", "Enter", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) event.preventDefault();
       if (
         panel ||
         event.target instanceof HTMLInputElement ||
@@ -270,17 +281,28 @@ export default function GoldenNeedle() {
         selectTool(s, TOOLS[Number(key) - 1]);
         refresh();
       }
+      if (event.target === host.current && ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) {
+        event.preventDefault();
+        selectKeyboardSpot(s, event.key);
+        refresh();
+      }
       if (key === "q") s.turning = -1;
       if (key === "e") s.turning = 1;
-      if (key === " " && !(event.target instanceof HTMLButtonElement)) {
+      if ((key === " " || key === "enter") && event.target === host.current) {
         event.preventDefault();
-        press(s);
-        refresh();
+        if (!holdOwner.current) {
+          if (s.keyboardSpot === null) selectKeyboardSpot(s);
+          press(s);
+          if (s.down) holdOwner.current = `key:${event.code}`;
+          refresh();
+        }
       }
     };
     const keyUp = (event: KeyboardEvent) => {
       if (["q", "e"].includes(event.key.toLowerCase())) state.current.turning = 0;
-      if (event.key === " ") {
+      if (holdOwner.current === `key:${event.code}`) {
+        event.preventDefault();
+        holdOwner.current = null;
         release(state.current);
         refresh();
       }
@@ -291,10 +313,7 @@ export default function GoldenNeedle() {
         refresh();
       }
     };
-    const blur = () => {
-      cancelPress(state.current);
-      refresh();
-    };
+    const blur = cancelInput;
     window.addEventListener("keydown", keyDown);
     window.addEventListener("keyup", keyUp);
     window.addEventListener("blur", blur);
@@ -305,7 +324,7 @@ export default function GoldenNeedle() {
       window.removeEventListener("blur", blur);
       document.removeEventListener("visibilitychange", hidden);
     };
-  }, [panel, refresh, fullscreen]);
+  }, [panel, refresh, fullscreen, cancelInput]);
 
   useEffect(() => {
     if (panel) dialog.current?.showModal();
@@ -327,12 +346,15 @@ export default function GoldenNeedle() {
     state.current = createGame(difficulty);
     scene.current?.resumeClock();
     refresh();
+    host.current?.focus();
   };
   const choose = (tool: Tool) => {
     selectTool(state.current, tool);
     refresh();
   };
   const pointer = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (holdOwner.current?.startsWith("key:") || (holdOwner.current && holdOwner.current !== `pointer:${event.pointerId}`)) return;
+    state.current.keyboardSpot = null;
     const canvas = host.current?.querySelector("canvas");
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
@@ -342,17 +364,21 @@ export default function GoldenNeedle() {
     };
   };
   const pointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!event.isPrimary || event.button !== 0) return;
+    if (!event.isPrimary || event.button !== 0 || holdOwner.current) return;
     event.currentTarget.setPointerCapture(event.pointerId);
     pointer(event);
     // Touch has no hover. Positioning the hand at touchdown makes every tool usable on phones.
     if (event.pointerType !== "mouse") state.current.hand = { ...state.current.pointer };
     press(state.current);
+    if (state.current.down) holdOwner.current = `pointer:${event.pointerId}`;
+    // Focus after pressing: onFocus must not move a mouse-aligned hand to a keyboard target.
+    event.currentTarget.focus({ preventScroll: true });
     refresh();
   };
   const pointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!event.isPrimary) return;
+    if (holdOwner.current !== `pointer:${event.pointerId}`) return;
     pointer(event);
+    holdOwner.current = null;
     release(state.current);
     refresh();
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
@@ -405,19 +431,23 @@ export default function GoldenNeedle() {
             </div>
           )}
           <div className={styles.stage}>
+            {/* eslint-disable jsx-a11y/no-noninteractive-tabindex -- This custom canvas application owns keyboard targeting and actions. */}
             <div
+tabIndex={playing ? 0 : -1}
               className={styles.canvas}
               ref={host}
               onPointerMove={pointer}
               onPointerDown={pointerDown}
               onPointerUp={pointerUp}
-              onPointerCancel={() => {
-                cancelPress(state.current);
-                refresh();
-              }}
+              onPointerCancel={event => { if (holdOwner.current === `pointer:${event.pointerId}`) cancelInput(); }}
+              onLostPointerCapture={event => { if (holdOwner.current === `pointer:${event.pointerId}`) cancelInput(); }}
+              onFocus={() => { selectKeyboardSpot(state.current); refresh(); }}
+              onBlur={() => { if (holdOwner.current?.startsWith("key:")) cancelInput(); }}
+              aria-describedby="needle-keyboard-help"
               role="application"
-              aria-label="操作台，鼠标移动工具，按住操作，数字 1 到 4 切换工具"
+              aria-label="操作台，方向键选点，空格或 Enter 按住操作，数字 1 到 4 切换工具"
             />
+            {/* eslint-enable jsx-a11y/no-noninteractive-tabindex */}
             {(!ready || loadError) && (
               <div className={styles.loading}>
                 {loadError || "正在整理器械…"}
@@ -464,6 +494,12 @@ export default function GoldenNeedle() {
                   继续操作
                 </button>
               </div>
+            )}
+          </div>
+          <div id="needle-keyboard-help" className={styles.keyboardHelp}>
+            <span>键盘：Tab 到操作台 · ← → 按编号选点 · ↑ ↓ 换行 · 空格 / Enter 按住</span>
+            {playing && view.keyboardSpot !== null && (
+              <strong aria-live="polite">{view.keyboardSpot + 1} 号落点{view.phase === "needle" ? ` · 目标角度 ${view.spots[view.keyboardSpot].angle}°` : ""}</strong>
             )}
           </div>
           <div className={styles.tray} aria-label="器械托盘">
@@ -751,7 +787,7 @@ export default function GoldenNeedle() {
       </div>
       <footer className={styles.footer}>
         <span>慢一点，也是一种技术。</span>
-        <span>鼠标 / 触屏操作 · 1–4 换工具 · P 暂停 · F 全屏</span>
+        <span>鼠标 / 触屏 / 键盘 · 1–4 换工具 · P 暂停 · F 全屏</span>
       </footer>
 
       <dialog ref={dialog} className={styles.dialog} onCancel={closePanel}>
@@ -825,6 +861,8 @@ export default function GoldenNeedle() {
             <p>
               进阶和整活模式需要对齐方框角度：Q / E
               或屏幕旋钮。触屏可直接按住落点，松手完成微针操作。
+              键盘用 Tab 聚焦操作台，左右方向键按编号循环选点，上下方向键移到邻近行，Home / End 到首末落点。
+              按住空格或 Enter，金色区间松开；按住时选点锁定，离开操作台会取消本次按住。
             </p>
             <p>
               栓剂是可选止痛道具，单局一次，会暂时降低疼痛增长。是否使用都能通关，选择它不会扣分。

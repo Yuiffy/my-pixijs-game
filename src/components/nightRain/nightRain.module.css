@@ -108,3 +108,8 @@
 .lampTravel { border-top: 1px solid #c5aa7444; padding-top: 12px; margin: 8px 0; }
 .lampTravel p { color: #d9c69a; font-size: 12px; margin: 0 0 8px; }
 .lampTravel button { font-size: 12px; margin: 3px; padding: 9px 12px; }
+
+.havenStory p { font-size: 14px; line-height: 1.9; color: #e0dacb; }
+.havenStory .havenBalance { color: #e8c790; font-size: 12px; padding: 10px 0; border-top: 1px solid #d7bd8244; }
+.havenChoices { display: grid; gap: 10px; margin: 22px 0 12px; }.havenChoices button { text-align: left; padding: 13px 16px; }.havenChoices small { display: block; margin-top: 5px; font-size: 11px; }.havenChoices button:disabled { cursor: default; }
+.havenJournal { list-style: none; margin: 0; padding: 0; }.havenJournal li { padding: 18px 0; border-top: 1px solid #d7bd8244; }.havenJournal h3 { font-size: 17px; font-weight: normal; margin: 7px 0; }.havenJournal p { font-size: 13px; margin: 6px 0 10px; }.havenJournal small { color: #baad89; font-size: 11px; }.havenJournal button { font-size: 12px; padding: 8px 13px; }

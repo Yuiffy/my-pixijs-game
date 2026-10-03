@@ -99,7 +99,7 @@ async function main() {
     await page.addInitScript(seed => { if (!localStorage.getItem('night-rain-v1')) localStorage.setItem('night-rain-v1', seed); }, seed);
     await install(page); await capture(page, '00-two-chapter-title');
     await page.getByRole('button', { name: '继续雨夜旅程 →', exact: true }).click(); await advance(page, 0);
-    assert.equal((await state(page)).worldVersion, 6);
+    assert.equal((await state(page)).worldVersion, 7);
     assert.deepEqual((await state(page)).collected, JSON.parse(seed).collected);
     await page.keyboard.press('m'); await page.getByRole('button', { name: '前往王寺雨灯', exact: true }).click(); await advance(page, 0);
     let villageSave;

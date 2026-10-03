@@ -18,6 +18,8 @@ export default async function mountScene(
     height: HEIGHT,
     backgroundColor: "#24574c",
     audio: { noAudio: true },
+    // React owns pointer/keyboard input; Phaser only renders this canvas.
+    input: { keyboard: false, mouse: false, touch: false },
     banner: false,
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     scene: {
