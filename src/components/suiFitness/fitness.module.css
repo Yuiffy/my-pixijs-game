@@ -71,8 +71,8 @@
 }
 .hud {
   display: grid;
-  grid-template-columns: 1.45fr 1fr 1fr 1fr 0.6fr;
-  gap: 28px;
+  grid-template-columns: 1.25fr 1fr 1fr 0.8fr 0.75fr 0.9fr;
+  gap: 22px;
   padding: 18px 3.4%;
   max-width: 1250px;
   width: 100%;
@@ -141,6 +141,112 @@
 }
 .sage .track i {
   background: var(--sage);
+}
+.blue .track i {
+  background: #58b9ca;
+}
+.level > span {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 7px;
+}
+.level b {
+  font-size: 20px;
+}
+.level small {
+  font-size: 10px;
+  color: #7c6a79;
+}
+.level .track i {
+  background: var(--sage);
+}
+.buildPicker,
+.loadout {
+  width: min(1100px, 100%);
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 14px 3%;
+}
+.buildTitle {
+  display: flex;
+  gap: 15px;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+.buildTitle b {
+  font-size: 13px;
+}
+.buildTitle small {
+  font-size: 11px;
+  color: #7c6a79;
+}
+.buildChoices {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.buildChoices button {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 3px 7px;
+  text-align: left;
+  border: 1px solid #d8c4c1;
+  border-radius: 4px;
+  background: transparent;
+  padding: 13px 10px;
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    background 0.18s,
+    border-color 0.18s;
+}
+.buildChoices button[aria-pressed="true"] {
+  background: #f0e3d7;
+  border-color: #a98377;
+}
+.buildChoices button > span {
+  grid-row: 1/3;
+  font-size: 29px;
+  align-self: center;
+}
+.buildChoices b {
+  font-size: 13px;
+}
+.buildChoices small {
+  font-size: 10px;
+  line-height: 1.55;
+}
+.loadout {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 1px solid #4e3e5018;
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+.loadout > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+.loadout span,
+.loadout > small {
+  font-size: 11px;
+}
+.loadout i {
+  font-style: normal;
+  color: var(--sage);
+  font-size: 18px;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+.loadout b {
+  color: var(--plum);
+}
+.dialog .resultSummary {
+  font-size: 11px !important;
+  margin: 0 0 15px !important;
 }
 .danger .track i {
   background: #d64349;
@@ -868,6 +974,18 @@
     font-size: 9px;
   }
 }
+@media (max-width: 600px) {
+  .hud { grid-template-columns: 1fr 1fr; gap: 10px 18px; }
+  .day { grid-column: 1/3; }
+  .meter strong { font-size: 17px; }
+  .level b { font-size: 17px; }
+  .buildChoices { grid-template-columns: 1fr; gap: 7px; }
+  .buildChoices button { padding: 8px 12px; }
+  .buildTitle { flex-wrap: wrap; gap: 3px 10px; }
+  .loadout { flex-direction: column; gap: 5px; padding: 7px 4%; }
+  .loadout span, .loadout > small { font-size: 10px; }
+  .loadout > div { gap: 3px 10px; }
+}
 @media (max-height: 500px) and (min-width: 600px) {
   .header {
     padding: 8px 3%;
@@ -878,7 +996,7 @@
   .hud {
     padding: 7px 3%;
     gap: 15px;
-    grid-template-columns: 1.4fr 1fr 1fr 1fr;
+    grid-template-columns: 1.2fr 1fr 1fr 0.8fr 0.7fr 0.8fr;
   }
   .defeats {
     display: none;
@@ -890,7 +1008,7 @@
     font-size: 21px;
   }
   .stage {
-    width: min(70%, calc((100svh - 140px) * 11 / 7));
+    width: min(70%, calc((100svh - 165px) * 11 / 7));
     margin: auto;
   }
   .controls {
@@ -938,6 +1056,11 @@
   .introHint {
     margin: 7px 0;
   }
+  .buildPicker { padding: 6px 3%; }
+  .buildTitle { margin-bottom: 5px; }
+  .buildChoices button { padding: 5px 7px; }
+  .buildChoices small { font-size: 9px; }
+  .loadout { padding: 5px 3%; }
 }
 @media (prefers-reduced-motion: reduce) {
   .root * {

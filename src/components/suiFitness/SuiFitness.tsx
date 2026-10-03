@@ -20,8 +20,12 @@ import {
   UPGRADE_DEFS,
   TARGET_WEIGHT,
   TARGET_MUSCLE,
+  TARGET_BODY_FAT,
+  TALENT_DEFS,
+  WEAPON_DEFS,
+  workoutCost,
 } from "./engine";
-import type { FitnessInput, FitnessState } from "./engine";
+import type { FitnessInput, FitnessState, Talent, WeaponKind } from "./engine";
 import { drawFitness } from "./renderer";
 import styles from "./fitness.module.css";
 
@@ -30,7 +34,7 @@ type FitnessWindow = Window & {
   render_game_to_text?: () => string;
   advanceTime?: (ms: number) => void;
 };
-const RECORD_KEY = "sui-fitness-record-v1";
+const RECORD_KEY = "sui-fitness-record-v2";
 const SUI_IMAGE = "/images/materials/岁己SUI小猫帽无外套长发金瞳.PNG";
 const STEP = 1 / 60;
 const ROUND_NAMES = [
@@ -106,7 +110,7 @@ export default function SuiFitness() {
   }, []);
   const pause = useCallback(() => {
     if (helpRef.current) return;
-    if (game.current.phase === 'paused') startFitness(game.current);
+    if (game.current.phase === "paused") startFitness(game.current);
     else pauseFitness(game.current);
     clearInput();
     sync();
@@ -141,9 +145,10 @@ export default function SuiFitness() {
     pending.current.pulse = false;
     return input;
   }, []);
-  const updateUrl = (seed: number) => {
+  const updateUrl = (seed: number, talent: Talent = game.current.talent) => {
     const url = new URL(window.location.href);
     url.searchParams.set("seed", String(seed));
+    url.searchParams.set("talent", talent);
     window.history.replaceState(null, "", url);
   };
   const begin = (newSeed = false, ready = false) => {
@@ -151,7 +156,7 @@ export default function SuiFitness() {
     const seed = newSeed
       ? window.crypto.getRandomValues(new Uint32Array(1))[0]
       : game.current.seed;
-    game.current = createFitness(seed);
+    game.current = createFitness(seed, game.current.talent);
     updateUrl(seed);
     if (!ready) startFitness(game.current);
     recorded.current = null;
@@ -173,14 +178,19 @@ export default function SuiFitness() {
   };
 
   useEffect(() => {
-    const requested = new URL(window.location.href).searchParams.get("seed");
+    const params = new URL(window.location.href).searchParams;
+    const requested = params.get("seed");
+    const requestedTalent = params.get("talent") as Talent;
+    const talent = Object.keys(TALENT_DEFS).includes(requestedTalent)
+      ? requestedTalent
+      : "strength";
     if (
       requested !== null &&
       /^\d{1,10}$/.test(requested) &&
       Number(requested) <= 4294967295
     ) {
-      game.current = createFitness(Number(requested));
-    }
+      game.current = createFitness(Number(requested), talent);
+    } else game.current = createFitness(game.current.seed, talent);
     updateUrl(game.current.seed);
     try {
       const raw = JSON.parse(localStorage.getItem(RECORD_KEY) || "null");
@@ -280,7 +290,8 @@ export default function SuiFitness() {
       // Focused buttons keep their native activation, including the hold button.
       if (
         event.target instanceof HTMLElement &&
-        event.target.closest("button, a") && event.code === "Space"
+        event.target.closest("button, a") &&
+        event.code === "Space"
       ) return;
       const supported = [
         "KeyW",
@@ -297,6 +308,7 @@ export default function SuiFitness() {
       ];
       if (!supported.includes(event.code)) return;
       event.preventDefault();
+      if (event.repeat && !keys.current.has(event.code)) return;
       keys.current.add(event.code);
       if (!event.repeat && event.code === "Space") pending.current.dash = true;
       if (!event.repeat && event.code === "KeyQ") pending.current.pulse = true;
@@ -432,19 +444,28 @@ export default function SuiFitness() {
   ) => {
     if (!["Space", "Enter"].includes(event.code)) return;
     event.preventDefault();
-    if (down && game.current.phase === "playing") workoutKeys.current.add(event.code);
-    else workoutKeys.current.delete(event.code);
+    if (down && game.current.phase === "playing") {
+      if (!event.repeat || workoutKeys.current.has(event.code)) workoutKeys.current.add(event.code);
+    } else workoutKeys.current.delete(event.code);
   };
   const nearby = view.zones.find(
     (zone) => Math.hypot(zone.x - view.player.x, zone.y - view.player.y) < zone.radius,
   );
   const interactive = view.phase === "playing";
-  const exerciseCost = view.upgrades.includes('focus') ? 18 : 24;
+  const exerciseCost = workoutCost(view);
   // Keep a near miss visibly outside the goal even when the usual label rounds.
-  const weightLabel = view.weight > TARGET_WEIGHT + 1e-9 && Number(view.weight.toFixed(1)) <= TARGET_WEIGHT
-    ? `>${TARGET_WEIGHT.toFixed(1)}` : view.weight.toFixed(1);
-  const muscleLabel = view.muscle < TARGET_MUSCLE - 1e-9 && Math.round(view.muscle) >= TARGET_MUSCLE
-    ? `<${TARGET_MUSCLE}` : String(Math.round(view.muscle));
+  const weightLabel =
+    view.weight > TARGET_WEIGHT + 1e-9 &&
+    Number(view.weight.toFixed(2)) <= TARGET_WEIGHT
+      ? `>${TARGET_WEIGHT.toFixed(2)}`
+      : view.weight.toFixed(2);
+  const muscleLabel =
+    view.muscle < TARGET_MUSCLE - 1e-9 &&
+    Math.round(view.muscle) >= TARGET_MUSCLE
+      ? `<${TARGET_MUSCLE}`
+      : String(Math.round(view.muscle));
+  const fatLabel = view.bodyFat > TARGET_BODY_FAT + 1e-9 && Number(view.bodyFat.toFixed(2)) <= TARGET_BODY_FAT
+    ? `>${TARGET_BODY_FAT.toFixed(2)}` : view.bodyFat.toFixed(2);
 
   return (
     <main ref={root} className={styles.root}>
@@ -482,7 +503,7 @@ export default function SuiFitness() {
         <section className={styles.hud} aria-label="挑战状态">
           <div className={styles.day}>
             <small>
-              DAY {String(view.day).padStart(2, "0")} / {DAYS}
+              STAGE {String(view.day).padStart(2, "0")} / {DAYS}
             </small>
             <strong>{ROUND_NAMES[view.day - 1]}</strong>
             <span>
@@ -492,10 +513,17 @@ export default function SuiFitness() {
           </div>
           <Meter
             label="体重"
-            value={((view.weight - 52) / 20) * 100}
+            value={((view.weight - 40) / 14) * 100}
             display={`${weightLabel} kg`}
-            detail="目标 ≤62 · 上限 72"
-            tone={view.weight > 68 ? "danger" : "coral"}
+            detail="48.00 起步 · 目标 40.00"
+            tone={view.weight > 52 ? "danger" : "coral"}
+          />
+          <Meter
+            label="体脂率"
+            value={view.bodyFat * 2}
+            display={`${fatLabel}%`}
+            detail={`目标 ≤${TARGET_BODY_FAT}% · 脂肪 ${view.fatMass.toFixed(2)} kg`}
+            tone="blue"
           />
           <Meter
             label="肌肉"
@@ -511,12 +539,56 @@ export default function SuiFitness() {
             detail="攒起来，去运动"
             tone="sage"
           />
-          <div className={styles.defeats}>
-            <small>击退诱惑</small>
-            <strong>{view.defeats}</strong>
-            <span>最高连击 {view.bestCombo}</span>
+          <div className={styles.level}>
+            <span>
+              <b>Lv.{view.level}</b>
+              <small>
+                {Math.floor(view.xp)} / {view.nextXp} XP
+              </small>
+            </span>
+            <div className={styles.track}>
+              <i
+                style={{
+                  width: `${Math.min(100, (view.xp / view.nextXp) * 100)}%`,
+                }}
+              />
+            </div>
+            <small>拾取 +5 · 训练 +12 起</small>
           </div>
         </section>
+        {view.phase === "ready" && (
+          <section className={styles.buildPicker} aria-label="选择开局天赋">
+            <div className={styles.buildTitle}>
+              <b>今天想怎么练？</b>
+              <small>开局天赋不同，后续武器可以混搭</small>
+            </div>
+            <div className={styles.buildChoices}>
+              {(
+                Object.entries(TALENT_DEFS) as [
+                  Talent,
+                  (typeof TALENT_DEFS)[Talent],
+                ][]
+              ).map(([id, talent]) => (
+                <button
+                  key={id}
+                  data-talent={id}
+                  aria-pressed={view.talent === id}
+                  onClick={() => {
+                    game.current = createFitness(game.current.seed, id);
+                    updateUrl(game.current.seed, id);
+                    sync();
+                  }}
+                >
+                  <span style={{ color: talent.color }}>
+                    {WEAPON_DEFS[talent.weapon].icon}
+                  </span>
+                  <b>{talent.name}</b>
+                  <small>{talent.description}</small>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
         <div className={styles.stage}>
           <canvas
             ref={canvas}
@@ -550,7 +622,7 @@ export default function SuiFitness() {
                   开始今天的挑战 <span>↗</span>
                 </button>
                 <p className={styles.introHint}>
-                  5 波诱惑 · 自动哑铃 · 减脂也保肌
+                  48.00 → 40.00 kg · {TALENT_DEFS[view.talent].name}开局
                 </p>
                 <button className={styles.textButton} onClick={showHelp}>
                   第一次来？看看玩法 →
@@ -578,7 +650,7 @@ export default function SuiFitness() {
               <div className={styles.message} role="status">
                 {view.messageTime > 0
                   ? view.message
-                  : "击退美食 → 捡动力 → 去运动。蛋白质补给能保肌。"}
+                  : "拾取与训练得经验 → 随时升级 → 混搭攻击。"}
               </div>
               <div className={styles.workoutPrompt}>
                 {nearby ? (
@@ -587,16 +659,35 @@ export default function SuiFitness() {
                     <span>
                       {view.exercise
                         ? `正在锻炼 ${Math.round(view.exercise.progress * 100)}%`
-                        : view.motivation < exerciseCost ? `动力不足 · 需要 ${exerciseCost}` : `站定按住 E · ${exerciseCost} 动力 / 2 秒`}
+                        : view.motivation < exerciseCost
+                          ? `动力不足 · 需要 ${exerciseCost}`
+                          : `站定按住 E · ${exerciseCost} 动力 / 2 秒`}
                     </span>
                   </>
                 ) : (
-                  <span>哑铃自动攻击 · 去彩色运动区按住 E</span>
+                  <span>攻击自动释放 · 去运动区按住 E 训练</span>
                 )}
               </div>
             </>
           )}
         </div>
+        {view.phase !== "ready" && (
+          <div className={styles.loadout} aria-label="当前装备与训练效果">
+            <div>
+              {(Object.entries(view.weapons) as [WeaponKind, number][])
+                .filter(([, rank]) => rank > 0)
+                .map(([kind, rank]) => (
+                  <span key={kind}>
+                    <i>{WEAPON_DEFS[kind].icon}</i>
+                    {WEAPON_DEFS[kind].name} <b>{rank}</b>
+                  </span>
+                ))}
+            </div>
+            <small>
+              击退 {view.defeats} · 燃脂储备 {view.burnReserve.toFixed(2)} kg
+            </small>
+          </div>
+        )}
         <div className={styles.controls}>
           <div className={styles.keyboard}>
             <span>
@@ -717,20 +808,23 @@ export default function SuiFitness() {
                 <ol className={styles.rules}>
                   <li>
                     <b>美食会追你。</b>DQ
-                    慢但重、牛肉干快速贴身，西西里柠檬柚会瞄准冲刺。碰到会增重，哑铃会自动击退身边敌人。
+                    慢但重、牛肉干快速贴身，西西里柠檬柚会瞄准冲刺。碰到增加脂肪负担，已装备武器会自动攻击。
                   </li>
                   <li>
                     <b>动力靠行动攒。</b>击退敌人掉落小星星，拾取后去运动区按住
-                    E /「锻炼 E」完成训练。瓶装 P 补给能补肌肉。
+                    E /「锻炼 E」完成训练。星星还给 5 经验，训练给 12
+                    起；攒够经验立即升级选武器或强化，最多混搭三种武器。
                   </li>
                   <li>
                     <b>三种运动，三条路线。</b>
-                    站定两秒、消耗 24 动力（自我鼓励后 18）。移动或碰撞会打断。健身房增肌强攻；游泳减脂加速；居家健身保肌并减轻碰撞负担。
+                    站定两秒、消耗 24 动力（自我鼓励可降至
+                    16）。移动或碰撞会打断。健身房保肌强攻；游泳积累更多燃脂储备；居家训练保肌防护。储备会逐步兑现，不会一练就减一大截。
                   </li>
                   <li>
-                    <b>别只盯着秤。</b>第五天结束时体重 ≤62 kg、肌肉 ≥55
-                    才算达标。体重到 72 kg 或肌肉降到 20
-                    会提前结束。每关结束选一项升级。
+                    <b>别只盯着秤。</b>从 48.00 kg、35% 体脂开始，达到体重
+                    ≤40.00 kg、体脂 ≤22%、肌肉 ≥55
+                    就提前通关。五阶段结束仍未达标，或体重到 54.00 kg、肌肉降到
+                    20，会结束挑战。站着等不会消耗脂肪或获得经验。
                   </li>
                 </ol>
                 <div className={styles.ruleKeys}>
@@ -741,8 +835,7 @@ export default function SuiFitness() {
                   <span>P / Esc 暂停 · F 全屏</span>
                 </div>
                 <p className={styles.smallPrint}>
-                  游戏里的五天各 40
-                  秒。现实里的减脂不用赶进度，游戏数值也不对应真实身体。
+                  五个游戏阶段各 {DAY_SECONDS} 秒；体重与体脂是本作的虚构数值。
                 </p>
                 <button className={styles.primary} onClick={closeHelp}>
                   收起说明
@@ -753,8 +846,8 @@ export default function SuiFitness() {
                 <p className={styles.eyebrow}>TAKE A BREATH</p>
                 <h2 id="fitness-dialog-title">歇一下，也算计划的一部分。</h2>
                 <p>
-                  第 {view.day} 天 · 还剩 {Math.ceil(DAY_SECONDS - view.time)}{" "}
-                  秒<br />
+                  第 {view.day} 阶段 · Lv.{view.level} · 还剩{" "}
+                  {Math.ceil(DAY_SECONDS - view.time)} 秒<br />
                   切出页面会自动暂停，回来后主动继续。
                 </p>
                 <button
@@ -776,9 +869,11 @@ export default function SuiFitness() {
               </>
             ) : view.phase === "upgrade" ? (
               <>
-                <p className={styles.eyebrow}>DAY {view.day} COMPLETE</p>
-                <h2 id="fitness-dialog-title">明天，想怎样变强？</h2>
-                <p>选一个升级，迎接下一波诱惑。</p>
+                <p className={styles.eyebrow}>
+                  LEVEL {view.level} · EARNED BY MOVING
+                </p>
+                <h2 id="fitness-dialog-title">努力有回报，选个新招。</h2>
+                <p>时间已暂停。选新武器或强化，接着打这波诱惑。</p>
                 <div className={styles.upgrades}>
                   {view.choices.map((id) => {
                     const upgrade = UPGRADE_DEFS.find((item) => item.id === id);
@@ -795,8 +890,17 @@ export default function SuiFitness() {
                           window.requestAnimationFrame(() => canvas.current?.focus(),);
                         }}
                       >
-                        <span>＋</span>
-                        <b>{upgrade.name}</b>
+                        <span>
+                          {upgrade.weapon
+                            ? WEAPON_DEFS[upgrade.weapon].icon
+                            : "＋"}
+                        </span>
+                        <b>
+                          {upgrade.name}
+                          {upgrade.weapon
+                            ? ` · ${view.weapons[upgrade.weapon] ? `Lv.${view.weapons[upgrade.weapon]} → ${view.weapons[upgrade.weapon] + 1}` : "新武器"}`
+                            : ""}
+                        </b>
                         <small>{upgrade.description}</small>
                         <i>带上它 →</i>
                       </button>
@@ -835,10 +939,17 @@ export default function SuiFitness() {
                     </b>
                   </div>
                   <div>
-                    <small>保住的肌肉</small>
-                    <b>{muscleLabel}</b>
+                    <small>最终体脂</small>
+                    <b>
+                      {fatLabel}
+                      <i>%</i>
+                    </b>
                   </div>
                 </div>
+                <p className={styles.resultSummary}>
+                  肌肉 {muscleLabel} · Lv.{view.level} · 用时{" "}
+                  {view.elapsed.toFixed(1)} 秒 · {view.defeats} 次击退
+                </p>
                 <div className={styles.workoutReport}>
                   {(["gym", "swim", "home"] as const).map((kind) => (
                     <span key={kind}>

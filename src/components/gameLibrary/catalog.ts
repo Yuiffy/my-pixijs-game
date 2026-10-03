@@ -28,9 +28,9 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
       {
         title: '岁己：今天也要动',
         href: '/game/sui-fitness',
-        description: '躲开 DQ、牛肉干和果茶的追击，攒动力去健身、游泳、居家训练。减脂，也把肌肉留下。',
+        description: '从 48.00 kg 向 40.00 kg 前进，训练减脂保肌。选开局天赋，混搭四种武器，靠行动升级。',
         image: '/games/sui-fitness/preview.svg',
-        meta: '美食生存战 · 自动哑铃 · 五波挑战 / 触屏',
+        meta: '美食肉鸽 · 三种天赋 · 四种攻击 / 触屏',
         releaseDate: '2026-10-03',
       },
       {

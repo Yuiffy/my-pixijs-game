@@ -1,4 +1,5 @@
 import type { FitnessState } from "./engine";
+import { upgradeRank } from "./engine";
 
 type Ctx = CanvasRenderingContext2D;
 type Zone = FitnessState["zones"][number];
@@ -597,9 +598,15 @@ function player(
   round(c, 3, 6 - step, 10, 18, 5, "#765a72");
   round(c, -15, 18 + step, 14, 8, 4, "#fff7eb", "#aa8c8e");
   round(c, 1, 18 - step, 15, 8, 4, "#fff7eb", "#aa8c8e");
-  round(c, -16, -16, 32, 29, 12, "#e9979b", "#bd7d8b");
-  round(c, -21, -10 + step, 10, 18, 5, "#e9979b");
-  round(c, 11, -10 - step, 10, 18, 5, "#e9979b");
+  const outfit =
+    s.talent === "swimmer"
+      ? "#81bdce"
+      : s.talent === "rhythm"
+        ? "#a6b886"
+        : "#e9979b";
+  round(c, -16, -16, 32, 29, 12, outfit, "#bd7d8b");
+  round(c, -21, -10 + step, 10, 18, 5, outfit);
+  round(c, 11, -10 - step, 10, 18, 5, outfit);
   ellipse(c, -18, 7 + step, 4, 4, "#ffe9da");
   ellipse(c, 18, 7 - step, 4, 4, "#ffe9da");
   line(c, [0, -11, 0, 7], "#f3c3bd", 2);
@@ -622,7 +629,7 @@ function player(
   c.restore();
   const angle = s.attackAngle;
   const orbit = reduced ? angle : s.elapsed * 1.6;
-  for (let i = 0; i < 2; i += 1) {
+  for (let i = 0; i < (s.weapons.dumbbell > 0 ? 2 : 0); i += 1) {
     const a = orbit + Math.PI * i;
     dumbbell(
       c,
@@ -633,6 +640,37 @@ function player(
       "#987e9b",
     );
   }
+}
+
+function attackObjects(c: Ctx, s: FitnessState) {
+  for (const p of s.projectiles) {
+    const a = Math.atan2(p.vy, p.vx);
+    line(
+      c,
+      [p.x - Math.cos(a) * 20, p.y - Math.sin(a) * 20, p.x, p.y],
+      "#66bed980",
+      6,
+    );
+    ellipse(c, p.x, p.y, 8, 8, "#58b9d0");
+    ellipse(c, p.x - 2, p.y - 2, 3, 3, "#f5ffff");
+    ring(c, p.x, p.y, 11, "#a2dce866", 2);
+  }
+  const rank = s.weapons.rope;
+  if (!rank) return;
+  const radius = 74 + upgradeRank(s, "reach") * 12 + (rank - 1) * 8;
+  c.save();
+  c.setLineDash([7, 9]);
+  ring(c, s.player.x, s.player.y, radius, "#93a97660", 2);
+  c.setLineDash([]);
+  for (let i = 0; i < rank + 1; i++) {
+    const angle = s.elapsed * 4 + (TAU * i) / (rank + 1);
+    const x = s.player.x + Math.cos(angle) * radius;
+    const y = s.player.y + Math.sin(angle) * radius;
+    ellipse(c, x, y, 13, 13, "#e7eabd");
+    ring(c, x, y, 11, "#8fa967", 3);
+    star(c, x, y, 7, "#fdfaec", 4);
+  }
+  c.restore();
 }
 
 function feedback(c: Ctx, s: FitnessState) {
@@ -682,6 +720,21 @@ function feedback(c: Ctx, s: FitnessState) {
     } else if (e.kind === "dash") {
       ellipse(c, e.x, e.y, radius * 0.7, radius * 0.4, "#f2b7a333");
       ring(c, e.x, e.y, radius * 0.65, "#e49e96", 2);
+    } else if (e.kind === "aura") {
+      const target = e.radius || 130;
+      const spread = target * (0.6 + (1 - life) * 0.4);
+      ring(c, e.x, e.y, spread, "#b5a0ce", 7 * life + 1);
+      ring(c, e.x, e.y, spread * 0.9, "#fbf6fd", 2);
+      for (let i = 0; i < 8; i++) {
+        const a = (TAU * i) / 8;
+        star(
+          c,
+          e.x + Math.cos(a) * spread,
+          e.y + Math.sin(a) * spread,
+          6,
+          "#c3b1da",
+        );
+      }
     } else if (e.kind === "exercise") {
       ring(c, e.x, e.y, radius + 16, "#91b8a1", 3);
       star(c, e.x - 20, e.y - 28, 7, "#91b8a1");
@@ -746,6 +799,7 @@ export function drawFitness(
   }
   for (const p of s.pickups) pickup(c, p, s.elapsed, reduced);
   for (const f of s.foods) food(c, f, s.elapsed, reduced);
+  attackObjects(c, s);
   feedback(c, s);
   player(c, s, assets, reduced, moving);
   c.restore();

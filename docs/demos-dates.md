@@ -8,7 +8,7 @@ the date a placeholder route was created as a launch date.
 
 | Game | Release evidence | Latest update evidence |
 | --- | --- | --- |
-| Sui Fitness / 今天也要动 | 2026-10-03, first locally verified five-day survival campaign and catalog entry; deployment pending | 2026-10-03, same implementation |
+| Sui Fitness / 今天也要动 | 2026-10-03, first locally verified five-day survival campaign and catalog entry; deployment pending | 2026-10-03, 48→40kg gradual fat loss, body composition, action XP, three talents and four attacks; deployment pending |
 | Beach Volley / 晴海双打 | 2026-10-02, first locally playable implementation and catalog entry; deployment pending | 2026-10-03, independent input holds, native keyboard activation and complete 2P touch actions; deployment pending |
 | Golden Needle / 不许手抖 | 2026-10-02, first locally verified playable implementation and catalog entry; deployment pending | 2026-10-03, complete keyboard targeting and hold controls; deployment pending |
 | Autochess | 2026-01-10, first confirmed demos entry (`841ebb3`); earlier route was a placeholder | `AUTOCHESS_RELEASE_DATE` in the game's version file |

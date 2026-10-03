@@ -1,13 +1,18 @@
 export const WORLD = { width: 1100, height: 700 };
 export const DAYS = 5;
-export const DAY_SECONDS = 40;
-export const TARGET_WEIGHT = 62;
+export const DAY_SECONDS = 60;
+export const START_WEIGHT = 48;
+export const TARGET_WEIGHT = 40;
+export const TARGET_BODY_FAT = 22;
 export const TARGET_MUSCLE = 55;
-export const OVERLOAD_WEIGHT = 72;
+export const OVERLOAD_WEIGHT = 54;
 export const MIN_MUSCLE = 20;
 export const PLAYER_RADIUS = 22;
+export const MAX_WEAPONS = 3;
 
 export type Exercise = "gym" | "swim" | "home";
+export type Talent = "strength" | "swimmer" | "rhythm";
+export type WeaponKind = "dumbbell" | "water" | "rope" | "aura";
 export type FoodKind = "dq" | "jerky" | "tea";
 export type Phase = "ready" | "playing" | "paused" | "upgrade" | "won" | "lost";
 export interface FitnessInput {
@@ -31,6 +36,7 @@ export interface Food {
   rush: number;
   vx: number;
   vy: number;
+  ropeGrace?: number;
 }
 export interface Pickup {
   id: number;
@@ -47,34 +53,61 @@ export interface ExerciseZone {
 }
 export interface FitnessEffect {
   id: number;
-  kind: "hit" | "dash" | "exercise" | "pickup";
+  kind: "hit" | "dash" | "exercise" | "pickup" | "aura";
   x: number;
   y: number;
   life: number;
+  radius?: number;
+}
+export interface Projectile {
+  id: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  damage: number;
+  pierce: number;
+  hitIds: number[];
 }
 export interface FitnessState {
   seed: number;
   random: number;
   phase: Phase;
+  talent: Talent;
   day: number;
   time: number;
   elapsed: number;
   player: { x: number; y: number };
   foods: Food[];
   pickups: Pickup[];
+  projectiles: Projectile[];
   zones: ExerciseZone[];
   effects: FitnessEffect[];
   weight: number;
+  fatMass: number;
+  leanMass: number;
+  bodyFat: number;
+  burnReserve: number;
+  burnRate: number;
   muscle: number;
   motivation: number;
   stamina: number;
+  level: number;
+  xp: number;
+  nextXp: number;
+  totalXp: number;
+  weapons: Record<WeaponKind, number>;
+  weaponTimers: Record<WeaponKind, number>;
+  weaponDamage: Record<WeaponKind, number>;
   defeats: number;
   combo: number;
   bestCombo: number;
   comboTime: number;
   workouts: Record<Exercise, number>;
-  exercise: { kind: Exercise; progress: number } | null;
+  lastWorkout: Exercise | null;
   buffs: { attack: number; speed: number; guard: number };
+  exercise: { kind: Exercise; progress: number } | null;
   message: string;
   messageTime: number;
   dashCooldown: number;
@@ -87,7 +120,6 @@ export interface FitnessState {
   attackAngle: number;
   attackRange: number;
   attackFlash: number;
-  attackCooldown: number;
   dashTime: number;
   dashDirection: { x: number; y: number };
   facing: { x: number; y: number };
@@ -97,106 +129,238 @@ export interface FitnessState {
   proteinTimer: number;
   nextId: number;
 }
-
+export const WEAPON_DEFS: Record<
+  WeaponKind,
+  { name: string; icon: string; description: string }
+> = {
+  dumbbell: {
+    name: "哑铃横扫",
+    icon: "⌁",
+    description: "扇形近战，一次横扫多只食物；升级加伤害和范围",
+  },
+  water: {
+    name: "泳圈水弹",
+    icon: "◒",
+    description: "自动瞄准远处，水弹可穿透；升级增加弹数和穿透",
+  },
+  rope: {
+    name: "跳绳环绕",
+    icon: "∞",
+    description: "绳结绕身连续打击；升级增加绳结和环绕范围",
+  },
+  aura: {
+    name: "瑜伽气场",
+    icon: "◎",
+    description: "定期释放范围震波并击退；升级扩大范围、缩短间隔",
+  },
+};
+export const TALENT_DEFS: Record<
+  Talent,
+  { name: string; weapon: WeaponKind; description: string; color: string }
+> = {
+  strength: {
+    name: "力量派",
+    weapon: "dumbbell",
+    description: "哑铃开局 · 健身房经验 +35%，力量增益更久",
+    color: "#da8d72",
+  },
+  swimmer: {
+    name: "游泳派",
+    weapon: "water",
+    description: "水弹开局 · 移速 +10%，游泳燃脂储备 +30%",
+    color: "#58b9ca",
+  },
+  rhythm: {
+    name: "节奏派",
+    weapon: "rope",
+    description: "跳绳开局 · 换训练区多得经验，居家防护更久",
+    color: "#98ae7c",
+  },
+};
 export const EXERCISE_DEFS: Record<
   Exercise,
   { name: string; description: string; color: string }
 > = {
   gym: {
     name: "健身房",
-    description: "消耗 24 动力 · 2 秒：肌肉 +9，体重 −0.45，哑铃强化 16 秒",
+    description:
+      "24 动力 / 2 秒 · 肌肉 +2.2 · 燃脂储备 +0.28 kg · 经验 +12 · 强攻",
     color: "#efab60",
   },
   swim: {
     name: "游泳池",
-    description: "消耗 24 动力 · 2 秒：体重 −1.4，肌肉 +2，游泳步伐加速 14 秒",
+    description:
+      "24 动力 / 2 秒 · 肌肉 +0.6 · 燃脂储备 +0.36 kg · 经验 +12 · 加速",
     color: "#58c5d6",
   },
   home: {
     name: "居家健身",
-    description: "消耗 24 动力 · 2 秒：肌肉 +6，体重 −0.75，碰撞负担减轻 16 秒",
+    description:
+      "24 动力 / 2 秒 · 肌肉 +1.6 · 燃脂储备 +0.30 kg · 经验 +12 · 防护",
     color: "#a3b985",
   },
 };
-
-export const UPGRADE_DEFS = [
+interface UpgradeDef {
+  id: string;
+  name: string;
+  description: string;
+  max: number;
+  weapon?: WeaponKind;
+}
+export const UPGRADE_DEFS: UpgradeDef[] = [
+  ...Object.entries(WEAPON_DEFS).map(([weapon, def]) => ({
+    id: `weapon_${weapon}`,
+    name: def.name,
+    description: def.description,
+    max: 4,
+    weapon: weapon as WeaponKind,
+  })),
   {
     id: "strong",
-    name: "哑铃加片",
-    description: "自动攻击伤害 +1，DQ 也扛不住",
+    name: "力量适应",
+    description: "所有武器伤害 +20%（可叠 3 次）",
+    max: 3,
   },
   {
     id: "reach",
     name: "舒展肩背",
-    description: "哑铃攻击范围 +24，更早击退诱惑",
+    description: "近战、环绕与气场范围 +12；水弹射程增加",
+    max: 2,
   },
   {
     id: "shoes",
     name: "轻盈跑鞋",
-    description: "移动速度 +15%，游泳加速仍可叠加",
+    description: "移动速度 +10%，训练间赶路更快",
+    max: 2,
   },
   {
     id: "focus",
     name: "自我鼓励",
-    description: "训练动力消耗 −25%，动力拾取 +3",
+    description: "训练消耗 −4 动力，星星动力 +2",
+    max: 2,
   },
-  { id: "guard", name: "稳定核心", description: "食物碰撞的体重负担 −30%" },
+  {
+    id: "guard",
+    name: "稳定核心",
+    description: "接触食物增加的脂肪 −20%",
+    max: 2,
+  },
   {
     id: "breath",
     name: "呼吸节奏",
-    description: "闪避冷却 −0.7 秒，体力恢复更快",
+    description: "冲刺冷却 −0.4 秒，体力恢复更快",
+    max: 2,
   },
-  { id: "protein", name: "蛋白补给", description: "蛋白补给额外恢复 3 肌肉" },
+  {
+    id: "protein",
+    name: "蛋白补给",
+    description: "瓶装补给额外恢复 1.5 肌肉",
+    max: 2,
+  },
   {
     id: "magnet",
     name: "好心情磁铁",
-    description: "从更远处吸收动力和蛋白补给",
+    description: "拾取范围 +38，移动时吸收附近星星",
+    max: 2,
   },
-] as const;
-
+  {
+    id: "metabolism",
+    name: "有氧适应",
+    description: "训练储备 +10%，储备兑现速度 +15%",
+    max: 3,
+  },
+  {
+    id: "discipline",
+    name: "训练日志",
+    description: "拾取和训练获得的经验 +20%",
+    max: 2,
+  },
+];
 const EMPTY_INPUT: FitnessInput = { x: 0, y: 0 };
-const clamp = (value: number, low: number, high: number) => (
-  Math.max(low, Math.min(high, value))
-);
-const distance = (a: { x: number; y: number }, b: { x: number; y: number }) => (
-  Math.hypot(a.x - b.x, a.y - b.y)
-);
-const hasUpgrade = (state: FitnessState, id: string) => state.upgrades.includes(id);
-function random(state: FitnessState) {
-  state.random =
-    (Math.imul(state.random, 1664525) + 1013904223 + 4294967296) % 4294967296;
-  return state.random / 4294967296;
+const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
+const distance = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.hypot(a.x - b.x, a.y - b.y);
+export const upgradeRank = (s: FitnessState, id: string) => s.upgrades.filter((value) => value === id).length;
+export const workoutCost = (s: FitnessState) => 24 - upgradeRank(s, "focus") * 4;
+export function refreshBody(s: FitnessState) {
+  s.muscle = clamp(s.muscle, 0, 100);
+  s.leanMass = 30.42 + s.muscle * 0.012;
+  s.fatMass = Math.max(0, s.fatMass);
+  s.weight = s.leanMass + s.fatMass;
+  s.bodyFat = (s.fatMass / s.weight) * 100;
 }
-function say(state: FitnessState, message: string, duration = 2.5) {
-  state.message = message;
-  state.messageTime = duration;
+function random(s: FitnessState) {
+  s.random = (Math.imul(s.random, 1664525) + 1013904223 + 4294967296) % 4294967296;
+  return s.random / 4294967296;
+}
+function say(s: FitnessState, message: string, duration = 2.5) {
+  s.message = message;
+  s.messageTime = duration;
 }
 function effect(
-  state: FitnessState,
+  s: FitnessState,
   kind: FitnessEffect["kind"],
   x: number,
   y: number,
+  radius?: number,
 ) {
-  state.effects.push({
-    id: state.nextId++,
+  s.effects.push({
+    id: s.nextId++,
     kind,
     x,
     y,
+    radius,
     life: kind === "exercise" ? 0.85 : 0.45,
   });
-  if (state.effects.length > 70) state.effects.shift();
+  if (s.effects.length > 70) s.effects.shift();
 }
-function spawnFood(state: FitnessState) {
-  const edge = Math.floor(random(state) * 4);
-  const roll = random(state);
+function gainXp(s: FitnessState, amount: number) {
+  const gained = amount * (1 + upgradeRank(s, "discipline") * 0.2);
+  s.xp += gained;
+  s.totalXp += gained;
+}
+function availableUpgrades(s: FitnessState) {
+  const slots = Object.values(s.weapons).filter((rank) => rank > 0).length;
+  return UPGRADE_DEFS.filter(def => {
+    if (def.weapon) {
+      return s.weapons[def.weapon] < def.max &&
+        (s.weapons[def.weapon] > 0 || slots < MAX_WEAPONS);
+    }
+    return upgradeRank(s, def.id) < def.max;
+  });
+}
+function offerLevel(s: FitnessState) {
+  if (s.xp < s.nextXp || s.phase !== "playing") return;
+  const available = availableUpgrades(s);
+  if (!available.length) return;
+  s.xp -= s.nextXp;
+  s.level += 1;
+  s.nextXp = 12 + (s.level - 1) * 7;
+  for (let i = available.length - 1; i > 0; i--) {
+    const j = Math.floor(random(s) * (i + 1));
+    [available[i], available[j]] = [available[j], available[i]];
+  }
+  // Every level offers an actual attack option while one remains to improve.
+  const weapon = available.find((def) => def.weapon);
+  s.choices = [weapon, ...available.filter((def) => def !== weapon)]
+    .filter((def): def is UpgradeDef => !!def)
+    .slice(0, 3)
+    .map((def) => def.id);
+  s.phase = "upgrade";
+  s.exercise = null;
+  s.lastDash = false;
+  s.lastPulse = false;
+}
+function spawnFood(s: FitnessState) {
+  const edge = Math.floor(random(s) * 4);
+    const roll = random(s);
   const kind: FoodKind = roll < 0.35 ? "dq" : roll < 0.7 ? "jerky" : "tea";
-  const radius = kind === "dq" ? 25 : kind === "tea" ? 20 : 17;
-  const hp = kind === "dq" ? 3 : kind === "tea" ? 2 : 1;
-  const along = random(state);
-  state.foods.push({
-    id: state.nextId++,
+  const hp =
+    (kind === "dq" ? 4 : kind === "tea" ? 3 : 1) + Math.floor((s.day - 1) / 2);
+  const along = random(s);
+  s.foods.push({
+    id: s.nextId++,
     kind,
-    radius,
+    radius: kind === "dq" ? 25 : kind === "tea" ? 20 : 17,
     hp,
     maxHp: hp,
     x:
@@ -212,138 +376,168 @@ function spawnFood(state: FitnessState) {
           ? WORLD.height + 30
           : 50 + along * (WORLD.height - 100),
     age: 0,
-    charge: 2.5 + random(state) * 1.5,
+    charge: 2.5 + random(s) * 1.5,
     telegraph: 0,
     rush: 0,
     vx: 0,
     vy: 0,
   });
 }
-function defeatFood(state: FitnessState, food: Food) {
-  state.defeats += 1;
-  state.combo += 1;
-  state.bestCombo = Math.max(state.bestCombo, state.combo);
-  state.comboTime = 3.5;
-  state.score += 14 + Math.min(state.combo, 10);
-  state.pickups.push({
-    id: state.nextId++,
+function defeatFood(s: FitnessState, food: Food) {
+  s.defeats += 1;
+  s.combo += 1;
+  s.bestCombo = Math.max(s.bestCombo, s.combo);
+  s.comboTime = 3.5;
+  s.score += 14 + Math.min(s.combo, 10);
+  s.pickups.push({
+    id: s.nextId++,
     kind: "motivation",
     x: food.x,
     y: food.y,
-    life: 18,
+    life: 24,
   });
-  effect(state, "hit", food.x, food.y);
+  effect(s, "hit", food.x, food.y);
 }
-function checkLoss(state: FitnessState) {
-  if (state.weight >= OVERLOAD_WEIGHT) {
-    state.phase = "lost";
-    state.resultReason = "诱惑负担达到上限，下次用闪避和决心波为训练腾出空间。";
-  } else if (state.muscle <= MIN_MUSCLE) {
-    state.phase = "lost";
-    state.resultReason = "肌肉储备耗尽了。去健身房或做居家训练，别只盯着体重。";
+function checkOutcome(s: FitnessState) {
+  refreshBody(s);
+  if (s.weight >= OVERLOAD_WEIGHT) {
+    s.phase = "lost";
+    s.resultReason = "诱惑负担达到 54.00 kg。多留意果茶预警，给训练腾出空间。";
+  } else if (s.muscle <= MIN_MUSCLE) {
+    s.phase = "lost";
+    s.resultReason = "肌肉储备耗尽。健身房和居家训练能保肌，别只盯着秤。";
+  } else if (
+    s.weight <= TARGET_WEIGHT + 1e-9 &&
+    s.bodyFat <= TARGET_BODY_FAT + 1e-9 &&
+    s.muscle >= TARGET_MUSCLE - 1e-9
+  ) {
+    s.phase = "won";
+    s.resultReason =
+      "40.00 kg 计划达成！体脂也降了，肌肉好好留住了。努力让你提前完成！";
+    s.score +=
+      1200 +
+      Math.round(
+        s.muscle * 6 + Math.max(0, DAYS * DAY_SECONDS - s.elapsed) * 5,
+      );
   }
-  if (state.phase === "lost") state.exercise = null;
+  if (s.phase === "won" || s.phase === "lost") s.exercise = null;
 }
-function workout(state: FitnessState, kind: Exercise) {
-  state.workouts[kind] += 1;
-  state.score += 85;
+function workout(s: FitnessState, kind: Exercise) {
+  s.workouts[kind] += 1;
+  s.score += 85;
+  const varied =
+    s.talent === "rhythm" && s.lastWorkout !== null && s.lastWorkout !== kind;
+  const reserve = kind === "gym" ? 0.28 : kind === "swim" ? 0.36 : 0.3;
+  const added =
+    (reserve + (varied ? 0.08 : 0)) *
+    (1 + upgradeRank(s, "metabolism") * 0.1) *
+    (s.talent === "swimmer" && kind === "swim" ? 1.3 : 1);
+  const credited = Math.min(5 - s.burnReserve, added);
+  s.burnReserve += credited;
+  const xp =
+    (12 + (varied ? 6 : 0)) *
+    (s.talent === "strength" && kind === "gym" ? 1.35 : 1);
+  gainXp(s, xp);
   if (kind === "gym") {
-    state.muscle += 9;
-    state.weight -= 0.45;
-    state.buffs.attack = 16;
-    say(state, "练到了！肌肉 +9，哑铃强化。", 2.2);
+    s.muscle += 2.2;
+    s.buffs.attack = s.talent === "strength" ? 24 : 16;
   } else if (kind === "swim") {
-    state.muscle += 2;
-    state.weight -= 1.4;
-    state.buffs.speed = 14;
-    say(state, "游完一圈，体重 −1.4！步伐更轻快。", 2.2);
+    s.muscle += 0.6;
+    s.buffs.speed = 16;
   } else {
-    state.muscle += 6;
-    state.weight -= 0.75;
-    state.buffs.guard = 16;
-    say(state, "在家也能练！肌肉 +6，核心更稳。", 2.2);
+    s.muscle += 1.6;
+    s.buffs.guard = s.talent === "rhythm" ? 24 : 16;
   }
-  state.muscle = Math.min(100, state.muscle);
-  state.weight = Math.max(50, state.weight);
-  effect(state, "exercise", state.player.x, state.player.y);
+  s.lastWorkout = kind;
+  refreshBody(s);
+  const earned = Math.round(xp * (1 + upgradeRank(s, "discipline") * 0.2));
+  say(s, `${EXERCISE_DEFS[kind].name}完成 · 经验 +${earned} · 燃脂储备 +${credited.toFixed(2)} kg`, 2.3);
+  effect(s, "exercise", s.player.x, s.player.y);
 }
-function finishDay(state: FitnessState) {
-  state.time = DAY_SECONDS;
-  state.score += 250;
-  state.exercise = null;
-  state.lastDash = false;
-  state.lastPulse = false;
-  if (state.day === DAYS) {
-    const weightMet = state.weight <= TARGET_WEIGHT + 1e-9;
-    const muscleMet = state.muscle >= TARGET_MUSCLE - 1e-9;
-    if (!weightMet || !muscleMet) {
-      state.phase = "lost";
-      if (!weightMet && !muscleMet) {
-        state.resultReason =
-          "五天坚持完成，但体重和肌肉都还没达到目标。下次多安排游泳与力量训练，让减脂和保肌一起达标。";
-      } else if (!weightMet) {
-        state.resultReason =
-          "五天坚持完成，但体重仍高于 62 kg。下次用游泳降低负担，再用闪避躲开食物诱惑。";
-      } else {
-        state.resultReason =
-          "五天坚持完成，但肌肉储备还不足 55。下次多安排健身房或居家训练，减脂也要保住肌肉。";
-      }
-      return;
+function finishDay(s: FitnessState) {
+  s.exercise = null;
+  if (s.day === DAYS) {
+    checkOutcome(s);
+    if (s.phase === "playing") {
+      s.phase = "lost";
+      const missing = [
+        s.weight > TARGET_WEIGHT + 1e-9 ? "体重 ≤40.00 kg" : "",
+        s.bodyFat > TARGET_BODY_FAT + 1e-9 ? "体脂 ≤22%" : "",
+        s.muscle < TARGET_MUSCLE - 1e-9 ? "肌肉 ≥55" : "",
+      ].filter(Boolean);
+      s.resultReason = `五阶段完成，还差：${missing.join("、")}。训练积累燃脂储备，拾取和训练能加快升级。`;
     }
-    state.phase = "won";
-    state.resultReason = "五天计划完成！躲过了诱惑，也把肌肉好好留住了。";
-    state.score += Math.round(
-      state.muscle * 6 + Math.max(0, TARGET_WEIGHT - state.weight) * 40,
-    );
     return;
   }
-  state.phase = "upgrade";
-  const available = UPGRADE_DEFS.filter(
-    (upgrade) => !hasUpgrade(state, upgrade.id),
-  ).map((upgrade) => upgrade.id);
-  for (let i = available.length - 1; i > 0; i--) {
-    const j = Math.floor(random(state) * (i + 1));
-    [available[i], available[j]] = [available[j], available[i]];
-  }
-  state.choices = available.slice(0, 3);
-  say(state, "今天也坚持了！选一份明天的动力。", 4);
+  s.day += 1;
+  s.time = 0;
+  s.score += 250;
+  s.foods = [];
+  s.projectiles = [];
+  s.spawnTimer = 0.5;
+  s.stamina = 100;
+  s.motivation = Math.min(100, s.motivation + 12);
+  s.invincible = 1;
+  say(
+    s,
+    `第 ${s.day} 阶段 · 诱惑更密集。经验随行动增长，不用等阶段结束升级。`,
+    3,
+  );
 }
-
-export function createFitness(seed = 10203): FitnessState {
-  const safeSeed = Number.isFinite(seed)
-    ? ((Math.trunc(seed) % 4294967296) + 4294967296) % 4294967296
-    : 10203;
+export function createFitness(
+  seed = 10203,
+  talent: Talent = "strength",
+): FitnessState {
+  const safeSeed = Number.isFinite(seed) ? ((Math.trunc(seed) % 4294967296) + 4294967296) % 4294967296 : 10203;
+  const safeTalent = Object.keys(TALENT_DEFS).includes(talent) ? talent : "strength";
+  const weapons = { dumbbell: 0, water: 0, rope: 0, aura: 0 };
+  weapons[TALENT_DEFS[safeTalent].weapon] = 1;
   return {
     seed: safeSeed,
     random: safeSeed,
     phase: "ready",
+    talent: safeTalent,
     day: 1,
     time: 0,
     elapsed: 0,
     player: { x: WORLD.width / 2, y: WORLD.height / 2 },
     foods: [],
     effects: [],
+    projectiles: [],
     pickups: [
-      { id: 1, kind: "motivation", x: 485, y: 365, life: 18 },
-      { id: 2, kind: "motivation", x: 615, y: 365, life: 18 },
+      { id: 1, kind: "motivation", x: 485, y: 365, life: 24 },
+      { id: 2, kind: "motivation", x: 615, y: 365, life: 24 },
     ],
     zones: [
       { kind: "gym", x: 215, y: 200, radius: 84 },
       { kind: "swim", x: 885, y: 210, radius: 84 },
       { kind: "home", x: 550, y: 540, radius: 84 },
     ],
-    weight: 62,
+    weight: START_WEIGHT,
+    fatMass: 16.8,
+    leanMass: 31.2,
+    bodyFat: 35,
+    burnReserve: 0,
+    burnRate: 0,
     muscle: 65,
     motivation: 40,
     stamina: 100,
+    level: 1,
+    xp: 0,
+    nextXp: 12,
+    totalXp: 0,
+    weapons,
+    weaponTimers: { dumbbell: 0, water: 0, rope: 0, aura: 0 },
+    weaponDamage: { dumbbell: 0, water: 0, rope: 0, aura: 0 },
     defeats: 0,
     combo: 0,
     bestCombo: 0,
     comboTime: 0,
     workouts: { gym: 0, swim: 0, home: 0 },
+    lastWorkout: null,
     exercise: null,
     buffs: { attack: 0, speed: 0, guard: 0 },
-    message: "今天也要动！靠近训练区，按住训练 2 秒。",
+    message: "48.00 → 40.00 kg · 拾取星星和训练得经验，升级随时发生。",
     messageTime: 5,
     dashCooldown: 0,
     pulseCooldown: 0,
@@ -353,204 +547,305 @@ export function createFitness(seed = 10203): FitnessState {
     resultReason: "",
     score: 0,
     attackAngle: 0,
-    attackRange: 104,
+    attackRange: 105,
     attackFlash: 0,
-    attackCooldown: 0,
     dashTime: 0,
     dashDirection: { x: 0, y: -1 },
     facing: { x: 0, y: -1 },
     lastDash: false,
     lastPulse: false,
     spawnTimer: 0.8,
-    proteinTimer: 10,
+    proteinTimer: 8,
     nextId: 3,
   };
 }
-
-export function startFitness(state: FitnessState) {
-  if (state.phase !== "ready" && state.phase !== "paused") return;
-  state.phase = "playing";
-  state.lastDash = false;
-  state.lastPulse = false;
+export function startFitness(s: FitnessState) {
+  if (s.phase !== "ready" && s.phase !== "paused") return;
+  s.phase = "playing";
+  s.lastDash = false;
+  s.lastPulse = false;
 }
-export function pauseFitness(state: FitnessState) {
-  if (state.phase !== "playing") return;
-  state.phase = "paused";
-  state.lastDash = false;
-  state.lastPulse = false;
+export function pauseFitness(s: FitnessState) {
+  if (s.phase !== "playing") return;
+  s.phase = "paused";
+  s.lastDash = false;
+  s.lastPulse = false;
 }
-export function chooseUpgrade(state: FitnessState, id: string) {
-  if (state.phase !== "upgrade" || !state.choices.includes(id)) return;
-  state.upgrades.push(id);
-  state.choices = [];
-  state.day += 1;
-  state.time = 0;
-  state.foods = [];
-  state.pickups = [];
-  state.effects = [];
-  state.spawnTimer = 0.7;
-  state.proteinTimer = 7;
-  state.motivation = Math.min(100, state.motivation + 18);
-  state.stamina = 100;
-  state.invincible = 1;
-  state.dashTime = 0;
-  state.dashCooldown = 0;
-  state.pulseCooldown = 0;
-  state.phase = "playing";
-  say(state, `第 ${state.day} 天，加油！诱惑会更密集。`, 3);
+export function chooseUpgrade(s: FitnessState, id: string) {
+  if (s.phase !== "upgrade" || !s.choices.includes(id)) return;
+  const def = availableUpgrades(s).find((item) => item.id === id);
+  if (!def) return;
+  if (def.weapon) s.weapons[def.weapon] += 1;
+  s.upgrades.push(id);
+  s.choices = [];
+  s.phase = "playing";
+  s.invincible = Math.max(s.invincible, 0.65);
+  s.lastDash = false;
+  s.lastPulse = false;
+  say(s, `${def.name}已装备 · Lv.${s.level} · 继续积累经验！`, 2);
 }
-
-function tick(state: FitnessState, dt: number, input: FitnessInput) {
-  checkLoss(state);
-  if (state.phase !== "playing") return;
-  state.time = Math.min(DAY_SECONDS, state.time + dt);
-  state.elapsed += dt;
-  state.weight = Math.max(50, state.weight - dt * 0.026);
-  state.muscle -= dt * 0.34;
-  state.stamina = Math.min(
-    100,
-    state.stamina + dt * (hasUpgrade(state, "breath") ? 25 : 17),
-  );
-  state.motivation = Math.min(100, state.motivation + dt * 1.1);
-  state.messageTime = Math.max(0, state.messageTime - dt);
-  state.invincible = Math.max(0, state.invincible - dt);
-  state.dashCooldown = Math.max(0, state.dashCooldown - dt);
-  state.pulseCooldown = Math.max(0, state.pulseCooldown - dt);
-  state.attackCooldown = Math.max(0, state.attackCooldown - dt);
-  state.attackFlash = Math.max(0, state.attackFlash - dt);
-  state.attackAngle = (state.attackAngle + dt * 4) % (Math.PI * 2);
-  state.buffs.attack = Math.max(0, state.buffs.attack - dt);
-  state.buffs.speed = Math.max(0, state.buffs.speed - dt);
-  state.buffs.guard = Math.max(0, state.buffs.guard - dt);
-  state.comboTime = Math.max(0, state.comboTime - dt);
-  if (state.comboTime === 0) state.combo = 0;
-  for (const item of state.effects) item.life -= dt;
-  state.effects = state.effects.filter((item) => item.life > 0);
-
-  const rawX = Number.isFinite(input.x) ? input.x : 0;
-  const rawY = Number.isFinite(input.y) ? input.y : 0;
-  const length = Math.hypot(rawX, rawY);
-  const movement = {
-    x: rawX / Math.max(1, length),
-    y: rawY / Math.max(1, length),
-  };
-  if (length > 0.05) state.facing = { x: rawX / length, y: rawY / length };
+function hit(s: FitnessState, food: Food, amount: number, weapon: WeaponKind) {
+  if (food.hp <= 0) return;
+  s.weaponDamage[weapon] += Math.min(food.hp, amount);
+  food.hp -= amount;
+  effect(s, "hit", food.x, food.y);
+}
+function attack(s: FitnessState, dt: number) {
+  const power =
+    (1 + upgradeRank(s, "strong") * 0.2) * (s.buffs.attack > 0 ? 1.35 : 1);
+  const reach = upgradeRank(s, "reach") * 12;
+  for (const kind of Object.keys(s.weaponTimers) as WeaponKind[]) {
+    s.weaponTimers[kind] = Math.max(0, s.weaponTimers[kind] - dt);
+  }
+  const near = s.foods
+    .filter((food) => food.hp > 0)
+    .sort(
+      (a, b) => distance(a, s.player) - distance(b, s.player) || a.id - b.id,
+    );
+  const level = s.weapons.dumbbell;
+  s.attackRange = 105 + reach + Math.max(0, level - 1) * 9;
   if (
-    input.dash &&
-    !state.lastDash &&
-    state.dashCooldown === 0 &&
-    state.stamina >= 30
+    level > 0 &&
+    s.weaponTimers.dumbbell === 0 &&
+    near[0] &&
+    distance(near[0], s.player) < s.attackRange + near[0].radius
   ) {
-    state.stamina -= 30;
-    state.dashTime = 0.24;
-    state.invincible = Math.max(state.invincible, 0.36);
-    state.dashCooldown = hasUpgrade(state, "breath") ? 1.7 : 2.4;
-    state.dashDirection = { ...state.facing };
-    state.exercise = null;
-    effect(state, "dash", state.player.x, state.player.y);
+    s.attackAngle = Math.atan2(near[0].y - s.player.y, near[0].x - s.player.x);
+    for (const food of near) {
+      const angle = Math.atan2(food.y - s.player.y, food.x - s.player.x);
+      const gap = Math.atan2(
+        Math.sin(angle - s.attackAngle),
+        Math.cos(angle - s.attackAngle),
+      );
+      if (
+        distance(food, s.player) <= s.attackRange + food.radius &&
+        Math.abs(gap) < 0.85
+      ) hit(s, food, (2 + (level - 1) * 0.8) * power, "dumbbell");
+    }
+    s.weaponTimers.dumbbell = 0.62 - level * 0.025;
+    s.attackFlash = 0.18;
+  }
+  const { water } = s.weapons;
+  if (
+    water > 0 &&
+    s.weaponTimers.water === 0 &&
+    near[0] &&
+    distance(near[0], s.player) < 620 + reach * 3
+  ) {
+    const angle = Math.atan2(near[0].y - s.player.y, near[0].x - s.player.x);
+    const count = water >= 4 ? 3 : water >= 2 ? 2 : 1;
+    for (let i = 0; i < count; i++) {
+      const spread = angle + (i - (count - 1) / 2) * 0.12;
+      s.projectiles.push({
+        id: s.nextId++,
+        x: s.player.x,
+        y: s.player.y - 4,
+        vx: Math.cos(spread) * 450,
+        vy: Math.sin(spread) * 450,
+        life: 1.5 + reach * 0.005,
+        damage: (2 + (water - 1) * 0.65) * power,
+        pierce: water >= 3 ? 2 : 1,
+        hitIds: [],
+      });
+    }
+    s.weaponTimers.water = 0.72 - water * 0.035;
+  }
+  for (const p of s.projectiles) {
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.life -= dt;
+    for (const food of near) {
+      if (p.pierce <= 0 || food.hp <= 0 || p.hitIds.includes(food.id)) continue;
+      if (distance(p, food) < food.radius + 8) {
+        hit(s, food, p.damage, "water");
+        p.hitIds.push(food.id);
+        p.pierce -= 1;
+      }
+    }
+  }
+  s.projectiles = s.projectiles.filter((p) => p.life > 0 && p.pierce > 0);
+  const { rope } = s.weapons;
+  if (rope > 0) {
+    const count = rope + 1;
+      const radius = 74 + reach + (rope - 1) * 8;
+    for (const food of near) {
+      food.ropeGrace = Math.max(0, (food.ropeGrace || 0) - dt);
+      if (food.ropeGrace > 0 || food.hp <= 0) continue;
+      for (let i = 0; i < count; i++) {
+        const angle = s.elapsed * 4 + (Math.PI * 2 * i) / count;
+        if (
+          distance(food, {
+            x: s.player.x + Math.cos(angle) * radius,
+            y: s.player.y + Math.sin(angle) * radius,
+          }) <=
+          food.radius + 14
+        ) {
+          hit(s, food, (1.2 + (rope - 1) * 0.45) * power, "rope");
+          food.ropeGrace = 0.32;
+          break;
+        }
+      }
+    }
+  }
+  const { aura } = s.weapons;
+  if (
+    aura > 0 &&
+    s.weaponTimers.aura === 0 &&
+    near.some((food) => distance(food, s.player) < 110 + reach + aura * 12)
+  ) {
+    const radius = 110 + reach + aura * 12;
+    for (const food of near) {
+      const away = distance(food, s.player);
+      if (away < radius + food.radius) {
+        hit(s, food, (1.6 + (aura - 1) * 0.65) * power, "aura");
+        if (away > 0) {
+          food.x += ((food.x - s.player.x) / away) * 24;
+          food.y += ((food.y - s.player.y) / away) * 24;
+        }
+      }
+    }
+    effect(s, "aura", s.player.x, s.player.y, radius);
+    s.weaponTimers.aura = 1.3 - aura * 0.12;
+  }
+}
+function tick(s: FitnessState, dt: number, input: FitnessInput) {
+  checkOutcome(s);
+  if (s.phase !== "playing") return;
+  s.time = Math.min(DAY_SECONDS, s.time + dt);
+  s.elapsed += dt;
+  s.muscle -= dt * 0.1;
+  s.stamina = Math.min(
+    100,
+    s.stamina + dt * (17 + upgradeRank(s, "breath") * 5),
+  );
+  s.motivation = Math.min(100, s.motivation + dt * 0.65);
+  for (const field of [
+    "messageTime",
+    "invincible",
+    "dashCooldown",
+    "pulseCooldown",
+    "attackFlash",
+    "comboTime",
+  ] as const) s[field] = Math.max(0, s[field] - dt);
+  for (const kind of ["attack", "speed", "guard"] as const) s.buffs[kind] = Math.max(0, s.buffs[kind] - dt);
+  if (s.comboTime === 0) s.combo = 0;
+  for (const item of s.effects) item.life -= dt;
+  s.effects = s.effects.filter((item) => item.life > 0);
+  const rawX = Number.isFinite(input.x) ? input.x : 0;
+    const rawY = Number.isFinite(input.y) ? input.y : 0;
+  const length = Math.hypot(rawX, rawY);
+    const movement = { x: rawX / Math.max(1, length), y: rawY / Math.max(1, length) };
+  if (length > 0.05) s.facing = { x: rawX / length, y: rawY / length };
+  if (input.dash && !s.lastDash && s.dashCooldown === 0 && s.stamina >= 30) {
+    s.stamina -= 30;
+    s.dashTime = 0.24;
+    s.invincible = Math.max(s.invincible, 0.36);
+    s.dashCooldown = 2.4 - upgradeRank(s, "breath") * 0.4;
+    s.dashDirection = { ...s.facing };
+    s.exercise = null;
+    effect(s, "dash", s.player.x, s.player.y);
   }
   if (
     input.pulse &&
-    !state.lastPulse &&
-    state.pulseCooldown === 0 &&
-    state.motivation >= 25
+    !s.lastPulse &&
+    s.pulseCooldown === 0 &&
+    s.motivation >= 25
   ) {
-    state.motivation -= 25;
-    state.pulseCooldown = 5;
-    effect(state, "exercise", state.player.x, state.player.y);
-    for (const food of state.foods) {
-      const away = distance(food, state.player);
+    s.motivation -= 25;
+    s.pulseCooldown = 5;
+    effect(s, "aura", s.player.x, s.player.y, 160);
+    for (const food of s.foods) {
+      const away = distance(food, s.player);
       if (away <= 160) food.hp -= 3;
       else if (away < 235) {
-        food.x += ((food.x - state.player.x) / away) * 100;
-        food.y += ((food.y - state.player.y) / away) * 100;
+        food.x += ((food.x - s.player.x) / away) * 100;
+        food.y += ((food.y - s.player.y) / away) * 100;
       }
     }
-    say(state, "我有自己的节奏！决心波清场。", 1.5);
+    say(s, "拒绝诱惑！给训练留一点空间。", 1.5);
   }
-  state.lastDash = Boolean(input.dash);
-  state.lastPulse = Boolean(input.pulse);
-  const zone = state.zones.find(
-    (item) => distance(item, state.player) <= item.radius - 8,
+  s.lastDash = Boolean(input.dash);
+  s.lastPulse = Boolean(input.pulse);
+  const zone = s.zones.find(
+    (item) => distance(item, s.player) <= item.radius - 8,
   );
-  const workoutCost = hasUpgrade(state, "focus") ? 18 : 24;
-  const continuingWorkout = Boolean(zone && state.exercise?.kind === zone.kind);
-  const motivationReady = continuingWorkout
-    ? state.motivation > 0.25
-    : state.motivation >= workoutCost;
+  const cost = workoutCost(s);
   const training = Boolean(
     input.exercise &&
     zone &&
-    state.dashTime <= 0 &&
-    motivationReady &&
-    length < 0.15,
+    s.dashTime <= 0 &&
+    length < 0.15 &&
+    (s.exercise?.kind === zone.kind
+      ? s.motivation > 0.25
+      : s.motivation >= cost),
   );
-  let speed =
+  const speed =
     218 *
-    (hasUpgrade(state, "shoes") ? 1.15 : 1) *
-    (state.buffs.speed > 0 ? 1.25 : 1);
-  if (training) speed *= 0.3;
-  if (state.dashTime > 0) {
-    state.player.x += state.dashDirection.x * 620 * dt;
-    state.player.y += state.dashDirection.y * 620 * dt;
-    state.dashTime = Math.max(0, state.dashTime - dt);
+    (1 + upgradeRank(s, "shoes") * 0.1) *
+    (s.talent === "swimmer" ? 1.1 : 1) *
+    (s.buffs.speed > 0 ? 1.25 : 1);
+  if (s.dashTime > 0) {
+    s.player.x += s.dashDirection.x * 620 * dt;
+    s.player.y += s.dashDirection.y * 620 * dt;
+    s.dashTime = Math.max(0, s.dashTime - dt);
   } else {
-    state.player.x += movement.x * speed * dt;
-    state.player.y += movement.y * speed * dt;
+    s.player.x += movement.x * speed * dt;
+    s.player.y += movement.y * speed * dt;
   }
-  state.player.x = clamp(state.player.x, 35, WORLD.width - 35);
-  state.player.y = clamp(state.player.y, 35, WORLD.height - 35);
-
+  s.player.x = clamp(s.player.x, 35, WORLD.width - 35);
+  s.player.y = clamp(s.player.y, 35, WORLD.height - 35);
   if (training && zone) {
-    if (state.exercise?.kind !== zone.kind) {
-      state.exercise = { kind: zone.kind, progress: 0 };
-    }
-    const cost = workoutCost / 2;
-    const usedTime = Math.min(dt, state.motivation / cost);
-    state.motivation -= usedTime * cost;
-    state.exercise.progress += usedTime / 2;
-    if (state.exercise.progress >= 1 - 1e-9) {
-      workout(state, zone.kind);
-      state.exercise = null;
+    if (s.exercise?.kind !== zone.kind) s.exercise = { kind: zone.kind, progress: 0 };
+    const usedTime = Math.min(dt, s.motivation / (cost / 2));
+    s.motivation -= (usedTime * cost) / 2;
+    s.exercise.progress += usedTime / 2;
+    if (s.exercise.progress >= 1 - 1e-9) {
+      workout(s, zone.kind);
+      s.exercise = null;
     }
   } else {
-    state.exercise = null;
-    if (
-      input.exercise &&
-      zone &&
-      state.motivation < workoutCost &&
-      state.messageTime === 0
-    ) {
-      say(state, `动力不足：需要 ${workoutCost} 动力才能开始训练，先收集金色动力。`, 2);
-    }
+    s.exercise = null;
+    if (input.exercise && zone && s.motivation < cost && s.messageTime === 0) say(s, `需要 ${cost} 动力开始训练，拾取金色星星也能得经验。`, 2);
   }
-
-  state.spawnTimer -= dt;
-  while (state.spawnTimer <= 0) {
-    if (state.foods.length < 70) spawnFood(state);
-    state.spawnTimer +=
-      (1.12 - (state.day - 1) * 0.125) * (0.88 + random(state) * 0.24);
+  // Exercise supplies a reserve, consumed gradually. Waiting supplies neither fat loss nor XP.
+  const reserveRate = Math.min(
+    0.042,
+    0.032 * (1 + upgradeRank(s, "metabolism") * 0.15),
+  );
+  const reserved = Math.min(s.burnReserve, dt * reserveRate);
+  const active = dt * (training ? 0.004 : length > 0.15 ? 0.006 : 0);
+  const availableFat = Math.max(
+    0,
+    s.fatMass - Math.max(0, TARGET_WEIGHT - (30.42 + s.muscle * 0.012)),
+  );
+  const burned = Math.min(availableFat, reserved + active);
+  s.fatMass -= burned;
+  s.burnReserve = Math.max(0, s.burnReserve - Math.min(reserved, burned));
+  s.burnRate = burned / dt;
+  s.spawnTimer -= dt;
+  while (s.spawnTimer <= 0) {
+    if (s.foods.length < 85) spawnFood(s);
+    s.spawnTimer += (0.9 - (s.day - 1) * 0.08) * (0.88 + random(s) * 0.24);
   }
-  state.proteinTimer -= dt;
-  if (state.proteinTimer <= 0) {
-    state.pickups.push({
-      id: state.nextId++,
+  s.proteinTimer -= dt;
+  if (s.proteinTimer <= 0) {
+    s.pickups.push({
+      id: s.nextId++,
       kind: "protein",
-      x: 150 + random(state) * 800,
-      y: 140 + random(state) * 430,
-      life: 22,
+      x: 150 + random(s) * 800,
+      y: 140 + random(s) * 430,
+      life: 26,
     });
-    state.proteinTimer += 14;
+    s.proteinTimer += 13;
   }
-  for (const food of state.foods) {
+  for (const food of s.foods) {
     if (food.hp <= 0) continue;
     food.age += dt;
-    const toward = distance(food, state.player);
-    const dx = toward > 0 ? (state.player.x - food.x) / toward : 0;
-    const dy = toward > 0 ? (state.player.y - food.y) / toward : 0;
+    const toward = distance(food, s.player);
+      const dx = toward > 0 ? (s.player.x - food.x) / toward : 0;
+      const dy = toward > 0 ? (s.player.y - food.y) / toward : 0;
     let foodSpeed =
-      (food.kind === "dq" ? 57 : food.kind === "jerky" ? 87 : 74) +
-      state.day * 4;
+      (food.kind === "dq" ? 57 : food.kind === "jerky" ? 87 : 74) + s.day * 4;
     if (food.kind === "jerky" && food.age % 2.6 > 1.95) foodSpeed *= 1.8;
     if (food.kind === "tea") {
       if (food.rush > 0) {
@@ -570,132 +865,103 @@ function tick(state: FitnessState, dt: number, input: FitnessInput) {
       food.charge -= dt;
       if (food.charge <= 0 && toward < 430) {
         food.telegraph = 0.7;
-        food.vx = dx * (270 + state.day * 10);
-        food.vy = dy * (270 + state.day * 10);
+        food.vx = dx * (270 + s.day * 10);
+        food.vy = dy * (270 + s.day * 10);
         continue;
       }
     }
     food.x += dx * foodSpeed * dt;
     food.y += dy * foodSpeed * dt;
   }
-
-  state.attackRange = 104 + (hasUpgrade(state, "reach") ? 24 : 0);
-  if (state.attackCooldown === 0) {
-    const targets = state.foods.filter(
-      (food) => (
-        food.hp > 0 &&
-        distance(food, state.player) <= state.attackRange + food.radius
-      ),
-    );
-    targets.sort(
-      (a, b) => (
-        distance(a, state.player) - distance(b, state.player) || a.id - b.id
-      ),
-    );
-    if (targets[0]) {
-      const target = targets[0];
-      state.attackAngle = Math.atan2(
-        target.y - state.player.y,
-        target.x - state.player.x,
-      );
-      target.hp -=
-        1 +
-        (hasUpgrade(state, "strong") ? 1 : 0) +
-        (state.buffs.attack > 0 ? 1 : 0);
-      state.attackCooldown = 0.5;
-      state.attackFlash = 0.16;
-      effect(state, "hit", target.x, target.y);
-    }
-  }
+  attack(s, dt);
   const remaining: Food[] = [];
-  for (const food of state.foods) {
+  for (const food of s.foods) {
     if (food.hp <= 0) {
-      defeatFood(state, food);
+      defeatFood(s, food);
       continue;
     }
     if (
-      state.invincible === 0 &&
-      distance(food, state.player) < food.radius + PLAYER_RADIUS
+      s.invincible === 0 &&
+      distance(food, s.player) < food.radius + PLAYER_RADIUS
     ) {
-      const weight =
-        food.kind === "dq" ? 0.6 : food.kind === "jerky" ? 0.32 : 0.42;
-      state.weight +=
-        weight *
-        (hasUpgrade(state, "guard") ? 0.7 : 1) *
-        (state.buffs.guard > 0 ? 0.65 : 1);
-      state.invincible = 0.7;
-      state.combo = 0;
-      state.comboTime = 0;
-      state.exercise = null;
-      effect(state, "hit", state.player.x, state.player.y);
+      s.fatMass +=
+        (food.kind === "dq" ? 0.14 : food.kind === "jerky" ? 0.07 : 0.1) *
+        (1 - upgradeRank(s, "guard") * 0.2) *
+        (s.buffs.guard > 0 ? 0.6 : 1);
+      s.invincible = 0.7;
+      s.combo = 0;
+      s.comboTime = 0;
+      s.exercise = null;
+      effect(s, "hit", s.player.x, s.player.y);
       say(
-        state,
-        `${food.kind === "dq" ? "DQ" : food.kind === "jerky" ? "牛肉干" : "西西里柠檬柚"}的诱惑！体重负担增加。`,
-        1.4,
+        s,
+        `${food.kind === "dq"
+          ? "DQ"
+          : food.kind === "jerky"
+            ? "牛肉干"
+            : "西西里柠檬柚"}贴身！脂肪负担增加，闪开再训练。`,
+        1.3,
       );
       continue;
     }
     remaining.push(food);
   }
-  state.foods = remaining;
-  const pickupRadius = hasUpgrade(state, "magnet") ? 112 : 44;
-  state.pickups = state.pickups.filter((item) => {
+  s.foods = remaining;
+  const pickupRadius = 50 + upgradeRank(s, "magnet") * 38;
+  s.pickups = s.pickups.filter((item) => {
     item.life -= dt;
-    if (distance(item, state.player) < pickupRadius) {
+    if (distance(item, s.player) < pickupRadius) {
       if (item.kind === "motivation") {
-        state.motivation = Math.min(
+        s.motivation = Math.min(
           100,
-          state.motivation + (hasUpgrade(state, "focus") ? 11 : 8),
+          s.motivation + 8 + upgradeRank(s, "focus") * 2,
         );
+        gainXp(s, 5);
       } else {
-        state.muscle = Math.min(
+        s.muscle = Math.min(
           100,
-          state.muscle + (hasUpgrade(state, "protein") ? 6 : 3),
+          s.muscle + 2.5 + upgradeRank(s, "protein") * 1.5,
         );
-        say(state, "蛋白补给到位，肌肉恢复！", 1.5);
+        say(s, "蛋白补给到位，肌肉恢复！", 1.5);
       }
-      effect(state, "pickup", item.x, item.y);
+      effect(s, "pickup", item.x, item.y);
       return false;
     }
     return item.life > 0;
   });
-  state.motivation = clamp(state.motivation, 0, 100);
-  checkLoss(state);
-  if (state.phase === "playing" && state.time >= DAY_SECONDS - 1e-9) {
-    finishDay(state);
-  }
+  s.motivation = clamp(s.motivation, 0, 100);
+  checkOutcome(s);
+  if (s.phase === "playing" && s.time >= DAY_SECONDS - 1e-9) finishDay(s);
+  offerLevel(s);
 }
-
-/** Uses seconds. Large frames are subdivided so collisions cannot skip through enemies. */
+/** Uses seconds; fixed substeps preserve collision and training behavior on slow frames. */
 export function stepFitness(
-  state: FitnessState,
+  s: FitnessState,
   dt: number,
   input: FitnessInput = EMPTY_INPUT,
 ) {
-  if (state.phase !== "playing" || !Number.isFinite(dt) || dt <= 0) return;
+  if (s.phase !== "playing" || !Number.isFinite(dt) || dt <= 0) return;
   let remaining = Math.min(dt, 0.25);
-  while (remaining > 1e-9 && state.phase === "playing") {
-    const slice = Math.min(remaining, 1 / 60, DAY_SECONDS - state.time);
+  while (remaining > 1e-9 && s.phase === "playing") {
+    const slice = Math.min(remaining, 1 / 60, DAY_SECONDS - s.time);
     if (slice <= 1e-9) {
-      finishDay(state);
+      finishDay(s);
       break;
     }
-    tick(state, slice, input);
+    tick(s, slice, input);
     remaining -= slice;
   }
 }
-
-/** Public simulation helper using the same input and rules as live gameplay. */
 export function advanceFitness(
-  state: FitnessState,
+  s: FitnessState,
   ms: number,
   input: FitnessInput = EMPTY_INPUT,
 ) {
   if (!Number.isFinite(ms) || ms <= 0) return;
   let remaining = ms / 1000;
-  while (remaining > 1e-9 && state.phase === "playing") {
+  while (remaining > 1e-9 && s.phase === "playing") {
     const slice = Math.min(remaining, 1 / 60);
-    stepFitness(state, slice, input);
+    stepFitness(s, slice, input);
     remaining -= slice;
   }
 }

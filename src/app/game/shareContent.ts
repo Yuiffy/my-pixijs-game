@@ -5,7 +5,7 @@ export const gameShareContent: Record<string, { title: string; description: stri
   },
   '/game/sui-fitness': {
     title: '岁己：今天也要动',
-    description: '击退 DQ、牛肉干和果茶的诱惑，攒起动力运动减脂，和岁己一起保住肌肉、变得更有力。',
+    description: '三种运动天赋、四种攻击混搭。从 48.00 kg 向 40.00 kg 前进，靠训练和战斗升级，减脂也保肌。',
   },
   '/game/autochess': {
     title: '维阿自走棋：裂隙阵线',

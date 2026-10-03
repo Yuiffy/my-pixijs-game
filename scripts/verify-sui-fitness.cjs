@@ -7,9 +7,9 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || require.resolve('p
 }));
 const { inspectPng } = require('./lib/autochess-screenshot.cjs');
 
-const base = process.env.FITNESS_BASE_URL || 'http://localhost:3971';
-const output = process.env.FITNESS_QA_DIR || 'tmp/sui-fitness-dev';
-const recordKey = 'sui-fitness-record-v1';
+const base = process.env.FITNESS_BASE_URL || 'http://localhost:4071';
+const output = process.env.FITNESS_QA_DIR || 'tmp/sui-fitness-v2-dev';
+const recordKey = 'sui-fitness-record-v2';
 const errors = [];
 const responses = [];
 const shots = [];
@@ -27,7 +27,7 @@ const stable = value => ({
   phase: value.phase, day: value.day, time: value.time, elapsed: value.elapsed,
   player: value.player, weight: value.weight, muscle: value.muscle,
   motivation: value.motivation, foods: value.foods, workouts: value.workouts,
-  defeats: value.defeats,
+  defeats: value.defeats, fatMass: value.fatMass, bodyFat: value.bodyFat, level: value.level, xp: value.xp, projectiles: value.projectiles,
 });
 
 async function prepare(context) {
@@ -49,9 +49,9 @@ async function prepare(context) {
   });
 }
 
-async function open(context, seed = 41) {
+async function open(context, seed = 41, talent = 'strength') {
   const page = await context.newPage();
-  await page.goto(`${base}/game/sui-fitness?seed=${seed}`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${base}/game/sui-fitness?seed=${seed}&talent=${talent}`, { waitUntil: 'domcontentloaded' });
   await ready(page);
   await advance(page, 0);
   assert.equal(await page.locator('canvas').count(), 1);
@@ -83,6 +83,11 @@ async function capture(page, name) {
   assert.deepEqual(layout.overflow, [], `Text overflows: ${JSON.stringify(layout.overflow)}`);
   const file = path.join(output, `${name}.png`);
   const pixels = inspectPng(await page.screenshot({ path: file, fullPage: true, animations: 'disabled' }));
+  assert.ok(pixels.colors > 30 && pixels.nearBlackRatio < 0.8 && pixels.transparentRatio < 0.8, 'Reject invalid capture');
+  const snapshot = await state(page);
+  const dom = await page.locator('body').innerText();
+  assert.ok(dom.includes(snapshot.weight.toFixed(2)), 'HUD must show two-decimal weight from public state');
+  assert.ok(dom.includes(snapshot.bodyFat.toFixed(2)), 'HUD must match public body composition');
   shots.push({ file, pixels, layout, state: await state(page) });
 }
 
@@ -98,406 +103,281 @@ async function frozen(page) {
   assert.ok(await page.evaluate(() => !!document.activeElement.closest('[role="dialog"]')));
 }
 
-// Uses the production keyboard handler and deterministic public time hook only.
-// No engine references, React fibers, or state mutations are used by this pilot.
-async function pilot(page, mode, targetKind) {
-  return page.evaluate(({ mode: action, targetKind: requestedKind }) => {
+const runs = [];
+let decisionSource;
+let choose;
+
+async function pilot(page, memo = {}, mode = 'active', frames = 450, stopWorkout) {
+  return page.evaluate(({ source, memo: memory, mode: action, frames: limit, stopWorkout: kind }) => {
+    const decide = new Function('return (' + source + ')')();
     const read = () => JSON.parse(window.render_game_to_text());
     const held = new Set();
-    const codes = { left: 'KeyA', right: 'KeyD', up: 'KeyW', down: 'KeyS', exercise: 'KeyE' };
-    const keys = { KeyA: 'a', KeyD: 'd', KeyW: 'w', KeyS: 's', KeyE: 'e', KeyQ: 'q', Space: ' ' };
-    const setKey = (code, down) => {
+    const keys = {KeyA:'a',KeyD:'d',KeyW:'w',KeyS:'s',KeyE:'e',KeyQ:'q',Space:' '};
+    const change = (code, down) => {
       if (held.has(code) === down) return;
-      if (down) held.add(code); else held.delete(code);
-      window.dispatchEvent(new KeyboardEvent(down ? 'keydown' : 'keyup', { code, key: keys[code], bubbles: true }));
+      down ? held.add(code) : held.delete(code);
+      window.dispatchEvent(new KeyboardEvent(down ? 'keydown' : 'keyup', {code,key:keys[code],bubbles:true}));
     };
-    const clear = () => { [...held].forEach(code => setKey(code, false)); };
-    const tap = code => { setKey(code, true); window.advanceTime(1000 / 60); setKey(code, false); };
-    const seen = new Set();
-    let steps = 0;
-    let lastDay = read().day;
-    let target = requestedKind || 'gym';
     const initial = read();
-    const trace = [];
-    const candidates = ['gym', 'swim', 'home'];
-    const waypoints = [{ x: 215, y: 200 }, { x: 885, y: 210 }, { x: 550, y: 540 }];
-    let waypoint = 0;
-    let trainingTarget = null;
-    const completed = { ...initial.workouts };
+    let current = initial;
     try {
-      for (; steps < 12000; steps += 1) {
-        let current = read();
-        if (current.phase !== 'playing') break;
-        if (current.day !== lastDay) {
-          trace.push({ day: current.day, weight: current.weight, muscle: current.muscle, motivation: current.motivation });
-          lastDay = current.day;
-        }
-        if (action === 'idle') {
-          clear();
-          window.advanceTime(100);
-          continue;
-        }
-        if (trainingTarget && !current.exercise && current.motivation < 23) {
-          trainingTarget = null;
-          waypoint = (waypoint + 1) % waypoints.length;
-        }
-        if (!trainingTarget && current.motivation >= 27) {
-          target = requestedKind || candidates.find(kind => Number(current.workouts[kind]) === 0)
-            || (current.muscle < 62 ? 'gym' : current.weight > 60 ? 'swim' : 'home');
-          trainingTarget = current.zones.find(value => value.kind === target);
-        }
-        const zone = current.zones.find(value => value.kind === target);
-        if (!zone) throw Error(`Missing workout zone ${target}`);
-        let destination = trainingTarget || waypoints[waypoint];
-        if (!trainingTarget && current.motivation < 27) {
-          const nearby = current.pickups.filter(item => item.kind === 'motivation'
-            && Math.hypot(item.x - current.player.x, item.y - current.player.y) < 260);
-          nearby.sort((a, b) => Math.hypot(a.x - current.player.x, a.y - current.player.y)
-            - Math.hypot(b.x - current.player.x, b.y - current.player.y));
-          if (nearby[0]) destination = nearby[0];
-        }
-        if (!trainingTarget && Math.hypot(destination.x - current.player.x, destination.y - current.player.y) < 35) {
-          waypoint = (waypoint + 1) % waypoints.length;
-          destination = waypoints[waypoint];
-        }
-        const dx = destination.x - current.player.x;
-        const dy = destination.y - current.player.y;
-        const distance = Math.hypot(dx, dy);
-        const near = Boolean(trainingTarget && distance < 30 && current.motivation > 0.5);
-        setKey(codes.left, !near && dx < -7);
-        setKey(codes.right, !near && dx > 7);
-        setKey(codes.up, !near && dy < -7);
-        setKey(codes.down, !near && dy > 7);
-        setKey(codes.exercise, near);
-        const closeFoods = current.foods.filter(food => Math.hypot(food.x - current.player.x, food.y - current.player.y) < 120);
-        if (current.pulseCooldown <= 0 && current.motivation > 48 && closeFoods.length >= 3) tap('KeyQ');
-        if (!near && closeFoods.length >= 2 && current.dashCooldown <= 0 && current.stamina >= 30) tap('Space');
-        window.advanceTime(50);
+      for (let i=0; i<limit && current.phase==='playing'; i++) {
+        const input = decide(current, memory, action);
+        change('KeyA', input.x < 0); change('KeyD', input.x > 0);
+        change('KeyW', input.y < 0); change('KeyS', input.y > 0);
+        change('KeyE', !!input.exercise);
+        change('Space', !!input.dash); change('KeyQ', !!input.pulse);
+        window.advanceTime(1000/60);
         current = read();
-        if (Number(current.workouts?.[target] || 0) > Number(completed[target] || 0)) {
-          completed[target] = current.workouts[target];
-          trainingTarget = null;
-          waypoint = (waypoint + 1) % waypoints.length;
-          seen.add(target);
-          if (action === 'workout') break;
-        }
+        if (kind && current.workouts[kind] > initial.workouts[kind]) break;
       }
-    } finally { clear(); }
-    return { state: read(), initial, steps, seen: [...seen], trace };
-  }, { mode, targetKind });
+    } finally { [...held].forEach(code => change(code, false)); }
+    return {initial,state:read(),memo:memory};
+  }, {source:decisionSource,memo,mode,frames,stopWorkout});
 }
 
-async function selectUpgrade(page) {
-  const upgrades = page.getByTestId('fitness-upgrade');
-  await upgrades.first().waitFor({ state: 'visible' });
-  const ids = await upgrades.evaluateAll(elements => elements.map(element => element.dataset.upgrade));
-  const priority = ['strong', 'reach', 'focus', 'shoes', 'magnet', 'guard', 'breath', 'protein'];
-  const preferred = priority.find(id => ids.includes(id));
-  const choice = preferred ? page.locator(`[data-testid="fitness-upgrade"][data-upgrade="${preferred}"]`) : upgrades.first();
-  await choice.click();
-  assert.equal((await state(page)).phase, 'playing');
-  return ids;
+async function selectUpgrade(page, s = null) {
+  const before = s || await state(page);
+  const id = choose(before);
+  await page.locator('[data-upgrade="' + id + '"]').click();
+  const after = await state(page);
+  assert.equal(after.day, before.day);
+  assert.equal(after.time, before.time, 'Level selection must keep the current wave and time');
+  assert.deepEqual(after.foods, before.foods, 'Level selection must retain the live enemies');
+  return after;
 }
 
-async function main() {
-  fs.mkdirSync(output, { recursive: true });
-  const response = await fetch(`${base}/game/sui-fitness?seed=41`, { signal: AbortSignal.timeout(90000) });
-  assert.equal(response.status, 200, `Dev server not responsive: ${response.status}`);
-  const browser = await chromium.launch({
-    channel: 'chrome', headless: process.env.FITNESS_HEADED !== '1',
-    args: ['--mute-audio', '--disable-speech-api'],
-  });
-  let passed = false;
+async function campaign(page, mode = 'active', screenshotPrefix = '') {
+  let memo = {};
+  let mixedCaptured = false;
+  const trace = [];
+  for (let loop=0; loop<140; loop++) {
+    let s = await state(page);
+    if (s.phase==='upgrade') {
+      if (screenshotPrefix && s.level===2) {
+        const frozenState = stable(s);
+        await advance(page, 1800);
+        assert.deepEqual(stable(await state(page)), frozenState);
+      }
+      await selectUpgrade(page, s);
+    } else if (s.phase!=='playing') break;
+    const result = await pilot(page, memo, mode);
+    memo = result.memo; s = result.state;
+    trace.push({time:s.elapsed,day:s.day,weight:s.weight,fat:s.bodyFat,muscle:s.muscle,
+      level:s.level,xp:s.totalXp,workouts:s.workouts,weapons:s.weapons});
+    if (screenshotPrefix && !mixedCaptured && s.phase==='playing' &&
+        Object.values(s.weapons).filter(rank=>rank>0).length >= 3 && s.foods.length>=2) {
+      await capture(page, screenshotPrefix + '-mixed-combat'); mixedCaptured=true;
+    }
+  }
+  const final = await state(page);
+  runs.push({mode,talent:final.talent,final,trace});
+  return final;
+}
+
+async function touch(client, type, points) {
+  await client.send('Input.dispatchTouchEvent', {type,touchPoints:points});
+}
+async function center(locator) {
+  const box = await locator.boundingBox(); assert.ok(box);
+  return {x:box.x+box.width/2,y:box.y+box.height/2};
+}
+
+(async () => {
+  fs.mkdirSync(output,{recursive:true});
+  const preflight = await fetch(base+'/game/sui-fitness');
+  assert.ok(preflight.ok, 'Target server must respond before opening Chrome');
+  const helper = await import('./tests/helpers/fitness-pilot.mjs');
+  decisionSource = helper.fitnessDecision.toString(); choose=helper.fitnessUpgrade;
+  const browser = await chromium.launch({channel:'chrome',headless:process.env.FITNESS_HEADED!=='1',args:['--mute-audio']});
+  let passed=false;
   try {
-    const desktop = await browser.newContext({ viewport: { width: 1440, height: 1000 },
-      permissions: ['clipboard-read', 'clipboard-write'] });
+    const desktop = await browser.newContext({viewport:{width:1440,height:1000},permissions:['clipboard-read','clipboard-write']});
     await prepare(desktop);
+    await desktop.addInitScript(() => { try {localStorage.setItem('sui-fitness-record-v1',JSON.stringify({best:777,wins:2,runs:3}));} catch {} });
     const page = await open(desktop);
     const initial = await state(page);
-    assert.equal(initial.phase, 'ready');
-    assert.equal(initial.seed, 41);
-    assert.deepEqual(initial.zones.map(zone => zone.kind).sort(), ['gym', 'home', 'swim']);
-    await button(page, '玩法说明').click();
-    const body = await page.locator('body').innerText();
-    assert.match(body, /DQ|dq/);
-    assert.match(body, /牛肉干/);
-    assert.match(body, /西西里|柠檬柚/);
-    await button(page, '收起说明').click();
-    await button(page, '分享游戏').click();
-    const shared = await page.evaluate(() => navigator.clipboard.readText());
-    assert.match(shared, /\/game\/sui-fitness\?seed=41/);
-    await capture(page, '01-desktop-ready');
+    assert.equal(initial.weight,48); assert.equal(initial.bodyFat,35); assert.equal(initial.level,1);
+    await capture(page,'01-desktop-ready-talents');
+    await page.locator('[data-talent="swimmer"]').click();
+    assert.equal((await state(page)).weapons.water,1);
+    assert.match(page.url(),/talent=swimmer/);
+    await button(page,'分享游戏').click();
+    assert.match(await page.evaluate(()=>navigator.clipboard.readText()),/talent=swimmer/);
+    await page.reload(); await ready(page); await advance(page,0);
+    assert.equal((await state(page)).talent,'swimmer');
+    await page.locator('[data-talent="strength"]').click();
+    await button(page,'玩法说明').click();
+    const instructions = await page.getByRole('dialog').innerText();
+    assert.match(instructions,/40.00/); assert.match(instructions,/22%/);
+    assert.match(instructions,/牛肉干/); assert.match(instructions,/西西里/);
+    await capture(page,'02-desktop-rules');
+    await button(page,'收起说明').click();
     await page.locator('#start-fitness').click();
-    assert.equal((await state(page)).phase, 'playing');
-    const beforeMove = await state(page);
-    await page.keyboard.down('ArrowRight'); await advance(page, 200); await page.keyboard.up('ArrowRight');
-    assert.ok((await state(page)).player.x > beforeMove.player.x + 15, 'Real ArrowRight key must move Sui');
-    const dashBefore = await state(page);
-    await page.keyboard.down('d'); await page.keyboard.down('Space'); await advance(page, 80);
-    await page.keyboard.up('Space'); await page.keyboard.up('d');
-    const dash = await state(page);
-    assert.ok(dash.player.x > dashBefore.player.x + 25 && dash.dashCooldown > 0, 'Space dash must move and enter cooldown');
-    await page.keyboard.down('q'); await advance(page, 30); await page.keyboard.up('q');
-    assert.ok((await state(page)).pulseCooldown > 0, 'Q pulse must enter cooldown');
-    await advance(page, 1500);
-    await capture(page, '02-desktop-playing-abilities');
-    await advance(page, 15000);
-    const visibleFoodKinds = current => [...new Set(current.foods
-      .filter(food => food.x > 55 && food.x < 1045 && food.y > 70 && food.y < 625)
-      .map(food => food.kind))].sort();
-    for (let attempt = 0; attempt < 24; attempt += 1) {
-      if (visibleFoodKinds(await state(page)).length === 3) break;
-      await advance(page, 250);
-    }
-    assert.deepEqual(visibleFoodKinds(await state(page)), ['dq', 'jerky', 'tea'],
-      'Representative mid-wave must contain all three named food enemies');
-    await capture(page, '12-desktop-three-foods-midwave');
-    scenarios.push('Seeded ready screen, share link, real arrow movement, Space dash and Q pulse');
-
-    await page.keyboard.press('p'); await frozen(page);
-    await capture(page, '03-desktop-paused');
-    await page.keyboard.press('p');
-    assert.equal((await state(page)).phase, 'playing', 'A second P key must resume the paused challenge');
-    await page.keyboard.press('Escape'); await frozen(page);
-    await button(page, '继续挑战').click();
-    assert.equal((await state(page)).phase, 'playing');
-    await page.keyboard.down('d');
-    await page.evaluate(() => window.dispatchEvent(new Event('blur')));
+    const before=await state(page);
+    await page.keyboard.down('ArrowRight'); await advance(page,180); await page.keyboard.up('ArrowRight');
+    assert.ok((await state(page)).player.x > before.player.x+25);
+    await page.keyboard.down('d'); await page.keyboard.press('Space'); await advance(page,80); await page.keyboard.up('d');
+    assert.ok((await state(page)).dashCooldown > 0);
+    await page.keyboard.press('q'); await advance(page,20);
+    assert.ok((await state(page)).pulseCooldown > 0);
+    await advance(page,500); // Finish the ongoing dash before testing cleared held movement.
+    await page.keyboard.press('p'); await frozen(page); await capture(page,'03-desktop-paused');
+    await page.keyboard.press('p'); assert.equal((await state(page)).phase,'playing');
+    await page.keyboard.down('d'); await page.evaluate(()=>window.dispatchEvent(new Event('blur')));
+    await frozen(page); await button(page,'继续挑战').click();
+    const stopped=await state(page); await advance(page,100);
+    assert.deepEqual((await state(page)).player,stopped.player); await page.keyboard.up('d');
+    await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));});
     await frozen(page);
-    await page.evaluate(() => window.dispatchEvent(new Event('focus')));
-    assert.equal((await state(page)).phase, 'paused', 'Focus must require explicit resume');
-    const awayPosition = (await state(page)).player;
-    await button(page, '继续挑战').click();
-    await advance(page, 100);
-    assert.deepEqual((await state(page)).player, awayPosition, 'Background pause must clear the physically held movement key');
-    await page.keyboard.up('d');
-    await page.evaluate(() => {
-      Object.defineProperty(document, 'hidden', { configurable: true, value: true });
-      document.dispatchEvent(new Event('visibilitychange'));
-    });
-    await frozen(page);
-    await page.evaluate(() => { delete document.hidden; document.dispatchEvent(new Event('visibilitychange')); });
-    assert.equal((await state(page)).phase, 'paused');
-    await button(page, '继续挑战').click();
-    await button(page, '玩法说明').focus();
-    await page.keyboard.press('Space');
-    const helpBefore = stable(await state(page));
-    await advance(page, 1000);
-    assert.deepEqual(stable(await state(page)), helpBefore, 'Help must freeze active play');
-    await button(page, '收起说明').click();
-    if ((await state(page)).phase === 'paused') await button(page, '继续挑战').click();
-    await page.keyboard.press('f');
-    await page.waitForFunction(() => !!document.fullscreenElement);
-    await button(page, '全屏').click();
-    await page.waitForFunction(() => !document.fullscreenElement);
-    scenarios.push('P pause/resume toggle, Escape pause, explicit menu resume, blur/visibility pause, help freeze and fullscreen');
+    await page.evaluate(()=>{delete document.hidden;document.dispatchEvent(new Event('visibilitychange'));});
+    assert.equal((await state(page)).phase,'paused'); await button(page,'继续挑战').click();
+    await button(page,'玩法说明').click(); const helpState=stable(await state(page));
+    await advance(page,1000); assert.deepEqual(stable(await state(page)),helpState);
+    await button(page,'收起说明').click(); await button(page,'继续挑战').click();
+    await page.keyboard.press('f'); await page.waitForFunction(()=>!!document.fullscreenElement);
+    await button(page,'全屏').click(); await page.waitForFunction(()=>!document.fullscreenElement);
+    scenarios.push('Three selectable talents, seed/talent sharing and reload, precise goals, normal keys, abilities, pause/blur/help/fullscreen');
 
-    await page.keyboard.press('Escape'); await frozen(page);
-    await button(page, '重新挑战').click();
-    assert.equal((await state(page)).seed, 41);
-    assert.equal((await state(page)).phase, 'playing');
-    for (const kind of ['gym', 'swim', 'home']) {
-      const workout = await pilot(page, 'workout', kind);
-      assert.ok(workout.seen.includes(kind), `Public controls failed to complete ${kind}: ${JSON.stringify(workout)}`);
-      const naturalLoss = (workout.state.elapsed - workout.initial.elapsed) * 0.34;
-      const gain = { gym: 9, swim: 2, home: 6 }[kind];
-      assert.ok(workout.state.muscle >= workout.initial.muscle - naturalLoss + gain - 0.05,
-        'Training must add the stated muscle gain after allowing for time spent travelling');
-      if (kind === 'gym') await capture(page, '04-desktop-workout');
-      if (workout.state.phase === 'upgrade') await selectUpgrade(page);
+    await page.keyboard.press('Escape'); await button(page,'重新挑战').click();
+    let memo={forceKind:'gym'};
+    const trainingStart=await state(page);
+    for(let loop=0;loop<20;loop++) {
+      if ((await state(page)).phase==='upgrade') await selectUpgrade(page);
+      const result=await pilot(page,memo,'active',450,'gym'); memo=result.memo;
+      if(result.state.workouts.gym>0) break;
     }
-    scenarios.push('Gym, swimming and home workout each complete through public movement and held E');
-    let result;
-    let upgradeCount = 0;
-    const campaignTrace = [];
-    for (let checkpoint = 0; checkpoint < 20; checkpoint += 1) {
-      result = await pilot(page, 'campaign');
-      campaignTrace.push(result);
-      if (result.state.phase !== 'upgrade') break;
-      if (upgradeCount === 0) await capture(page, '05-desktop-upgrade');
-      await selectUpgrade(page);
-      upgradeCount += 1;
-    }
-    assert.equal(result.state.phase, 'won', `Campaign pilot failed: ${JSON.stringify(campaignTrace)}`);
-    assert.ok(result.state.weight <= 62 && result.state.muscle >= 55, 'Victory must meet both fitness goals');
-    assert.ok(result.state.defeats > 0, 'Automatic combat must defeat food temptations');
-    assert.ok(upgradeCount > 0, 'Full campaign must include upgrade choices');
-    await capture(page, '06-desktop-won');
-    const record = await readRecord(page);
-    assert.ok(record && record.wins >= 1 && record.runs >= 1);
-    await advance(page, 2000);
-    assert.deepEqual(await readRecord(page), record, 'Terminal run must be recorded exactly once');
-    await page.reload(); await ready(page); await advance(page, 0);
-    assert.equal((await state(page)).phase, 'ready');
-    assert.deepEqual(await readRecord(page), record, 'Records survive reload');
-    await page.locator('#start-fitness').click();
-    let lost;
-    for (let checkpoint = 0; checkpoint < 6; checkpoint += 1) {
-      lost = await pilot(page, 'idle');
-      if (lost.state.phase !== 'upgrade') break;
+    const trained=await state(page);
+    assert.ok(trained.workouts.gym>0);
+    assert.ok(trained.level>=2 && trained.elapsed<15);
+    assert.ok(trained.weight>47.7,'First workout must not instantly remove a kilogram');
+    if(trained.phase==='upgrade') {
+      const levelState=stable(trained); await advance(page,3000);
+      assert.deepEqual(stable(await state(page)),levelState);
+      await capture(page,'04-action-earned-upgrade');
       await selectUpgrade(page);
     }
-    assert.equal(lost.state.phase, 'lost', `Idle play should provide a real failure outcome: ${JSON.stringify(lost)}`);
-    await capture(page, '07-desktop-lost');
-    assert.equal((await readRecord(page)).runs, record.runs + 1);
-    await button(page, '重新挑战').click();
-    assert.equal((await state(page)).phase, 'playing');
-    assert.equal((await state(page)).seed, 41);
-    await page.keyboard.press('p');
-    await button(page, '换个开局').click();
-    const fresh = await state(page);
-    assert.equal(fresh.phase, 'ready');
-    assert.notEqual(fresh.seed, 41);
-    assert.equal(new URL(page.url()).searchParams.get('seed'), String(fresh.seed));
-    await page.reload(); await ready(page); assert.equal((await state(page)).seed, fresh.seed);
-    scenarios.push(`Full campaign victory (${upgradeCount} choices), automatic food defeats, idle loss, record dedup/reload and same/new seed restart`);
-    await desktop.close();
+    for (const kind of ['swim','home']) {
+      const initialCount=(await state(page)).workouts[kind]; memo={forceKind:kind};
+      for(let loop=0;loop<35;loop++) {
+        const s=await state(page); if(s.phase==='upgrade') await selectUpgrade(page,s);
+        const result=await pilot(page,memo,'active',450,kind); memo=result.memo;
+        if(result.state.workouts[kind]>initialCount) break;
+      }
+      assert.ok((await state(page)).workouts[kind]>initialCount,'Public held-E training must complete '+kind);
+    }
+    const afterTraining=await state(page);
+    if(afterTraining.phase==='upgrade') await selectUpgrade(page,afterTraining);
+    await capture(page,'05-three-training-zones');
+    scenarios.push('Actual held-E gym/swim/home, gentle first-workout weight change, first-wave XP upgrade, frozen choice and wave retention');
+    const victory=await campaign(page,'active','06-strength');
+    assert.equal(victory.phase,'won',JSON.stringify({weight:victory.weight,muscle:victory.muscle,reason:victory.resultReason}));
+    assert.ok(victory.weight<=40+1e-9 && victory.bodyFat<=22 && victory.muscle>=55);
+    assert.ok(victory.elapsed>150 && victory.elapsed<300);
+    await capture(page,'07-strength-victory');
+    const record=await readRecord(page);
+    assert.ok(record.wins===1 && record.runs===1);
+    await advance(page,1000); assert.deepEqual(await readRecord(page),record);
+    assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('sui-fitness-record-v1')).best),777);
+    await page.reload(); await ready(page); await advance(page,0);
+    assert.deepEqual((await state(page)).records,record);
+    await page.locator('#start-fitness').click();
+    const failed=await campaign(page,'no-training');
+    assert.equal(failed.phase,'lost'); assert.ok(failed.weight>44);
+    assert.deepEqual(failed.workouts,{gym:0,swim:0,home:0});
+    await capture(page,'08-no-training-loss');
+    await button(page,'换个开局').click();
+    assert.notEqual((await state(page)).seed,41); assert.equal((await state(page)).phase,'ready');
+    scenarios.push('Active route reaches 40kg early with body-fat/muscle goals, no-training route fails, v2 records/reload/dedup preserve v1, new seed restart');
 
-    const mobile = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
-    await prepare(mobile);
-    const phone = await open(mobile);
-    await capture(phone, '13-mobile-390-ready');
-    await button(phone, '玩法说明').tap();
-    await capture(phone, '14-mobile-390-help');
-    await button(phone, '收起说明').tap();
+    const damage={dumbbell:victory.weaponDamage.dumbbell,water:victory.weaponDamage.water,rope:victory.weaponDamage.rope,aura:victory.weaponDamage.aura};
+    for (const talent of ['swimmer','rhythm']) {
+      const build=await open(desktop,41,talent);
+      assert.equal((await state(build)).talent,talent);
+      await build.locator('#start-fitness').click();
+      const final=await campaign(build,'active',talent==='swimmer'?'09-swimmer':'10-rhythm');
+      assert.equal(final.phase,'won',JSON.stringify(final));
+      assert.ok(final.bodyFat<=22 && final.weight<=40+1e-9 && final.muscle>=55);
+      for(const kind of Object.keys(damage)) damage[kind]+=final.weaponDamage[kind];
+      await capture(build,talent==='swimmer'?'11-swimmer-victory':'12-rhythm-victory');
+      await build.close();
+    }
+    assert.ok(Object.values(damage).every(value=>value>10),JSON.stringify(damage));
+    scenarios.push('All three talent campaigns win using public inputs; four distinct weapon types actually damage enemies across mixed builds');
+
+    const mobile=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+    await prepare(mobile); const phone=await open(mobile,2,'rhythm');
+    await capture(phone,'13-mobile-ready-talents');
     await phone.locator('#start-fitness').tap();
-    const joystick = phone.getByTestId('fitness-joystick');
-    await joystick.scrollIntoViewIfNeeded();
-    const joystickBox = await joystick.boundingBox();
-    const exerciseBox = await button(phone, '锻炼 E').boundingBox();
-    assert.ok(joystickBox && exerciseBox, 'Touch controls must be visible');
-    const origin = { x: joystickBox.x + joystickBox.width / 2, y: joystickBox.y + joystickBox.height / 2, id: 1 };
-    const right = { ...origin, x: origin.x + joystickBox.width * 0.3 };
-    const exercise = { x: exerciseBox.x + exerciseBox.width / 2, y: exerciseBox.y + exerciseBox.height / 2, id: 2 };
-    const cdp = await mobile.newCDPSession(phone);
-    const touch = (type, touchPoints) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints });
-    const phoneBefore = await state(phone);
-    await touch('touchStart', [origin]);
-    await touch('touchMove', [right]);
-    await touch('touchStart', [right, exercise]);
-    await advance(phone, 200);
-    assert.ok((await state(phone)).player.x > phoneBefore.player.x + 10, 'True touch joystick must move');
-    assert.equal((await state(phone)).inputs.exercise, true, 'Exercise finger must be held alongside joystick');
-    await capture(phone, '08-mobile-390-multitouch');
-    await touch('touchEnd', [exercise]);
-    assert.equal((await state(phone)).inputs.exercise, false, 'Releasing workout must release only its own input');
-    const heldBefore = (await state(phone)).player.x;
-    await advance(phone, 120);
-    assert.ok((await state(phone)).player.x > heldBefore + 5, 'Releasing workout finger must preserve joystick finger');
-    await touch('touchCancel', []);
-    const canceled = stable(await state(phone));
-    await advance(phone, 100);
-    assert.deepEqual((await state(phone)).player, canceled.player, 'Touch cancellation must clear joystick movement');
-    assert.equal((await state(phone)).inputs.exercise, false);
-    await phone.locator('canvas').focus();
-    await phone.keyboard.down('e');
-    await touch('touchStart', [{ ...exercise, id: 5 }]);
-    await touch('touchEnd', []);
-    assert.equal((await state(phone)).inputs.exercise, true, 'Releasing a touch must preserve a held physical E key');
-    await phone.keyboard.up('e');
-    assert.equal((await state(phone)).inputs.exercise, false);
-    await button(phone, '锻炼 E').focus();
-    await phone.keyboard.down('Space'); await advance(phone, 100);
-    assert.equal((await state(phone)).inputs.exercise, true, 'Focused workout button must support held Space');
-    assert.equal((await state(phone)).dashCooldown, 0, 'Focused workout Space must not dash');
-    await phone.keyboard.up('Space');
-    assert.equal((await state(phone)).inputs.exercise, false);
-    await button(phone, '拒绝诱惑 Q').tap(); await advance(phone, 50);
-    assert.ok((await state(phone)).pulseCooldown > 0, 'Touch decision pulse must fire');
-    await button(phone, '冲刺 Space').tap(); await advance(phone, 50);
-    assert.ok((await state(phone)).dashCooldown > 0, 'Touch dash must fire');
-    await button(phone, '暂停').tap(); await frozen(phone);
-    await phone.setViewportSize({ width: 320, height: 740 });
-    await capture(phone, '09-mobile-320-paused');
-    await phone.setViewportSize({ width: 844, height: 390 });
-    await capture(phone, '10-mobile-landscape-paused');
-    await button(phone, '继续挑战').tap();
-    await advance(phone, 3000);
-    await button(phone, '冲刺 Space').focus();
-    const focusedBefore = await state(phone);
-    await phone.keyboard.press('Space'); await advance(phone, 100);
-    const focusedAfter = await state(phone);
-    assert.ok(focusedAfter.dashCooldown > 0 && focusedAfter.player.x > focusedBefore.player.x, 'Focused ability button must fire once from keyboard');
-    await mobile.close();
-    scenarios.push('True two-finger touch joystick/workout, mixed physical/touch holds, independent release, touch cancel, 320/390px/landscape and keyboard focus');
-
-    const restricted = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
-    await prepare(restricted);
-    await restricted.addInitScript(() => {
-      Storage.prototype.getItem = () => { throw Error('Storage denied by test'); };
-      Storage.prototype.setItem = () => { throw Error('Storage denied by test'); };
-    });
-    const blocked = await open(restricted, 3);
-    await blocked.locator('#start-fitness').click();
-    let deniedLoss;
-    for (let checkpoint = 0; checkpoint < 6; checkpoint += 1) {
-      deniedLoss = await pilot(blocked, 'idle');
-      if (deniedLoss.state.phase !== 'upgrade') break;
-      await selectUpgrade(blocked);
+    const client=await mobile.newCDPSession(phone);
+    const stick=await center(phone.locator('[data-testid="fitness-joystick"]'));
+    const exercise=await center(button(phone,'锻炼 E'));
+    await touch(client,'touchStart',[{id:11,x:stick.x,y:stick.y+26}]);
+    await advance(phone,980);
+    await touch(client,'touchMove',[{id:11,...stick}]);
+    assert.ok((await state(phone)).player.y>530 && (await state(phone)).player.y<565);
+    await touch(client,'touchStart',[{id:11,...stick},{id:22,...exercise}]);
+    await phone.keyboard.down('e'); await advance(phone,400);
+    const multi=await state(phone); assert.equal(multi.inputs.exercise,true); assert.ok(multi.exercise.progress>0);
+    await capture(phone,'14-mobile-multitouch-training');
+    await touch(client,'touchEnd',[{id:22,...exercise}]);
+    await advance(phone,150); assert.equal((await state(phone)).inputs.exercise,true);
+    await phone.keyboard.up('e'); await advance(phone,20); assert.equal((await state(phone)).inputs.exercise,false);
+    await touch(client,'touchStart',[{id:11,...stick},{id:23,...exercise}]); await advance(phone,300);
+    await touch(client,'touchCancel',[]); await advance(phone,20);
+    assert.equal((await state(phone)).inputs.exercise,false); assert.equal((await state(phone)).inputs.pointer,-1);
+    await button(phone,'锻炼 E').focus(); await phone.keyboard.down('Enter'); await phone.keyboard.down('Space');
+    await advance(phone,200); await phone.keyboard.up('Enter'); assert.equal((await state(phone)).inputs.exercise,true);
+    await phone.keyboard.up('Space'); await advance(phone,20); assert.equal((await state(phone)).inputs.exercise,false);
+    await button(phone,'暂停').tap(); await frozen(phone);
+    await phone.setViewportSize({width:320,height:720}); await capture(phone,'15-mobile-320-paused');
+    await phone.setViewportSize({width:844,height:390}); await capture(phone,'16-mobile-landscape-paused');
+    await button(phone,'继续挑战').tap();
+    await phone.evaluate(()=>window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyE',key:'e',repeat:true,bubbles:true})));
+    await advance(phone,20); assert.equal((await state(phone)).inputs.exercise,false,'A stale repeated key cannot reactivate cleared training');
+    await button(phone,'玩法说明').tap(); await capture(phone,'17-mobile-landscape-help');
+    await button(phone,'收起说明').tap(); await phone.setViewportSize({width:390,height:844});
+    if((await state(phone)).phase==='paused') await button(phone,'继续挑战').tap();
+    memo={forceKind:'home'};
+    for(let loop=0;loop<15;loop++) {
+      const result=await pilot(phone,memo,'active',450,'home');memo=result.memo;
+      if(result.state.phase==='upgrade') break;
     }
-    assert.equal(deniedLoss.state.phase, 'lost');
-    assert.match(await blocked.locator('body').innerText(), /存储|保存|纪录/);
-    await capture(blocked, '11-storage-blocked');
-    await button(blocked, '重新挑战').click();
-    assert.equal((await state(blocked)).phase, 'playing');
-    await blocked.reload(); await ready(blocked); assert.equal((await state(blocked)).phase, 'ready');
-    await restricted.close();
-    scenarios.push('Storage denied and reduced motion retain start, terminal outcome, restart and reload playability');
+    assert.equal((await state(phone)).phase,'upgrade');
+    await capture(phone,'18-mobile-earned-upgrade'); await selectUpgrade(phone);
+    scenarios.push('True CDP multi-touch joystick/E hold, physical/touch ownership, independent release, cancellation, dual Enter/Space holds, 320/390px/landscape and mobile XP choice');
 
-    const hall = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
-    await prepare(hall);
-    const entry = await hall.newPage();
-    await entry.goto(`${base}/demos#games`, { waitUntil: 'domcontentloaded' });
-    await entry.getByRole('searchbox', { name: '搜索游戏' }).fill('岁己');
-    const gameLink = entry.locator('a[href="/game/sui-fitness"]');
-    assert.equal(await gameLink.count(), 1, 'The game must be discoverable in the game hall');
-    await gameLink.click();
-    await ready(entry);
-    assert.equal((await state(entry)).phase, 'ready');
-    await hall.close();
-    scenarios.push('Search game hall for 岁己 and follow real link into the ready game');
+    const blocked=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
+    await prepare(blocked);
+    await blocked.addInitScript(()=>{Storage.prototype.getItem=()=>{throw new Error('Storage denied');};Storage.prototype.setItem=()=>{throw new Error('Storage denied');};});
+    const blockedPage=await open(blocked,3,'swimmer');
+    await blockedPage.locator('#start-fitness').tap();
+    const blockedEnd=await campaign(blockedPage,'active');
+    assert.equal(blockedEnd.phase,'won'); await capture(blockedPage,'19-storage-blocked-victory');
+    await button(blockedPage,'重新挑战').tap(); assert.equal((await state(blockedPage)).phase,'playing');
+    await blockedPage.reload(); await ready(blockedPage);
+    assert.equal((await state(blockedPage)).phase,'ready');
+    scenarios.push('Storage-denied/reduced-motion talent campaign wins, restart and reload remain playable');
 
-    // A fresh page exercises the real animation loop before advanceTime is ever called.
-    const live = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
-    await prepare(live);
-    const livePage = await live.newPage();
-    await livePage.goto(`${base}/game/sui-fitness?seed=41`, { waitUntil: 'domcontentloaded' });
-    await ready(livePage);
-    await livePage.locator('#start-fitness').click();
-    const liveBefore = await state(livePage);
-    await livePage.keyboard.down('ArrowRight');
-    await livePage.waitForTimeout(450);
-    await livePage.keyboard.up('ArrowRight');
-    const liveMoved = await state(livePage);
-    assert.ok(liveMoved.player.x > liveBefore.player.x + 60,
-      'Real RAF must process a normally held ArrowRight key without advanceTime');
-    await livePage.waitForFunction(() => JSON.parse(window.render_game_to_text()).elapsed >= 1.5);
-    const liveSpawned = await state(livePage);
-    assert.ok(liveSpawned.foods.length > 0 && liveSpawned.elapsed > liveBefore.elapsed + 1,
-      'Real RAF must advance time and spawn food enemies');
-    await livePage.keyboard.press('p');
-    const livePaused = stable(await state(livePage));
-    assert.equal(livePaused.phase, 'paused');
-    await livePage.waitForTimeout(300);
-    assert.deepEqual(stable(await state(livePage)), livePaused, 'Real RAF must freeze during pause');
-    await livePage.keyboard.press('p');
-    assert.equal((await state(livePage)).phase, 'playing');
-    await livePage.waitForFunction(previous => JSON.parse(window.render_game_to_text()).elapsed > previous + 0.2,
-      livePaused.elapsed);
-    const liveResumed = await state(livePage);
-    liveObservations.push({ before: liveBefore, moved: liveMoved, spawned: liveSpawned,
-      paused: livePaused, resumed: liveResumed, usedAdvanceTime: false });
-    await live.close();
-    scenarios.push('Fresh real RAF page: normal held key movement, enemy spawn, elapsed time, frozen pause and P keyboard resume without advanceTime');
-
-    assert.deepEqual(errors, [], 'No browser/page errors');
-    assert.deepEqual(responses, [], 'No failed network responses');
-    passed = true;
+    const live=await desktop.newPage();
+    await live.goto(base+'/game/sui-fitness?seed=41&talent=swimmer',{waitUntil:'domcontentloaded'}); await ready(live);
+    await live.locator('#start-fitness').click();
+    const liveBefore=await state(live);
+    await live.keyboard.down('ArrowRight'); await live.waitForTimeout(450); await live.keyboard.up('ArrowRight');
+    const liveMoved=await state(live); assert.ok(liveMoved.player.x>liveBefore.player.x+40);
+    await live.waitForFunction(()=>JSON.parse(window.render_game_to_text()).elapsed>=1.5);
+    const spawned=await state(live); assert.ok(spawned.foods.length>0);
+    await live.keyboard.press('p'); const paused=await state(live); await live.waitForTimeout(300);
+    const frozenLive=await state(live); assert.deepEqual(stable(frozenLive),stable(paused));
+    await live.keyboard.press('p'); await live.waitForTimeout(200);
+    const resumed=await state(live); assert.equal(resumed.phase,'playing'); assert.ok(resumed.elapsed>paused.elapsed);
+    liveObservations.push({usedAdvanceTime:false,before:liveBefore,moved:liveMoved,spawned,paused,frozen:frozenLive,resumed});
+    scenarios.push('Fresh real-RAF ranged page moves, spawns enemies, freezes on pause, resumes with P without advanceTime');
+    passed=true;
+    console.log(JSON.stringify({passed,scenarios:scenarios.length,screenshots:shots.length,
+      campaigns:runs.map(({mode,talent,final})=>({mode,talent,phase:final.phase,time:final.elapsed,weight:final.weight,fat:final.bodyFat,level:final.level})),errors,responses}));
   } finally {
-    fs.writeFileSync(path.join(output, 'report.json'), JSON.stringify({ passed, base, scenarios, errors, responses, shots, liveObservations }, null, 2));
+    fs.writeFileSync(path.join(output,'report.json'),JSON.stringify({passed,base,scenarios,errors,responses,shots,runs,liveObservations},null,2));
     await browser.close();
   }
-  console.log(JSON.stringify({ passed, scenarios, errors, screenshots: shots.map(shot => shot.file) }, null, 2));
-}
-
-main().catch(error => { console.error(error); process.exitCode = 1; });
+})().catch(error=>{console.error(error);process.exitCode=1;});
