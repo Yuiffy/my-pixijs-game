@@ -46,6 +46,9 @@ const nextConfig = isEsaStaticExport
   ? {
       ...(distDir ? { distDir } : {}),
       output: 'export',
+      // JSX pages only: server-only route.ts handlers cannot run on static hosting.
+      // Next 14's app loader needs multiple extensions to preserve the array type.
+      pageExtensions: ['tsx', 'jsx'],
       trailingSlash: true,
       images: {
         unoptimized: true,
