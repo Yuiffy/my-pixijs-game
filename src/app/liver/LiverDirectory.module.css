@@ -11,12 +11,14 @@
 }
 
 .topbar {
-  height: 64px;
+  min-height: 64px;
   border-bottom: 1px solid var(--line-soft);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 clamp(18px, 3vw, 44px);
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  padding: 12px clamp(18px, 3vw, 44px);
 }
 
 .brand {
@@ -91,7 +93,7 @@
   justify-content: flex-end;
 }
 
-.topbarMeta a { white-space: nowrap; }
+.topbarMeta a { display: inline-flex; align-items: center; min-height: 36px; white-space: nowrap; }
 
 .topbarMeta strong {
   color: #dbe8ef;

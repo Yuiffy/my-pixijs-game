@@ -6,6 +6,7 @@ import {
   PlayCircleOutlined,
   CustomerServiceOutlined,
   GiftOutlined,
+  TeamOutlined,
   HistoryOutlined,
   PictureOutlined,
   HomeOutlined,
@@ -152,6 +153,9 @@ const HomeContent = () => {
               >
                  <span className="hidden lg:inline-flex"><AudioOutlined className="group-hover:scale-110 transition-transform" /></span> 岁己按钮
               </a>
+              <Link href="/liver" className="px-1 sm:px-3 lg:px-4 py-2 min-h-11 hover:text-cyan-400 transition-colors text-slate-400 flex items-center justify-center whitespace-nowrap gap-2 text-xs lg:text-sm font-bold">
+                <span className="hidden lg:inline-flex"><TeamOutlined /></span> 其他主播
+              </Link>
            </div>
         </nav>
 

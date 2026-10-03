@@ -31,12 +31,13 @@ export default function LiverIndexPage() {
           <span className={styles.brandMark}>S</span>
           <span className={styles.brandLabel}>鹿饼AI直播总结</span>
         </Link>
-        <div className={styles.topbarMeta}>
+        <nav className={styles.topbarMeta} aria-label="相关入口">
           <Link href="/liver/sui/songs">岁己歌单<BetaBadge /> ↗</Link>
           <Link href="/liver/sui/gifts">舰礼档案<BetaBadge /> ↗</Link>
+          <Link href="/demos">小游戏合集 ↗</Link>
           <span>LIVE ARCHIVE</span>
           <strong>{totalMembers} 位成员</strong>
-        </div>
+        </nav>
       </header>
 
       <div className={styles.shell}>
