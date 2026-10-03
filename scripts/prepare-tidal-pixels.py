@@ -14,7 +14,11 @@ from scipy import ndimage
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "public/games/tidal-duel/pixel"
-SIZE, FOOT = 320, 312
+LAYOUT = json.loads((OUT / "source-layout.json").read_text(encoding="utf-8"))
+SIZE, FOOT = LAYOUT["frameSize"], LAYOUT["anchor"][1]
+BODY_HEIGHT = LAYOUT["bodyHeight"]
+if LAYOUT["anchor"][0] != SIZE // 2:
+    raise ValueError("The compiler expects a bottom-center anchor")
 
 
 def clean(im):
@@ -77,7 +81,7 @@ def slots(source, desc):
     return result
 
 
-def normalize(frames, body_height=184, reference=None):
+def normalize(frames, body_height=BODY_HEIGHT, reference=None):
     # Generated slot centres drift. Pin the bottom support footprint to one root,
     # rather than letting a nominal grid centre offset both bodies into each other.
     for f in frames:
@@ -88,21 +92,22 @@ def normalize(frames, body_height=184, reference=None):
         f.info["anchorX"] = (int(occupied[0]) + int(occupied[-1]) + 1) / 2
     heights = [f.getbbox()[3] - f.getbbox()[1] for f in frames[:4]]
     scale = body_height / (reference or median(heights))
-    max_extent = max(max(abs(f.getbbox()[0] - f.info.get("anchorX", f.width / 2)),
-                         abs(f.getbbox()[2] - f.info.get("anchorX", f.width / 2))) for f in frames)
-    scale = min(scale, (SIZE / 2 - 6) / max_extent,
-                (FOOT - 8) / max(f.getbbox()[3] - f.getbbox()[1] for f in frames))
     result = []
     for index, f in enumerate(frames):
+        frame_scale = scale * f.info.get("scaleCorrection", 1)
         box = f.getbbox()
         content = f.crop(box)
-        content = content.resize((max(1, round(content.width * scale)), max(1, round(content.height * scale))), Image.Resampling.NEAREST)
+        content = content.resize((max(1, round(content.width * frame_scale)), max(1, round(content.height * frame_scale))), Image.Resampling.NEAREST)
+        # A thin source foot pixel may disappear during nearest-neighbour reduction.
+        # Re-anchor the actual resized silhouette, not its now-empty last row.
+        resized_box = content.getbbox()
+        content = content.crop(resized_box)
         canvas = Image.new("RGBA", (SIZE, SIZE))
         # Do not recenter an extended kick around its larger silhouette.
-        x = round(SIZE / 2 + (box[0] - f.info.get("anchorX", f.width / 2)) * scale)
+        x = round(SIZE / 2 + (box[0] - f.info.get("anchorX", f.width / 2)) * frame_scale) + resized_box[0]
         y = FOOT - content.height
         if y < 0 or x < 0 or x + content.width > SIZE:
-            raise ValueError(f"Sprite {index} escapes normalized slot: {(x, y, content.size)}, source box {box}, scale {scale}")
+            raise ValueError(f"Sprite {index} escapes normalized slot: {(x, y, content.size)}, source box {box}, scale {frame_scale}. Enlarge the container instead of shrinking the character.")
         canvas.alpha_composite(content, (x, y))
         result.append(canvas)
     return result
@@ -135,7 +140,7 @@ def main():
     parser.add_argument("--source", required=True)
     args = parser.parse_args()
     source = Path(args.source).resolve()
-    spec = json.loads((OUT / "source-layout.json").read_text(encoding="utf-8"))
+    spec = LAYOUT
     audit = []
     for character, skins in spec["sources"].items():
         for skin, desc in skins.items():
@@ -143,13 +148,22 @@ def main():
             seed_frame = normalize([seed])[0]
             seed_name = f"{character}-original-seed.webp" if skin == "original" else f"{character}-seed.webp"
             seed_frame.save(OUT / seed_name, "WEBP", lossless=True, exact=True)
-            motion = normalize(slots(source, desc["motion"]))
+            raw_motion = slots(source, desc["motion"])
+            for index, correction in desc.get("motionCorrections", {}).items():
+                raw_motion[int(index)].info["scaleCorrection"] = correction
+            # Each generated action strip can have a different body scale.
+            # Crouch and jump use an upright body's scale, not bent pose height.
+            guard_height = median(f.height for f in raw_motion[10:12])
+            motion = (normalize(raw_motion[:4]) + normalize(raw_motion[4:8])
+                      + normalize(raw_motion[8:10], reference=guard_height)
+                      + normalize(raw_motion[10:12], reference=guard_height)
+                      + normalize(raw_motion[12:16], reference=guard_height))
             combat_desc = desc["combat"]
             raw_combat = slots(source, combat_desc)
-            # The reaction row is a separately authored strip; its three standing
-            # poses establish one common scale, preserving the lying pose's size.
+            # The reaction row uses its configured upright pose as a body reference,
+            # preserving the proportions of leaning and lying poses.
             reaction = raw_combat[-4:]
-            reaction_height = median([reaction[i].getbbox()[3] - reaction[i].getbbox()[1] for i in (0, 1, 3)])
+            reaction_height = reaction[desc["combat"].get("reactionReference", 1)].height
             combat = normalize(raw_combat[:-4]) + normalize(reaction, reference=reaction_height)
             if "insertLow" in combat_desc:
                 low = normalize(slots(source, combat_desc["insertLow"]), body_height=110)
@@ -161,7 +175,9 @@ def main():
                 packed = atlas(frames, name)
                 preview(packed, name.replace(".webp", ".png"))
                 audit.append({"file": name, "frames": len(frames), "size": packed.size,
-                              "alpha": "binary", "anchor": [SIZE // 2, FOOT], "bodyHeight": 184})
+                              "frameSize": SIZE, "alpha": "binary", "anchor": [SIZE // 2, FOOT], "bodyHeight": BODY_HEIGHT,
+                              "frameBounds": [list(f.getbbox()) for f in frames],
+                              "normalization": "action-strip body references; never shrink to fit an extended limb"})
     stage = Image.open(source / spec["stage"]).convert("RGB").resize((640, 360), Image.Resampling.NEAREST)
     stage.save(OUT / "boardwalk.webp", "WEBP", lossless=True)
     (OUT / "compiled.json").write_text(json.dumps(audit, indent=2) + "\n", encoding="utf-8")

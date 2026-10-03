@@ -1,6 +1,7 @@
 import { FLOOR, HEIGHT, WIDTH, fighterBoxes, clamp } from "./engine";
 import type { Fighter, Game } from "./engine";
 import { FIGHTERS, getFighter, getSkin } from "./roster";
+import layout from "../../../public/games/tidal-duel/pixel/source-layout.json";
 
 interface SkinAssets {
   seed: HTMLImageElement;
@@ -15,7 +16,12 @@ export interface PixelFrame {
   sheet: "motion" | "combat";
   index: number;
 }
-const TILE = 320;
+export const SPRITE_LAYOUT = {
+  tile: layout.frameSize,
+  anchor: layout.anchor,
+  bodyHeight: layout.bodyHeight,
+};
+const TILE = SPRITE_LAYOUT.tile;
 const r = (n: number) => Math.round(n / 2) * 2;
 function loadImage(path: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -155,8 +161,8 @@ function sprite(
     Math.floor(frame.index / 4) * TILE,
     TILE,
     TILE,
-    -160 * scale,
-    -312 * scale,
+    -SPRITE_LAYOUT.anchor[0] * scale,
+    -SPRITE_LAYOUT.anchor[1] * scale,
     TILE * scale,
     TILE * scale,
   );
@@ -333,7 +339,17 @@ function portrait(
   y: number,
 ) {
   rect(ctx, x, y, 60, 60, "#342943");
-  ctx.drawImage(skinAssets(assets, f).motion, 135, 127, 60, 60, x, y, 60, 60);
+  ctx.drawImage(
+    skinAssets(assets, f).motion,
+    SPRITE_LAYOUT.anchor[0] - 25,
+    SPRITE_LAYOUT.anchor[1] - SPRITE_LAYOUT.bodyHeight - 1,
+    60,
+    60,
+    x,
+    y,
+    60,
+    60,
+  );
 }
 function hud(ctx: CanvasRenderingContext2D, assets: Assets, game: Game) {
   game.fighters.forEach((f, side) => {
@@ -532,8 +548,8 @@ function superCut(
   ctx.clip();
   ctx.drawImage(
     skinAssets(assets, f).motion,
-    95,
-    128,
+    SPRITE_LAYOUT.anchor[0] - 65,
+    SPRITE_LAYOUT.anchor[1] - SPRITE_LAYOUT.bodyHeight,
     140,
     100,
     reduced ? 40 : r(40 + elapsed * 18),
@@ -630,7 +646,7 @@ function menu(
     3,
     reduced,
   );
-  text(ctx, "潮夜", 1192, 166, 70, "#ffd7ba", "right", 900);
+  text(ctx, "潮夜格斗", 1192, 166, 54, "#ffd7ba", "right", 900);
   text(ctx, "AFTER THE TIDE", 1188, 191, 11, "#ffe8d1a0", "right", 400);
 }
 export function renderGame(

@@ -77,10 +77,22 @@
   "sourceDirectory": "Codex generated_images/01a0fda4-1389-7332-87a9-2c58c905fc36",
   "defaultSkins": "original",
   "references": "Character identity references and generated seeds; motion/combat strips reuse the corresponding costume seed. No third-party MUGEN sprites or runtime.",
-  "preprocessing": "scripts/prepare-tidal-pixels.py: alpha threshold >220; complete connected silhouettes; shared strip scale, nearest-neighbour, fixed 320×320 tiles, foot anchor [160,312], 184px standing height. Horizontal roots use the bottom 5.5% support footprint instead of the nominal generated grid centre; extended hands and boots stay within their tiles. Reaction strips share the standing reference scale; down poses retain their natural size. Shiori original frames 8–11 inserted from the supplemental low strip.",
+  "preprocessing": "scripts/prepare-tidal-pixels.py: alpha threshold >220; complete connected silhouettes; nearest-neighbour, fixed 448×448 tiles, foot anchor [224,440], 184px standing body reference. Idle, walk and guard strips are calibrated separately to the same body reference; crouch and jump share the upright guard scale, preserving bent proportions. Combat rows use their standing reference; reaction rows use the configured upright pose. The container never reduces a whole strip to fit an extended limb. Horizontal roots use the bottom 5.5% support footprint, and resized alpha is trimmed before foot alignment. Shiori original low frames 8–11 remain from the supplemental strip. A measured 1.077 correction fixes Shiori original idle frame 1.",
+  "normalizationHistory": [
+    {
+      "date": "2026-10-03",
+      "layout": "320×320; [160,312] foot anchor",
+      "method": "Shared scale capped by the largest pose fitting within the tile; original PNGs and all generation prompts preserved."
+    },
+    {
+      "date": "2026-10-04",
+      "layout": "448×448; [224,440] foot anchor",
+      "reason": "Sui original walk/guard appeared 15–18% smaller than idle; resort combat was reduced by about 18% to fit an extended sweep. Expanded transparent slots and explicit upright body references remove these scale jumps without changing character art."
+    }
+  ],
   "galleryPoster": {
     "file": "../poster.webp",
-    "source": "Current Canvas 2D character-selection render with both original costumes, plus native canvas title text; exported to 1280×720 WebP.",
+    "source": "scripts/capture-tidal-poster.cjs: current Canvas 2D original-costume selection render and native canvas 潮夜格斗 / TIDE FIGHTERS text; exported to 1280×720 WebP.",
     "additionalImageGeneration": false
   },
   "frameSequences": {

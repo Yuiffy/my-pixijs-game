@@ -27,6 +27,11 @@ import { FIGHTERS, getFighter } from "./roster";
 import { loadAssets, renderGame, pixelFrame } from "./renderer";
 import type { Assets } from "./renderer";
 import DuelAudio from "./audio";
+import {
+  MODERN_KEYS as KEYS,
+  MODERN_CONTROLS as CONTROLS,
+  modernGamepad,
+} from "./controls";
 import styles from "./tidalDuel.module.css";
 
 type DuelWindow = Window & {
@@ -48,61 +53,6 @@ const INITIAL: Options = {
   skin: "original",
   opponentSkin: "original",
 };
-const KEYS: Record<string, [Side, Action]> = {
-  KeyH: [0, "skill"],
-  KeyY: [0, "rise"],
-  KeyN: [0, "burst"],
-  Numpad7: [1, "skill"],
-  Numpad8: [1, "rise"],
-  Numpad9: [1, "burst"],
-  Digit7: [1, "skill"],
-  Digit8: [1, "rise"],
-  Digit9: [1, "burst"],
-  KeyA: [0, "left"],
-  KeyD: [0, "right"],
-  KeyW: [0, "jump"],
-  KeyS: [0, "crouch"],
-  KeyJ: [0, "punch"],
-  KeyK: [0, "kick"],
-  KeyL: [0, "guard"],
-  KeyU: [0, "hold"],
-  KeyI: [0, "throw"],
-  KeyO: [0, "special"],
-  ShiftLeft: [0, "sidestep"],
-  ArrowLeft: [1, "left"],
-  ArrowRight: [1, "right"],
-  ArrowUp: [1, "jump"],
-  ArrowDown: [1, "crouch"],
-  Numpad1: [1, "punch"],
-  Numpad2: [1, "kick"],
-  Numpad3: [1, "guard"],
-  Numpad4: [1, "hold"],
-  Numpad5: [1, "throw"],
-  Numpad6: [1, "special"],
-  ShiftRight: [1, "sidestep"],
-  Digit1: [1, "punch"],
-  Digit2: [1, "kick"],
-  Digit3: [1, "guard"],
-  Digit4: [1, "hold"],
-  Digit5: [1, "throw"],
-  Digit6: [1, "special"],
-};
-const CONTROLS: [Action, string, string][] = [
-  ["left", "←", "A"],
-  ["right", "→", "D"],
-  ["jump", "跳", "W"],
-  ["crouch", "蹲", "S"],
-  ["punch", "拳", "J"],
-  ["kick", "踢", "K"],
-  ["guard", "防", "L"],
-  ["hold", "反", "U"],
-  ["throw", "投", "I"],
-  ["sidestep", "闪", "⇧"],
-  ["special", "必杀", "O"],
-  ["skill", "角色技", "H"],
-  ["rise", "升击", "Y"],
-  ["burst", "脱身", "N"],
-];
 const snapshot = (g: Game): Game => ({
   ...g,
   fighters: [{ ...g.fighters[0] }, { ...g.fighters[1] }],
@@ -142,6 +92,7 @@ export default function TidalDuel() {
       fighter.aiTimer = 0;
       fighter.directions = [];
       fighter.throwTech = 0;
+      fighter.assisted = null;
     });
   }, []);
   const input = useCallback(
@@ -293,24 +244,7 @@ export default function TidalDuel() {
       for (const side of [0, 1] as Side[]) {
         const pad = pads[side];
         if (side === 1 && gameRef.current.options.mode !== "local") continue;
-        const axis = pad?.axes[0] ?? 0;
-        const vertical = pad?.axes[1] ?? 0;
-        const mappings: [Action, boolean][] = [
-          ["left", axis < -0.35 || !!pad?.buttons[14]?.pressed],
-          ["right", axis > 0.35 || !!pad?.buttons[15]?.pressed],
-          ["crouch", vertical > 0.35 || !!pad?.buttons[13]?.pressed],
-          ["jump", vertical < -0.35 || !!pad?.buttons[12]?.pressed],
-          ["punch", !!pad?.buttons[0]?.pressed],
-          ["kick", !!pad?.buttons[1]?.pressed],
-          ["guard", !!pad?.buttons[4]?.pressed],
-          ["hold", !!pad?.buttons[2]?.pressed],
-          ["throw", !!pad?.buttons[3]?.pressed],
-          ["sidestep", !!pad?.buttons[5]?.pressed],
-          ["special", !!pad?.buttons[7]?.pressed],
-          ["skill", !!pad?.buttons[6]?.pressed],
-          ["rise", !!pad?.buttons[10]?.pressed],
-          ["burst", !!pad?.buttons[11]?.pressed],
-        ];
+        const mappings = modernGamepad(pad);
         mappings.forEach(([action, down]) => input(`pad:${side}:${action}`, side, action, down),);
       }
     };
@@ -484,13 +418,18 @@ export default function TidalDuel() {
       {options.mode === "local" && (
         <span className={styles.bankLabel}>{side + 1}P</span>
       )}
-      {CONTROLS.map(([action, label, key]) => (
+      {CONTROLS.map(([action, label, key, secondKey]) => (
         <button
           type="button"
           key={action}
           data-control={`${side}-${action}`}
-          className={`${action === "special" ? styles.special : ""} ${action === "punch" || action === "kick" ? styles.strike : ""}`}
+          className={`${action === "ability" ? styles.special : ""} ${["light", "medium", "heavy"].includes(action) ? styles.strike : ""}`}
           aria-label={`玩家${side === 0 ? "一" : "二"}${label}`}
+          aria-pressed={
+            action === "assist"
+              ? !!view.fighters[side].previous.assist
+              : undefined
+          }
           disabled={view.paused || !!overlay || view.phase !== "fight"}
           onPointerDown={(event) => {
             if (event.button !== 0) return;
@@ -530,27 +469,7 @@ export default function TidalDuel() {
           }}
         >
           <span>{label}</span>
-          <kbd>
-            {side === 0
-              ? key
-              : action === "sidestep"
-                ? "⇧"
-                : ["left", "right", "jump", "crouch"].includes(action)
-                  ? label
-                  : String(
-                      [
-                        "punch",
-                        "kick",
-                        "guard",
-                        "hold",
-                        "throw",
-                        "special",
-                        "skill",
-                        "rise",
-                        "burst",
-                      ].indexOf(action) + 1,
-                    )}
-          </kbd>
+          <kbd>{side === 0 ? key : secondKey}</kbd>
         </button>
       ))}
     </div>
@@ -566,7 +485,7 @@ export default function TidalDuel() {
             ← <span>游戏大厅</span>
           </Link>
           <span className={styles.brand}>
-            晴海对决 · 潮夜 <i>TIDAL DUEL</i>
+            潮夜格斗 <i>TIDE FIGHTERS</i>
           </span>
           <div className={styles.tools}>
             <button
@@ -654,14 +573,14 @@ export default function TidalDuel() {
             ref={canvasRef}
             width={WIDTH}
             height={HEIGHT}
-            aria-label="岁己与栞栞的晴海格斗擂台"
+            aria-label="潮夜格斗：岁己与栞栞的像素格斗擂台"
           >
             请使用支持 Canvas 的浏览器。
           </canvas>
           {!ready && (
             <div className={styles.loading}>
               <span />
-              {error || "正在准备晴海擂台…"}
+              {error || "正在准备潮夜格斗擂台…"}
               {error && (
                 <button type="button" onClick={() => window.location.reload()}>
                   重新加载
@@ -675,10 +594,12 @@ export default function TidalDuel() {
                 SUI × SHIORI / AFTER THE TIDE
               </div>
               <h1>
-                晴海<span>对决</span>
-                <small>TIDAL DUEL · 潮夜</small>
+                潮夜<span>格斗</span>
+                <small>TIDE FIGHTERS · 岁己 × 栞栞</small>
               </h1>
-              <p className={styles.tagline}>日落之后，下一招由你决定。</p>
+              <p className={styles.tagline}>
+                轻中重出招，按后防御。日落之后，放手过招。
+              </p>
               <div className={styles.characters}>
                 {FIGHTERS.map((f) => (
                   <button
@@ -923,7 +844,7 @@ export default function TidalDuel() {
             {controls(0)}
             {options.mode === "local" && controls(1)}
             <div className={styles.controlFoot}>
-              <span>H 角色技 · Y 升击 25 · N 脱身 50 · 命中后 ⇧ 取消 50</span>
+              <span>按后防御 · 轻+中投技 · 重+必杀超杀 · 按住辅助连打</span>
               <button type="button" onClick={() => openOverlay("exit")}>
                 返回选人
               </button>
@@ -965,17 +886,9 @@ export default function TidalDuel() {
             ) : (
               <>
                 <span className={styles.eyebrow}>FIGHTER GUIDE</span>
-                <h2 id="duel-dialog-title">读懂对手，再出招。</h2>
-                <div className={styles.triangle}>
-                  <b>拳 / 脚</b>
-                  <span>→</span>
-                  <b>投技</b>
-                  <span>→</span>
-                  <b>反击</b>
-                  <span>→ 拳 / 脚</span>
-                </div>
+                <h2 id="duel-dialog-title">五个键，就能开打。</h2>
                 <p>
-                  拳脚打断投技。投技抓住防御与反击的空当。反击只在短窗口内生效，猜错会留下破绽。
+                  先记三件事：按后防御，轻中重出招，必杀一键释放。想打连招，按住辅助，再连续按同一个攻击键。
                 </p>
                 <table>
                   <thead>
@@ -992,84 +905,92 @@ export default function TidalDuel() {
                       <td>← → / ↑ / ↓</td>
                     </tr>
                     <tr>
-                      <td>拳 / 踢 / 防御</td>
+                      <td>轻 / 中 / 重攻击</td>
                       <td>J / K / L</td>
                       <td>1 / 2 / 3</td>
                     </tr>
                     <tr>
-                      <td>反击 / 投技 / 必杀</td>
-                      <td>U / I / O</td>
-                      <td>4 / 5 / 6</td>
+                      <td>必杀 / 辅助</td>
+                      <td>U / 按住 I</td>
+                      <td>4 / 按住 5</td>
                     </tr>
                     <tr>
-                      <td>侧闪</td>
-                      <td>左 Shift</td>
-                      <td>右 Shift</td>
+                      <td>防御 / 蹲防</td>
+                      <td>远离对手的方向 / 下 + 后</td>
+                      <td>远离对手的方向 / 下 + 后</td>
                     </tr>
                     <tr>
-                      <td>角色技 / 升击 / 脱身</td>
-                      <td>H / Y / N</td>
-                      <td>7 / 8 / 9</td>
+                      <td>投技 / 超杀 / 脱身</td>
+                      <td>J + K / L + U / I + U</td>
+                      <td>1 + 2 / 3 + 4 / 5 + 4</td>
                     </tr>
                   </tbody>
                 </table>
                 <p>
-                  <b>上中下段：</b>站立防御挡上、中段；蹲防挡下段。U 反中段，W +
-                  U 反上段，S + U 反下段。侧闪躲直拳，回旋踢能追踪。
+                  <b>按后防御：</b>
+                  后是远离对手的方向，换边后会反过来。远处照常后退；受到攻击时会格挡。下
+                  + 后防扫腿，站防应对跳入攻击。光按下只会蹲，不会防御。
                 </p>
                 <p>
-                  <b>连招：</b>J → J → K 浮空，J → K 突进，K → K
-                  回旋。恢复前按下一招可预输入。蹲下出拳脚是下段。满气势 O
-                  发动角色必杀。
+                  <b>辅助连招：</b>按住 I，连按 J 是三段连掌，连按 K
+                  是踢掌接角色必杀，连按 L
+                  是浮空连招，满潮能时以超杀收尾。后续招只在命中后接出，不会在落空或被防御时自动消耗超杀能量。
                 </p>
                 <p>
-                  <b>岁己 · 猫步连掌：</b>H（↓↘→ +
-                  J）向前进身，命中或被防御后可再按 H
+                  <b>岁己 · 猫步连掌：</b>U 向前进身，命中或被防御后可再按 U
                   两次。最后一段收招长，落空要小心。
                 </p>
                 <p>
-                  <b>栞栞 · 流心潮波：</b>H（↓↘→ +
-                  J）发出潮波；站防、中段反击、跳跃与侧闪均可应对。Y（→↓↘ +
-                  K）升击消耗 25 潮能，有短暂起手保护，被防后容易受罚。
+                  <b>栞栞 · 流心潮波：</b>U
+                  发出潮波，按后、防反、跳跃或侧闪均可应对。两人都可用下 + U
+                  升击，消耗 25 潮能，起手短暂无敌，被防后容易受罚。
                 </p>
                 <p>
-                  <b>资源与拆投：</b>被抓瞬间按 I 拆投。受击或防御中按 N 消耗 50
-                  潮能脱身，每回合一次；命中后 Shift 消耗 50
-                  取消收招。护盾耗尽会破防，停止防御后恢复。衣装只改变外观。
+                  <b>投技与资源：</b>轻 + 中投技，被抓瞬间同样按轻 + 中拆投。重
+                  + 必杀消耗 100 潮能发动超杀；辅助 + 必杀消耗 50
+                  潮能从受击或防御硬直脱身，每回合一次。护盾耗尽会破防。衣装只改变外观。
                 </p>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>{selected.name}招式</th>
-                      <th>起手 / 有效 / 收招</th>
-                      <th>伤害 / 潮能</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {["punch", "kick", "signature", "reversal", "super"].map(
-                      (id) => {
-                        const m = selected.moves[id];
-                        return (
-                          <tr key={id}>
-                            <td>{m.name}</td>
-                            <td>
-                              {Math.round(m.startup * 60)} /{" "}
-                              {Math.round(m.active * 60)} /{" "}
-                              {Math.round(m.recovery * 60)}F
-                            </td>
-                            <td>
-                              {m.damage} / {m.meter ?? 0}
-                            </td>
-                          </tr>
-                        );
-                      },
-                    )}
-                  </tbody>
-                </table>
+                <details className={styles.advanced}>
+                  <summary>进阶动作与招式帧数</summary>
+                  <p>
+                    轻 + 重防反：默认反中段，加上方向反上段，加下方向反下段。中
+                    + 重侧闪，命中后可消耗 50 潮能取消收招。方向指令 ↓↘→ + 轻 /
+                    →↓↘ + 中也保留，但不需要先学搓招。
+                  </p>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>{selected.name}招式</th>
+                        <th>起手 / 有效 / 收招</th>
+                        <th>伤害 / 潮能</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {["punch", "kick", "signature", "reversal", "super"].map(
+                        (id) => {
+                          const m = selected.moves[id];
+                          return (
+                            <tr key={id}>
+                              <td>{m.name}</td>
+                              <td>
+                                {Math.round(m.startup * 60)} /{" "}
+                                {Math.round(m.active * 60)} /{" "}
+                                {Math.round(m.recovery * 60)}F
+                              </td>
+                              <td>
+                                {m.damage} / {m.meter ?? 0}
+                              </td>
+                            </tr>
+                          );
+                        },
+                      )}
+                    </tbody>
+                  </table>
+                </details>
                 <p className={styles.helpFoot}>
-                  P / Esc 暂停 · F 全屏 · 标准手柄：A 拳、B 踢、X 反、Y 投、LB
-                  防、RB 闪、RT 超杀、LT
-                  角色技、左摇杆按下升击、右摇杆按下脱身。切到其他页面会自动暂停。练习帧优势为该次接触时的剩余收招比较，倒地/浮空不等于可保证连招。
+                  P / Esc 暂停 · F 全屏 · 手柄：A 轻、X 中、Y 重、B 必杀、RT
+                  辅助，方向后防；LB 投技、RB
+                  超杀也可直接使用。切到其他页面会自动暂停。练习帧优势显示实际接触后的剩余硬直。
                 </p>
                 <button
                   type="button"

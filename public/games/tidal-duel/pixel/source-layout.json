@@ -1,8 +1,8 @@
 {
-  "frameSize": 320,
+  "frameSize": 448,
   "anchor": [
-    160,
-    312
+    224,
+    440
   ],
   "bodyHeight": 184,
   "sources": {
@@ -21,6 +21,7 @@
         },
         "combat": {
           "file": "exec-514b0a93-ce9a-4d62-a5bd-524c39347355.png",
+          "reactionReference": 3,
           "rows": [
             0,
             270,
@@ -46,6 +47,7 @@
         },
         "combat": {
           "file": "exec-3f0e9ea7-0db5-48a6-9793-75deeff30961.png",
+          "reactionReference": 3,
           "rows": [
             0,
             282,
@@ -61,6 +63,7 @@
     "shiori": {
       "original": {
         "seed": "exec-76f63362-dc1f-47a3-8a1a-c531956997e7.png",
+        "motionCorrections": { "1": 1.077 },
         "motion": {
           "file": "exec-80cf1758-4b71-4cda-9dbd-610cdf808b83.png",
           "rows": [

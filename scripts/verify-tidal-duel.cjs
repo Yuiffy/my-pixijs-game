@@ -15,9 +15,9 @@ const gamepadOnly = process.env.TIDAL_DUEL_GAMEPAD_ONLY === '1';
 const state = page => page.evaluate(() => JSON.parse(window.render_game_to_text()));
 const advance = (page, ms) => page.evaluate(ms => window.advanceTime(ms), ms);
 const button = (page, name) => page.getByRole('button', { name, exact: true });
-const actions = ['left', 'right', 'jump', 'crouch', 'punch', 'kick', 'guard', 'hold', 'throw', 'sidestep', 'special', 'skill', 'rise', 'burst'];
+const actions = ['left', 'right', 'jump', 'crouch', 'light', 'medium', 'heavy', 'ability', 'assist', 'punch', 'kick', 'guard', 'hold', 'throw', 'sidestep', 'special', 'skill', 'rise', 'burst'];
 const P1 = { left: 'KeyA', right: 'KeyD', jump: 'KeyW', crouch: 'KeyS',
-  punch: 'KeyJ', kick: 'KeyK', guard: 'KeyL', hold: 'KeyU', throw: 'KeyI', sidestep: 'ShiftLeft', special: 'KeyO' };
+  punch: 'KeyJ', kick: 'KeyK', guard: 'KeyA', hold: ['KeyJ', 'KeyL'], throw: ['KeyJ', 'KeyK'], sidestep: ['KeyK', 'KeyL'], special: ['KeyL', 'KeyU'] };
 const dismissHelp = page => button(page, '明白了，去过招 →').click();
 
 class CaptureFailure extends Error {}
@@ -106,6 +106,7 @@ async function start(page, mode = 'training') {
 }
 
 async function keys(page, codes, ms) {
+  codes = codes.flat();
   for (const code of codes) await page.keyboard.down(code);
   await advance(page, ms);
   for (const code of [...codes].reverse()) await page.keyboard.up(code);
@@ -182,11 +183,11 @@ async function publicPixelCostumes(page, report) {
   await page.locator('#duel-opponent').selectOption('sui');
   await page.locator('#duel-opponent-skin').selectOption('original');
   await start(page, 'training');
-  await keys(page, ['KeyH'], 300);
+  await keys(page, ['KeyU'], 300);
   assert.ok((await state(page)).projectiles.some(p => p.side === 0), 'public Shiori shortcut creates a travelling wave');
   await capture(page, report, '10-production-original-wave');
   await button(page, '重置站位').click();
-  await keys(page, ['KeyY'], 160);
+  await keys(page, ['KeyS', 'KeyU'], 160);
   const rise = await state(page);
   assert.equal(rise.fighters[0].move, 'reversal');
   assert.equal(rise.fighters[0].meter, 75, 'public reversal spends 25 energy');
@@ -210,10 +211,11 @@ async function libraryNavigation(page, report) {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.getByRole('link', { name: /游戏大厅/ }).click();
   await page.waitForURL('**/demos');
-  await page.getByRole('searchbox', { name: '搜索游戏' }).fill('晴海');
-  await page.waitForURL(current => current.searchParams.get('q') === '晴海');
+  await page.getByRole('searchbox', { name: '搜索游戏' }).fill('格斗');
+  await page.waitForURL(current => current.searchParams.get('q') === '格斗');
   const entries = page.locator('[data-game]');
-  assert.deepEqual((await entries.evaluateAll(elements => elements.map(el => el.dataset.game))).sort(), ['/game/beach-volley', '/game/tidal-duel'].sort(), 'hall search keeps volleyball and fighter available');
+  assert.ok((await entries.evaluateAll(elements => elements.map(el => el.dataset.game))).includes('/game/tidal-duel'), 'fighting search finds the renamed game');
+  assert.equal(await page.locator('[data-game="/game/beach-volley"]').count(), 0, 'volleyball remains distinct from fighting');
   const fighting = page.locator('[data-game="/game/tidal-duel"]');
   await fighting.scrollIntoViewIfNeeded();
   await fighting.locator('img').evaluate(el => el.decode());
@@ -228,11 +230,11 @@ async function libraryNavigation(page, report) {
   const file = path.join(output, '08-production-hall.png');
   const pixels = inspectPng(await page.screenshot({ path: file, fullPage: true, animations: 'disabled' }));
   report.screenshots.push({ name: '08-production-hall', file, pixels, entries: await entries.evaluateAll(elements => elements.map(el => ({ href: el.dataset.game, text: el.textContent }))), poster });
-  await fighting.getByRole('link', { name: '打开 晴海对决 · 岁己 vs 栞栞', exact: true }).click();
+  await fighting.getByRole('link', { name: '打开 潮夜格斗 · 岁己 vs 栞栞', exact: true }).click();
   await page.waitForURL('**/game/tidal-duel');
   await page.waitForFunction(() => window.render_game_to_text && JSON.parse(window.render_game_to_text()).assetsReady);
   assert.equal((await state(page)).phase, 'menu', 'hall fighter link opens character selection');
-  report.checks.push('Production hall navigation and 晴海 search keep volleyball/fighter entries; new WebP poster serves and decodes; fighter link opens playable selection');
+  report.checks.push('Production hall fighting search finds 潮夜格斗 independently of volleyball; new WebP poster serves and decodes; fighter link opens playable selection');
 }
 
 async function development(page, browser, report) {
@@ -284,28 +286,28 @@ async function development(page, browser, report) {
   assert.equal((await state(page)).fighters[0].state, 'crouch');
   await page.keyboard.up(P1.crouch); await advance(page, 20);
   await page.keyboard.down(P1.guard); await advance(page, 20);
-  assert.equal((await state(page)).fighters[0].state, 'guard');
+  assert.equal((await state(page)).fighters[0].state, 'walk', 'holding back still retreats at range');
   await page.keyboard.up(P1.guard); await advance(page, 20);
   await rig(page);
   await keys(page, [P1.hold], 25);
   assert.equal((await state(page)).fighters[0].state, 'hold', 'keyboard opens a hold counter window');
   await rig(page);
   await page.keyboard.down(P1.jump); await advance(page, 50);
-  await page.keyboard.down(P1.hold); await advance(page, 30);
-  await page.keyboard.up(P1.jump); await page.keyboard.up(P1.hold); await advance(page, 10);
+  for (const code of P1.hold) await page.keyboard.down(code); await advance(page, 30);
+  await page.keyboard.up(P1.jump); for (const code of P1.hold) await page.keyboard.up(code); await advance(page, 10);
   after = await state(page);
-  assert.equal(after.fighters[0].state, 'hold', 'W then U within chord grace opens high hold');
+  assert.equal(after.fighters[0].state, 'hold', 'W then light-heavy within chord grace opens high hold');
   assert.equal(after.fighters[0].holdHeight, 'high');
   assert.equal(after.fighters[0].y, 610, 'high counter chord stays grounded');
   await rig(page);
-  await page.keyboard.down(P1.hold); await advance(page, 50);
+  for (const code of P1.hold) await page.keyboard.down(code); await advance(page, 50);
   await page.keyboard.down(P1.jump); await advance(page, 30);
-  await page.keyboard.up(P1.jump); await page.keyboard.up(P1.hold); await advance(page, 10);
-  assert.equal((await state(page)).fighters[0].holdHeight, 'high', 'U then W within chord grace also reads high');
+  await page.keyboard.up(P1.jump); for (const code of P1.hold) await page.keyboard.up(code); await advance(page, 10);
+  assert.equal((await state(page)).fighters[0].holdHeight, 'high', 'light-heavy then W within chord grace also reads high');
   await rig(page);
   await keys(page, [P1.sidestep], 100);
   assert.ok(Math.abs((await state(page)).fighters[0].z) > 0.38, 'keyboard sidestep leaves the strike line');
-  report.checks.push('Real keyboard movement, jump, crouch, guard, hold and sidestep states; high counter chord accepts W→U and U→W with a 50 ms key gap');
+  report.checks.push('Real modern keyboard movement, jump, crouch, retreat, hold and sidestep states; high counter accepts either order with a 50 ms direction/chord gap');
 
   await rig(page);
   await keys(page, [P1.punch], 140);
@@ -560,25 +562,25 @@ async function gamepadControls(page, report) {
       const s = JSON.parse(window.render_game_to_text());
       return s.fighters[0].x > 330 && s.fighters[1].x < 1020;
     });
-    await padScenario([{ buttons: [0] }, { buttons: [1] }], () => {
+    await padScenario([{ buttons: [0] }, { buttons: [2] }], () => {
       const s = JSON.parse(window.render_game_to_text());
       return s.fighters[0].move === 'punch' && s.fighters[1].move === 'kick';
     });
-    for (const [buttonIndex, expectedState] of [[4, 'guard'], [2, 'hold'], [5, 'sidestep']]) {
-      await padScenario([{ buttons: [buttonIndex] }, { buttons: [buttonIndex] }], expectedState =>
+    for (const [indices, expectedState] of [[[0, 3], 'hold'], [[2, 3], 'sidestep']]) {
+      await padScenario([{ buttons: indices }, { buttons: indices }], expectedState =>
         JSON.parse(window.render_game_to_text()).fighters.every(fighter => fighter.state === expectedState), expectedState);
     }
-    await padScenario([{ buttons: [3] }, { buttons: [3] }], () =>
+    await padScenario([{ buttons: [4] }, { buttons: [4] }], () =>
       JSON.parse(window.render_game_to_text()).fighters.every(fighter => fighter.move === 'throw'));
     await padScenario([{ axes: [0, -1] }, { axes: [0, 1] }], () => {
       const s = JSON.parse(window.render_game_to_text());
       return s.fighters[0].y < 600 && s.fighters[1].state === 'crouch';
     });
-    await padScenario([{ buttons: [7] }, {}], () => {
+    await padScenario([{ buttons: [3, 1] }, {}], () => {
       const s = JSON.parse(window.render_game_to_text());
       return s.fighters[0].move === 'super' && s.fighters[0].meter === 0;
     }, undefined, { meter: 100 });
-    report.checks.push('Standard gamepad polling with browser getGamepads stub: both pads move independently, A/B strike, X hold, Y throw, LB guard, RB sidestep, vertical axis jump/crouch, RT super');
+    report.checks.push('Modern gamepad polling with browser getGamepads stub: both pads move, A/X strike, A+Y hold, X+Y sidestep, LB throw, vertical axis jump/crouch and Y+B super');
   } finally {
     await page.evaluate(() => { window.__qaPads = []; window.tidalDuel.manual(false); });
     await page.waitForTimeout(100);
@@ -640,7 +642,7 @@ async function rig(page, options = {}) {
         comboTime: 0, stun: 0, critical: 0, juggle: 0, invincible: 0, holdHeight: 'mid',
         holdCooldown: 0, stepCooldown: 0, buffer: [], previous: { ...clear },
         aiTimer: 0, aiPlan: { ...clear }, lastDamage: 0,
-        contact: 'none', guardGauge: 100, guardDelay: 0, burstReady: true, throwTech: 0, directions: [], history: [],
+        contact: 'none', guardGauge: 100, guardDelay: 0, burstReady: true, throwTech: 0, directions: [], history: [], assisted: null,
       });
       if (options.characters) g.fighters[side].character = options.characters[side];
     }
@@ -659,7 +661,7 @@ async function realTouch(browser, report) {
     assert.ok(box && box.width > 0 && box.height > 0, `touch ${action} control is visible`);
     return { id, x: box.x + box.width / 2, y: box.y + box.height / 2 };
   }
-  const right = await point('right', 1); const punch = await point('punch', 2);
+  const right = await point('right', 1); const punch = await point('light', 2);
   const before = await state(page);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [right, punch] });
   await advance(page, 160);
@@ -688,7 +690,7 @@ async function realTouch(browser, report) {
   await page.evaluate(() => document.exitFullscreen());
   await page.waitForFunction(() => !document.fullscreenElement);
   await rig(page, { hp: [300, 1], wins: [1, 0] });
-  const kick = await point('kick', 4);
+  const kick = await point('medium', 4);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [kick] });
   await advance(page, 260);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });

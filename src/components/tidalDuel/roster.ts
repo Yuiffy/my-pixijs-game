@@ -45,6 +45,7 @@ export interface MoveDefinition {
   guardDamage?: number;
   invulnerability?: number;
   projectile?: { speed: number; radius: number; lifetime: number };
+  overhead?: boolean;
 }
 export interface CharacterDefinition {
   id: string;
@@ -217,6 +218,7 @@ const COMMON: Record<string, MoveDefinition> = {
     reach: 163,
     stun: 0.29,
     push: 26,
+    overhead: true,
   },
   airKick: {
     id: "airKick",
@@ -230,6 +232,7 @@ const COMMON: Record<string, MoveDefinition> = {
     reach: 198,
     stun: 0.34,
     push: 47,
+    overhead: true,
     knockdown: true,
   },
   launcher: {

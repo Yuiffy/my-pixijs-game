@@ -6,7 +6,7 @@ const { chromium } = require(require.resolve('playwright', { paths: [process.cwd
 const { inspectPng } = require('./lib/autochess-screenshot.cjs');
 const url = process.env.TIDAL_DUEL_URL || 'http://localhost:4037/game/tidal-duel';
 const output = path.resolve(process.env.TIDAL_DUEL_OUTPUT || 'tmp/tidal-pixel-v2-dev');
-const actions = ['left', 'right', 'jump', 'crouch', 'punch', 'kick', 'guard', 'hold', 'throw', 'sidestep', 'special', 'skill', 'rise', 'burst'];
+const actions = ['left', 'right', 'jump', 'crouch', 'light', 'medium', 'heavy', 'ability', 'assist', 'punch', 'kick', 'guard', 'hold', 'throw', 'sidestep', 'special', 'skill', 'rise', 'burst'];
 const state = page => page.evaluate(() => JSON.parse(window.render_game_to_text()));
 const advance = (page, ms) => page.evaluate(ms => window.advanceTime(ms), ms);
 const button = (page, name) => page.getByRole('button', { name, exact: true });
@@ -46,7 +46,7 @@ async function rig(page, options = {}) {
       Object.assign(f, { x: (options.positions || [565, 674])[side], y: 610, z: 0, vx: 0, vy: 0, facing: side ? -1 : 1,
         state: 'idle', stateTime: 0, stateDuration: 0, hp: 300, meter: 100, stun: 0, critical: 0, move: null, moveTime: 0, moveHit: false,
         contact: 'none', guardGauge: 100, guardDelay: 0, burstReady: true, throwTech: 0, invincible: 0, juggle: 0, combo: 0, comboTime: 0,
-        buffer: [], directions: [], history: [], holdCooldown: 0, stepCooldown: 0, previous: Object.fromEntries(actions.map(a => [a, false])) });
+        buffer: [], directions: [], history: [], assisted: null, holdCooldown: 0, stepCooldown: 0, previous: Object.fromEntries(actions.map(a => [a, false])) });
     });
   }, { options, actions }); await advance(page, 0);
 }
@@ -78,10 +78,10 @@ async function run(headless = true) {
     await start(page); await rig(page); await keys(page, ['KeyK'], 190);
     assert.equal((await state(page)).animation[0].index, 5); await capture(page, report, '03-resort-kick');
     await menu(page); await page.locator('#duel-skin').selectOption('original'); await page.locator('#duel-opponent-skin').selectOption('original'); await start(page);
-    await rig(page); await keys(page, ['KeyH'], 220);
+    await rig(page); await keys(page, ['KeyU'], 220);
     await capture(page, report, '04-cat-contact');
     assert.ok((await state(page)).fighters[1].hp < 300);
-    await keys(page, ['KeyH'], 200); await keys(page, ['KeyH'], 200);
+    await keys(page, ['KeyU'], 200); await keys(page, ['KeyU'], 200);
     await until(page, s => s.fighters[0].move === 'signature3');
     await capture(page, report, '05-cat-three-stage');
     await rig(page, { positions: [350, 930] }); await directions(page, 0, [2, 3, 6], 'KeyJ');
@@ -90,16 +90,16 @@ async function run(headless = true) {
     assert.equal((await state(page)).fighters[1].move, 'signature');
     await advance(page, 360); assert.ok((await state(page)).projectiles.length); await capture(page, report, '06-shiori-wave');
     await rig(page); await page.keyboard.down('KeyW'); await advance(page, 170); await page.keyboard.up('KeyW');
-    await keys(page, ['Digit8'], 170);
+    await keys(page, ['ArrowDown', 'Digit4'], 170);
     assert.equal((await state(page)).fighters[1].move, 'reversal'); await capture(page, report, '07-shiori-antiair');
-    await rig(page); await keys(page, ['KeyI'], 120);
+    await rig(page); await keys(page, ['KeyJ', 'KeyK'], 120);
     assert.ok((await state(page)).grabs.length);
-    await keys(page, ['Digit5'], 20); assert.ok((await state(page)).events.some(e => e.type === 'tech'));
+    await keys(page, ['Digit1', 'Digit2'], 20); assert.ok((await state(page)).events.some(e => e.type === 'tech'));
     await capture(page, report, '08-throw-tech');
     await rig(page); await keys(page, ['Digit2'], 210);
-    await keys(page, ['KeyN'], 20); await until(page, s => s.events.some(e => e.type === 'burst'));
+    await keys(page, ['KeyI', 'KeyU'], 20); await until(page, s => s.events.some(e => e.type === 'burst'));
     assert.equal((await state(page)).fighters[0].burstReady, false); await capture(page, report, '09-break');
-    await rig(page); await keys(page, ['KeyJ'], 150); await keys(page, ['ShiftLeft'], 30);
+    await rig(page); await keys(page, ['KeyJ'], 150); await keys(page, ['KeyK', 'KeyL'], 30);
     await until(page, s => s.events.some(e => e.type === 'cancel')); await capture(page, report, '10-drive-cancel');
     await rig(page, { positions: [350, 950] }); await directions(page, 0, [6, 2, 3], 'KeyK'); assert.equal((await state(page)).fighters[0].move, 'reversal');
     await rig(page, { positions: [350, 950] }); await directions(page, 1, [6, 2, 3], 'Digit2'); assert.equal((await state(page)).fighters[1].move, 'reversal');
@@ -121,20 +121,20 @@ async function run(headless = true) {
     const pads = async buttons => {
       await page.evaluate(buttons => { window.__pixelPads = buttons.map(indices => ({ axes: [0, 0], buttons: Array.from({ length: 17 }, (_, i) => ({ pressed: indices.includes(i), value: indices.includes(i) ? 1 : 0 })) })); }, buttons);
     };
-    for (const [index, move] of [[6, 'signature'], [10, 'reversal']]) {
-      await rig(page, { positions: [350, 950] }); await page.evaluate(() => window.tidalDuel.manual(false)); await pads([[index], [index]]);
+    for (const [indices, move] of [[[1], 'signature'], [[13, 1], 'reversal']]) {
+      await rig(page, { positions: [350, 950] }); await page.evaluate(() => window.tidalDuel.manual(false)); await pads([indices, indices]);
       await page.waitForFunction(move => JSON.parse(window.render_game_to_text()).fighters.every(f => f.move === move), move);
       await pads([[], []]); await page.waitForTimeout(60); await page.evaluate(() => window.tidalDuel.manual(true));
     }
     await rig(page); await page.evaluate(() => { const f = window.tidalDuel.game().fighters[0]; f.state = 'hit'; f.stun = 1; window.tidalDuel.manual(false); });
-    await pads([[11], []]); await page.waitForFunction(() => !JSON.parse(window.render_game_to_text()).fighters[0].burstReady);
+    await pads([[7, 1], []]); await page.waitForFunction(() => !JSON.parse(window.render_game_to_text()).fighters[0].burstReady);
     await pads([[], []]); await page.waitForTimeout(60); await page.evaluate(() => window.tidalDuel.manual(true));
-    await rig(page, { positions: [350, 950] }); await page.evaluate(() => window.tidalDuel.manual(false)); await pads([[6], []]);
+    await rig(page, { positions: [350, 950] }); await page.evaluate(() => window.tidalDuel.manual(false)); await pads([[1], []]);
     await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).fighters[0].move === 'signature');
     await button(page, '暂停').click(); await button(page, '继续对决').click(); await page.waitForTimeout(900);
-    assert.equal((await state(page)).fighters[0].move, null, 'held LT cannot restart special after pause');
+    assert.equal((await state(page)).fighters[0].move, null, 'held B cannot restart special after pause');
     await pads([[], []]); await page.waitForTimeout(60); await page.evaluate(() => window.tidalDuel.manual(true));
-    report.checks.push('Gamepad LT and left-stick press independently trigger both signatures/reversals, right-stick burst works, held button cannot retrigger on resume');
+    report.checks.push('Modern gamepad B and down+B trigger both signatures/reversals, RT+B burst works, held button cannot retrigger on resume');
     await menu(page); await page.getByRole('button', { name: /栞栞.*SHIORI/ }).click(); await page.locator('#duel-opponent').selectOption('shiori'); await page.locator('#duel-opponent-skin').selectOption('resort');
     await start(page); await rig(page); await keys(page, ['KeyK', 'ArrowDown', 'Digit2'], 250); await capture(page, report, '11-shiori-mirror-skins');
     await menu(page); await page.locator('#duel-opponent').selectOption('sui'); await start(page, 'training'); await button(page, '判定框 关').click();
@@ -146,7 +146,7 @@ async function run(headless = true) {
     }
     // Real CDP touch exercises the new shortcut in the compact layout.
     await page.setViewportSize({ width: 390, height: 844 }); await rig(page, { positions: [350, 930] });
-    const cdp = await context.newCDPSession(page); const box = await page.locator('[data-control="0-skill"]').boundingBox();
+    const cdp = await context.newCDPSession(page); const box = await page.locator('[data-control="0-ability"]').boundingBox();
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ id: 1, x: box.x + box.width / 2, y: box.y + box.height / 2 }] });
     await advance(page, 290); assert.equal((await state(page)).fighters[0].move, 'signature');
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });

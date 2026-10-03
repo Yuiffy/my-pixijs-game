@@ -139,7 +139,7 @@ test("projectile has real travel, one-wave limit, jump/step/guard/hold counters 
     // Position a live wave near the defender so all responses share the same timing.
     const target = g.fighters[1]; g.projectiles[0].x = target.x - 180;
     ticks(g, {}, defense, 55);
-    if (defense.guard && !defense.crouch || defense.jump || defense.sidestep || defense.hold) assert.equal(target.hp, 300, JSON.stringify(defense));
+    if (defense.guard || defense.jump || defense.sidestep || defense.hold) assert.equal(target.hp, 300, JSON.stringify(defense));
     else assert.ok(target.hp < 300, JSON.stringify(defense));
   }
   const stack = game({ character: "shiori" }, 700); ticks(stack, { skill: true }); until(stack, () => stack.fighters[0].move === null); ticks(stack); ticks(stack, { skill: true }, {}, 10);

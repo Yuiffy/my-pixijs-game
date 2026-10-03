@@ -1,5 +1,7 @@
 import { FIGHTERS, getFighter, getSkin } from "./roster";
 import type { HitHeight, MoveDefinition } from "./roster";
+import { modernCommand } from "./controls";
+import type { AttackStrength } from "./controls";
 
 export type Character = string;
 export type Side = 0 | 1;
@@ -11,6 +13,11 @@ export type Action =
   | "right"
   | "jump"
   | "crouch"
+  | "light"
+  | "medium"
+  | "heavy"
+  | "ability"
+  | "assist"
   | "punch"
   | "kick"
   | "guard"
@@ -60,6 +67,11 @@ export const ACTIONS: readonly Action[] = [
   "right",
   "jump",
   "crouch",
+  "light",
+  "medium",
+  "heavy",
+  "ability",
+  "assist",
   "punch",
   "kick",
   "guard",
@@ -77,6 +89,9 @@ export interface BufferedAction {
   crouch: boolean;
   jump: boolean;
   move?: string;
+  assisted?: AttackStrength;
+  modern?: boolean;
+  chord?: boolean;
 }
 export interface Fighter {
   side: Side;
@@ -120,6 +135,7 @@ export interface Fighter {
   throwTech: number;
   directions: { value: number; time: number }[];
   history: { command: string; time: number }[];
+  assisted: { strength: AttackStrength; index: number; serial: number } | null;
 }
 export type EventType =
   | "hit"
@@ -214,6 +230,11 @@ export const emptyInput = (): Input => ({
   right: false,
   jump: false,
   crouch: false,
+  light: false,
+  medium: false,
+  heavy: false,
+  ability: false,
+  assist: false,
   punch: false,
   kick: false,
   guard: false,
@@ -279,6 +300,7 @@ function fighter(character: Character, side: Side): Fighter {
     throwTech: 0,
     directions: [],
     history: [],
+    assisted: null,
   };
 }
 function normalizedOptions(options: Partial<Options>): Options {
@@ -341,6 +363,7 @@ function setState(f: Fighter, state: FighterState, duration = 0) {
   f.state = state;
   f.stateTime = 0;
   f.stateDuration = duration;
+  if (state !== "attack") f.assisted = null;
 }
 function emit(
   game: Game,
@@ -494,6 +517,7 @@ function endRound(game: Game) {
   game.grabs = [];
 }
 function captureInput(game: Game, f: Fighter, input: Input) {
+  const modern = modernCommand(input, f.previous);
   const horizontal = (Number(input.right) - Number(input.left)) * f.facing;
   const vertical = input.crouch ? -1 : input.jump ? 1 : 0;
   const direction =
@@ -504,10 +528,14 @@ function captureInput(game: Game, f: Fighter, input: Input) {
         : 5 + horizontal;
   f.directions = f.directions.filter((item) => game.time - item.time < 0.45);
   if (f.directions[f.directions.length - 1]?.value !== direction) f.directions.push({ value: direction, time: game.time });
-  if (input.throw && !f.previous.throw) f.throwTech = 0.16;
+  if ((input.throw && !f.previous.throw) || modern?.action === "throw") f.throwTech = 0.16;
   // Real keyboards deliver a direction and its hold button a few ticks apart.
   // Accept either order briefly, rather than requiring an impossible same-tick chord.
-  if (f.state === "hold" && f.stateTime <= 0.1 && input.hold) {
+  if (
+    f.state === "hold" &&
+    f.stateTime <= 0.1 &&
+    (input.hold || (input.light && input.heavy))
+  ) {
     if (input.crouch && !f.previous.crouch) f.holdHeight = "low";
     else if (input.jump && !f.previous.jump) f.holdHeight = "high";
   }
@@ -525,6 +553,41 @@ function captureInput(game: Game, f: Fighter, input: Input) {
     "jump",
   ];
   let queued = false;
+  if (modern) {
+    if (modern.chord) f.buffer = f.buffer.filter((item) => !item.modern);
+    const motion =
+      !modern.assisted &&
+      (modern.action === "punch" || modern.action === "kick")
+        ? recognizeMotion(f, modern.action)
+        : undefined;
+    f.buffer.push({
+      ...modern,
+      modern: true,
+      ttl: 0.16,
+      crouch: input.crouch,
+      jump: input.jump,
+      move: motion,
+    });
+    const names: Partial<Record<Action, string>> = {
+      punch: "轻",
+      kick: "中",
+      heavy: "重",
+      skill: "必杀",
+      rise: "↓必杀",
+      throw: "轻+中",
+      special: "重+必杀",
+      burst: "辅助+必杀",
+      hold: "轻+重",
+      sidestep: "中+重",
+    };
+    f.history.push({
+      command: `${modern.assisted ? "辅助·" : ""}${names[modern.action] ?? modern.action}`,
+      time: game.time,
+    });
+    if (f.history.length > 9) f.history.shift();
+    if (motion) f.directions = [];
+    queued = true;
+  }
   order.forEach((action) => {
     if (
       !queued &&
@@ -585,6 +648,7 @@ function beginMove(game: Game, f: Fighter, id: string) {
   if (!move || (move.meter && f.meter < move.meter)) return false;
   if (move.projectile && game.projectiles.some((p) => p.side === f.side)) return false;
   if (move.meter) f.meter -= move.meter;
+  f.assisted = null;
   if (move.kind === "super") {
     game.super = {
       side: f.side,
@@ -605,12 +669,62 @@ function beginMove(game: Game, f: Fighter, id: string) {
   f.facing = game.fighters[other(f.side)].x >= f.x ? 1 : -1;
   return true;
 }
+
+const ASSISTED_ROUTES: Record<AttackStrength, readonly string[]> = {
+  light: ["punch", "punch2", "punch3"],
+  medium: ["kick", "kickPunch", "signature"],
+  heavy: ["punch", "punch2", "launcher", "super"],
+};
+function beginAssisted(
+  game: Game,
+  f: Fighter,
+  strength: AttackStrength,
+  index: number,
+) {
+  const id = ASSISTED_ROUTES[strength][index];
+  if (!id || !beginMove(game, f, id)) return false;
+  f.assisted = { strength, index, serial: f.moveSerial };
+  return true;
+}
+
+export function holdingBack(f: Fighter): boolean {
+  return Number(f.previous.right) - Number(f.previous.left) === -f.facing;
+}
+function canBlock(f: Fighter, move: MoveDefinition): boolean {
+  if (!grounded(f) || !neutral(f)) return false;
+  if (
+    !(f.previous.guard || holdingBack(f) || (f.state === "guard" && f.stun > 0))
+  ) return false;
+  return move.height === "low"
+    ? f.previous.crouch
+    : !move.overhead || !f.previous.crouch;
+}
+
 function consumeBuffer(game: Game, f: Fighter) {
   if (f.hp <= 0) return;
   const current = f.move ? getFighter(f.character).moves[f.move] : null;
   for (let n = 0; n < f.buffer.length; n++) {
     const item = f.buffer[n];
     let used = false;
+    // A human chord can arrive a few ticks apart. Replace only an untouched
+    // startup, refunding its cost before charging the intended command once.
+    if (
+      item.chord &&
+      current &&
+      f.state === "attack" &&
+      f.contact === "none" &&
+      !f.moveHit &&
+      f.moveTime <= 0.07 &&
+      ["throw", "special", "hold", "sidestep"].includes(item.action)
+    ) {
+      const refunded = current.meter ?? 0;
+      if (item.action !== "special" || f.meter + refunded >= 100) {
+        f.meter = Math.min(MAX_METER, f.meter + refunded);
+        f.move = null;
+        f.invincible = 0;
+        setState(f, "idle");
+      }
+    }
     const earlyHighChord =
       item.jump &&
       !item.crouch &&
@@ -650,6 +764,20 @@ function consumeBuffer(game: Game, f: Fighter) {
       game.projectiles = game.projectiles.filter((p) => p.side === f.side);
       emit(game, "burst", f.side, "BREAK · 脱身", 1.6);
       used = true;
+    } else if (item.assisted && grounded(f)) {
+      if (neutral(f) && f.stun <= 0) {
+        used = beginAssisted(game, f, item.assisted, 0);
+      } else if (
+        current &&
+        f.state === "attack" &&
+        f.contact === "hit" &&
+        f.assisted?.strength === item.assisted &&
+        f.assisted.serial === f.moveSerial &&
+        f.moveTime >= current.startup + current.active &&
+        f.moveTime < f.stateDuration - 0.033
+      ) {
+        used = beginAssisted(game, f, item.assisted, f.assisted.index + 1);
+      }
     } else if (
       item.action === "sidestep" &&
       current &&
@@ -709,7 +837,11 @@ function consumeBuffer(game: Game, f: Fighter) {
     ) {
       used = beginMove(game, f, current.followups[item.action] as string);
     } else if (neutral(f) && f.stun <= 0) {
-      if (item.action === "punch" || item.action === "kick") {
+      if (
+        item.action === "punch" ||
+        item.action === "kick" ||
+        item.action === "heavy"
+      ) {
         const id =
           (grounded(f) ? item.move : undefined) ??
           (!grounded(f)
@@ -720,7 +852,9 @@ function consumeBuffer(game: Game, f: Fighter) {
               ? item.action === "punch"
                 ? "lowPunch"
                 : "lowKick"
-              : item.action);
+              : item.action === "heavy"
+                ? "kick2"
+                : item.action);
         used = beginMove(game, f, id);
       } else if (item.action === "throw" && grounded(f)) used = beginMove(game, f, "throw");
       else if (
@@ -1063,12 +1197,9 @@ function resolveMove(
     emit(game, "hold", target.side, `精准反击 · ${damage}`, 1.4);
     return;
   }
-  const crouching = target.previous.crouch;
-  const blocking =
-    target.state === "guard" &&
-    grounded(target) &&
-    (move.height === "low" ? crouching : move.height === "high" || !crouching);
+  const blocking = canBlock(target, move);
   if (blocking) {
+    setState(target, "guard");
     attacker.contact = "block";
     const chip = move.kind === "super" ? 8 : 0;
     target.hp = Math.max(1, target.hp - chip);
@@ -1275,7 +1406,8 @@ function resolveProjectiles(game: Game) {
       setState(target, "idle");
       emit(game, "hold", target.side, "潮波化解", 1.2);
       contactInfo(game, source, move, "潮波化解", 0, 0, remaining);
-    } else if (target.state === "guard" && !target.previous.crouch) {
+    } else if (canBlock(target, move)) {
+      setState(target, "guard");
       if (sameMove) source.contact = "block";
       target.stun = move.blockStun ?? 0.22;
       target.guardGauge = Math.max(
@@ -1570,7 +1702,7 @@ export function stepGame(game: Game, inputs: [Input, Input], dt = STEP) {
 export function describeGame(game: Game) {
   const number = (n: number) => Math.round(n * 100) / 100;
   return {
-    title: "晴海对决 · 岁己 vs 栞栞",
+    title: "潮夜格斗 · 岁己 vs 栞栞",
     coordinates: "1280×720; x向右，y向下；脚底y=610为地面，z∈[-1,1]为侧移深度",
     phase: game.phase,
     paused: game.paused,

@@ -70,11 +70,11 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
         releaseDate: '2026-07-18',
       },
       {
-        title: '晴海对决 · 岁己 vs 栞栞',
+        title: '潮夜格斗 · 岁己 vs 栞栞',
         href: '/game/tidal-duel',
-        description: '暮色栈道上的像素格斗：猫步连掌、流心潮波，换上喜欢的衣装，读招拆投、一决胜负。',
+        description: '岁己与栞栞的像素格斗。按后防御、单键必杀、辅助连招，五个动作键轻松过招。',
         image: '/games/tidal-duel/poster.webp',
-        meta: '像素格斗 · 单人 / 同机双人 · 换肤与练习',
+        meta: '像素格斗 · 现代简易操作 · 单人 / 同机双人',
         releaseDate: '2026-10-03',
       },
       {
