@@ -26,6 +26,14 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
     title: '动作与探索',
     games: [
       {
+        title: '岁己：零点之后',
+        href: '/game/after-hours',
+        description: '下播之后，房间里的另一个你还在等最后一句话。找回午夜录音，穿过回声走廊，带着自己的名字走向天亮。',
+        image: '/games/after-hours/preview.png',
+        meta: '3D 心理恐怖 · 扮演岁己 · 探索 / 解谜 / 追逐',
+        releaseDate: '2026-10-03',
+      },
+      {
         title: '岁己：今天也要动',
         href: '/game/sui-fitness',
         description: '从 48.00 kg 向 40.00 kg 前进，训练减脂保肌。选开局天赋，混搭四种武器，靠行动升级。',

@@ -1,0 +1,26 @@
+{
+  "author": "Blender 4.5 LTS / original local bpy authoring",
+  "units": "meters",
+  "runtime_up": "Y",
+  "assets": [
+    {
+      "file": "apartment.glb",
+      "bytes": 3887852,
+      "meshes": 13,
+      "triangles": 115388,
+      "materials": 13,
+      "source": "assets/after-hours/apartment.blend",
+      "runtime_bytes": 3478712
+    },
+    {
+      "file": "sui.glb",
+      "bytes": 1874764,
+      "meshes": 27,
+      "triangles": 56256,
+      "materials": 9,
+      "source": "assets/after-hours/sui.blend",
+      "runtime_bytes": 1463128
+    }
+  ],
+  "optimization": "glTF Transform 4.2.1 dedup, weld, prune; named pivots preserved; no geometry decoder required"
+}

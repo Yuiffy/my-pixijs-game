@@ -438,3 +438,17 @@ Original prompt: 敌人的抬手、前摇不明显，各种动作呆板、不好
 113 项雨夜规则测试、修改源文件 ESLint、完整 check 与随后顺序 build 通过，保留构建 ESLint。开发版 28 张、生产包 8 张、生产拾取回归 4 张和静音通用客户端生产版 1 张截图，均完成像素检查、状态 / DOM / canvas / 错误交叉核对并打开目检，错误为空。拾取三类物品的新着色器编译为 0、无长任务，首帧约 32–40ms（本机此次测量）。证据在 tmp/night-rain-readability-{verified,production,production-shared}/、tmp/night-rain-pickup-readability-production/，最终日志 tmp/night-rain-readable-release-*-final.log。实现规则与复跑命令见 docs/night-rain-readability.md。
 
 本轮使用独立检出 D:/workspace/releases/night-rain-experience-20261003 验证发布候选。没有待修复的验收项；后续可沿同一模拟时序增加 Boss 独有骨骼动画。
+
+## 2026-10-03 · 岁己：零点之后与本地 Blender（已验收）
+
+Original prompt: 为了制作更精致的 3D 游戏，给本机安装 Blender 并让 Codex 能够连接，然后制作以岁己为主角、参考《米塔》的 3D 恐怖游戏。
+
+已安装官方 Blender 4.5.14 LTS 到 `D:/develop/Blender/blender-4.5.14-windows-x64/`，核对官方 SHA256 并创建开始菜单快捷方式。Codex 全局注册 `blender-local` MCP；通过实际注册配置初始化服务、发现五个工具、执行 bpy、检查公寓和角色源文件，连接成功。可编辑 .blend、作者脚本、优化后的 GLB 与重建命令均已保留，详见 [制作、连接与验收说明](docs/after-hours.md)。
+
+游戏 `/game/after-hours` 使用 React Three Fiber，玩家扮演岁己，另一个岁己为未结束的直播回声。六章贯穿收工、停电配电、录音与午夜密码、重复走廊、追逐躲藏及双结局；具备防穿墙寻路、手记、检查点重试、自动存档与刷新续玩。游戏馆 `/demos` 已接入实景预览和入口。
+
+11 项游戏规则、6 项游戏馆规则通过；完整 `pnpm run check` 后顺序执行 `pnpm run build` 成功，保留构建 ESLint。为通过门禁保存既有格斗引擎的破防布尔判定，相关 39 项规则通过。静音安装版 Chrome 开发 36 张、生产 37 张有效截图已全部打开目检；正常输入完成六章与双结局、真实抓人与重试、衣柜躲藏、暂停失焦、WebGL 恢复、390／320px 双指触控，状态／DOM／画布／像素一致，页面与控制台错误为空。证据在 `tmp/after-hours-verified/`、`tmp/after-hours-production/` 与 `tmp/blender-mcp/connection-report.json`。
+
+本地生产试玩 `http://127.0.0.1:3941/game/after-hours`，开发预览端口 3940；分别使用独立构建目录，已移除本任务自动加入的临时 tsconfig 引用并保留其他任务配置。这是完整可玩的风格化短篇首版，使用原创模型、关节程序动画与合成环境音；目前没有真人配音、面部动画或长篇过场，尚未验收实体手机 GPU／Safari。
+
+追加要求：提交远程 master，demos 放入口。发布候选在独立检出中仅纳入本任务源码、模型、作者资源、文档及游戏馆入口；17 项规则、修改源码 ESLint、顺序完整检查与生产构建再次通过。静音安装版 Chrome 对该生产构建从 `/demos` 搜索并点击入口开始游玩，三张截图均通过像素检查及打开目检，状态／DOM／画布一致，页面／控制台错误为空；证据在 `tmp/after-hours-release-browser/`。托管平台上线状态独立于 Git 推送确认。
