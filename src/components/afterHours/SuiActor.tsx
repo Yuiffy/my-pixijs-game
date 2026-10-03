@@ -22,16 +22,22 @@ export default function SuiActor({
   const rig = useMemo(() => {
     const joints: Record<string, THREE.Object3D> = {};
     const meshes: THREE.Mesh[] = [];
+    const eyeSurfaces: THREE.Mesh[] = [];
     let mouth: THREE.Mesh | null = null;
     asset.traverse((o) => {
       if (/^Sui_/.test(o.name) && !(o instanceof THREE.Mesh)) joints[o.name] = o;
       if (o instanceof THREE.Mesh) meshes.push(o);
+      if (o instanceof THREE.Mesh) {
+        const materials = Array.isArray(o.material) ? o.material : [o.material];
+        if (materials.some(m => /Warm eye whites|Ruby iris/.test(m.name))) eyeSurfaces.push(o);
+      }
       if (
         o instanceof THREE.Mesh &&
         o.morphTargetDictionary?.Smile !== undefined
       ) mouth = o;
     });
-    return { joints, meshes, mouth: mouth as THREE.Mesh | null };
+    const faceRevision = Number(asset.getObjectByName("Sui_Root")?.userData.face_revision || 2);
+    return { joints, meshes, eyeSurfaces, mouth: mouth as THREE.Mesh | null, faceRevision };
   }, [asset]);
 
   useFrame(({ clock }, dt) => {
@@ -141,6 +147,7 @@ export default function SuiActor({
           (gesture === "shy" ? 0.9 : 1) * (1 - blink),
         );
     }
+    rig.eyeSurfaces.forEach(surface => { surface.visible = blink < 0.9; });
     const { mouth } = rig;
     const speaking =
       friendly &&
@@ -164,6 +171,7 @@ export default function SuiActor({
     }
     stats.current.character = {
       revision: 2,
+      faceRevision: rig.faceRevision,
       actor: friendly ? "sui" : "echo",
       gesture,
       joints: Object.keys(rig.joints).length,

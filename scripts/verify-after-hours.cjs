@@ -17,8 +17,8 @@ async function quietExternalScripts(context) {
     route => route.fulfill({ contentType: 'application/javascript', body: '' }));
 }
 
-async function capture(page, name) {
-  await page.waitForTimeout(200);
+async function capture(page, name, settleMs = 200) {
+  if (settleMs) await page.waitForTimeout(settleMs);
   const file = path.join(out, `${name}.png`);
   const s = await state(page);
   const dom = await page.evaluate(() => ({ width: innerWidth, height: innerHeight, scrollWidth: document.documentElement.scrollWidth, canvas: [document.querySelector('canvas')?.width, document.querySelector('canvas')?.height], text: document.body.innerText.slice(0, 1300) }));
@@ -122,6 +122,13 @@ async function exerciseShell(page) {
 async function evening(page, blend = 'honey', promise = 'tomorrow', prefix = '') {
   await interact(page, 'sui');
   await capture(page, prefix + 'welcome-dialogue');
+  if (process.env.FACE_QA === '1') {
+    assert.equal((await state(page)).renderer.character.faceRevision, 3, 'the new face is loaded from the shipped GLB');
+    await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).renderer.character.blink > .72, { polling: 'raf', timeout: 12000 });
+    await capture(page, prefix + 'face-blink', 0);
+    await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).renderer.character.blink < .04);
+    await capture(page, prefix + 'face-open', 0);
+  }
   await page.getByRole('button', { name: '当然开心，终于可以这样见到你了。', exact: true }).click();
   assert.equal((await state(page)).stage, 'tea');
   await advance(page, 12000);
@@ -292,6 +299,21 @@ async function main() {
     await capture(page, 'title');
     await page.locator('#after-hours-start').click(); await capture(page, 'first-person');
     if (process.env.SMOKE === '1') { assert.deepEqual(errors, []); return; }
+    if (process.env.FACE_QA === '1') {
+      await evening(page);
+      await page.getByRole('button', { name: '暂停游戏' }).click();
+      await page.getByRole('button', { name: '重新开始', exact: true }).click();
+      await page.getByRole('button', { name: '从下播那一刻开始', exact: true }).click();
+      await page.setViewportSize({ width: 390, height: 844 });
+      await evening(page, 'lemon', 'extra', 'mobile-');
+      await page.getByRole('button', { name: '暂停游戏' }).click();
+      await page.getByRole('button', { name: '重新开始', exact: true }).click();
+      await page.getByRole('button', { name: '从下播那一刻开始', exact: true }).click();
+      await page.setViewportSize({ width: 320, height: 844 });
+      await interact(page, 'sui'); await capture(page, 'mobile-320-face');
+      assert.equal((await state(page)).renderer.character.faceRevision, 3);
+      assert.deepEqual(errors, []); return;
+    }
     await exerciseShell(page);
     const choiceSave = await solve(page);
     const alternate = await browser.newContext({ viewport: { width: 1280, height: 800 } });

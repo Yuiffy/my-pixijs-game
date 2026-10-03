@@ -530,3 +530,15 @@ Original prompt: 引入更合理、流畅的动作，默认重击削弱并有明
 137 / 137 项雨夜规则通过，包含全部主线、两岸、归灯暗线和副本的普通输入完整流程，以及动作取消、部分／满蓄、姿势连续、整周期关节可达、存档和音效时机。修改源码 ESLint、完整 pnpm run check 后顺序 pnpm run build 均通过，Next 构建 ESLint 保持启用。静音安装版 Chrome 的开发／生产各 40 张截图已逐张目检，像素、状态、DOM、画布交叉核对，页面／控制台错误为空；实际首领攻击能惩罚重击后摇，390px 触控与虚拟标准手柄完成蓄力松手。
 
 前版地下入口、连续双向升降、到达提示，以及 12 件装备独立 SVG 造型与空护符槽占位图均保留。复现与低模程序动画／模拟设备的表现边界见 docs/night-rain-player-motion.md；规则与门禁在验收检出 tmp/night-motion-{rules,check,build}-release.log，生产报告在主工作区 tmp/night-motion-production/report.json。仅提交本轮清单，其他线程修改保留；发布状态单独通过 Vercel API 核对。
+
+## 2026-10-04 · 岁己：零点之后面部第三版（已验收）
+
+Original prompt: 身体不错，但两个大眼睛让脸有些惊悚；参考岁己 3D 回形象，以相似、简化或面部贴图方式达到合适效果。追加要求：提交远程 master，demos 放入口。
+
+已查看实际四周年 3D 演出回放 BV1XAt666E6M 约 10:08／10:16 的近景，通过 Blender MCP 重制独立的简化面部：眼宽缩小约 26%、开口减小，上眼睑遮虹膜，浅色局部下眼缘、收敛的瞳孔高光、贴近脸的眼面，柔和脸颊／鼻部绘制贴图、浅鼻与更贴脸的刘海。保留身体几何和原有肤色，闭眼时隐藏眼白／虹膜，Smile／Talk／Worry 继续工作。GLB 与 manifest 添加 face_revision 3，运行状态读取实际模型版本；Blender 作者文件和脚本保存。优化角色为 1,961,108 字节、46 网格、83,576 三角形、14 材质、20 命名关节和五张内嵌绘制贴图，最终 glTF 验证零错误、零警告。
+
+独立检出 D:/workspace/releases/after-hours-v2-20261004 基于远程 master 8412fa3；15 项游戏与 6 项游戏馆规则、修改源文件 ESLint、顺序完整 check／build 均通过，保留 Next 构建 ESLint。静音安装版 Chrome 的开发专项 30 张 PNG／两张合照和最终生产 57 张 PNG／两张合照，全部逐张打开目检并完成像素、状态、DOM、画布及页面／控制台错误交叉核对，错误为空。验证闭眼／睁眼、桌面蜂蜜／明天与手机柠檬／稍坐支线、刷新保留照片、异常近看、恐怖章节回声、双结局、追逐抓人／重试／躲藏、暂停／指针锁定／WebGL 恢复和 390／320px 双指触控。生产合照均为 640×480，约 90% 亮像素、超过 6 万种颜色。
+
+/demos 入口已验证搜索点击并进入 /game/after-hours，预览替换为目检过的新脸实际标题画面。证据 tmp/sui-face-v3-{dev,production}/，门禁／浏览器日志 tmp/sui-face-v3-release-{check,build,browser}.log；详细参考与复现见 docs/after-hours.md。开发服务器已停止，仅移除本任务临时 tsconfig 引用。仍为独立风格化模型，手机为 Chrome 触控模拟，未验收实体手机 GPU／Safari。
+
+推送前整合远程 master 的 7e51993 雨夜主角动作更新，保留双方进度记录；本次游戏源码和模型与完整验收版本一致。整合后再次通过 21 项规则、修改源文件 ESLint、顺序完整 check／build，以及从 /demos 搜索点击进入游戏并开始游玩的静音 Chrome 冒烟验证。三张新增生产截图已逐张目检，像素／状态／DOM／画布一致，脸部版本为 3，错误为空；证据 tmp/sui-face-v3-integrated-smoke/ 与 tmp/sui-face-v3-integrated-{rules,check,build,browser}.log。

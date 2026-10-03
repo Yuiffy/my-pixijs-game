@@ -27,6 +27,7 @@ export type RenderStats = {
   fps: number;
   character?: {
     revision: number;
+    faceRevision?: number;
     actor: string;
     gesture: string;
     joints: number;

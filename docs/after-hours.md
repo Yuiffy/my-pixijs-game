@@ -10,6 +10,12 @@ Next.js、React Three Fiber 与 Three.js；独立规则状态、同源碰撞数�
 
 欢迎、送茶、害羞与合照有对应姿势，眨眼和 Smile／Talk／Worry 嘴部形变配合呼吸、行走、头发与翅膀摆动。真实岁己投影，回放复制体不投影。前段对话与泡茶面板放在画面下部，保留同伴面部可见。
 
+### 面部第三版（2026-10-04）
+
+面部参考实际的 [岁己四周年 3D 演出回放](https://www.bilibili.com/video/BV1XAt666E6M/) 约 10:08／10:16 的正面近景，采用独立制作的简化动漫脸。眼宽由 0.103 米收至 0.076 米，开口由 0.042 米收至 0.030 米；放松的上眼睑遮住部分红色虹膜，下眼缘只保留浅色局部轮廓，瞳孔和高光缩小。眼面靠近脸部，鼻深由 0.007 米减至 0.003 米，刘海下移、眉线收敛，减少眼部凸出与整圈黑边带来的惊悚感。
+
+脸部使用独立材质与打包的 512px 绘制贴图，添加柔和的脸颊／鼻部血色；身体沿用原有肤色与几何。眨眼接近闭合时隐藏眼白和虹膜，嘴部 Smile／Talk／Worry 形变继续使用。GLB 的角色版本仍为 2，独立 `face_revision: 3` 由运行时读取，并显示在 `render_game_to_text()` 的 `renderer.character.faceRevision` 中。保留可编辑的 Blender 源文件与重建脚本，模型元数据仅记参考 BVID，运行时没有外部贴图请求。
+
 WASD 移动、鼠标锁定／拖动与方向键转头、E 互动、Shift 跑步、F 手电、J 手记、Esc 暂停。手机提供左摇杆、右侧滑动与互动按钮。音效在玩家操作后才启动，菜单可静音；浏览器自测强制静音并禁用 TTS。
 
 ## Blender 与 Codex
@@ -46,9 +52,9 @@ codex mcp get blender-local
 pwsh -NoLogo -NoProfile -NonInteractive -File scripts/blender/optimize-assets.ps1
 ```
 
-作者脚本 `scripts/blender/build_after_hours.py` 生成场景，并调用 `build_sui_v2.py` 生成新版角色，压缩保存 .blend，关闭自动备份版本。只重建角色时，可通过 Blender MCP 执行 `build_sui_v2.build_character(OUT)`，随后运行 `pwsh -NoLogo -NoProfile -NonInteractive -File scripts/blender/optimize-assets.ps1 -Assets sui`，避免改写公寓资产。优化脚本通过 glTF Transform 4.2.1 去重、焊接与清理，保留命名关节和形变，无额外几何解码器；同时更新 manifest 中的相对源路径和运行文件大小。公寓 GLB 约 3.48 MB，新版角色为 1,945,480 字节（约 1.95 MB），纹理全部内嵌。
+作者脚本 `scripts/blender/build_after_hours.py` 生成场景，并调用 `build_sui_v2.py` 生成新版角色，压缩保存 .blend，关闭自动备份版本。只重建角色时，可通过 Blender MCP 执行 `build_sui_v2.build_character(OUT)`，随后运行 `pwsh -NoLogo -NoProfile -NonInteractive -File scripts/blender/optimize-assets.ps1 -Assets sui`，避免改写公寓资产。优化脚本通过 glTF Transform 4.2.1 去重、焊接与清理，保留命名关节和形变，无额外几何解码器；同时更新 manifest 中的相对源路径和运行文件大小。公寓 GLB 约 3.48 MB，当前角色为 1,961,108 字节（约 1.96 MB），五张绘制贴图全部内嵌。
 
-角色有 20 个命名关节支点、44 个网格、84,408 个三角形与 13 个材质，新增前臂、小腿、发束、翅膀和眼部支点，由 `SuiActor.tsx` 驱动。场景统一使用米制碰撞与交互数据，玩家、同伴和回声共用地面与 A* 障碍规则；终点段也检查碰撞，玩家不能穿过真实同伴。关键灯光跨章节保留，避免因灯光数量变化重新编译材质。启动前预编译，画面丢失时暂停，重载后保留游戏进度。
+角色有 20 个命名关节支点、46 个网格、83,576 个三角形与 14 个材质，新增前臂、小腿、发束、翅膀和眼部支点，由 `SuiActor.tsx` 驱动。场景统一使用米制碰撞与交互数据，玩家、同伴和回声共用地面与 A* 障碍规则；终点段也检查碰撞，玩家不能穿过真实同伴。关键灯光跨章节保留，避免因灯光数量变化重新编译材质。启动前预编译，画面丢失时暂停，重载后保留游戏进度。
 
 ## 晚安之约与回放线索
 
@@ -57,6 +63,24 @@ pwsh -NoLogo -NoProfile -NonInteractive -File scripts/blender/optimize-assets.ps
 「明天见」或「再坐一会儿，但我们还有明天」的选择会被房间歪曲，也在后续线索中回应。月亮茶杯、直播台的星和门口的太阳说明配电顺序；维护录音与 00:17 解释密码、时钟门和关闭回放源的原因，名字门要求保留原本的 SUI，而非镜像 IUS。天亮时真实岁己记得选过的茶。
 
 存档版本为 v2，沿用 `sui-after-hours-v1` 键，保留照片、配茶和约定。首版 intro 存档迁入新序章；已经进入恐怖章节的首版进度继续保留，不要求重玩前段。
+
+## 面部第三版验收（2026-10-04）
+
+基于远程 `master` 的 `8412fa3`，在独立检出 `D:/workspace/releases/after-hours-v2-20261004` 中完成修改源文件 ESLint、完整 `pnpm run check` 后顺序 `pnpm run build`，Next 构建 ESLint 保持启用。15 项游戏规则与 6 项游戏馆规则通过；最终优化角色经 glTF Transform 验证，零错误、零警告。`scripts/verify-after-hours.cjs` 的 `FACE_QA=1` 模式专门检查实际加载的脸部版本、闭眼／睁眼、两种配茶与约定、合照保存及刷新、异常照片和 320px 对话。
+
+静音安装版 Chrome 的开发面部验证产生 30 张 PNG 与两张实际保存的 JPEG；最终生产包在 `http://127.0.0.1:3973` 通过完整流程，产生 57 张 PNG 与两张 JPEG。全部已逐张打开目检，覆盖正常对话与合照、恐怖章节回声、双结局、追逐抓人／检查点重试／衣柜躲藏、WebGL 恢复、暂停与 390／320px 双指触控。画面通过像素检查，并与文本状态、DOM、画布尺寸和页面／控制台错误交叉核对；运行时报告脸部版本为 3，错误数组为空。生产合照均为 640×480，亮像素约 90%，超过 6 万种颜色。
+
+证据保存在 `tmp/sui-face-v3-dev/` 和 `tmp/sui-face-v3-production/`，门禁与浏览器日志为 `tmp/sui-face-v3-release-{check,build,browser}.log`，最终资产验证为 `tmp/sui-face-v3-final-gltf-validation.log`。`/demos` 的「岁己：零点之后」继续指向 `/game/after-hours`，预览已替换为目检通过的新脸实际标题画面。开发服务器已停止，本任务自动添加的临时 tsconfig 引用已移除。
+
+推送前整合远程 `master` 的 `7e51993` 雨夜主角动作更新，进度文件保留双方追加段落，本次游戏源码和模型与完整验收版本一致。整合后再次通过 21 项规则、修改源文件 ESLint、顺序完整 check／build，并用静音 Chrome 从 `/demos` 搜索、点击入口和开始游玩。三张新增生产截图已逐张目检，像素／状态／DOM／画布一致，实际脸部版本为 3，页面／控制台错误为空；证据为 `tmp/sui-face-v3-integrated-smoke/` 和 `tmp/sui-face-v3-integrated-{rules,check,build,browser}.log`。
+
+```powershell
+$env:PLAYWRIGHT_MODULE='C:/Users/yuiffy/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright'
+$env:AFTER_HOURS_URL='http://127.0.0.1:3973'
+$env:AFTER_HOURS_QA='D:/workspace/myrepo/my-pixijs-game/tmp/sui-face-v3-production'
+node scripts/verify-after-hours.cjs
+# 专项面部验证时设 FACE_QA=1；完整流程不设置 FACE_QA 或 SMOKE。
+```
 
 ## 新版验证与复现（2026-10-04）
 

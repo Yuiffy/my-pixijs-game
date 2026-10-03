@@ -192,6 +192,7 @@ def build_character(out):
     for m in list(bpy.data.materials):
         bpy.data.materials.remove(m)
     skin = mat('Porcelain skin / painted blush', (.96, .83, .79), .83, glow=.015)
+    face_skin = mat('Soft anime face / painted blush', (.99, .86, .84), .95, glow=.16)
     white = mat('Ivory cotton', (.88, .89, .96), .9)
     navy = mat('Midnight blue tailoring', (.031, .046, .091), .83)
     lining = mat('Blue grey velvet', (.105, .145, .23), .74)
@@ -199,9 +200,9 @@ def build_character(out):
     shadow = mat('Silver lilac hair underside', (.59, .56, .71), .7)
     gold = mat('Antique champagne gold', (.65, .48, .22), .42, .55)
     ruby = mat('Ruby brooch', (.45, .018, .038), .28, .15)
-    ink = mat('Soft cocoa eyelashes', (.055, .019, .034), .95)
-    eyes = mat('Warm eye whites', (.98, .94, .92), .6, glow=.05)
-    iris = mat('Ruby iris / radial paint', (.9, .15, .18), .5, glow=.20)
+    ink = mat('Soft cocoa eyelashes', (.042, .024, .038), .95)
+    eyes = mat('Warm eye whites', (.98, .94, .92), .95, glow=.015)
+    iris = mat('Ruby iris / radial paint', (.72, .13, .18), .9, glow=.025)
     lips = mat('Rose lips', (.56, .15, .21), .8)
     shoe = mat('Polished midnight shoes', (.027, .032, .064), .28)
 
@@ -211,23 +212,36 @@ def build_character(out):
         strength += math.exp(-(x/.015)**2 - ((y-1.39)/.02)**2) * .065
         return tuple(c * (1-strength) + b * strength for c, b in zip((.99, .885, .847), (1, .46, .52)))
 
+    def face_paint(u, v):
+        x, y = (u - .5) * .29, 1.315 + v * .315
+        strength = sum(math.exp(-((x - c) / .035)**2 - ((y - 1.409) / .020)**2) * .27 for c in (-.073, .073))
+        strength += math.exp(-(x/.012)**2 - ((y-1.390)/.014)**2) * .065
+        return tuple(c * (1-strength) + b * strength for c, b in zip((.995, .863, .847), (1, .42, .51)))
+
     def iris_paint(u, v):
         x, y = (u-.5)*2, (v-.5)*2
         r, a = math.hypot(x, y), math.atan2(y, x)
-        fiber = math.sin(a*41 + r*13)*.025 + math.cos(a*79-r*7)*.018
-        base = (.90 + fiber, .20 + max(0, -y)*.28 + fiber, .25 + max(0, -y)*.10)
-        edge = min(1, max(0, (r-.77)*5))
-        base = tuple(c*(1-edge) + d*edge for c,d in zip(base, (.19,.025,.08)))
-        if r < .33:
-            base = (.09,.009,.039)
-        if ((x+.30)/.22)**2+((y-.39)/.22)**2 < 1 or ((x-.35)/.095)**2+((y+.38)/.095)**2 < 1:
-            base = (.995,.99,1)
-        if abs(y + .47 + .1*math.sin(a*5)) < .022 and .35 < r < .76:
-            base = (1,.70,.45)
+        fiber = math.sin(a*43 + r*10)*.012 + math.cos(a*71-r*5)*.008
+        warm = min(1, max(0, (.6-y)/1.5))
+        base = tuple(top*(1-warm)+bottom*warm+fiber for top,bottom in zip((.39,.055,.105),(.88,.28,.28)))
+        edge = min(1, max(0, (r-.84)*6))
+        base = tuple(c*(1-edge) + d*edge for c,d in zip(base, (.22,.035,.065)))
+        if (x/.28)**2 + ((y-.025)/.29)**2 < 1:
+            base = (.12,.023,.046)
+        if ((x+.29)/.13)**2+((y-.35)/.16)**2 < 1:
+            base = (1,.97,.95)
+        if ((x-.34)/.065)**2+((y+.41)/.065)**2 < 1:
+            base = (.96,.69,.65)
+        if abs(y + .59) < .015 and .32 < r < .77:
+            base = (.98,.51,.40)
         return base
 
     paint(skin, 'Hand painted porcelain face 512', 512, blush)
+    paint(face_skin, 'Soft cheek and nose face paint 512', 512, face_paint)
+    face_nodes = face_skin.node_tree.nodes
+    face_skin.node_tree.links.new(next(n for n in face_nodes if n.type=='TEX_IMAGE').outputs['Color'], face_nodes.get('Principled BSDF').inputs['Emission Color'])
     paint(iris, 'Ruby iris highlights and fibers 512', 512, iris_paint)
+    paint(eyes, 'Soft upper eyelid shadow 256', 256, lambda u,v: tuple(c*(1-.10*v**3)+d*.10*v**3 for c,d in zip((1,.975,.966),(.69,.49,.52))))
     paint(silk, 'Pearl hair satin strands 256', 256, lambda u,v: tuple(max(0,min(1,c + .024*math.cos(u*math.tau) + .008*math.cos(u*90 + v*4))) for c in (.90,.885,.95)))
 
     root = pivot('Sui_Root', (0,0,0))
@@ -248,7 +262,7 @@ def build_character(out):
 
     def front(x,y):
         w,d,c = ring_at(y)
-        return c + d * max(0,1-(x/w)**2)**.30 + .007*math.exp(-(x/.014)**2-((y-1.395)/.025)**2)
+        return c + d * max(0,1-(x/w)**2)**.30 + .003*math.exp(-(x/.014)**2-((y-1.395)/.025)**2)
 
     verts, faces, uv = [], [], []
     rows, sides = 46, 64
@@ -266,27 +280,33 @@ def build_character(out):
             a=j*sides+i; b=j*sides+(i+1)%sides
             faces.append((a,b,b+sides,a+sides))
     faces.extend([tuple(range(sides-1,-1,-1)),tuple((rows-1)*sides+i for i in range(sides))])
-    face = mesh('Sui_Face / shaped cheek and jaw topology',verts,faces,skin,head,uv)
-    face['topology'] = 'contiguous 46 x 64 loops; integrated nose; painted cheek blush'
+    face = mesh('Sui_Face / shaped cheek and jaw topology',verts,faces,face_skin,head,uv)
+    face['topology'] = 'contiguous 46 x 64 loops; shallow anime nose; softly painted cheek blush'
     loft('Neck',[(1.235,.042,.039,0,0),(1.31,.042,.039,0,0),(1.35,.039,.033,0,.006)],skin,body)
     for side,label in [(-1,'Left'),(1,'Right')]:
         ball('Ear', (side*.126,1.41,-.005),(.013,.03,.014),skin,head)
         tube('Earring',[(side*.132,1.386,.003),(side*.136,1.373,.013),(side*.132,1.365,.018)],.002,gold,head)
         ball('Pearl drop',(side*.132,1.361,.018),(.005,.007,.005),white,head)
-        cx,cy = side*.062,1.44
+        cx,cy = side*.056,1.438
+        eye_width, upper, lower = .076, .016, -.014
+
+        def eye_edge(t, upper_lid):
+            dx = (t-.5)*eye_width
+            arc = math.sin(math.pi*t)**.68
+            return cy + side*dx*.035 + (upper if upper_lid else lower)*arc
+
         eye_group = pivot('Sui_'+label+'Eye',(cx,cy,front(cx,cy)),head)
         ev,ef,eu = [],[],[]
-        # Almond contour: tapered inner corner, a gently lifted outer corner.
+        # The 3D performance reference has relaxed lids, not a complete dark rim.
         nx,ny = 28,14
         for j in range(ny+1):
             q = j/ny
             for i in range(nx+1):
-                t=i/nx; dx=(t-.5)*.103
-                arc=math.sin(math.pi*t)**.72
-                tilt=side*dx*.095
-                y=cy + tilt + (-.017+(q*.042))*arc
+                t=i/nx; dx=(t-.5)*eye_width
+                arc=math.sin(math.pi*t)**.68
+                y=eye_edge(t,False)*(1-q)+eye_edge(t,True)*q
                 x=cx+dx
-                ev.append((x,y,front(x,y)+.0018+.003*math.sin(q*math.pi)*arc))
+                ev.append((x,y,front(x,y)+.0012+.0003*math.sin(q*math.pi)*arc))
                 eu.append((t,q))
         for j in range(ny):
             for i in range(nx):
@@ -299,30 +319,35 @@ def build_character(out):
             r=j/8
             for i in range(segments):
                 a=math.tau*i/segments
-                dx=math.cos(a)*r*.024
-                dy=math.sin(a)*r*.026
-                arc=math.sin(math.pi*((dx/.103)+.5))**.72
-                dy=max(-.017*arc,min(.025*arc,dy))
-                x,y=cx+dx,cy+dy+side*dx*.095
-                iv.append((x,y,front(x,y)+.006+.0015*(1-r*r)))
-                iu.append((.5+dx/.048,.5+dy/.052))
+                dx=math.cos(a)*r*.0195
+                dy=math.sin(a)*r*.022
+                t=dx/eye_width+.5
+                # Clip the iris under both lids; the upper iris is never fully exposed.
+                y=max(eye_edge(t,False)+.00035,min(eye_edge(t,True)-.00035,cy+dy+.001))
+                x=cx+dx
+                iv.append((x,y,front(x,y)+.0023+.0002*(1-r*r)))
+                iu.append((.5+dx/.039,.5+dy/.044))
         for j in range(8):
             for i in range(segments):
                 a=j*segments+i; b=j*segments+(i+1)%segments
                 iff.append((a,a+segments,b+segments,b))
         mesh(label+' ruby iris',iv,iff,iris,eye_group,iu)
-        for upper in [True,False]:
+        for upper_lid in [True,False]:
             points=[]
             for i in range(33):
-                t=i/32; dx=(t-.5)*.103
-                y=cy+side*dx*.095+(.025 if upper else -.017)*math.sin(math.pi*t)**.72
+                t=i/32
+                if not upper_lid and not ((side<0 and .035<t<.31) or (side>0 and .69<t<.965)):
+                    continue
+                dx=(t-.5)*eye_width
+                y=eye_edge(t,upper_lid)
                 points.append((cx+dx,y,front(cx+dx,y)+.0035))
-            tube(label+(' upper lash' if upper else ' lower lash'),points,.0024 if upper else .001,ink,eye_group)
-        for i in range(3):
-            x=cx+side*(.043-i*.005); y=cy+.017+i*.002
-            tube('Lash flick',[(x,y,front(x,y)+.005),(x+side*(.012-i*.002),y+.008,front(x,y)+.005)],.0014,ink,eye_group)
-        points=[(cx+(i/20-.5)*.074,1.495+.006*math.sin(i/20*math.pi),front(cx+(i/20-.5)*.074,1.495)+.002) for i in range(21)]
-        tube('Soft eyebrow',points,.0018,shadow,head)
+            tube(label+(' upper lash' if upper_lid else ' soft lower outer lid'),points,.00165 if upper_lid else .00045,ink if upper_lid else lips,eye_group)
+        for i in range(2):
+            dx=side*(.031-i*.004)
+            x=cx+dx; y=eye_edge(dx/eye_width+.5,True)
+            tube('Lash flick',[(x,y,front(x,y)+.005),(x+side*(.006-i*.001),y+.0035,front(x,y)+.005)],.0009,ink,eye_group)
+        points=[(cx+(i/20-.5)*.056,1.477+.003*math.sin(i/20*math.pi),front(cx+(i/20-.5)*.056,1.477)+.002) for i in range(21)]
+        tube('Soft eyebrow',points,.0012,shadow,head)
 
     mouth = pivot('Sui_Mouth',(0,1.361,front(0,1.361)),head)
     # Smile is actual lip geometry, with exported morphs used during dialogue.
@@ -362,7 +387,7 @@ def build_character(out):
     mesh('Silver crown with shaped hairline',hv,hf,silk,head,hu)
     for i in range(9):
         x=(i-4)*.027
-        tip=1.468+abs(i-4)*.010
+        tip=1.455+abs(i-4)*.005
         lock('Layered pointed fringe',[(x*.66,1.62,.053),(x*.83,1.576,.111),(x,1.523,.121),(x*.87,tip,.110)],.025,silk,head,.006)
     for side in (-1,1):
         lock('Cheek framing lock',[(side*.116,1.57,.059),(side*.129,1.454,.084),(side*.115,1.367,.103),(side*.101,1.324,.088)],.019,silk,head,.009)
@@ -485,8 +510,10 @@ def build_character(out):
         bpy.ops.object.join()
         objects[0].name=(par.name if par else 'Sui')+' / '+m
     root['character_revision']=2
+    root['face_revision']=3
+    root['face_reference']='Bilibili BV1XAt666E6M ; 3D performance closeups at 10:08 and 10:16'
     root['reference']='public/images/materials/blue/岁己_20231216形象_双马尾有外套.webp'
-    root['face']='sculpted cheek/jaw loops; almond eyes; Smile / Talk / Worry morphs; eye and hair pivots'
+    root['face']='soft painted cheeks; relaxed 0.076m eyes with clipped ruby irises; partial lower lid; Smile / Talk / Worry morphs'
     bpy.ops.object.camera_add(location=xyz((0,1.35,3.4)))
     camera=bpy.context.object
     camera.rotation_euler=(Vector(xyz((0,1.025,0)))-camera.location).to_track_quat('-Z','Y').to_euler()
@@ -511,7 +538,7 @@ def build_character(out):
     return {'file':'sui.glb','bytes':(out/'sui.glb').stat().st_size,'meshes':len(meshes),
             'triangles':sum(sum(len(p.vertices)-2 for p in o.data.polygons) for o in meshes),
             'materials':len({m.name for o in meshes for m in o.data.materials}),
-            'source':'assets/after-hours/sui.blend','revision':2,'morphs':['Smile','Talk','Worry']}
+            'source':'assets/after-hours/sui.blend','revision':2,'face_revision':3,'morphs':['Smile','Talk','Worry']}
 
 
 if __name__=='__main__':
