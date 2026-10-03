@@ -3,7 +3,9 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { ConfigProvider, theme, Typography, Space } from 'antd';
 import {
-  ExperimentOutlined,
+  PlayCircleOutlined,
+  CustomerServiceOutlined,
+  GiftOutlined,
   HistoryOutlined,
   PictureOutlined,
   HomeOutlined,
@@ -16,6 +18,7 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import HomeModule from '@/components/Home/HomeModule';
 import GalleryModule from '@/components/Home/GalleryModule';
 import RecordsModule from '@/components/Home/RecordsModule';
+import BetaBadge from '@/components/BetaBadge';
 
 const { Text, Paragraph } = Typography;
 
@@ -103,11 +106,13 @@ const HomeContent = () => {
     >
       <main className="min-h-screen bg-[#0A0D14] text-slate-200 overflow-x-hidden selection:bg-[#DA5D77]/50">
         {/* Smart Top Nav */}
-        <nav className={`fixed top-0 inset-x-0 z-[100] p-4 flex justify-center transition-all duration-500 ${
+        <nav
+          aria-label="首页导航"
+          className={`fixed top-0 inset-x-0 z-[100] p-4 flex justify-center transition-all duration-500 ${
           scrollDirection === 'down' && scrollY > 100 ? '-translate-y-[120%]' : 'translate-y-0'
         } ${isScrolled ? 'pt-2' : 'pt-6'}`}>
-           <div className={`transition-all duration-500 bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-full flex items-center shadow-[0_20px_50px_rgba(0,0,0,0.6)] ${
-             isScrolled ? 'px-2 py-1' : 'px-4 py-2'
+           <div className={`w-full sm:w-auto max-w-5xl transition-all duration-500 bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-3xl sm:rounded-full grid grid-cols-4 sm:flex items-center shadow-[0_20px_50px_rgba(0,0,0,0.6)] ${
+             isScrolled ? 'px-1 sm:px-2 py-1' : 'px-1 sm:px-4 py-2'
            }`}>
                 {[
                 { key: 'home', label: '主页', icon: <HomeOutlined /> },
@@ -117,7 +122,8 @@ const HomeContent = () => {
                 <button
                   key={item.key}
                   onClick={() => handleTabChange(item.key)}
-                  className={`relative px-6 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition-all ${
+                  aria-pressed={activeTab === item.key}
+                  className={`relative px-1 sm:px-3 lg:px-4 py-2 min-h-11 rounded-full text-xs lg:text-sm whitespace-nowrap font-bold flex items-center justify-center gap-2 transition-all ${
                     activeTab === item.key
                     ? 'text-white'
                     : 'text-slate-400 hover:text-white hover:bg-white/5'
@@ -126,21 +132,25 @@ const HomeContent = () => {
                   {activeTab === item.key && (
                     <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/80 to-blue-600/80 rounded-full -z-10 shadow-lg animate-fade-in" />
                   )}
-                  {item.icon} {item.label}
+                  <span className="hidden lg:inline-flex">{item.icon}</span> {item.label}
                 </button>
               ))}
-              <div className="w-[1px] h-6 bg-white/10 mx-2" />
-              <Link href="/demos" className="px-4 py-2 hover:text-cyan-400 transition-colors text-slate-400 flex items-center gap-2 text-sm font-bold group">
-                 <ExperimentOutlined className="group-hover:rotate-45 transition-transform" /> 实验室
+              <Link href="/liver/sui/songs" className="px-0 sm:px-3 lg:px-4 py-2 min-h-11 hover:text-cyan-400 transition-colors text-slate-300 flex items-center justify-center whitespace-nowrap text-xs lg:text-sm font-bold">
+                <span className="hidden lg:inline-flex mr-2"><CustomerServiceOutlined /></span><span>歌单<BetaBadge /></span>
               </Link>
-              <div className="w-[1px] h-4 bg-white/10 mx-1" />
+              <Link href="/liver/sui/gifts" className="px-0 sm:px-3 lg:px-4 py-2 min-h-11 hover:text-pink-400 transition-colors text-slate-300 flex items-center justify-center whitespace-nowrap text-xs lg:text-sm font-bold">
+                <span className="hidden lg:inline-flex mr-2"><GiftOutlined /></span><span>舰礼<BetaBadge /></span>
+              </Link>
+              <Link href="/demos" className="px-1 sm:px-3 lg:px-4 py-2 min-h-11 hover:text-cyan-400 transition-colors text-slate-400 flex items-center justify-center whitespace-nowrap gap-2 text-xs lg:text-sm font-bold group">
+                 <span className="hidden lg:inline-flex"><PlayCircleOutlined className="group-hover:scale-110 transition-transform" /></span> 同人游戏
+              </Link>
               <a
                 href="https://button.suiji.site"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 hover:text-pink-400 transition-colors text-slate-400 flex items-center gap-2 text-sm font-bold group"
+                className="px-1 sm:px-3 lg:px-4 py-2 min-h-11 hover:text-pink-400 transition-colors text-slate-400 flex items-center justify-center whitespace-nowrap gap-2 text-xs lg:text-sm font-bold group"
               >
-                 <AudioOutlined className="group-hover:scale-110 transition-transform" /> 岁己按钮
+                 <span className="hidden lg:inline-flex"><AudioOutlined className="group-hover:scale-110 transition-transform" /></span> 岁己按钮
               </a>
            </div>
         </nav>
@@ -155,7 +165,7 @@ const HomeContent = () => {
            <div className="absolute top-1/2 left-[5%] text-xl opacity-10 animate-pulse">✨</div>
         </div>
 
-        <div className="max-w-5xl mx-auto px-6 pt-24 pb-24 relative z-10 min-h-screen">
+        <div className="max-w-5xl mx-auto px-6 pt-40 sm:pt-28 pb-24 relative z-10 min-h-screen">
 
           {/* Module Content */}
           <div className="mt-4">
