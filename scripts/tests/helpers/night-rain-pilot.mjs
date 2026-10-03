@@ -2,6 +2,7 @@
 // emits ordinary world movement and button presses; never alters game state.
 import { loadTypescriptModule } from './load-typescript-module.mjs';
 const { findPath } = await loadTypescriptModule('src/components/nightRain/companion.ts');
+const { enemyAttack } = await loadTypescriptModule('src/components/nightRain/enemyCombat.ts');
 export const NIGHT_ROUTE = [
   { x: 1, z: 15, interact: 'laptop' },
   { x: 10, z: 15 }, { x: 10, z: 8 }, { x: 10, z: -1 },
@@ -34,12 +35,14 @@ export function chooseInput(s, destination, { parryOnly = false } = {}) {
   const d = gap(enemy, p); const dx = (enemy.x - p.x) / Math.max(d, 0.01); const dz = (enemy.z - p.z) / Math.max(d, 0.01);
   const input = { x: 0, z: 0 };
   if (!s.lockedId) input.lock = true;
-  const sweep = ((enemy.kind === 'boss' && enemy.phase === 2) || ['nana', 'azi', 'captain', 'regent', 'reaver', 'monk', 'warden', 'abbot', 'serpent', 'elegist'].includes(enemy.kind)) && enemy.attackIndex % 3 === 2;
+  const attack = enemyAttack(enemy); const sweep = !attack.parryable;
   if (p.action !== 'idle') return input;
   if (enemy.action === 'stagger') {
     if (d < 2.35) input.light = true;
     else { input.x = dx; input.z = dz; }
-  } else if (enemy.action === 'windup' && enemy.timer <= 0.14) {
+  } else if (s.projectiles?.some(b => gap(b, p) < 1.6 && Math.abs(b.y - (p.y + 1)) < 0.9)) {
+    input.parry = true;
+  } else if (!attack.projectile && enemy.action === 'windup' && enemy.timer <= 0.14) {
     if (sweep) { input.dodge = true; input.x = -dx; input.z = -dz; }
     else input.parry = true;
   } else if (p.hp <= 48 && p.flasks > 0 && enemy.action === 'recover' && enemy.timer > 0.8) {
@@ -76,7 +79,7 @@ export function playFirstLevel(engine, s = engine.createGame(), options = {}) {
     walkTo(engine, s, target, 90000, options);
     if (target.interact) {
       engine.interact(s);
-      if (target.interact === 'food' && s.mode !== 'ending') throw new Error('Dinner did not end the first act');
+      if (target.interact === 'food' && s.mode !== 'interlude') throw new Error('Dinner did not enter its story interlude');
       if (target.interact === 'shortcut' && !s.shortcut) throw new Error('Inside lever did not open shortcut');
     }
     if (target.upgrade && !engine.upgrade(s)) throw new Error('Earned money could not be used at checkpoint');

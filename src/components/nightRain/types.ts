@@ -1,10 +1,11 @@
 import type { HavenState } from './haven';
+import type { Equipment } from './equipment';
 
 export type Vec3 = { x: number; y: number; z: number };
 export type PlayerSkin = 'sui' | 'shiori' | 'nagisa';
 export type AttackId = 'light1' | 'light2' | 'light3' | 'heavy' | 'charged' | 'sprintLight' | 'sprintHeavy' | 'airLight' | 'airHeavy';
 export type Action = 'idle' | 'light' | 'heavy' | 'charge' | 'dodge' | 'parry' | 'guard' | 'guardRelease' | 'guardBreak' | 'hurt' | 'heal' | 'execute' | 'dead';
-export type EnemyKind = 'prowler' | 'guard' | 'duelist' | 'boss' | 'nana' | 'azi' | 'lancer' | 'captain' | 'regent' | 'reaver' | 'monk' | 'warden' | 'abbot' | 'serpent' | 'elegist';
+export type EnemyKind = 'prowler' | 'guard' | 'duelist' | 'boss' | 'nana' | 'azi' | 'lancer' | 'captain' | 'regent' | 'reaver' | 'monk' | 'warden' | 'abbot' | 'serpent' | 'elegist' | 'colossus' | 'sentinel';
 export type EnemyAction = 'idle' | 'chase' | 'windup' | 'attack' | 'recover' | 'stagger' | 'dead';
 export type Player = Vec3 & {
   facing: number; hp: number; stamina: number; action: Action; actionTime: number;
@@ -30,15 +31,18 @@ export type GameInput = {
   dashHeld?: boolean; heavyHeld?: boolean; guardHeld?: boolean; aim?: number;
 };
 export type Effect = Vec3 & { id: number; kind: 'hit' | 'parry' | 'block' | 'dodge' | 'heal' | 'death' | 'reward'; life: number; text?: string };
+export type Projectile = Vec3 & { id: number; owner: string; vx: number; vy: number; vz: number; life: number; damage: number; kind: 'bolt' | 'stone' };
 export type GameState = {
-  version: 1; motionVersion: 1; mode: 'title' | 'playing' | 'dead' | 'ending'; paused: boolean;
+  version: 1; motionVersion: 1; mode: 'title' | 'playing' | 'dead' | 'ending' | 'interlude'; paused: boolean;
+  projectiles: Projectile[];
+  bestiary: string[];
   player: Player; enemies: Enemy[]; effects: Effect[]; nextEffectId: number;
   time: number; deaths: number; kills: number; parries: number; executions: number;
   rice: number; bankedRice: number; level: number; charm: boolean; shortcut: boolean;
-  worldVersion: 8; weaponLevel: number; weapon: 'umbrella' | 'ironUmbrella' | 'katana'; haven: HavenState; templeGate: boolean; flaskUpgrade: boolean; litLamps: string[];
+  worldVersion: 9; gear: Equipment; weaponLevel: number; weapon: 'umbrella' | 'ironUmbrella' | 'katana' | 'graveSpear' | 'reedDaggers' | 'stoneMaul'; haven: HavenState; templeGate: boolean; flaskUpgrade: boolean; litLamps: string[];
   chapterGates: string[]; chapterComplete: boolean; valleyGates: string[]; valleyComplete: boolean;
   playerSkin: PlayerSkin; harborGate: boolean; defeatedGuests: string[];
-  checkpoint: 'courtyard' | 'room' | 'lower-lamp' | 'archive-lamp' | 'royal-lamp' | 'village-lamp' | 'monastery-lamp' | 'confluence-lamp' | 'haven-lamp'; bossDefeated: boolean; collected: string[];
+  checkpoint: 'courtyard' | 'room' | 'lower-lamp' | 'archive-lamp' | 'royal-lamp' | 'village-lamp' | 'monastery-lamp' | 'confluence-lamp' | 'haven-lamp' | 'crypt-lamp' | 'cave-lamp'; bossDefeated: boolean; collected: string[];
   visited: string[]; lockedId: string | null; message: string; messageTime: number;
   prompt: string; nearbyId: string | null; region: string;
   bloodstain: (Vec3 & { rice: number }) | null; restCount: number;

@@ -3,6 +3,7 @@ import { canOccupy, supportAt, interactionPoint, LANDMARKS } from './world';
 import { CHAPTER_GATES, CHAPTER_LANDMARKS } from './chapter';
 import { HAVEN_GATES, HAVEN_LANDMARKS, havenAvailable, havenTarget } from './haven';
 import { riverSeals, VALLEY_GATES, VALLEY_LANDMARKS } from './valley';
+import { DUNGEON_LANDMARKS, DUNGEON_ENEMIES } from './dungeons';
 
 export type CompanionSkin = 'biscuit' | 'otter';
 export type Companion = {
@@ -34,12 +35,15 @@ routeAt: -100,
 });
 const distance = (a: Vec3, b: Vec3) => Math.hypot(a.x - b.x, a.z - b.z, a.y - b.y);
 const labels: Record<string, string> = {
+  room: '旅馆',
   'drowned-warden': '沉舟水车院 · 花礼',
   'silent-abbot': '无声山寺 · 瑞娅',
   'river-serpent': '那伽沉殿 · 悠亚',
   'gate-captain': '双象门楼 · 米汀',
   'rain-regent': '雨冠大殿 · 弥月',
-  ...Object.fromEntries([...CHAPTER_LANDMARKS, ...VALLEY_LANDMARKS, ...HAVEN_LANDMARKS].map(l => [l.id, l.label.replace(/^(读|打开|收下|拾取|使用)/, '')])),
+  ...Object.fromEntries([...CHAPTER_LANDMARKS, ...VALLEY_LANDMARKS, ...HAVEN_LANDMARKS, ...DUNGEON_LANDMARKS].map(l => [l.id, l.label.replace(/^(读|打开|收下|拾取|使用)/, '')])),
+  'crypt-colossus': '弃灯墓地 · 露缇',
+'cave-sentinel': '风息洞窟 · 沐石',
   'temple-lamp': '莲池旧灯',
 'canal-lamp': '摆渡旧灯',
 'temple-flask': '刻露瓶',
@@ -67,6 +71,9 @@ boss: '栞栞守着的夜市入口',
 export const targetLabel = (id: string | null) => (id ? labels[id] ?? id : '下一处发现');
 export function guideTargets(s: GameState) {
   return LANDMARKS.filter(l => {
+    if ((s.player.x > 80) !== (l.x > 80)) return false;
+    if (s.player.x > 80 && (s.player.z > 88) !== (l.z > 88)) return false;
+    if (l.id === 'cave-entrance' && !s.chapterComplete) return false;
     if (!havenAvailable(s, l.id)) return false;
     if (HAVEN_LANDMARKS.some(h => h.id === l.id)) {
       if (['well-testimony', 'well-return', 'well-choice'].includes(l.id) && !s.haven.gates.includes('well-door')) return false;
@@ -96,6 +103,7 @@ export function guideTargets(s: GameState) {
   });
 }
 export function mainTarget(s: GameState): string {
+  if (s.player.x > 80) return s.player.z > 88 ? !s.defeatedGuests.includes('cave-sentinel') ? 'cave-sentinel' : !s.collected.includes('stone-maul') ? 'stone-maul' : 'cave-exit' : !s.defeatedGuests.includes('crypt-colossus') ? 'crypt-colossus' : !s.collected.includes('grave-spear') ? 'grave-spear' : 'crypt-exit';
   if (s.valleyComplete) return havenTarget(s);
   if (s.chapterComplete && !s.valleyComplete) {
     if (!s.valleyGates.includes('valley-entry')) return 'valley-entry';
@@ -204,6 +212,8 @@ export function findPath(start: Vec3, destination: Vec3, shortcut: WorldAccess):
   return [];
 }
 function destinationFor(id: string): Vec3 | undefined {
+  const guardian = DUNGEON_ENEMIES.find(e => e.id === id);
+  if (guardian) return { x: guardian.x, y: guardian.y, z: guardian.z - 3 };
   if (id === 'drowned-warden') return { x: -202, y: 2, z: -399 };
   if (id === 'silent-abbot') return { x: -92, y: 18, z: -414 };
   if (id === 'river-serpent') return { x: -150, y: 8, z: -506 };
@@ -263,7 +273,7 @@ export function updateCompanion(c: Companion, s: GameState, dt: number) {
         } else if (!walkSegment(p, c.position, s, 0.6) && s.time - c.routeAt > 2) leadTo(c, s, c.targetId);
         else c.status = 'waiting';
       } else {
-        c.status = 'arrived'; speak(c, s, c.targetId === 'tide-note' ? '这就是潮汐港的潮桥！沿桥向东走进灯市，暖灯长阶通往七海。' : ['boss', 'gate-captain', 'rain-regent', 'drowned-warden', 'silent-abbot', 'river-serpent'].includes(c.targetId) ? '前面就是守路人。留一点体力，我陪你慢慢试。' : `到了，${targetLabel(c.targetId)}就在这里。靠近后按 E 试试。`, 9);
+        c.status = 'arrived'; speak(c, s, c.targetId === 'tide-note' ? '这就是潮汐港的潮桥！沿桥向东走进灯市，暖灯长阶通往七海。' : ['boss', 'gate-captain', 'rain-regent', 'drowned-warden', 'silent-abbot', 'river-serpent', 'crypt-colossus', 'cave-sentinel'].includes(c.targetId) ? '前面就是守路人。留一点体力，我陪你慢慢试。' : `到了，${targetLabel(c.targetId)}就在这里。靠近后按 E 试试。`, 9);
       }
     }
   } else if (!c.targetId) {
@@ -272,6 +282,11 @@ export function updateCompanion(c: Companion, s: GameState, dt: number) {
     c.position.x += (desired.x - c.position.x) * amount; c.position.y += (desired.y - c.position.y) * amount; c.position.z += (desired.z - c.position.z) * amount;
   }
   if (s.time < c.nextHint || c.targetId) return;
+  const winch = LANDMARKS.find(l => l.id === 'ferry-winch');
+  if (winch && s.defeatedGuests.includes('drowned-warden') && !s.collected.includes('ferry-winch') && distance(p, winch) < 20 && !c.seen['ferry-winch']) {
+    c.seen['ferry-winch'] = { nearest: distance(p, winch), stage: 1 }; c.suggestedId = 'ferry-winch';
+    speak(c, s, '水车院的渡船还没动。看岸边青绿色的高光，去修好系缆，就能坐船往返旧城和两岸。', 10); return;
+  }
   if (danger) {
     speak(c, s, p.hp < 45 && p.flasks > 0 ? '先退开一点，R 喝椰子水。恢复的时候也会被打断哦。' : '不用一直按攻击。看他抬手，留一点体力给闪避。红色横扫不能弹反。'); return;
   }

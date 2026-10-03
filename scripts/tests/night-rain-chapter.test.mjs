@@ -32,7 +32,7 @@ test('version four saves add the northern city without healing, respawning or lo
   const raw = JSON.parse(engine.saveGame(s)); raw.worldVersion = 4; raw.enemies = raw.enemies.slice(0, 13); delete raw.chapterGates; delete raw.chapterComplete;
   const loaded = engine.loadGame(JSON.stringify(raw)); assert.ok(loaded);
   assert.deepEqual(loaded.player, s.player); assert.deepEqual(loaded.enemies.slice(0, 13), raw.enemies);
-  assert.equal(loaded.worldVersion, 8); assert.equal(loaded.enemies.length, world.ENEMY_SPAWNS.length);
+  assert.equal(loaded.worldVersion, 9); assert.equal(loaded.enemies.length, world.ENEMY_SPAWNS.length);
   for (const corrupt of [s => s.chapterGates.push('archive-door'), s => s.chapterComplete = true, s => s.chapterGates.push('missing')]) { const bad = fresh(); corrupt(bad); assert.equal(engine.loadGame(engine.saveGame(bad)), null); }
 });
 
@@ -140,7 +140,7 @@ test('the final bell needs both the defeated regent and dinner, completes once, 
   const regent = s.enemies.find(e => e.id === 'rain-regent'); regent.hp = 0; regent.action = 'dead'; s.defeatedGuests.push(regent.id);
   engine.interact(s); assert.equal(s.chapterComplete, false); assert.match(s.interpretation, /夜市吃饭/);
   s.bossDefeated = true; const boss = s.enemies.find(e => e.kind === 'boss'); boss.hp = 0; boss.action = 'dead'; s.collected.push('food');
-  engine.interact(s); assert.equal(s.chapterComplete, true); assert.equal(s.mode, 'ending');
+  engine.interact(s); assert.equal(s.chapterComplete, true); assert.equal(s.mode, 'interlude');
   const loaded = engine.loadGame(engine.saveGame(s)); assert.ok(loaded);
   engine.continueExploring(loaded); engine.interact(loaded);
   assert.equal(loaded.mode, 'playing'); assert.equal(loaded.collected.filter(id => id === 'chapter-bell').length, 1);
@@ -181,7 +181,7 @@ test('whole first chapter completes using legal movement and combat, every new l
     const row = { target: target.id ?? p, time: s.time, hp: s.player.hp, level: s.level, killed: s.kills };
     evidence.push(row); console.log(JSON.stringify(row));
   }
-  assert.equal(s.chapterComplete, true); assert.equal(s.mode, 'ending');
+  assert.equal(s.chapterComplete, true); assert.equal(s.mode, 'interlude');
   assert.equal(s.chapterGates.length, 5); assert.ok(s.defeatedGuests.includes('gate-captain')); assert.ok(s.defeatedGuests.includes('rain-regent'));
   assert.equal(engine.maxFlasks(s), 4); assert.equal(s.litLamps.length, 4);
   const restored = engine.loadGame(engine.saveGame(s)); assert.ok(restored.chapterComplete);

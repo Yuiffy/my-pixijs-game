@@ -22,6 +22,7 @@ export default function BossStyle({ kind }: { kind: EnemyKind }) {
       {b.motif === 'ice' && <><mesh position={[0, 1.15, -0.08]}><coneGeometry args={[0.45, 0.55, 8]} /><meshStandardMaterial color="#b6cede" /></mesh><mesh position={[0, 1.91, 0]}><octahedronGeometry args={[0.14]} /><meshBasicMaterial color="#b9eaff" /></mesh></>}
       {b.motif === 'star' && [-1, 1].map(n => <group key={n}><Gem at={[n * 0.2, 1.95, 0]} size={[0.025, 0.19, 0.025]} color="#759c75" /><Gem at={[n * 0.2, 2.13, 0]} size={[0.09, 0.07, 0.09]} color="#d7e5a1" /></group>)}
       {b.motif === 'ink' && <><Gem at={[0, 1.83, -0.025]} size={[0.32, 0.1, 0.26]} color="#3b344c" /><mesh position={[0, 1.1, -0.3]}><boxGeometry args={[0.4, 0.51, 0.12]} /><meshStandardMaterial color="#e8dac3" /></mesh>{[-1, 1].map(n => <mesh key={n} position={[n * 0.29, 0.84, 0.09]} rotation={[0, 0, n * 0.16]}><boxGeometry args={[0.11, 0.46, 0.025]} /><meshStandardMaterial color="#d9d0bd" /></mesh>)}</>}
+      {(b.motif === 'stone' || b.motif === 'rock') && <group><Gem at={[0, 1.16, 0.22]} size={[0.35, 0.34, 0.15]} color={b.trim} /><Gem at={[-0.36, 1.25, 0]} size={[0.2, 0.2, 0.23]} color={b.trim} /><Gem at={[0.36, 1.25, 0]} size={[0.2, 0.2, 0.23]} color={b.trim} /><mesh position={[0, 1.94, 0]}><octahedronGeometry args={[0.22]} /><meshStandardMaterial color={b.eye} emissive={b.eye} emissiveIntensity={0.25} /></mesh></group>}
     </group>
   );
 }
@@ -37,6 +38,7 @@ export function BossWeapon({ kind }: { kind: EnemyKind }) {
       {kind === 'abbot' && <mesh position={[0, 1.4, 0]}><octahedronGeometry args={[0.25]} /><meshStandardMaterial color="#d4f1fb" metalness={0.5} roughness={0.15} /></mesh>}
       {kind === 'serpent' && <group position={[0, 1.45, 0]}><mesh rotation={[0.3, 0, 0]}><torusGeometry args={[0.24, 0.035, 6, 20]} /><meshStandardMaterial color="#c8d796" /></mesh><Gem at={[0, 0, 0]} size={[0.13, 0.13, 0.13]} color="#e6edb9" /></group>}
       {kind === 'elegist' && <mesh position={[0, 1.53, 0]}><coneGeometry args={[0.14, 0.4, 8]} /><meshStandardMaterial color="#242436" /></mesh>}
+      {(kind === 'colossus' || kind === 'sentinel') && <mesh position={[0, 1.4, 0]}><boxGeometry args={[0.65, 0.5, 0.45]} /><meshStandardMaterial color={b.trim} roughness={0.8} /></mesh>}
     </group>
   );
 }

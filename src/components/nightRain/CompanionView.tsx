@@ -34,10 +34,11 @@ export default function CompanionView({
     if (!root.current) return;
     root.current.visible = c.enabled;
     root.current.position.set(
-      c.position.x,
-      c.position.y + 1.7 + Math.sin(s.time * 2.5) * 0.065,
-      c.position.z,
+      s.mode === 'interlude' ? s.player.x - 1.3 : c.position.x,
+      (s.mode === 'interlude' ? s.player.y : c.position.y) + 1.7 + Math.sin(s.time * 2.5) * 0.065,
+      s.mode === 'interlude' ? s.player.z + 0.5 : c.position.z,
     );
+    root.current.scale.setScalar(s.mode === 'interlude' ? 0.7 : 1);
     const heading = Math.atan2(
       camera.position.x - c.position.x,
       camera.position.z - c.position.z,

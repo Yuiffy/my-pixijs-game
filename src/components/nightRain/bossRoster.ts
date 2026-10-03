@@ -1,6 +1,8 @@
 import type { EnemyKind } from './types';
 
 export const BOSS_ROSTER: Partial<Record<EnemyKind, { name: string; legacy: string; hair: string; coat: string; trim: string; eye: string; motif: string; first: string; second: string; tip: string }>> = {
+  colossus: { name: '露缇 · 藏骨巨像', legacy: '露缇 · 藏骨巨像', hair: '#dfd5bd', coat: '#777789', trim: '#c6b690', eye: '#bd9be3', motif: 'stone', first: '墓灯迟落', second: '刻名震地', tip: '露缇举槌后会长停顿；重砸收招很长，震地红环请跳跃或退开。' },
+  sentinel: { name: '沐石 · 风息守望', legacy: '沐石 · 风息守望', hair: '#b9d4c7', coat: '#59877b', trim: '#bdcb9d', eye: '#d7edbe', motif: 'rock', first: '岩槌听雨', second: '风息回旋', tip: '沐石约为旅人的三倍高。退到槌尖外，等双手落地再靠近；回旋范围很大。' },
   boss: { name: '栞栞 · 雨切守街', legacy: '封街人 · 铁伞', hair: '#f2dfb7', coat: '#eee7db', trim: '#86704d', eye: '#78a5cb', motif: 'otter', first: '栞铃点雨', second: '花返雨切', tip: '拔刀会停半拍，等刀真正出鞘再弹反；花返横切需要跳跃或退开。' },
   captain: { name: '米汀 · 双象断潮', legacy: '双象卫长 · 铜印', hair: '#bcc9d8', coat: '#eee7dd', trim: '#343643', eye: '#7a9bb0', motif: 'sailor', first: '双刀听潮', second: '断潮换步', tip: '收刀时会侧步换位，留意锁定方向；重切后的长收招是机会。' },
   regent: { name: '弥月 · 机巧雨冠', legacy: '长夜司灯 · 雨冠', hair: '#d5c0e7', coat: '#504368', trim: '#ddb99a', eye: '#b5dafa', motif: 'rabbit', first: '兔耳点射', second: '双月齐鸣', tip: '兔耳炮直线点射。横移躲开射线，双炮迟落后有较长空档。' },

@@ -14,7 +14,7 @@ export default function HavenPanel({ state, mode, choose, guide }: { state: Game
       <p className={styles.eyebrow}>{talk.speaker}</p><h2>{talk.title}</h2>
       {talk.lines.map(line => <p key={line}>{line}</p>)}
       {state.haven.talking === 'haven-keeper' && <p className={styles.havenBalance}>随身 {state.rice} · 寄存 {state.haven.savings}</p>}
-      <div className={styles.havenChoices}>{talk.choices.map(c => <button key={c.id} disabled={c.disabled} onClick={() => choose(c.id)}><span>{c.label}</span>{c.detail && <small>{c.detail}</small>}</button>)}</div>
+      <div className={styles.havenChoices}>{talk.choices.map((c, i) => <button data-game-primary={i === 0 || undefined} key={c.id} disabled={c.disabled} onClick={() => choose(c.id)}><span>{c.label}</span>{c.detail && <small>{c.detail}</small>}</button>)}</div>
       {!!state.messageTime && state.messageKind === 'event' && <p role="status" className={styles.havenBalance}>{state.message}</p>}
     </div>
 );

@@ -1,6 +1,8 @@
 import type { CameraControl, GameInput, GameState } from './types';
+import { padFamily, type PadFamily } from './inputHints';
+import { MenuNavigation } from './menuNavigation';
 
-type Panel = 'pause' | 'map' | 'companion' | 'story' | 'journal' | 'forge' | null;
+type Panel = 'pause' | 'map' | 'companion' | 'story' | 'journal' | 'forge' | 'lamp' | 'gear' | 'bestiary' | null;
 type ControlHost = {
   root: HTMLElement;
   camera: { current: CameraControl };
@@ -12,6 +14,7 @@ type ControlHost = {
   clear: () => void;
   queue: (action: Partial<GameInput>) => void;
   upgrade: () => void;
+  back?: () => void;
 };
 
 /** Radial dead zone preserves walking speed and prevents faster diagonals. */
@@ -32,6 +35,7 @@ export class ActionControls {
   locked = false;
   altHeld = false;
   gamepadConnected = false;
+  family: PadFamily = 'xbox';
   lockMessage = '';
   lookSettings = { mouse: 1, gamepad: 1, invertY: false };
   private sprinting = false;
@@ -46,6 +50,7 @@ export class ActionControls {
   private navigation = 0;
   private nextNavigation = 0;
   private listeners: (() => void)[] = [];
+  private menus = new MenuNavigation();
 
   constructor(private host: ControlHost) {
     try {
@@ -88,6 +93,7 @@ export class ActionControls {
     on('contextmenu', event => { if (this.locked) event.preventDefault(); });
     on('wheel', event => { if (this.locked && this.playing()) this.host.camera.current.distance = Math.max(3, Math.min(9, this.host.camera.current.distance + event.deltaY * 0.006)); });
     on('keydown', event => {
+      if (event.isTrusted) { this.source = 'mouse'; this.menus.reset(); }
       if (event.key !== 'Alt') return;
       event.preventDefault();
       this.altHeld = true; this.captureAfterRelease = false; host.clear(); this.release();
@@ -97,6 +103,7 @@ export class ActionControls {
       event.preventDefault(); this.altHeld = false;
       if (this.source === 'mouse' && this.focused && this.playing()) { this.captureAfterRelease = true; this.capture(); }
     });
+    on('pointerdown', event => { if (event.isTrusted && host.root.contains(event.target as Node)) { this.source = event.pointerType === 'touch' ? 'touch' : 'mouse'; this.menus.reset(); } });
     const blur = () => { this.focused = false; this.altHeld = false; this.captureAfterRelease = false; this.movement = { x: 0, forward: 0, sprint: false }; this.release(); };
     const focus = () => { this.focused = true; };
     window.addEventListener('blur', blur); window.addEventListener('focus', focus);
@@ -145,6 +152,7 @@ export class ActionControls {
       this.padKey = ''; this.previous = []; this.dashHeld = false; this.guardHeld = false; if (this.source === 'gamepad') this.heavyHeld = false; return;
     }
     const pressed = pad.buttons.map(b => b.pressed || b.value > 0.5);
+    this.family = padFamily(pad.id);
     this.heldBlocked = this.heldBlocked.map((blocked, index) => blocked && !!pressed[index]);
     const key = `${pad.index}:${pad.id}`;
     // Reconnect/focus regain never replays buttons held in the background.
@@ -165,33 +173,25 @@ export class ActionControls {
     const menu = this.host.root.querySelector<HTMLElement>('[role="alertdialog"]') ?? this.host.root.querySelector<HTMLElement>('[role="dialog"]') ?? this.host.root.querySelector<HTMLElement>('[data-game-menu]');
     if (menu) {
       this.heldBlocked = pressed.slice();
-      if (edge(1) && this.host.panel() && !this.host.confirming()) { this.host.showPanel(null); return; }
-      const items = Array.from(menu.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), a[href], summary')).filter(el => el.getClientRects().length > 0);
+      if (edge(1) && this.host.panel() && !this.host.confirming()) { if (this.host.back) this.host.back(); else this.host.showPanel(null); return; }
+      if (this.source !== 'gamepad') return;
+      this.menus.sync(menu);
       const direction = pressed[12] || pressed[14] || move.y < -0.5 || move.x < -0.5 ? -1 : pressed[13] || pressed[15] || move.y > 0.5 || move.x > 0.5 ? 1 : 0;
       if (direction && (direction !== this.navigation || now > this.nextNavigation)) {
-        const focused = document.activeElement;
-        if (focused instanceof HTMLSelectElement && (pressed[14] || pressed[15] || Math.abs(move.x) > 0.5)) {
-          focused.selectedIndex = Math.max(0, Math.min(focused.options.length - 1, focused.selectedIndex + direction));
-          focused.dispatchEvent(new Event('change', { bubbles: true }));
-        } else {
-          const index = items.indexOf(focused as HTMLElement);
-          const next = index < 0 ? (direction > 0 ? 0 : items.length - 1) : (index + direction + items.length) % items.length;
-          items[next]?.focus(); items[next]?.scrollIntoView({ block: 'nearest' });
-        }
+        this.menus.move(menu, direction, !!(pressed[14] || pressed[15] || Math.abs(move.x) > 0.5));
         this.nextNavigation = now + (direction !== this.navigation ? 350 : 150);
       }
       this.navigation = direction;
-      if (edge(0)) {
-        const focused = items.find(el => el === document.activeElement);
-        // First confirm on a title/death screen selects its primary action.
-        (focused ?? menu.querySelector<HTMLElement>('[data-game-primary]') ?? items[0])?.click();
-      }
+      if (edge(0)) this.menus.confirm(menu);
       return;
     }
+    this.menus.reset();
     this.navigation = 0;
     if (!this.playing() || this.altHeld) return;
     if (edge(8)) { this.host.showPanel('map'); return; }
     if (edge(6)) { this.host.showPanel('companion'); return; }
+    if (edge(15)) { this.host.showPanel('journal'); return; }
+    if (edge(14)) { this.host.showPanel('gear'); return; }
     if (edge(12)) this.host.upgrade();
     if (edge(10)) this.sprinting = !this.sprinting;
     if (Math.hypot(move.x, move.y) < 0.1) this.sprinting = false;

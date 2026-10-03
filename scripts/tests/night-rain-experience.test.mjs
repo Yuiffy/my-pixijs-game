@@ -100,10 +100,10 @@ test('weapon forms actually alter reach, damage, posture, stamina and guard rath
 
 test('all previously unnamed bosses are characters, with unique signatures and working special mechanics', () => {
   const s = fresh(); const characters = s.enemies.filter(e => BOSS_ROSTER[e.kind]);
-  assert.equal(characters.length, 7); assert.equal(new Set(characters.map(e => e.name)).size, 7);
+  assert.equal(characters.length, 9); assert.equal(new Set(characters.map(e => e.name)).size, 9);
   assert.ok(characters.every(e => !e.name.includes('无名') && e.name === BOSS_ROSTER[e.kind].name));
   const signatures = characters.map(e => [0, 1, 2].map(attackIndex => engine.enemyAttack({ ...e, attackIndex, phase: 2 }).name));
-  assert.equal(new Set(signatures.flat()).size, 21);
+  assert.equal(new Set(signatures.flat()).size, 27);
   const gunner = s.enemies.find(e => e.kind === 'regent'); assert.equal(engine.enemyAttack(gunner).lunge, 0); assert.ok(engine.enemyAttack(gunner).range > 5);
   const skipper = s.enemies.find(e => e.kind === 'captain');
   Object.assign(skipper, { phase: 2, aggro: true, action: 'recover', timer: 0.9, facing: 0 }); place(s, { x: skipper.x, y: skipper.y, z: skipper.z + 2 });

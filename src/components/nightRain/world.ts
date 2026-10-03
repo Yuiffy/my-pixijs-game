@@ -5,6 +5,7 @@ import { CHAPTER_ENEMIES, CHAPTER_LANDMARKS, CHAPTER_OBSTACLES, CHAPTER_REST_POI
 import { VALLEY_ENEMIES, VALLEY_LANDMARKS, VALLEY_OBSTACLES, VALLEY_REST_POINTS, VALLEY_SURFACES } from './valley';
 
 import { HAVEN_ENEMIES, HAVEN_LANDMARKS, HAVEN_OBSTACLES, HAVEN_REST_POINTS, HAVEN_SURFACES } from './haven';
+import { DUNGEON_ENEMIES, DUNGEON_LANDMARKS, DUNGEON_OBSTACLES, DUNGEON_REST_POINTS, DUNGEON_SURFACES } from './dungeons';
 
 // Metres. +x east, +z south, +y up. Ramp endY is the height at z2.
 // Solid parapets bound the walkable network; no hidden teleport links.
@@ -52,6 +53,7 @@ export const SURFACES: Surface[] = [
   ...CHAPTER_SURFACES,
   ...VALLEY_SURFACES,
   ...HAVEN_SURFACES,
+  ...DUNGEON_SURFACES,
 ];
 
 export const OBSTACLES: Obstacle[] = [
@@ -80,6 +82,7 @@ export const OBSTACLES: Obstacle[] = [
   ...CHAPTER_OBSTACLES,
   ...VALLEY_OBSTACLES,
   ...HAVEN_OBSTACLES,
+  ...DUNGEON_OBSTACLES,
 ];
 
 export const LANDMARKS: Landmark[] = [
@@ -108,6 +111,7 @@ export const LANDMARKS: Landmark[] = [
   ...CHAPTER_LANDMARKS,
   ...VALLEY_LANDMARKS,
   ...HAVEN_LANDMARKS,
+  ...DUNGEON_LANDMARKS,
 ];
 
 export const AMBUSH_ENEMIES: (Vec3 & { id: string; kind: EnemyKind; name: string; facing: number })[] = [
@@ -132,6 +136,7 @@ export const ENEMY_SPAWNS: (Vec3 & { id: string; kind: EnemyKind; name: string; 
   ...VALLEY_ENEMIES,
   ...HAVEN_ENEMIES,
   ...AMBUSH_ENEMIES,
+  ...DUNGEON_ENEMIES,
 ];
 
 export const SPAWN: Vec3 = { x: 1.8, y: 6, z: 15.5 };
@@ -143,6 +148,7 @@ export const REST_POINTS: Record<string, Vec3> = {
   ...CHAPTER_REST_POINTS,
   ...VALLEY_REST_POINTS,
   ...HAVEN_REST_POINTS,
+  ...DUNGEON_REST_POINTS,
 };
 // A guide stops beside a solid shrine; interaction itself is allowed from any clear side.
 export function interactionPoint(l: Landmark): Vec3 {
@@ -158,7 +164,7 @@ export function gateOpen(o: Obstacle, access: WorldAccess): boolean {
   return o.kind === 'gate' && (o.gateId === 'harbor' ? typeof access !== 'boolean' && !!access.harborGate : o.gateId === 'temple' ? typeof access !== 'boolean' && access.templeGate : typeof access === 'boolean' ? access : access.shortcut);
 }
 
-export const WORLD_BOUNDS = { x1: -295, x2: 80, z1: -545, z2: 163, maxY: 50 };
+export const WORLD_BOUNDS = { x1: -295, x2: 130, z1: -545, z2: 163, maxY: 50 };
 
 function spatialIndex<T>(items: T[], bounds: (item: T) => { x1: number; x2: number; z1: number; z2: number }) {
   const buckets = new Map<string, T[]>();
@@ -205,6 +211,18 @@ export function lineClear(a: Vec3, b: Vec3, shortcut: WorldAccess = false, ignor
     y = supportAt(x, z, y + 0.6) ?? y;
   }
   return Math.abs(y - b.y) < 0.8;
+}
+
+/** Actual point-height collision: bolts cannot pass through cover or another floor. */
+export function projectileBlocked(p: Vec3, access: WorldAccess): boolean {
+  if (architectureIntervals(p.x, p.z).some(h => p.y >= h.bottom && p.y <= h.top)) return true;
+  if (nearbyObstacles(p.x, p.z).some(o => !gateOpen(o, access) && p.y >= o.y && p.y <= o.y + o.h && Math.abs(p.x - o.x) < o.w / 2 + 0.06 && Math.abs(p.z - o.z) < o.d / 2 + 0.06)) return true;
+  if (nearbyParapets(p.x, p.z).some(o => p.y >= o.y && p.y <= o.y + o.slope * (p.z - o.z) + 0.73 && Math.abs(p.x - o.x) < o.w / 2 + 0.05 && Math.abs(p.z - o.z) < o.d / 2 + 0.05)) return true;
+  return nearbySurfaces(p.x, p.z).some(s => {
+    if (p.x < s.x1 || p.x > s.x2 || p.z < s.z1 || p.z > s.z2) return false;
+    const top = s.y + (((s.endY ?? s.y) - s.y) * (p.z - s.z1)) / (s.z2 - s.z1);
+    return p.y >= top - 0.58 && p.y <= top + 0.03;
+  });
 }
 
 // The same visible 72cm parapets are used by rendering and player collision.

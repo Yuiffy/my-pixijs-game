@@ -28,11 +28,11 @@ test('all river spawns, shrines, mechanisms and ferry landings stand on connecte
 
 test('actual completed v5 save migrates without changing the player, inventory or any old enemy', () => {
   const old = JSON.parse(fixture); const s = fresh();
-  assert.equal(s.worldVersion, 8); assert.deepEqual(s.player, old.player);
+  assert.equal(s.worldVersion, 9); assert.deepEqual(s.player, old.player);
   assert.deepEqual(s.enemies.slice(0, old.enemies.length), expectedLegacyEnemies(old.enemies));
   for (const key of ['rice', 'level', 'bankedRice', 'defeatedGuests', 'litLamps', 'collected', 'chapterGates', 'chapterComplete']) assert.deepEqual(s[key], old[key], key);
   assert.equal(s.enemies.length, world.ENEMY_SPAWNS.length);
-  assert.equal(s.enemies.length - old.enemies.length, valley.VALLEY_ENEMIES.length + haven.HAVEN_ENEMIES.length + world.AMBUSH_ENEMIES.length);
+  assert.equal(s.enemies.length - old.enemies.length, valley.VALLEY_ENEMIES.length + haven.HAVEN_ENEMIES.length + world.AMBUSH_ENEMIES.length + 8);
   assert.deepEqual(s.valleyGates, []); assert.equal(s.valleyComplete, false);
   assert.ok(engine.loadGame(engine.saveGame(s)));
 });
@@ -117,7 +117,7 @@ test('river rewards stack with old upgrades once, and completion requires the fi
   at(s, 'river-heart'); engine.interact(s); assert.equal(s.valleyComplete, false);
   for (const id of valley.VALLEY_BOSSES) clear(s, id);
   s.collected.push('mill-sluice', 'monastery-sluice'); s.valleyGates.push('river-door');
-  engine.interact(s); assert.equal(s.valleyComplete, true); assert.equal(s.mode, 'ending');
+  engine.interact(s); assert.equal(s.valleyComplete, true); assert.equal(s.mode, 'interlude');
   const loaded = engine.loadGame(engine.saveGame(s)); assert.ok(loaded); engine.continueExploring(loaded); engine.interact(loaded);
   assert.equal(loaded.mode, 'playing'); assert.equal(loaded.collected.filter(id => id === 'river-heart').length, 1);
 });
@@ -165,7 +165,7 @@ async function journey(route, name) {
     stages.push({ target: target.id ?? target.capture, position: { x: s.player.x, y: s.player.y, z: s.player.z }, hp: s.player.hp, time: s.time });
     console.log(`${name}: ${target.id ?? target.capture} ${Math.round(s.time)}s`);
   }
-  assert.equal(s.valleyComplete, true); assert.equal(s.mode, 'ending');
+  assert.equal(s.valleyComplete, true); assert.equal(s.mode, 'interlude');
   assert.ok(valley.VALLEY_BOSSES.every(id => s.defeatedGuests.includes(id)));
   fs.mkdirSync('tmp/night-rain-valley-rules', { recursive: true });
   fs.writeFileSync(`tmp/night-rain-valley-rules/${name}.json`, JSON.stringify({ stages, distance, state: s }, null, 2));

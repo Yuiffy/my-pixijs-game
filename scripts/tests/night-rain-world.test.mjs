@@ -15,7 +15,7 @@ const interact = (s,id) => {travel(s,id);engine.interact(s);};
 const distance = path => path.slice(1).reduce((sum,p,i)=>sum+Math.hypot(p.x-path[i].x,p.z-path[i].z,p.y-path[i].y),0);
 
 test('every expansion destination and all lamp spawn points have a legal walking route with both gates shut',()=>{
- const s=fresh();for(const l of world.LANDMARKS.filter(l=>l.z>=-83)){
+ const s=fresh();for(const l of world.LANDMARKS.filter(l=>l.z>=-83&&l.x<80)){
   assert.equal(world.supportAt(l.x,l.z,l.y+.1),l.y);
   if(['well-testimony','well-choice','well-return'].includes(l.id)){
    assert.equal(guide.findPath(s.player,world.interactionPoint(l),s).length,0,`${l.id}: sealed`);
@@ -79,13 +79,13 @@ test('first ignition only registers; subsequent rest is free, refills and resets
  assert.deepEqual(s.litLamps,['courtyard']);assert.equal(s.checkpoint,'courtyard');assert.match(s.prompt,/免费休息/);
  const restored=engine.loadGame(engine.saveGame(s));assert.ok(restored);assert.equal(restored.player.hp,37);assert.equal(restored.enemies[0].hp,0);
  engine.interact(s);assert.equal(s.player.hp,engine.maxHp(s));assert.equal(s.player.stamina,engine.maxStamina(s));assert.equal(s.player.flasks,3);assert.equal(s.restCount,1);assert.equal(s.rice,0);assert.ok(s.enemies[0].hp>0);
- assert.deepEqual(world.LANDMARKS.filter(l=>l.kind==='rest').map(l=>l.id),['courtyard','lower-lamp','archive-lamp','royal-lamp','village-lamp','monastery-lamp','confluence-lamp','haven-lamp']);assert.deepEqual(Object.keys(world.REST_POINTS),['room','courtyard','lower-lamp','archive-lamp','royal-lamp','village-lamp','monastery-lamp','confluence-lamp','haven-lamp']);
+ assert.deepEqual(world.LANDMARKS.filter(l=>l.kind==='rest').map(l=>l.id),['courtyard','lower-lamp','archive-lamp','royal-lamp','village-lamp','monastery-lamp','confluence-lamp','haven-lamp','crypt-lamp','cave-lamp']);assert.deepEqual(Object.keys(world.REST_POINTS),['room','courtyard','lower-lamp','archive-lamp','royal-lamp','village-lamp','monastery-lamp','confluence-lamp','haven-lamp','crypt-lamp','cave-lamp']);
 });
 
 test('v2 retired checkpoint migrates without moving, healing, restocking or reviving enemies',()=>{
  for(const oldLamp of ['temple-lamp','canal-lamp']){
   const s=fresh();Object.assign(s.player,{...world.interactionPoint(world.LANDMARKS.find(l=>l.id===oldLamp)),hp:31,flasks:1});s.enemies[0].hp=0;s.enemies[0].action='dead';
-  s.worldVersion=2;s.checkpoint=oldLamp;s.litLamps=[oldLamp];const loaded=engine.loadGame(engine.saveGame(s));assert.ok(loaded);assert.equal(loaded.worldVersion,8);assert.equal(loaded.checkpoint,'courtyard');assert.deepEqual(loaded.litLamps,['courtyard']);assert.deepEqual(loaded.player,s.player);assert.deepEqual(loaded.enemies,s.enemies);assert.equal(loaded.restCount,s.restCount);
+  s.worldVersion=2;s.checkpoint=oldLamp;s.litLamps=[oldLamp];const loaded=engine.loadGame(engine.saveGame(s));assert.ok(loaded);assert.equal(loaded.worldVersion,9);assert.equal(loaded.checkpoint,'courtyard');assert.deepEqual(loaded.litLamps,['courtyard']);assert.deepEqual(loaded.player,s.player);assert.deepEqual(loaded.enemies,s.enemies);assert.equal(loaded.restCount,s.restCount);
   s.litLamps=[];assert.equal(engine.loadGame(engine.saveGame(s)),null);
  }
 });

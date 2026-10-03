@@ -35,6 +35,8 @@ async function main() {
       assert.equal(game.collected.includes(id),false);
       assert.ok(engine.loadGame(engine.saveGame(game)));
       const page = await browser.newPage({viewport:{width:1440,height:900}});
+      await page.route('https://pagead2.googlesyndication.com/**',r=>r.fulfill({contentType:'application/javascript',body:''}));
+      await page.route('https://hm.baidu.com/**',r=>r.fulfill({contentType:'application/javascript',body:''}));
       page.on('pageerror',e=>errors.push(e.message)); page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
       await page.addInitScript(installVirtualPointerLock);
       await page.addInitScript(save=>{
@@ -78,7 +80,7 @@ async function main() {
       assert.equal(moved.collected.filter(value=>value===id).length,1);
       assert.equal(moved.rice,result.state.rice);
       assert.equal(moved.player.flasks,result.state.player.flasks);
-      const stored=await page.evaluate(()=>localStorage.getItem('night-rain-v1'));assert.ok(engine.loadGame(stored).collected.includes(id));
+      const stored=await page.evaluate(()=>localStorage.getItem('night-rain-v1-slot-1'));assert.ok(engine.loadGame(stored).collected.includes(id));
       await page.reload({waitUntil:'networkidle'});await page.getByRole('button',{name:'继续雨夜旅程 →',exact:true}).click();
       assert.ok((await page.evaluate(()=>window.nightRain.getState())).collected.includes(id));
       await page.close();

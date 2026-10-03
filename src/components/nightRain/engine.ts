@@ -1,5 +1,9 @@
 import type { Action, AttackId, Effect, Enemy, EnemyKind, GameInput, GameState, Player, Vec3, WorldAccess } from './types';
-import { ceilingAt, deckBlocks, playerBlocked, supportAt, canOccupy, REST_POINTS, ENEMY_SPAWNS, AMBUSH_ENEMIES, LANDMARKS, lineClear, regionAt, SPAWN, WORLD_BOUNDS } from './world';
+import { ceilingAt, deckBlocks, playerBlocked, projectileBlocked, supportAt, canOccupy, REST_POINTS, ENEMY_SPAWNS, AMBUSH_ENEMIES, LANDMARKS, lineClear, regionAt, SPAWN, WORLD_BOUNDS } from './world';
+import { enemyRole, isBoss } from './encounters';
+import { DUNGEON_BOSSES, DUNGEON_ENEMIES, DUNGEON_PORTALS, giantScale } from './dungeons';
+import { ARMORS, validEquipment } from './equipment';
+import { bestiaryKey } from './bestiary';
 import { freshHaven, HAVEN_ENEMIES, HAVEN_FERRIES, HAVEN_GATES, HAVEN_LORE, havenAvailable } from './haven';
 import { applyConversation, validHaven } from './havenStory';
 import { CHAPTER_ENEMIES, CHAPTER_GATES, CHAPTER_LORE } from './chapter';
@@ -8,7 +12,7 @@ import { FERRY_DESTINATIONS, riverSeals, VALLEY_BOSSES, VALLEY_ENEMIES, VALLEY_G
 import { enemyAttack, enemyTiming, ENEMY_STRIKE_TIME, ENEMY_CONTACT_TIME } from './enemyCombat';
 
 import { BOSS_ROSTER } from './bossRoster';
-import { WEAPONS, weaponAttack } from './weapons';
+import { WEAPONS, weaponAttack, weaponUnlocked } from './weapons';
 
 import { ATTACKS, BUFFER_TIME, CHARGE_TIME, DASH_HOLD_TIME, PARRY_WINDOW } from './combat';
 
@@ -17,6 +21,8 @@ export { enemyAttack } from './enemyCombat';
 // The simulation contains no browser, rendering, wall-clock or random state.
 // All times are seconds, except the public stepGame argument (milliseconds).
 const STATS: Record<EnemyKind, { hp: number; posture: number; damage: number; speed: number; reward: number }> = {
+  colossus: { hp: 530, posture: 190, damage: 34, speed: 1.45, reward: 220 },
+  sentinel: { hp: 720, posture: 220, damage: 39, speed: 1.3, reward: 300 },
   prowler: { hp: 68, posture: 64, damage: 19, speed: 2.1, reward: 18 },
   guard: { hp: 112, posture: 94, damage: 25, speed: 1.65, reward: 30 },
   duelist: { hp: 144, posture: 100, damage: 24, speed: 2.65, reward: 45 },
@@ -42,9 +48,9 @@ const alive = (enemy: Enemy) => enemy.hp > 0 && enemy.action !== 'dead';
 const finite = (n: unknown, min: number, max: number): n is number => typeof n === 'number' && Number.isFinite(n) && n >= min && n <= max;
 
 export function maxFlasks(s: GameState): number { return 3 + Number(s.flaskUpgrade) + Number(s.collected.includes('cistern-flask')) + Number(s.collected.includes('valley-flask')); }
-export function healAmount(s: GameState): number { return (s.charm ? 80 : 60) + (s.collected.includes('bamboo-dew') ? 30 : 0) + (s.haven.ending === 'release' ? 15 : 0); }
-export function maxHp(s: GameState): number { return 100 + s.level * 12; }
-export function maxStamina(s: GameState): number { return 100 + s.level * 5 + (s.haven.ending === 'remember' ? 15 : 0); }
+export function healAmount(s: GameState): number { return (s.gear.talisman === 'goldBell' ? 80 : 60) + (s.collected.includes('bamboo-dew') ? 30 : 0) + (s.haven.ending === 'release' ? 15 : 0); }
+export function maxHp(s: GameState): number { return 100 + s.level * 12 + (s.gear.talisman === 'graveSeal' ? 20 : 0); }
+export function maxStamina(s: GameState): number { return 100 + s.level * 5 + (s.haven.ending === 'remember' ? 15 : 0) + (s.gear.talisman === 'tideKnot' ? 18 : 0); }
 export function upgradeCost(s: GameState): number { return 40 + s.level * 30; }
 
 function makeEnemies(bossDefeated = false, defeatedGuests: string[] = []): Enemy[] {
@@ -85,6 +91,8 @@ mode: 'title',
 paused: false,
 player: makePlayer(SPAWN),
 enemies: makeEnemies(),
+projectiles: [],
+bestiary: [],
 effects: [],
 nextEffectId: 1,
     time: 0,
@@ -97,7 +105,8 @@ bankedRice: 0,
 level: 0,
 charm: false,
 shortcut: false,
-    worldVersion: 8,
+    worldVersion: 9,
+gear: { armor: 'traveler', talisman: 'none' },
 weaponLevel: 0,
 weapon: 'umbrella',
 haven: freshHaven(),
@@ -146,7 +155,7 @@ function movePlayer(s:GameState, dx:number, dz:number):void {
     const x = p.x + (axis === 'x' ? dx / count : 0); const z = p.z + (axis === 'z' ? dz / count : 0); const
 feet = p.y + p.jumpHeight;
     const ground = supportAt(x, z, feet + 0.6);
-    if (playerBlocked(x, z, feet, s, 0.24, isAirborne(p) ? 0.03 : 0.6) || s.enemies.some(e => alive(e) && Math.abs(e.y - feet) < 0.85 && Math.hypot(e.x - x, e.z - z) < 0.64)) continue;
+    if (playerBlocked(x, z, feet, s, 0.24, isAirborne(p) ? 0.03 : 0.6) || s.enemies.some(e => alive(e) && feet > e.y - 0.85 && feet < e.y + 0.85 * giantScale(e.id) && Math.hypot(e.x - x, e.z - z) < 0.31 + 0.33 * giantScale(e.id))) continue;
     // A deck has a real side; approaching a higher floor does not phase through it.
     if (deckBlocks(x, z, feet)) continue;
     p.x = x; p.z = z;
@@ -174,10 +183,10 @@ before = p.y + p.jumpHeight;
 }
 function move(s: GameState, entity: Vec3, dx: number, dz: number, radius = 0.33): void {
   if (entity === s.player) { movePlayer(s, dx, dz); return; }
+  radius *= giantScale((entity as Enemy).id);
   // Resolve each axis separately so a diagonal stick slides along a wall.
   const blockedByBody = (x: number, z: number) => {
-    if (entity === s.player) return s.enemies.some(e => alive(e) && Math.abs(e.y - entity.y) < 0.85 && Math.hypot(e.x - x, e.z - z) < 0.64);
-    return Math.abs(s.player.y - entity.y) < 0.85 && Math.hypot(s.player.x - x, s.player.z - z) < 0.68;
+    return Math.abs(s.player.y - entity.y) < 0.85 && Math.hypot(s.player.x - x, s.player.z - z) < 0.35 + radius;
   };
   const steps = Math.max(1, Math.ceil(Math.hypot(dx, dz) / 0.1));
   for (let i = 0; i < steps; i += 1) {
@@ -197,7 +206,9 @@ function killEnemy(s: GameState, e: Enemy): void {
   if (e.action === 'dead') return;
   e.hp = 0; e.action = 'dead'; e.aggro = false; e.timer = 0; e.posture = 0;
   s.kills += 1; s.rice += STATS[e.kind].reward;
+  const entry = bestiaryKey(e); if (!s.bestiary.includes(entry)) s.bestiary.push(entry);
   effect(s, e, 'reward', `+${STATS[e.kind].reward} 夜市钱`);
+  if (DUNGEON_BOSSES.includes(e.id)) { s.defeatedGuests.push(e.id); say(s, `${e.name} · 守望已息`, 8, 'event', '守望者身后的金光遗物已经可以收下。副本入口仍可返回，也可以在雨灯旁行旅。'); }
   if (s.lockedId === e.id) s.lockedId = null;
   if (e.kind === 'nana' || e.kind === 'azi') { s.defeatedGuests.push(e.id); say(s, e.kind === 'nana' ? '七潮归寂 · 晨钟有路' : '苔灯谢幕 · 余音仍在', 6, 'event', e.kind === 'nana' ? '潮门安静了。登上后面的石阶，可以敲响黎明钟，也可以继续探索。' : '阿梓留下了戏匣。戏台南边落雨檐可以跳到低码头，再走回灯市。'); }
   if (e.kind === 'captain' || e.kind === 'regent') {
@@ -228,20 +239,22 @@ function die(s: GameState): void {
   effect(s, s.player, 'death'); say(s, '雨夜失足。夜市钱留在原地，回到雨灯后还能取回。', 99); s.prompt = ''; s.nearbyId = null;
 }
 
-function damagePlayer(s: GameState, e: Enemy): void {
+function damagePlayer(s: GameState, e: Enemy, projectileSource?: Vec3 & { facing: number; damage: number }): void {
   const p = s.player; const attack = enemyAttack(e);
-  if (!inCone(s, e, p, attack.range, attack.arc)) return;
+  const source = projectileSource ?? e;
+  if (!projectileSource && !inCone(s, e, p, attack.range, attack.arc)) return;
+  const damageAmount = projectileSource?.damage ?? attack.damage;
   if (!attack.parryable && p.jumpHeight > 0.55) { effect(s, p, 'dodge', '跃过'); return; }
   if (p.invulnerable > 0 || (p.action === 'dodge' && p.actionTime >= 0.07 && p.actionTime <= 0.4)) { effect(s, p, 'dodge', '闪避'); return; }
-  if (attack.parryable && p.action === 'parry' && p.actionTime <= PARRY_WINDOW && inCone(s, p, e, attack.range + 0.2, 1.4)) {
+  if (attack.parryable && p.action === 'parry' && p.actionTime <= PARRY_WINDOW && inCone(s, p, source, attack.range + 0.2, 1.4)) {
     s.parries += 1; p.stamina = Math.min(maxStamina(s), p.stamina + 12); e.action = 'recover'; e.timer = 0.92;
     p.parryFlash = 0.3; s.hitstop = 0.06;
     damageEnemy(s, e, 3, e.kind === 'boss' ? 49 : 38); effect(s, { x: (p.x + e.x) / 2, y: p.y + 0.25, z: (p.z + e.z) / 2 }, 'parry', '弹反'); say(s, '铛！弹反成功 · 压住对手的架势', 1.5); return;
   }
-  if (attack.parryable && p.action === 'guard' && inCone(s, p, e, attack.range + 0.2, 1.15)) {
-    const cost = (10 + attack.damage * 0.9) * WEAPONS[s.weapon].guard;
+  if (attack.parryable && p.action === 'guard' && inCone(s, p, source, attack.range + 0.2, 1.15)) {
+    const cost = (10 + damageAmount * 0.9) * WEAPONS[s.weapon].guard;
     const broken = p.stamina < cost;
-    const damage = Math.ceil(attack.damage * (broken ? 0.6 : 0.15));
+    const damage = Math.ceil(damageAmount * (broken ? 0.6 : 0.15) * ARMORS[s.gear.armor].defense);
     p.stamina = Math.max(0, p.stamina - cost); p.staminaDelay = broken ? 1 : 0.65;
     p.hp = Math.max(0, p.hp - damage); p.guardImpact = 0.24; s.hitstop = 0.035;
     move(s, p, -Math.sin(p.facing) * (broken ? 0.45 : 0.16), -Math.cos(p.facing) * (broken ? 0.45 : 0.16));
@@ -250,8 +263,8 @@ function damagePlayer(s: GameState, e: Enemy): void {
     if (p.hp <= 0) die(s);
     return;
   }
-  p.hp = Math.max(0, p.hp - attack.damage); p.action = 'hurt'; p.actionTime = 0; p.attack = null; p.buffer = null; p.combo = 0; p.charge = 0; p.invulnerable = 0.46;
-  p.staminaDelay = 0.65; effect(s, p, 'hit', `−${attack.damage}`);
+  p.hp = Math.max(0, p.hp - Math.ceil(damageAmount * ARMORS[s.gear.armor].defense)); p.action = 'hurt'; p.actionTime = 0; p.attack = null; p.buffer = null; p.combo = 0; p.charge = 0; p.invulnerable = 0.46;
+  p.staminaDelay = 0.65; effect(s, p, 'hit', `−${damageAmount}`);
   if (p.hp <= 0) die(s);
 }
 
@@ -262,7 +275,7 @@ function execute(s: GameState): boolean {
   p.facing = facingToward(p, e); p.action = 'execute'; p.attack = null; p.buffer = null; p.combo = 0; p.actionTime = 0; p.hitDone = true; p.invulnerable = 1.05;
   p.stamina = Math.min(maxStamina(s), p.stamina + 30); s.executions += 1;
   e.posture = 0; e.action = 'recover'; e.timer = 1.5;
-  damageEnemy(s, e, ['boss', 'nana', 'azi', 'captain', 'regent', 'warden', 'abbot', 'serpent', 'elegist'].includes(e.kind) ? 102 + s.level * 5 : e.hp, 0);
+  damageEnemy(s, e, isBoss(e) ? 102 + s.level * 5 : e.hp, 0);
   effect(s, e, 'parry', '破架处决'); return true;
 }
 
@@ -328,7 +341,7 @@ function actionInput(s: GameState, input: GameInput): void {
     return;
   }
   let action: Action = 'idle';
-  if (dodge && spend(s, 25)) {
+  if (dodge && spend(s, 25 + ARMORS[s.gear.armor].dodgeCost)) {
     action = 'dodge'; const length = Math.hypot(input.x, input.z);
     p.dodgeX = length > 0.1 ? input.x / length : -Math.sin(p.facing); p.dodgeZ = length > 0.1 ? input.z / length : -Math.cos(p.facing);
   } else if (input.parry && spend(s, 14)) action = 'parry';
@@ -375,7 +388,7 @@ function updatePlayer(s: GameState, dt: number, input: GameInput): void {
   }
   if (p.action === 'charge') {
     p.charge = Math.min(CHARGE_TIME, p.charge + dt); p.actionTime += dt;
-    if (!input.heavyHeld || p.actionTime >= 1.5) {
+    if (!input.heavyHeld || p.charge >= CHARGE_TIME) {
       const charged = p.charge >= CHARGE_TIME && p.stamina >= weaponAttack(s, 'charged').cost;
       if (charged) spend(s, weaponAttack(s, 'charged').cost);
       const prep = p.charge;
@@ -396,9 +409,11 @@ function updatePlayer(s: GameState, dt: number, input: GameInput): void {
         for (const e of s.enemies) {
           if (!alive(e) || !inCone(s, p, e, spec.range, spec.arc)) continue;
           const heavy = p.action === 'heavy';
-          const guarded = e.kind === 'guard' && e.action !== 'stagger' && e.action !== 'recover' && Math.abs(angleDiff(facingToward(e, p), e.facing)) < 1.4;
-          damageEnemy(s, e, (spec.damage + s.level * (heavy ? 5 : 3)) * (guarded && !heavy ? 0.4 : 1), spec.posture); hits += 1;
-          if (alive(e) && e.action !== 'stagger' && !['boss', 'captain', 'regent', 'warden', 'abbot', 'serpent', 'elegist'].includes(e.kind) && (heavy || e.action !== 'windup')) { e.action = 'recover'; e.timer = heavy ? 0.55 : 0.28; }
+          const guarded = enemyRole(e) === 'bulwark' && e.action !== 'stagger' && e.action !== 'recover' && Math.abs(angleDiff(facingToward(e, p), e.facing)) < 1.4;
+          // Boss poise resists charged pressure; punishing a committed recovery is still rewarding.
+          const pressure = heavy && isBoss(e) ? (e.action === 'recover' ? 0.62 : 0.38) : 1;
+          damageEnemy(s, e, (spec.damage + s.level * (heavy ? 5 : 3)) * (guarded && !heavy ? 0.4 : 1), spec.posture * pressure); hits += 1;
+          if (alive(e) && e.action !== 'stagger' && !isBoss(e) && (heavy || e.action !== 'windup')) { e.action = 'recover'; e.timer = heavy ? 0.55 : 0.28; }
         }
         if (hits) s.hitstop = p.action === 'heavy' ? 0.075 : 0.04;
         if (p.attack === 'charged' || p.attack === 'airHeavy') effect(s, { ...p, x: p.x + Math.sin(p.facing), z: p.z + Math.cos(p.facing) }, 'parry');
@@ -421,13 +436,14 @@ function updateEnemy(s: GameState, e: Enemy, dt: number): void {
   const p = s.player; const dist = distance(e, p); const homeDistance = distance(e, e.spawn);
   // Distant idle actors do not trace hundreds of metres through the expanded city.
   if (!e.aggro && dist > 17 && homeDistance < 0.15) return;
+  const role = enemyRole(e); const ranged = role === 'crossbow' || role === 'slinger';
   const sameLevel = Math.abs(e.y - p.y) < 1.8; const sees = sameLevel && dist < 17 && lineClear(e, p, s);
-  if (['boss', 'nana', 'azi', 'captain', 'regent', 'warden', 'abbot', 'serpent', 'elegist'].includes(e.kind) && e.hp <= e.maxHp * 0.5 && e.phase === 1 && !['windup', 'attack'].includes(e.action)) { e.phase = 2; say(s, BOSS_ROSTER[e.kind] ? `${BOSS_ROSTER[e.kind]!.name.split(' · ')[0]} · ${BOSS_ROSTER[e.kind]!.second}` : e.kind === 'nana' ? '七海 · 七潮叠浪' : '阿梓 · 夜曲变奏', 5, 'event', BOSS_ROSTER[e.kind]?.tip ?? '红色横扫不能弹反，跳过或退开，等收招再反击。'); }
+  if (isBoss(e) && e.hp <= e.maxHp * 0.5 && e.phase === 1 && !['windup', 'attack'].includes(e.action)) { e.phase = 2; say(s, BOSS_ROSTER[e.kind] ? `${BOSS_ROSTER[e.kind]!.name.split(' · ')[0]} · ${BOSS_ROSTER[e.kind]!.second}` : e.kind === 'nana' ? '七海 · 七潮叠浪' : '阿梓 · 夜曲变奏', 5, 'event', BOSS_ROSTER[e.kind]?.tip ?? '红色横扫不能弹反，跳过或退开，等收招再反击。'); }
   const inArena = e.kind !== 'boss' || (p.z < -36 && p.y < 0.2);
   const ambush = AMBUSH_ENEMIES.some(a => a.id === e.id);
   const refuge = s.litLamps.includes('courtyard') && Math.abs(p.y) < 0.8 && Math.hypot(p.x + 1, p.z - 7) < 3.5;
   if (refuge && e.aggro && e.kind !== 'boss') { e.aggro = false; e.action = 'idle'; e.timer = 0.8; e.posture = 0; }
-  if (!e.aggro && homeDistance < 1.5 && inArena && !refuge && dist < (ambush ? 3.6 : e.kind === 'boss' ? 8 : 6.3) && sees) { e.aggro = true; e.timer = 0.45; }
+  if (!e.aggro && homeDistance < 1.5 && inArena && !refuge && dist < (ambush ? 3.6 : ranged ? 11 : e.kind === 'boss' ? 8 : 6.3) && sees) { e.aggro = true; e.timer = ranged ? 0.9 : 0.45; }
   // Enemies return to their posts rather than pursuing through floors or the entire level.
   if (e.aggro && (homeDistance > (['regent', 'serpent', 'elegist'].includes(e.kind) ? 22 : e.kind === 'captain' ? 18 : e.kind === 'boss' ? 11 : 10) || dist > 15 || (e.kind === 'boss' && p.z > -35.5))) { e.aggro = false; e.action = 'idle'; e.timer = 0.8; e.posture = 0; }
   if (!e.aggro) {
@@ -453,16 +469,45 @@ function updateEnemy(s: GameState, e: Enemy, dt: number): void {
   if (e.action === 'attack') {
     if (e.timer > ENEMY_STRIKE_TIME - 0.12) move(s, e, Math.sin(e.facing) * attack.lunge * dt * 5, Math.cos(e.facing) * attack.lunge * dt * 5);
     e.timer -= dt;
-    if (!e.hitDone && e.timer <= ENEMY_STRIKE_TIME - ENEMY_CONTACT_TIME) { e.hitDone = true; damagePlayer(s, e); }
+    if (!e.hitDone && e.timer <= ENEMY_STRIKE_TIME - ENEMY_CONTACT_TIME) {
+      e.hitDone = true;
+      if (attack.projectile) {
+        const speed = role === 'crossbow' ? 10 : 7.5;
+        const y = e.y + 1.15;
+        s.projectiles.push({ id: s.nextEffectId++, owner: e.id, x: e.x + Math.sin(e.facing) * 0.6, y, z: e.z + Math.cos(e.facing) * 0.6, vx: Math.sin(e.facing) * speed, vz: Math.cos(e.facing) * speed, vy: (p.y + 0.95 - y) / Math.max(0.1, dist / speed), life: 2, damage: attack.damage, kind: role === 'crossbow' ? 'bolt' : 'stone' });
+        if (s.projectiles.length > 12) s.projectiles.shift();
+      } else damagePlayer(s, e);
+    }
     if (e.action === 'attack' && e.timer <= 0) { e.action = 'recover'; e.timer = attack.recovery; }
     return;
   }
   if (e.action === 'recover') { if (e.kind === 'captain' && e.phase === 2 && e.timer > 0.5 && e.timer < 0.95) move(s, e, Math.cos(e.facing) * dt * 1.8, -Math.sin(e.facing) * dt * 1.8); e.timer -= dt; if (e.timer <= 0) { e.action = 'chase'; e.attackIndex += 1; e.timer = 0.1; } return; }
   e.timer = Math.max(0, e.timer - dt);
   e.posture = Math.max(0, e.posture - dt * (dist > 5 ? 10 : 2.2));
-  if (dist <= attack.range - 0.25 && sees && e.timer <= 0) { e.facing = facingToward(e, p); e.action = 'windup'; e.timer = attack.windup; return; }
+  if (ranged && e.timer <= 0) {
+    // Close pressure forces a slow short blade; the ranged post does not kite forever.
+    if (dist < 2.7) e.attackIndex = Math.floor(e.attackIndex / 3) * 3 + 2;
+    else if (e.attackIndex % 3 === 2) e.attackIndex += 1;
+  }
+  const nextAttack = enemyAttack(e);
+  if (dist <= nextAttack.range - 0.25 && sees && e.timer <= 0) { e.facing = facingToward(e, p); e.action = 'windup'; e.timer = nextAttack.windup; return; }
   e.action = 'chase';
-  if (dist > 1.2 && sees) { e.facing = facingToward(e, p); move(s, e, Math.sin(e.facing) * STATS[e.kind].speed * dt, Math.cos(e.facing) * STATS[e.kind].speed * dt); }
+  if (ranged && dist < 4 && homeDistance < 2.5 && sees) { e.facing = facingToward(e, p); move(s, e, -Math.sin(e.facing) * dt, -Math.cos(e.facing) * dt); } else if (dist > (ranged ? 9 : 1.2) && sees) { e.facing = facingToward(e, p); move(s, e, Math.sin(e.facing) * STATS[e.kind].speed * dt, Math.cos(e.facing) * STATS[e.kind].speed * dt); }
+}
+
+function updateProjectiles(s: GameState, dt: number) {
+  for (const bolt of s.projectiles) {
+    const old = { ...bolt };
+    bolt.x += bolt.vx * dt; bolt.y += bolt.vy * dt; bolt.z += bolt.vz * dt; bolt.life -= dt;
+    if (projectileBlocked(bolt, s)) { bolt.life = 0; effect(s, bolt, 'block'); continue; }
+    const p = s.player;
+    if (Math.hypot(p.x - bolt.x, p.z - bolt.z) < 0.46 && bolt.y > p.y + p.jumpHeight + 0.12 && bolt.y < p.y + p.jumpHeight + 1.7) {
+      const owner = s.enemies.find(e => e.id === bolt.owner);
+      if (owner) damagePlayer(s, owner, { x: old.x, y: p.y, z: old.z, facing: Math.atan2(bolt.vx, bolt.vz), damage: bolt.damage });
+      bolt.life = 0;
+    }
+  }
+  s.projectiles = s.projectiles.filter(b => b.life > 0);
 }
 
 const BASE_DOORS = [
@@ -516,6 +561,7 @@ export function stepGame(s: GameState, dtMs: number, input: GameInput = NEUTRAL)
     s.effects = s.effects.filter(fx => fx.life > 0);
     updatePlayer(s, dt, safeInput);
     for (const enemy of s.enemies) { if (s.mode === 'playing') updateEnemy(s, enemy, dt); }
+    if (s.mode === 'playing') updateProjectiles(s, dt);
   }
   updatePrompt(s);
 }
@@ -532,6 +578,16 @@ export function interact(s: GameState): void {
   if (nearbyId === 'bloodstain' && s.bloodstain) { s.rice += s.bloodstain.rice; s.bloodstain = null; effect(s, s.player, 'reward', '失物归还'); say(s, '找回了夜市钱。今晚还吃得起！'); updatePrompt(s); return; }
   const landmark = LANDMARKS.find(l => l.id === nearbyId);
   if (!landmark) return;
+  const portal = DUNGEON_PORTALS[landmark.id];
+  if (portal) {
+    if (!safeToRest(s)) { say(s, '先甩开追兵，再穿过石门。'); return; }
+    if (portal.chapter && !s.chapterComplete) { say(s, '先听王寺钟声，再循雾河找到洞窟。'); return; }
+    const { hp, stamina, flasks } = s.player;
+    s.player = { ...makePlayer(portal.destination), hp, stamina, flasks }; s.lockedId = null; s.projectiles = [];
+    say(s, landmark.label, 6, 'event'); updatePrompt(s); return;
+  }
+  const guardedLoot = ['grave-spear', 'grave-seal'].includes(landmark.id) ? 'crypt-colossus' : ['stone-maul', 'tide-knot'].includes(landmark.id) ? 'cave-sentinel' : null;
+  if (guardedLoot && !s.defeatedGuests.includes(guardedLoot)) { say(s, '金光仍被守望者护着，先回应它的挑战。'); return; }
   if (wrongDoorSide(s, landmark.id)) { say(s, '无法从这一侧打开 · 门闩在另一侧', 4, 'event', '沿支路绕到门后，开启后近路会永久保留。'); return; }
   if (landmark.kind === 'rest') {
     if (!s.litLamps.includes(landmark.id)) {
@@ -543,9 +599,14 @@ export function interact(s: GameState): void {
     if (!safeToRest(s)) { say(s, '敌人还在附近，先脱离战斗才能休息。'); return; }
     s.checkpoint = landmark.id as GameState['checkpoint'];
     s.player.hp = maxHp(s); s.player.stamina = maxStamina(s); s.player.flasks = maxFlasks(s); s.restCount += 1;
-    s.enemies = makeEnemies(s.bossDefeated, s.defeatedGuests); s.lockedId = null;
+    s.enemies = makeEnemies(s.bossDefeated, s.defeatedGuests); s.lockedId = null; s.projectiles = [];
     effect(s, landmark, 'heal');
     say(s, '歇息片刻 · 雨仍未停', 4, 'event', '免费休息，生命、体力和药瓶已补满；普通敌人会重生。旁边花钱的是强化装备，不是休息。');
+  } else if (['ossuary-mail', 'grave-spear', 'grave-seal', 'reed-cape', 'cave-daggers', 'stone-maul', 'tide-knot'].includes(landmark.id)) {
+    if (!s.collected.includes(landmark.id)) { s.collected.push(landmark.id); effect(s, landmark, 'reward', '独一遗物'); say(s, `${landmark.label} · 已收入行囊`, 7, 'event', '打开行囊更换武器、防具或护符。独一遗物会在休息、死亡与传送后保留。'); }
+  } else if (landmark.id === 'crypt-note' || landmark.id === 'cave-note') {
+    if (!s.collected.includes(landmark.id)) s.collected.push(landmark.id);
+    say(s, landmark.id === 'crypt-note' ? '箭廊正对墓门，藏骨侧廊却绕过弩弦。露缇替无人记名者守着最后一块石印。' : '风苇落在水右岸，岩心只留给愿意等一记重槌的人。沐石没有催过任何渡客。', 12, 'lore', '白光为补给，紫光为稀有遗物，金光为永久能力或独一武器；支路有不同奖励。');
   } else if (interactHaven(s, landmark.id)) {
     updatePrompt(s); return;
   } else if (landmark.id === 'bamboo-dew' && !s.collected.includes(landmark.id)) {
@@ -555,7 +616,7 @@ export function interact(s: GameState): void {
     s.collected.push(landmark.id); s.rice += 35; effect(s, landmark, 'reward', '+35 夜市钱');
     say(s, '旧铜钱 ×35', 3, 'event', landmark.id === 'cloister-cache' ? '拿到了！回廊的矮阶通回中庭雨灯，不用原路返回。' : landmark.id === 'lookout-cache' ? '望台上能看到夜市和东侧运河，挑战首领前可以先绕去开近路。' : '这笔钱可以拿回雨灯整备，提高生命、体力和伤害。');
   } else if (landmark.kind === 'charm' && !s.charm) {
-    s.charm = true; s.collected.push(landmark.id); effect(s, landmark, 'reward', '金铃护符'); say(s, '拾得 · 金铃护符', 4, 'event', '金铃会让椰子水恢复更多生命：现在一瓶恢复 80 点。绕路值得吧！');
+    s.charm = true; s.gear.talisman = 'goldBell'; s.collected.push(landmark.id); effect(s, landmark, 'reward', '金铃护符'); say(s, '拾得 · 金铃护符', 4, 'event', '金铃会让椰子水恢复更多生命：现在一瓶恢复 80 点。绕路值得吧！');
   } else if (['cistern-flask', 'valley-flask'].includes(landmark.id) && !s.collected.includes(landmark.id)) {
     s.collected.push(landmark.id); s.player.flasks = Math.min(maxFlasks(s), s.player.flasks + 1);
     effect(s, landmark, 'reward'); say(s, `${landmark.id === 'valley-flask' ? '听瀑露瓶' : '莲纹露瓶'} · 药瓶上限 +1`, 5, 'event', `现在可携带 ${maxFlasks(s)} 瓶椰露。回到已经点亮的雨灯休息后补满。`);
@@ -576,7 +637,7 @@ export function interact(s: GameState): void {
     if (!destination) return;
     const { hp, stamina, flasks, staminaDelay } = s.player;
     s.player = { ...makePlayer(destination.position), hp, stamina, flasks, staminaDelay };
-    s.lockedId = null; s.effects = []; s.hitstop = 0;
+    s.lockedId = null; s.effects = []; s.projectiles = []; s.hitstop = 0;
     say(s, `渡船靠岸 · ${destination.label}`, 6, 'event', '渡船往返已经恢复。血量、药瓶与原先的复活雨灯保留。');
   } else if (['mill-sluice', 'monastery-sluice', 'ferry-winch'].includes(landmark.id)) {
     const guardian = landmark.id === 'monastery-sluice' ? 'silent-abbot' : 'drowned-warden';
@@ -586,7 +647,7 @@ export function interact(s: GameState): void {
   } else if (landmark.id === 'river-heart') {
     if (!s.defeatedGuests.includes('river-serpent')) { say(s, '那伽仍守着未归的愿灯。', 5, 'lore', '先击败沉殿里的悠亚，再来放灯。'); return; }
     if (s.valleyComplete) return;
-    s.collected.push(landmark.id); s.valleyComplete = true; s.mode = 'ending'; s.lockedId = null;
+    s.collected.push(landmark.id); s.valleyComplete = true; s.mode = 'interlude'; s.lockedId = null;
     say(s, '第二关 · 雾河回响。钟声翻过山，愿灯终于顺流回家。', 99, 'event');
   } else if (VALLEY_LORE[landmark.id]) {
     if (!s.collected.includes(landmark.id)) s.collected.push(landmark.id);
@@ -609,13 +670,13 @@ export function interact(s: GameState): void {
   } else if (landmark.kind === 'food') {
     if (!s.bossDefeated) { say(s, '伞不收，炉不迎客。', 5, 'lore', '摊主要我们先打败守街的栞栞，赢了再来点餐。'); return; }
     if (s.collected.includes('food')) return;
-    s.collected.push('food'); s.mode = 'ending'; s.lockedId = null; s.prompt = ''; s.nearbyId = null;
+    s.collected.push('food'); s.mode = 'interlude'; s.lockedId = null; s.prompt = ''; s.nearbyId = null;
     say(s, '下播后的第一份打抛饭。明天还要直播，今晚先好好吃饭。', 99);
   } else if (landmark.id === 'chapter-bell') {
     if (!s.defeatedGuests.includes('rain-regent')) { say(s, '弥月仍守长夜，钟声尚不能远行。', 5, 'lore', '先击败大殿里的弥月。'); return; }
     if (!s.collected.includes('food')) { say(s, '今晚还没有吃饭。先回夜市炉火，再来听钟。', 6, 'event', '雨灯旁可以在已经点亮的雨灯之间行旅。回中庭去夜市吃饭后，再返回王寺。'); return; }
     if (s.chapterComplete) return;
-    s.collected.push('chapter-bell'); s.chapterComplete = true; s.mode = 'ending'; s.lockedId = null;
+    s.collected.push('chapter-bell'); s.chapterComplete = true; s.mode = 'interlude'; s.lockedId = null;
     say(s, '第一关 · 长夜归灯。饭还温着，整座城终于等到了钟声。', 99, 'event');
   } else if (CHAPTER_LORE[landmark.id]) {
     if (!s.collected.includes(landmark.id)) s.collected.push(landmark.id);
@@ -662,12 +723,12 @@ export function canForge(s: GameState): boolean {
   return s.mode === 'playing' && s.player.action === 'idle' && !isAirborne(s.player) && safeToRest(s) && LANDMARKS.some(l => l.kind === 'rest' && s.litLamps.includes(l.id) && distance(s.player, l) < 2.05 && Math.abs(s.player.y - l.y) < 0.8);
 }
 export function equipWeapon(s: GameState, weapon: GameState['weapon']): boolean {
-  if (!Object.hasOwn(WEAPONS, weapon) || WEAPONS[weapon].tier > s.weaponLevel || !canForge(s)) return false;
+  if (!Object.hasOwn(WEAPONS, weapon) || !weaponUnlocked(s, weapon) || !canForge(s)) return false;
   s.weapon = weapon; say(s, `握持 · ${WEAPONS[weapon].name}`, 3, 'event'); return true;
 }
 
 export function continueExploring(s: GameState): void {
-  if (s.mode !== 'ending') return;
+  if (s.mode !== 'ending' && s.mode !== 'interlude') return;
   s.mode = 'playing'; s.paused = false; s.lockedId = null; clearHeldActions(s);
   say(s, s.haven.ending ? '灯有了归处，你也有。' : s.valleyComplete ? '灯随河流，路仍相连。' : s.chapterComplete ? '钟声翻过后山，雾河里的灯还在等你。' : '吃饱了。北口香料街尽头，王寺的灯还亮着。', 9, 'lore', s.haven.ending ? '沿灯库东侧归廊回庭，打开后门。阿莲、弥音和温叔都想听听你的回答。' : s.valleyComplete ? '旅馆南桥通向归灯庭。旧寺西侧书房和盐仓背后的船坞，还留着关于未归之人的线索。' : s.chapterComplete ? '从钟台东侧的后山门进入第二关「雾河回响」。新区域与王寺直接相连，原有战斗和探索进度保留。' : '从夜市西北角向北，沿香料水街进入织坊下城。榕树下有新的雨灯。'); updatePrompt(s);
 }
@@ -678,7 +739,7 @@ export function travelToLamp(s: GameState, id: string): boolean {
   if (!origin || !s.litLamps.includes(id) || !REST_POINTS[id] || !safeToRest(s) || s.mode !== 'playing' || s.player.action !== 'idle' || isAirborne(s.player)) return false;
   const { hp, stamina, flasks } = s.player;
   s.player = { ...makePlayer(REST_POINTS[id]), hp, stamina, flasks };
-  s.checkpoint = id as GameState['checkpoint']; s.lockedId = null; s.effects = [];
+  s.checkpoint = id as GameState['checkpoint']; s.lockedId = null; s.effects = []; s.projectiles = [];
   say(s, `抵达${LANDMARKS.find(l => l.id === id)?.label}`, 4, 'event'); updatePrompt(s); return true;
 }
 
@@ -695,7 +756,7 @@ export function escapeStuck(s:GameState):boolean {
 export function respawn(s: GameState): void {
   if (s.mode !== 'dead') return;
   s.player = makePlayer(REST_POINTS[s.checkpoint]); s.player.hp = maxHp(s); s.player.stamina = maxStamina(s); s.player.flasks = maxFlasks(s);
-  s.enemies = makeEnemies(s.bossDefeated, s.defeatedGuests); s.mode = 'playing'; s.paused = false; s.effects = []; s.lockedId = null;
+  s.enemies = makeEnemies(s.bossDefeated, s.defeatedGuests); s.mode = 'playing'; s.paused = false; s.effects = []; s.projectiles = []; s.lockedId = null;
   say(s, '雨灯仍亮着。观察起手，留一点体力；丢下的钱就在倒下的地方。', 5); updatePrompt(s);
 }
 
@@ -793,10 +854,10 @@ export function loadGame(raw: string | null): GameState | null {
   if (!raw || raw.length > 110000) return null;
   try {
     const s = JSON.parse(raw) as GameState;
-    if (!s || s.version !== 1 || !['title', 'playing', 'dead', 'ending'].includes(s.mode) || typeof s.paused !== 'boolean') return null;
+    if (!s || s.version !== 1 || !['title', 'playing', 'dead', 'ending', 'interlude'].includes(s.mode) || typeof s.paused !== 'boolean') return null;
     const legacyMotion = s.motionVersion === undefined;
     if (!legacyMotion && s.motionVersion !== 1) return null;
-    if (s.worldVersion !== undefined && ![2, 3, 4, 5, 6, 7, 8].includes(s.worldVersion)) return null;
+    if (s.worldVersion !== undefined && ![2, 3, 4, 5, 6, 7, 8, 9].includes(s.worldVersion)) return null;
     const oldWorld = s.worldVersion === undefined; const oldDistrict = (s.worldVersion ?? 0) < 4; const oldChapter = (s.worldVersion ?? 0) < 5; const oldValley = (s.worldVersion ?? 0) < 6; const oldHaven = (s.worldVersion ?? 0) < 7;
     if (oldWorld) { s.templeGate = false; s.flaskUpgrade = false; s.litLamps = s.checkpoint === 'courtyard' ? ['courtyard'] : []; }
     if ((s.worldVersion as number) === 2) {
@@ -810,13 +871,16 @@ export function loadGame(raw: string | null): GameState | null {
     if (oldChapter) { s.chapterGates = []; s.chapterComplete = false; }
     if (oldValley) { s.valleyGates = []; s.valleyComplete = false; }
     if (oldHaven) s.haven = freshHaven();
+    if (s.mode === 'ending' && !s.haven.ending) s.mode = 'interlude';
     const oldExperience = (s.worldVersion ?? 0) < 8;
     if (oldExperience) { s.weaponLevel = 0; s.weapon = 'umbrella'; }
-    s.worldVersion = 8;
-    if (!finite(s.weaponLevel, 0, 2) || !Number.isInteger(s.weaponLevel) || !Object.hasOwn(WEAPONS, s.weapon) || WEAPONS[s.weapon].tier > s.weaponLevel || (s.weaponLevel === 2 && !s.bossDefeated)) return null;
+    const oldJourneys = (s.worldVersion ?? 0) < 9;
+    if (oldJourneys) { s.gear = { armor: 'traveler', talisman: s.charm ? 'goldBell' : 'none' }; s.bestiary = Array.isArray(s.enemies) ? Array.from(new Set(s.enemies.filter(e => e.hp === 0).map(bestiaryKey))) : []; }
+    s.worldVersion = 9;
+    if (!finite(s.weaponLevel, 0, 2) || !Number.isInteger(s.weaponLevel) || !Object.hasOwn(WEAPONS, s.weapon) || !weaponUnlocked(s, s.weapon) || (s.weaponLevel === 2 && !s.bossDefeated)) return null;
     if (!Array.isArray(s.valleyGates) || new Set(s.valleyGates).size !== s.valleyGates.length || s.valleyGates.some(id => !VALLEY_GATES.some(g => g.id === id)) || typeof s.valleyComplete !== 'boolean') return null;
     if (!Array.isArray(s.chapterGates) || new Set(s.chapterGates).size !== s.chapterGates.length || s.chapterGates.some(id => !CHAPTER_GATES.some(g => g.id === id)) || typeof s.chapterComplete !== 'boolean') return null;
-    if (typeof s.harborGate !== 'boolean' || !Array.isArray(s.defeatedGuests) || s.defeatedGuests.some(id => !['nana-tide', 'azi-stage', 'gate-captain', 'rain-regent', ...VALLEY_BOSSES, 'last-lamplighter'].includes(id)) || new Set(s.defeatedGuests).size !== s.defeatedGuests.length) return null;
+    if (typeof s.harborGate !== 'boolean' || !Array.isArray(s.defeatedGuests) || s.defeatedGuests.some(id => !['nana-tide', 'azi-stage', 'gate-captain', 'rain-regent', ...VALLEY_BOSSES, 'last-lamplighter', ...DUNGEON_BOSSES].includes(id)) || new Set(s.defeatedGuests).size !== s.defeatedGuests.length) return null;
     if (s.chapterGates.includes('archive-door') && !s.defeatedGuests.includes('gate-captain')) return null;
     if (s.chapterComplete !== s.collected?.includes('chapter-bell') || (s.chapterComplete && (!s.defeatedGuests.includes('rain-regent') || !s.collected.includes('food')))) return null;
     if (s.valleyGates.includes('valley-entry') && !s.chapterComplete) return null;
@@ -837,7 +901,7 @@ export function loadGame(raw: string | null): GameState | null {
     if (!finite(s.level, 0, 15) || !Number.isInteger(s.level) || !finite(s.time, 0, 10000000)) return null;
     if (!Array.isArray(s.collected) || s.collected.length > LANDMARKS.length || new Set(s.collected).size !== s.collected.length || s.collected.some(id => !LANDMARKS.some(l => l.id === id))) return null;
     if (!Array.isArray(s.visited) || s.visited.length > 150 || s.visited.some(v => typeof v !== 'string' || v.length > 100)) return null;
-    if (!validHaven(s)) return null;
+    if (!validHaven(s) || !validEquipment(s)) return null;
     s.haven.talking = null;
     const p = s.player;
     if (!p) return null;
@@ -879,7 +943,9 @@ export function loadGame(raw: string | null): GameState | null {
       }
       for (const enemy of s.enemies) { const role = BOSS_ROSTER[enemy.kind]; if (role && enemy.name === role.legacy) enemy.name = role.name; }
     }
+    if (oldJourneys) addMissing(DUNGEON_ENEMIES.map(e => e.id));
     if (!Array.isArray(s.enemies) || s.enemies.length !== ENEMY_SPAWNS.length) return null;
+    if (!Array.isArray(s.bestiary) || new Set(s.bestiary).size !== s.bestiary.length || s.bestiary.some(id => !s.enemies.some(e => bestiaryKey(e) === id))) return null;
     for (let i = 0; i < s.enemies.length; i += 1) {
       const e = s.enemies[i]; const spawn = ENEMY_SPAWNS[i];
       if (oldWorld) migrateLampPosition(e, s);
@@ -896,8 +962,8 @@ export function loadGame(raw: string | null): GameState | null {
       }
     }
     s.motionVersion = 1;
-    if (s.enemies.some(e => ['nana', 'azi', 'captain', 'regent', 'warden', 'abbot', 'serpent', 'elegist'].includes(e.kind) && ((e.hp === 0) !== s.defeatedGuests.includes(e.id)))) return null;
-    if (s.bossDefeated !== (s.enemies.find(e => e.kind === 'boss')?.hp === 0) || (s.mode === 'ending' && !s.bossDefeated)) return null;
+    if (s.enemies.some(e => isBoss(e) && e.kind !== 'boss' && ((e.hp === 0) !== s.defeatedGuests.includes(e.id)))) return null;
+    if (s.bossDefeated !== (s.enemies.find(e => e.kind === 'boss')?.hp === 0) || (['ending', 'interlude'].includes(s.mode) && !s.bossDefeated) || (s.mode === 'interlude' && !s.collected.includes('food'))) return null;
     if (s.flaskUpgrade !== s.collected.includes('temple-flask')) return null;
     if (s.charm !== s.collected.includes('roof-charm')) return null;
     if (oldWorld) migrateLampPosition(s.bloodstain, s);
@@ -906,6 +972,6 @@ export function loadGame(raw: string | null): GameState | null {
     if (typeof s.message !== 'string' || s.message.length > 500 || !finite(s.messageTime, 0, 100)) return null;
     // Preserve combat, health and enemy deaths exactly. A refresh cannot heal,
     // reset a losing boss fight, or award the same kill a second time.
-    s.effects = []; s.paused = false; updatePrompt(s); return s;
+    s.effects = []; s.projectiles = []; s.paused = false; updatePrompt(s); return s;
   } catch { return null; }
 }

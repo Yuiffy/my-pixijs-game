@@ -23,6 +23,14 @@ import BossSignatures from './BossSignatures';
 import BossStyle, { BossWeapon } from './BossStyle';
 import { BOSS_ROSTER } from './bossRoster';
 import WeaponView, { Katana, ShioriBloom } from './WeaponView';
+import { lootTier, LOOT_STYLE } from './loot';
+import { enemyRole } from './encounters';
+import InterludeView from './InterludeView';
+import DungeonView from './DungeonView';
+import DiscoveryView from './DiscoveryView';
+import ProjectileView from './ProjectileView';
+import { giantScale } from './dungeons';
+import { ARMORS } from './equipment';
 import { combatPose, rollPose, CHARGE_TIME } from './combat';
 import type { Companion } from './companion';
 import {
@@ -934,9 +942,9 @@ function RainShrine({ stateRef, id, position }: { stateRef: StateRef; id: string
   const glow = useRef<THREE.Mesh>(null); const flame = useRef<THREE.Mesh>(null); const light = useRef<THREE.PointLight>(null);
   useFrame(() => {
     const s = stateRef.current; const lit = s.litLamps.includes(id); const current = s.checkpoint === id;
-    if (glow.current) { glow.current.rotation.z = s.time * 0.12; const mat = glow.current.material as THREE.MeshBasicMaterial; mat.color.set(current ? '#ffda89' : lit ? '#86dacc' : '#ffe2a0'); mat.opacity = (lit ? 0.45 : 0.48) + Math.sin(s.time * 2) * 0.08; }
-    if (flame.current) { flame.current.visible = true; flame.current.scale.setScalar((lit ? 1 : 0.65) + Math.sin(s.time * 4) * 0.08); (flame.current.material as THREE.MeshBasicMaterial).color.set(lit ? '#ffe4a0' : '#ffdf9b'); }
-    if (light.current) { light.current.intensity = lit ? 8 : 2.2; light.current.color.set(lit ? '#ffce82' : '#8cd5e5'); }
+    if (glow.current) { glow.current.rotation.z = s.time * 0.12; const mat = glow.current.material as THREE.MeshBasicMaterial; mat.color.set(current ? '#ffda89' : lit ? '#ffce82' : '#80bfee'); mat.opacity = (lit ? 0.5 : 0.75) + Math.sin(s.time * 2) * 0.08; glow.current.scale.setScalar(lit ? 1 : 0.7); }
+    if (flame.current) { flame.current.visible = lit; flame.current.scale.setScalar(1 + Math.sin(s.time * 4) * 0.08); }
+    if (light.current) { light.current.intensity = lit ? 8 : 0.8; light.current.color.set(lit ? '#ffce82' : '#80bfee'); }
   });
   return (
 <group position={position}>
@@ -1041,8 +1049,8 @@ function Landmarks({ stateRef }: { stateRef: StateRef }) {
               <mesh castShadow>
                 <octahedronGeometry args={[l.kind === "charm" ? 0.25 : 0.18]} />
                 <meshStandardMaterial
-                  color="#f8d98b"
-                  emissive="#af742c"
+                  color={LOOT_STYLE[lootTier(l)].color}
+                  emissive={LOOT_STYLE[lootTier(l)].color}
                   emissiveIntensity={1.6}
                   metalness={0.5}
                   roughness={0.2}
@@ -1050,11 +1058,13 @@ function Landmarks({ stateRef }: { stateRef: StateRef }) {
               </mesh>
               <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.53, 0]}>
                 <ringGeometry args={[0.25, 0.3, 24]} />
-                <meshBasicMaterial color="#ffdf8a" />
+                <meshBasicMaterial color={LOOT_STYLE[lootTier(l)].color} />
               </mesh>
+              <mesh position={[0, 0.1, 0]}><cylinderGeometry args={[0.015, 0.09, LOOT_STYLE[lootTier(l)].height, 8, 1, true]} /><meshBasicMaterial color={LOOT_STYLE[lootTier(l)].color} transparent opacity={0.25} depthWrite={false} side={THREE.DoubleSide} /></mesh>
+              {Array.from({ length: LOOT_STYLE[lootTier(l)].rings }, (_, n) => <mesh key={n} position={[Math.cos(n * 2.4) * 0.18, 0.16 + n * 0.2, Math.sin(n * 2.4) * 0.18]}><sphereGeometry args={[0.04, 6, 4]} /><meshBasicMaterial color={LOOT_STYLE[lootTier(l)].color} /></mesh>)}
             </group>
             {/* Keep the light in the render list: hiding it recompiles every lit material. */}
-            <pointLight ref={el => { pickupLights.current[i] = el; }} position={[l.x, l.y + 0.6, l.z]} color="#fbd079" intensity={2} distance={3} />
+            <pointLight ref={el => { pickupLights.current[i] = el; }} position={[l.x, l.y + 0.6, l.z]} color={LOOT_STYLE[lootTier(l)].color} intensity={2} distance={3} />
           </group>
           );
         if (l.kind === 'ferry') return <group key={l.id} position={[l.x, l.y, l.z]}><mesh position={[0, 1, -0.5]}><cylinderGeometry args={[0.045, 0.055, 2, 6]} /><meshStandardMaterial color="#9c8964" /></mesh><mesh position={[0, 2, -0.5]}><octahedronGeometry args={[0.2]} /><meshBasicMaterial color="#9adcd2" /></mesh></group>;
@@ -1084,7 +1094,7 @@ function Landmarks({ stateRef }: { stateRef: StateRef }) {
   );
 }
 
-function Actor({
+export function Actor({
   stateRef,
   enemyId,
 }: {
@@ -1121,7 +1131,11 @@ function Actor({
   const guest = kind === "nana" || kind === "azi" || !!namedBoss;
   const player = kind === "player";
   const guard = kind === "guard";
-  const size = namedBoss ? 1.22 : boss ? 1.5 : kind === "prowler" ? 0.94 : 1.05;
+  const role = enemyId ? enemyRole({ id: enemyId, kind: kind as EnemyKind }) : null;
+  const ranged = role === 'crossbow' || role === 'slinger';
+  const size = enemyId && giantScale(enemyId) > 1 ? giantScale(enemyId) : namedBoss ? 1.22 : boss ? 1.5 : kind === "prowler" ? 0.94 : 1.05;
+  const [armor, setArmor] = useState(stateRef.current.gear.armor);
+  const mealClock = useRef(0);
   const coat = player
     ? PLAYER_SKINS[appearance].coat
     : namedBoss ? namedBoss.coat : kind === 'elegist' ? '#897050' : kind === 'serpent' ? '#3d7c74' : kind === 'warden' ? '#536f81' : ['monk', 'abbot'].includes(kind ?? '') ? '#ae8651' : kind === 'reaver' ? '#667459' : kind === 'regent' ? '#673e48' : kind === 'captain' ? '#8a713f' : guest ? kind === "nana" ? "#303b49" : "#91a269" : boss
@@ -1159,6 +1173,7 @@ function Actor({
   useFrame(({ camera }, dt) => {
     const state = stateRef.current;
     if (player && appearance !== state.playerSkin)setAppearance(state.playerSkin);
+    if (player && armor !== state.gear.armor) setArmor(state.gear.armor);
     const enemy = enemyId
       ? state.enemies.find((e) => e.id === enemyId)
       : undefined;
@@ -1304,6 +1319,11 @@ function Actor({
       const tell = enemyTell(enemy);
       mat.opacity = tell.committed ? 0.42 : 0.13 + Math.min(1, 1 - enemy.timer / attack.windup) * 0.15;
     }
+    if (player && state.mode === 'interlude' && !state.chapterComplete) {
+      mealClock.current += Math.min(dt, 0.05); body.current.rotation.x = 0.06; body.current.position.y = -0.15;
+      if (arm.current) arm.current.rotation.x = -0.9 - Math.sin(mealClock.current * 1.6) * 0.35;
+      if (rightElbow.current) rightElbow.current.rotation.x = -0.7;
+    } else mealClock.current = 0;
     if (slash.current) {
       slash.current.visible = player
         ? actor.action === "execute" &&
@@ -1463,6 +1483,7 @@ function Actor({
             {kind === 'serpent' && <group>{[-2, -1, 0, 1, 2].map(i => <group key={i} position={[i * 0.24, 1.92 - Math.abs(i) * 0.06, -0.13]}><mesh rotation={[0, 0, -i * 0.22]}><cylinderGeometry args={[0.095, 0.055, 0.7, 6]} /><meshStandardMaterial color="#c3b775" metalness={0.45} /></mesh><mesh position={[0, 0.36, 0.08]} scale={[1.3, 1, 0.6]}><sphereGeometry args={[0.14, 8, 6]} /><meshStandardMaterial color="#a6c092" /></mesh><mesh position={[0, 0.36, 0.17]}><boxGeometry args={[0.14, 0.025, 0.02]} /><meshBasicMaterial color="#d9ffe6" /></mesh></group>)}</group>}
             {!namedBoss && ['monk', 'abbot'].includes(kind ?? '') && <group><mesh position={[0, 1.4, 0.16]} rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.23, 0.055, 6, 14]} /><meshStandardMaterial color="#decaa1" /></mesh><Block position={[-0.1, 1.05, 0.28]} size={[0.23, 0.72, 0.08]} color="#c2a169" rotation={[0, 0, -0.2]} /></group>}
             {kind === 'reaver' && <mesh position={[0, 1.76, 0]}><coneGeometry args={[0.48, 0.28, 10]} /><meshStandardMaterial color="#ac9e70" /></mesh>}
+            {ranged && <Block position={[0, 1.15, -0.3]} size={[0.5, 0.6, 0.16]} color="#84575d" />}
             {kind === 'regent' && <group><mesh position={[0, 1.85, 0]}><cylinderGeometry args={[0.18, 0.29, 0.3, 8]} /><meshStandardMaterial color="#cca958" metalness={0.5} /></mesh>{[-1, 0, 1].map(i => <mesh key={i} position={[i * 0.18, 2.07 + (i === 0 ? 0.13 : 0), 0]}><coneGeometry args={[0.075, 0.44, 5]} /><meshStandardMaterial color="#ddbd75" metalness={0.45} /></mesh>)}<Block position={[0, 1.03, -0.31]} size={[0.6, 0.73, 0.06]} color="#9c514d" /></group>}
             <Block
               position={[0, 1.45, 0.2]}
@@ -1486,6 +1507,7 @@ function Actor({
           </group>
         )
         )}
+        {player && armor !== 'traveler' && <group><Block position={[0, 1.02, -0.3]} size={[0.62, 0.9, 0.08]} color={ARMORS[armor].color} /><Block position={[0, 1.14, 0.25]} size={[0.45, 0.43, 0.065]} color={ARMORS[armor].color} /></group>}
         <group ref={leftArm} position={[-0.36, 1.24, 0]}>
           <Pole position={[0, -0.12, 0]} radius={0.105} height={0.23} color={coat} />
           <group ref={leftElbow} position={[0, -0.24, 0]}>
@@ -1506,7 +1528,8 @@ function Actor({
             {(shioriBoss || kind === 'captain') && <Katana />}
             {namedBoss && <BossWeapon kind={kind as EnemyKind} />}
             {player && <mesh ref={chargeGlow} position={[0, 1.05, 0]} visible={false}><sphereGeometry args={[0.14, 12, 8]} /><meshBasicMaterial color="#ffe5a8" transparent opacity={0.6} depthWrite={false} /></mesh>}
-            {!player && !namedBoss && kind !== 'nana' && (
+            {ranged && <group><Block position={[0, 0.45, 0]} size={[0.12, 0.75, 0.12]} color="#775333" /><Block position={[0, 0.7, 0]} size={[0.85, 0.09, 0.1]} color="#d4c6a2" />{role === 'slinger' && <mesh position={[0, 0.82, 0]}><icosahedronGeometry args={[0.13, 0]} /><meshStandardMaterial color="#8c9e9a" /></mesh>}</group>}
+            {!player && !namedBoss && !ranged && kind !== 'nana' && (
 <Pole
               position={[0, 0.45, 0]}
               radius={player ? 0.035 : 0.045}
@@ -1609,6 +1632,8 @@ function Weather({ stateRef }: { stateRef: StateRef }) {
   useFrame(() => {
     const p = stateRef.current.player;
     const { time } = stateRef.current;
+    if (lines.current) lines.current.visible = p.x < 80;
+    if (p.x > 80) return;
     for (let i = 0; i < 480; i += 1) {
       const x = p.x + pseudoRandom(i + 700) * 38 - 19;
       const z = p.z + pseudoRandom(i + 1300) * 38 - 19;
@@ -1675,7 +1700,7 @@ function CameraRig({
       controls.yaw += difference * Math.min(1, dt * 5);
       yaw = controls.yaw;
       // A raised shoulder view keeps the enemy windup clear of the player silhouette.
-      distance = Math.max(5.6, distance + 0.6);
+      distance = Math.max(5.6, distance + 0.6 + (giantScale(locked.id) - 1) * 1.8);
       pitch = Math.max(0.54, pitch);
     }
     if (state.mode === "title") {
@@ -1683,8 +1708,9 @@ function CameraRig({
       distance = 9;
       pitch = 0.3;
     }
+    if (state.mode === 'interlude') { yaw = state.chapterComplete ? 0.65 : 0.92; distance = state.chapterComplete ? 7.5 : 4; pitch = state.chapterComplete ? 0.35 : 0.22; }
     target.set(p.x, p.y + 1.3 + p.jumpHeight, p.z);
-    if (locked) { target.x += (locked.x - p.x) * 0.38; target.z += (locked.z - p.z) * 0.38; }
+    if (locked) { target.x += (locked.x - p.x) * 0.38; target.z += (locked.z - p.z) * 0.38; target.y += (giantScale(locked.id) - 1) * 0.7; }
     desired.set(
       p.x + Math.sin(yaw) * Math.cos(pitch) * distance,
       p.y + 1.3 + p.jumpHeight + Math.sin(pitch) * distance,
@@ -1715,7 +1741,7 @@ function CameraRig({
     }
     // Also test actual static artwork: parapets, awnings and roof edges must not
     // slice through the camera when the player turns beside a ledge.
-    const city = scene.getObjectByName('night-city');
+    const city = scene.getObjectByName(p.x > 80 ? 'optional-dungeons' : 'night-city');
     let obstructed = false;
     if (city) {
       direction.subVectors(desired, target); const length = direction.length();
@@ -1794,8 +1820,12 @@ function Scene({ stateRef, cameraControl, onReady, onError, companionRef }: Worl
       <City />
       <ValleyView stateRef={stateRef} />
       <HavenView stateRef={stateRef} />
+      <DungeonView stateRef={stateRef} />
       <ObstacleArt stateRef={stateRef} />
       <Landmarks stateRef={stateRef} />
+      <DiscoveryView stateRef={stateRef} />
+      <InterludeView stateRef={stateRef} />
+      <ProjectileView stateRef={stateRef} />
       <Actor stateRef={stateRef} />
       {companionRef && <CompanionView stateRef={stateRef} companionRef={companionRef} />}
       {ENEMY_SPAWNS.map((e) => (

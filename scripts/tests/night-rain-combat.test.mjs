@@ -28,10 +28,10 @@ test('light combo follows 1/2/3 and expires; one late buffer cannot queue severa
   const spam = fresh(); step(spam, 20, { light: true }); step(spam, 20, { light: true }); step(spam, 550); assert.equal(spam.player.stamina, 83); assert.equal(spam.player.action, 'idle');
 });
 test('charge starts without damage, releases once, full charge earns posture and damage at higher cost', () => {
-  const { s, e } = duel(); step(s, 800, { heavy: true, heavyHeld: true }); assert.equal(s.player.action, 'charge'); assert.equal(e.hp, e.maxHp);
-  step(s, 200); assert.equal(s.player.attack, 'charged'); assert.equal(e.hp, e.maxHp); step(s, 150); assert.equal(e.hp, 0); assert.equal(s.player.stamina, 57);
+  const { s, e } = duel(); step(s, 740, { heavy: true, heavyHeld: true }); assert.equal(s.player.action, 'charge'); assert.equal(e.hp, e.maxHp);
+  step(s, 60, { heavyHeld: true }); assert.equal(s.player.attack, 'charged'); assert.equal(e.hp, e.maxHp); step(s, 270); assert.equal(e.hp, 0); assert.equal(s.player.stamina, 57);
   const partial = duel(); step(partial.s, 200, { heavy: true, heavyHeld: true }); step(partial.s, 350); assert.equal(partial.e.hp, partial.e.maxHp - 41);
-  const held = fresh(); step(held, 2200, { heavy: true, heavyHeld: true }); assert.equal(held.player.attack, 'charged'); assert.equal(held.player.stamina, 57); step(held, 300, { heavyHeld: true }); assert.equal(held.player.action, 'idle');
+  const held = fresh(); step(held, 1400, { heavy: true, heavyHeld: true }); assert.equal(held.player.attack, 'charged'); assert.equal(held.player.stamina, 57); step(held, 300, { heavyHeld: true }); assert.equal(held.player.action, 'idle');
 });
 test('attack steering is bounded before impact and much slower after impact; no free walking during swings', () => {
   const s = fresh(); s.player.facing = 0; step(s, 180, { heavy: true, x: 1 });
@@ -61,7 +61,7 @@ test('jump cannot cross a tall locked gate, but clears a low corridor parapet', 
 });
 test('pause/Alt cancel charge and buffered inputs without releasing an unsolicited strike', () => {
   for (const cancel of [engine.clearHeldActions, s => engine.setPaused(s, true)]) {
-    const s = fresh(); step(s, 800, { heavy: true, heavyHeld: true }); cancel(s); engine.setPaused(s, false); step(s, 500); assert.equal(s.player.action, 'idle'); assert.equal(s.player.attack, null);
+    const s = fresh(); step(s, 500, { heavy: true, heavyHeld: true }); cancel(s); engine.setPaused(s, false); step(s, 500); assert.equal(s.player.action, 'idle'); assert.equal(s.player.attack, null);
   }
 });
 test('save keeps airborne combat and new state; legacy light swings resume and invalid new fields reject', () => {

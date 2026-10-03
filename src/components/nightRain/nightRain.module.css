@@ -120,3 +120,21 @@
 @keyframes soulReveal { 0% { opacity: 0; transform: scale(1.07); filter: blur(7px); } 18% { opacity: 1; filter: blur(0); } 70% { opacity: 1; } 100% { opacity: 0; transform: scale(1); } }
 .forgeWeapon { border-top: 1px solid #d7bd8244; padding: 14px 0; }.forgeWeapon h3 { margin: 0 0 4px; font-size: 17px; font-weight: normal; color: #ecd29c; }.forgeWeapon p { margin: 4px 0; font-size: 13px; }.forgeWeapon small { display: block; font-size: 11px; margin: 8px 0; }.forgeWeapon button { padding: 8px 12px; font-size: 12px; }.forgeBalance { color: #e6c780; font-size: 12px; }.forge { max-width: 430px; }
 @media (prefers-reduced-motion: reduce) { .soulNotice { animation: none; opacity: 1; } }
+ .root [data-pad-focus="true"] { outline: 2px solid #ffe09b; outline-offset: 3px; background-color: #385561; box-shadow: 0 0 16px #ffe09b32; }
+ .root .primary[data-pad-focus="true"] { color: var(--ink); }
+ .menuHints { display: block; color: #e2c492; margin-bottom: 16px; }
+ .interlude { position: absolute; inset: 0; pointer-events: none; z-index: 20; border-top: 55px solid #101d24dd; border-bottom: 110px solid #101d24dd; }
+ .interludeCaption { position: absolute; bottom: -30px; left: 12%; right: 12%; text-align: center; color: #f4e6cd; text-shadow: 0 2px 5px #000; }
+ .interludeCaption small, .interludeCaption b, .interludeCaption span { display: block; }
+ .interludeCaption small { color: #dfbb7f; letter-spacing: .12em; margin-bottom: 14px; }
+ .interludeCaption b { font-size: 14px; color: #e0b88d; margin-bottom: 6px; }
+ .interludeActions { position: absolute; right: 4%; bottom: -96px; display: flex; gap: 12px; pointer-events: auto; }
+ .interludeActions button { border: 1px solid #a98a5f; padding: 10px 16px; background: #203a44; color: #eee0c5; }
+ .gear button, .saveSlots button { display: block; width: 100%; text-align: left; margin: 8px 0; }
+ .gear small, .saveSlots small { display: block; opacity: .75; font-size: 12px; margin-top: 4px; }
+ .gear [aria-pressed="true"], .saveSlots [aria-pressed="true"] { border-color: #e3c785; background: #385561; }
+ .bestiary article { padding: 12px; border-top: 1px solid #c6b89045; }
+ .saveSlots { max-height: 190px; overflow-y: auto; }
+ .audioUnlock { position: absolute; top: 85px; right: 20px; z-index: 4; font-size: 11px !important; padding: 7px 12px !important; }
+ .root[data-mode="interlude"] .hud, .root[data-mode="interlude"] .tools, .root[data-mode="interlude"] .region { visibility: hidden; }
+ @media (max-width: 600px) { .interludeCaption { left: 6%; right: 6%; bottom: -24px; font-size: 14px; } .interludeActions { right: 6%; bottom: -96px; } }

@@ -118,7 +118,7 @@ async function main() {
       await button(page, 8); assert.equal((await state(page)).panel, 'map'); await button(page, 1); assert.equal((await state(page)).panel, null);
       await button(page, 9); assert.equal((await state(page)).panel, 'pause');
       // Navigate all menu controls without mouse, including camera setting selects.
-      for (let i = 0; i < 18 && await page.evaluate(() => document.activeElement.textContent) !== '镜头设置'; i++) await button(page, 13);
+      for (let i = 0; i < 40 && await page.evaluate(() => document.activeElement.textContent) !== '镜头设置'; i++) await button(page, 13);
       assert.equal(await page.evaluate(() => document.activeElement.textContent), '镜头设置'); await button(page, 0); await button(page, 13);
       assert.equal(await page.evaluate(() => document.activeElement.id), 'mouse-look-speed'); await button(page, 15);
       assert.equal((await state(page)).controls.look.mouse, 1.5);
@@ -155,6 +155,18 @@ async function main() {
       await page.waitForTimeout(1250);
       const locked = await button(page, 11); assert.ok(locked.lockedId, 'R3 locks a live target');
       const released = await button(page, 11); assert.equal(released.lockedId, null);
+      // The courtyard is now a protected approach and the canal guard is a covered bow post.
+      // Approach the alley prowler through the authored exit to exercise a real heal.
+      await page.evaluate(() => {
+        for (const target of [{ x: 7, z: 7 }, { x: 0, z: 8 }, { x: -3, z: 4 }, { x: -8, z: 2 }, { x: -13, z: 1 }]) {
+          for (let i = 0; i < 500 && window.nightRain.getState().player.hp === 100; i++) {
+            const s = window.nightRain.getState(); const dx = target.x - s.player.x, dz = target.z - s.player.z, distance = Math.hypot(dx, dz);
+            if (distance < .25) break;
+            window.nightRain.input({ x: dx / distance, z: dz / distance }); window.advanceTime(40);
+          }
+        }
+        for (let i = 0; i < 250 && window.nightRain.getState().player.hp === 100; i++) window.advanceTime(40);
+      });
       await page.waitForFunction(() => window.nightRain.getState().player.hp < 100);
       await waitIdle(page); const healing = await button(page, 2); assert.equal(healing.player.action, 'heal');
       checks.gamepadInteractionLockHeal = true;

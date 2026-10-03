@@ -1,0 +1,36 @@
+{
+  "music": [
+    {
+      "file": "exploration.mp3",
+      "title": "Cathedral in the forest",
+      "author": "congusbongus",
+      "license": "CC0",
+      "source": "https://opengameart.org/content/cathedral-in-the-forest-ambient-loop",
+      "bytes": 1918580,
+      "sha256": "9aa5cdb63faa00e9efa3bcb4ba081d42bd5bd3d37b726687afa7a2d7928619df"
+    },
+    {
+      "file": "haven.mp3",
+      "title": "First Light Particles",
+      "author": "Yoiyami",
+      "license": "CC0",
+      "source": "https://opengameart.org/content/first-light-particles-%E2%80%93-cc0-atmospheric-pianoambient-track",
+      "bytes": 1845020,
+      "sha256": "f16da14064d93b1917278d595dfbf176ba65e8e9082410991e0473f6e78ca1db"
+    },
+    {
+      "file": "boss.mp3",
+      "title": "Ghosts & Heroes (2025 loop)",
+      "author": "Bobjt",
+      "license": "CC0",
+      "source": "https://opengameart.org/content/ghosts-heroes",
+      "bytes": 1614586,
+      "sha256": "e72ef59f5bf8a1e1359ebc4209ddfce716b4cbaf174420680bdc8af79b8c4eed"
+    }
+  ],
+  "narration": {
+    "method": "Offline Microsoft Huihui Desktop (Windows SAPI), 24 kHz mono MP3, 48 kbps",
+    "manifest": "src/components/nightRain/voiceManifest.json",
+    "lines": 569
+  }
+}

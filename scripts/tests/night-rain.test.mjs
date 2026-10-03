@@ -119,12 +119,12 @@ test('a legal route descends stairs and lights checkpoint; the shortcut cannot o
 
 test('all enemies, reward branches, shortcut loop, upgrade and dinner are completed with ordinary inputs only', () => {
   const run = playFirstLevel(engine); const s = run.state;
-  assert.equal(s.mode, 'ending'); assert.equal(s.deaths, 0); assert.equal(s.kills, 7); assert.ok(s.parries > 10); assert.ok(s.executions >= 6);
+  assert.equal(s.mode, 'interlude'); assert.equal(s.deaths, 0); assert.equal(s.kills, 7); assert.ok(s.parries > 10); assert.ok(s.executions >= 6);
   assert.equal(s.level, 1); assert.equal(s.bankedRice, 40); assert.equal(s.charm, true); assert.equal(s.shortcut, true); assert.equal(s.bossDefeated, true);
   assert.ok(s.visited.includes('金塔屋脊')); assert.ok(s.visited.includes('运河侧廊')); assert.ok(s.visited.includes('封街夜市'));
   assert.ok(run.stages.find(stage => stage.target.interact === 'shortcut').kills === 6, 'shortcut is opened before boss victory');
   assert.ok(s.enemies.find(e => e.kind === 'boss').phase === 2); assert.ok(s.time > 100 && s.time < 250);
-  const saved = loadGame(saveGame(s)); assert.ok(saved); assert.equal(saved.mode, 'ending'); assert.equal(saved.rice, s.rice);
+  const saved = loadGame(saveGame(s)); assert.ok(saved); assert.equal(saved.mode, 'interlude'); assert.equal(saved.rice, s.rice);
 });
 
 test('boss phase two offers a genuinely unparryable sweep and an intentionally delayed strike', () => {

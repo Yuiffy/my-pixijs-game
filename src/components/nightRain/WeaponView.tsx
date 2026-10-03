@@ -30,10 +30,10 @@ export function RainUmbrella({ iron = false }: { iron?: boolean }) {
 export default function WeaponView({ stateRef }: { stateRef: MutableRefObject<GameState> }) {
   const groups = useRef<(THREE.Group | null)[]>([]);
   useFrame(() => {
-    const choice = ['umbrella', 'ironUmbrella', 'katana'].indexOf(stateRef.current.weapon);
-    groups.current.forEach((g, i) => { if (g) g.visible = i === choice; });
+    const choice = ['umbrella', 'ironUmbrella', 'katana', 'graveSpear', 'reedDaggers', 'stoneMaul'].indexOf(stateRef.current.weapon);
+    groups.current.forEach((g, i) => { if (g) g.visible = i === choice && stateRef.current.mode !== 'interlude'; });
   });
-  return <group>{[<RainUmbrella key="folded" />, <RainUmbrella iron key="iron" />, <Katana key="blade" />].map((weapon, i) => <group key={i} ref={el => { groups.current[i] = el; }} visible={i === 0}>{weapon}</group>)}</group>;
+  return <group>{[<RainUmbrella key="folded" />, <RainUmbrella iron key="iron" />, <Katana key="blade" />, <group key="spear"><mesh position={[0, 0.9, 0]}><cylinderGeometry args={[0.035, 0.045, 2.8, 8]} /><meshStandardMaterial color="#8a7267" /></mesh><mesh position={[0, 2.3, 0]}><coneGeometry args={[0.1, 0.42, 5]} /><meshStandardMaterial color="#d0b3ff" metalness={0.6} /></mesh></group>, <group key="daggers">{[-1, 1].map(n => <mesh key={n} position={[n * 0.09, 0.24, 0]}><boxGeometry args={[0.04, 0.62, 0.035]} /><meshStandardMaterial color="#a4e7cf" metalness={0.6} /></mesh>)}</group>, <group key="maul"><mesh position={[0, 0.55, 0]}><cylinderGeometry args={[0.055, 0.065, 1.7, 8]} /><meshStandardMaterial color="#8b7669" /></mesh><mesh position={[0, 1.25, 0]}><boxGeometry args={[0.62, 0.48, 0.45]} /><meshStandardMaterial color="#e0c593" roughness={0.85} /></mesh></group>].map((weapon, i) => <group key={i} ref={el => { groups.current[i] = el; }} visible={i === 0}>{weapon}</group>)}</group>;
 }
 
 export function ShioriBloom({ stateRef, enemyId }: { stateRef: MutableRefObject<GameState>; enemyId: string }) {
