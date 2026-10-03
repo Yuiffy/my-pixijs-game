@@ -144,10 +144,14 @@ function GameRow({
   favorite: boolean;
   onFavorite: () => void;
 }) {
+  const href = process.env.NEXT_PUBLIC_ESA_PAGES === '1' && game.href === '/knight'
+    ? 'https://sui-echoes-below.vercel.app/'
+    : game.href;
+
   return (
     <article className={styles.gameEntry} data-game={game.href}>
       <Link
-        href={game.href}
+        href={href}
         className={styles.gameRow}
         aria-label={`打开 ${game.title}`}
         onClick={() => { if (game.externalStats) recordGameOpen(game.href); }}
@@ -264,6 +268,11 @@ export default function DemosPage() {
   }
 
   useEffect(() => {
+    if (process.env.NEXT_PUBLIC_ESA_PAGES === '1') {
+      setViewCounts(null);
+      return undefined;
+    }
+
     const controller = new AbortController();
     fetch('/api/demos/visits', { signal: controller.signal })
       .then((response) => (response.ok ? response.json() : null))
