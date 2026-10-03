@@ -31,6 +31,10 @@
   font: inherit;
 }
 
+.saveNotice { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; color: var(--muted); font-size: 11px; line-height: 1.7; }
+.saveNotice[data-warning="true"] { padding: 10px 12px; border: 1px solid #9c7750; color: #f7d7a1; }
+.saveNotice button { min-height: 40px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 4px; color: var(--ink); background: #232d29; cursor: pointer; }
+
 .inputMode {
   display: flex;
   align-items: center;

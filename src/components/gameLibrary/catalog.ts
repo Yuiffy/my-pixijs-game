@@ -26,12 +26,29 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
     title: '动作与探索',
     games: [
       {
+        title: '晴海对决 · 岁己 vs 栞栞',
+        href: '/game/tidal-duel',
+        description: '拳脚、投技与反击，读懂对手的下一招，在晴海擂台一决胜负。',
+        image: '/games/tidal-duel/poster.webp',
+        meta: '海岛格斗 · 单人 / 同机双人 · 连招与反击',
+        releaseDate: '2026-10-03',
+      },
+      {
+        title: '岁己：今天也要动',
+        href: '/game/sui-fitness',
+        description: '躲开 DQ、牛肉干和果茶的追击，攒动力去健身、游泳、居家训练。减脂，也把肌肉留下。',
+        image: '/games/sui-fitness/preview.svg',
+        meta: '美食生存战 · 自动哑铃 · 五波挑战 / 触屏',
+        releaseDate: '2026-10-03',
+      },
+      {
         title: '晴海双打 · 岁己 × 栞栞',
         href: '/game/beach-volley',
         description: '迎着海风起跳扣杀，和岁己、栞栞在晴海沙滩打出漂亮的一球。',
         image: '/games/beach-volley/intro.webp',
         meta: '沙滩排球 · 单人 / 同机双人 · 专属必杀',
         releaseDate: '2026-10-02',
+        updateDate: '2026-10-03',
       },
       {
         title: '岁己 · 雨夜寻味',
@@ -50,7 +67,7 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
         image: '/games/one-more/dojo.webp',
         meta: `动作对战 · 扮演挑战者 · 三位首章 Boss · v${SPARRING_VERSION}`,
         releaseDate: '2026-09-06',
-        updateDate: '2026-09-07',
+        updateDate: '2026-10-03',
       },
       {
         title: 'Knight：空洞搜打撤',
@@ -72,9 +89,9 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
         description:
           '拿稳小方块探头，照顾岁己的变美愿望。清洁、敷麻、稳稳下针，别忘了冷敷，也可选栓剂止痛。',
         image: '/games/golden-needle/preview.png',
-        meta: '手术操作模拟 · 三档难度 · 鼠标 / 触屏',
+        meta: '手术操作模拟 · 三档难度 · 键鼠 / 触屏',
         releaseDate: '2026-10-02',
-        updateDate: '2026-10-02',
+        updateDate: '2026-10-03',
       },
       {
         title: '嘘，TA还在播',
@@ -102,7 +119,7 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
         image: '/games/pre-stream/preview-3d.webp',
         meta: '3D 开播竞速 · 扮演主播岁己 · 三晚计时摘星',
         releaseDate: '2026-09-12',
-        updateDate: '2026-09-26',
+        updateDate: '2026-10-03',
       },
       {
         title: '主播，别嚼了！',
@@ -136,7 +153,7 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
         image: '/games/reset-rush/preview.svg',
         meta: '开发者桌游 · 1 人 + 3 AI · 时间、精力与并行开发',
         releaseDate: '2026-09-26',
-        updateDate: '2026-09-26',
+        updateDate: '2026-10-03',
       },
       {
         title: '上船！应援事务所',
@@ -146,7 +163,7 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
         image: '/games/hype-harbor/preview.png',
         meta: '投资桌游 · 2–4 人 · AI / 本地多人',
         releaseDate: '2026-09-26',
-        updateDate: '2026-09-26',
+        updateDate: '2026-10-03',
       },
       {
         title: '平陆运河：造山移海',
@@ -156,7 +173,7 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
         image: '/games/pinglu-canal/preview.svg',
         meta: '地形工程 · 1–4 人 / AI · 自由施工',
         releaseDate: '2026-09-27',
-        updateDate: '2026-09-27',
+        updateDate: '2026-10-03',
       },
       {
         title: '智能纪元',
@@ -165,7 +182,7 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
         image: '/games/mini/agi.png',
         meta: '策略经营 · 扮演 AI 公司 · 发展大模型',
         releaseDate: '2026-09-11',
-        updateDate: '2026-09-15',
+        updateDate: '2026-10-03',
       },
       {
         title: '晶圆周期',
@@ -174,7 +191,7 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
         image: '/games/mini/fab.png',
         meta: '模拟经营 · 扮演内存颗粒厂商 · 把握行情',
         releaseDate: '2026-09-11',
-        updateDate: '2026-09-11',
+        updateDate: '2026-10-03',
       },
     ],
   },
@@ -250,7 +267,7 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
         image: '/images/sui-bird-jump.png',
         meta: '垂直跳跃 · 键盘 / 触屏 · 同路线挑战',
         releaseDate: '2025-11-27',
-        updateDate: '2026-10-02',
+        updateDate: '2026-10-03',
       },
     ],
   },

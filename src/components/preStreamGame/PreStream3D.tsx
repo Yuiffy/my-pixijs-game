@@ -20,6 +20,7 @@ import type { PrepState, StationId, TaskId } from './gameplay3d';
 import { createPreStreamAudio } from './sound3d';
 import type { PreStreamAudio } from './sound3d';
 import styles from './preStream3D.module.css';
+import { PrepHoldControls } from './controls';
 
 const World3D = dynamic(() => import('./World3D'), { ssr: false });
 const SAVE_KEY = 'sui-pre-stream-run-v2';
@@ -200,7 +201,7 @@ export default function PreStream3D() {
   const keysRef = useRef(new Set<string>());
   const stickRef = useRef({ x: 0, z: 0 });
   const stickIdRef = useRef<number | null>(null);
-  const primaryRef = useRef(false);
+  const primaryRef = useRef(new PrepHoldControls());
   const destinationRef = useRef<StationId | null>(null);
   const selectedRef = useRef<StationId | null>(null);
   const wheelAtRef = useRef(0);
@@ -308,7 +309,7 @@ export default function PreStream3D() {
   const clearControls = useCallback(() => {
     keysRef.current.clear();
     stickRef.current = { x: 0, z: 0 };
-    primaryRef.current = false;
+    primaryRef.current.clear();
     stickIdRef.current = null;
     destinationRef.current = null;
     selectStation(null);
@@ -320,8 +321,9 @@ export default function PreStream3D() {
   const commit = useCallback((next: PrepState, force = true) => {
     const previous = stateRef.current;
     if (next === previous) return;
-    if (next.phase !== previous.phase || next.paused !== previous.paused) {
-      primaryRef.current = false;
+    if (next.phase !== previous.phase || next.paused !== previous.paused) clearControls();
+    else if (next.minigame?.stage !== previous.minigame?.stage) {
+      primaryRef.current.clear();
       setHeld(false);
     }
     if (previous.phase !== 'result' && next.phase === 'result') {
@@ -352,7 +354,21 @@ export default function PreStream3D() {
       setState(next);
     }
     persist(next, force);
-  }, [persist, selectStation, syncAudio]);
+  }, [clearControls, persist, selectStation, syncAudio]);
+
+  const pressPrimary = useCallback((source: string) => {
+    const { current } = stateRef;
+    if (current.paused || current.phase !== 'minigame' ||
+      !(current.minigame?.kind === 'cat' || (current.minigame?.kind === 'toilet' && current.minigame.stage === 'shoot'))) return;
+    primaryRef.current.press(source);
+    setHeld(primaryRef.current.held);
+  }, []);
+
+  const releasePrimary = useCallback((source: string, cancelled = false) => {
+    const submit = primaryRef.current.release(source, cancelled);
+    setHeld(primaryRef.current.held);
+    if (submit && stateRef.current.minigame?.kind === 'cat') commit(releaseCatPourPrep(stateRef.current));
+  }, [commit]);
 
   const selectNight = useCallback((level: number, begin = false) => {
     audioRef.current?.setMuted(true);
@@ -530,7 +546,7 @@ export default function PreStream3D() {
         }
         const length = Math.hypot(x, z);
         if (length > 1) { x /= length; z /= length; }
-        const next = stepPrepGame(stateRef.current, delta, { x, z, primary: primaryRef.current });
+        const next = stepPrepGame(stateRef.current, delta, { x, z, primary: primaryRef.current.held });
         commit(next, false);
         remaining -= delta;
       }
@@ -580,7 +596,7 @@ formattedTime: formatPrepTime(stateRef.current.elapsedMs),
         if (event.code === 'Escape' && destinationRef.current) {
           destinationRef.current = null; setTarget(null);
         } else if (event.code === 'Escape' && stateRef.current.phase === 'minigame' && !stateRef.current.paused) {
-          primaryRef.current = false; commit(leaveMiniGame(stateRef.current));
+          primaryRef.current.clear(); commit(leaveMiniGame(stateRef.current));
         } else if (!event.repeat) pause();
         return;
       }
@@ -608,22 +624,17 @@ formattedTime: formatPrepTime(stateRef.current.elapsedMs),
       } else if (event.code === 'KeyE' || event.code === 'Space') {
         if ((focusedControl && event.code === 'Space') || event.target instanceof HTMLInputElement) return;
         event.preventDefault();
-        if (event.code === 'Space' && current.phase === 'minigame') primaryRef.current = true;
+        if (event.code === 'Space' && current.phase === 'minigame' && !event.repeat) pressPrimary(`key:${event.code}`);
         if (!event.repeat) act();
       }
     };
     const keyup = (event: KeyboardEvent) => {
       keysRef.current.delete(event.code);
-      if (event.code === 'Space') {
-        const wasHeld = primaryRef.current;
-        primaryRef.current = false;
-        if (wasHeld && stateRef.current.minigame?.kind === 'cat') commit(releaseCatPourPrep(stateRef.current));
-      }
+      if (event.code === 'Space' || event.code === 'Enter') releasePrimary(`key:${event.code}`);
     };
     const freeze = () => {
       pageSuspendedRef.current = true;
-      keysRef.current.clear(); primaryRef.current = false; stickRef.current = { x: 0, z: 0 };
-      setKnob({ x: 0, z: 0 }); setHeld(false);
+      clearControls();
       const { current } = stateRef;
       if (!current.paused && ['explore', 'minigame', 'countdown'].includes(current.phase)) commit(togglePausePrep(current));
       syncAudio(stateRef.current);
@@ -651,7 +662,7 @@ formattedTime: formatPrepTime(stateRef.current.elapsedMs),
       window.removeEventListener('pagehide', freeze);
       document.removeEventListener('visibilitychange', visibility);
     };
-  }, [act, aim, commit, confirmRestart, cycleNearby, fullscreen, help, pause, persist, syncAudio]);
+  }, [act, aim, clearControls, commit, confirmRestart, cycleNearby, fullscreen, help, pause, persist, pressPrimary, releasePrimary, syncAudio]);
 
   const stationAction = (id: StationId) => {
     if (incidentStation(id)) return state.incidents.active.includes(id as PrepState['incidents']['active'][number]) ? '突发' : '完成';
@@ -694,19 +705,16 @@ formattedTime: formatPrepTime(stateRef.current.elapsedMs),
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
     pointAim(event);
-    if (holdMode) { primaryRef.current = true; setHeld(true); }
+    if (holdMode) pressPrimary(`pointer:${event.pointerId}`);
   };
-  const aimUp = () => { primaryRef.current = false; setHeld(false); };
+  const aimUp = (event: React.PointerEvent<HTMLDivElement>) => releasePrimary(`pointer:${event.pointerId}`, event.type !== 'pointerup');
   const actionDown = (event: React.PointerEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
-    if (holdMode) { primaryRef.current = true; setHeld(true); } else act();
+    if (holdMode) pressPrimary(`pointer:${event.pointerId}`); else act();
   };
-  const actionUp = () => {
-    const wasHeld = primaryRef.current;
-    primaryRef.current = false;
-    setHeld(false);
-    if (wasHeld && stateRef.current.minigame?.kind === 'cat') commit(releaseCatPourPrep(stateRef.current));
+  const actionUp = (event: React.PointerEvent<HTMLButtonElement>) => {
+    releasePrimary(`pointer:${event.pointerId}`, event.type !== 'pointerup');
   };
   const wipePoint = (event: React.PointerEvent<HTMLDivElement>) => {
     const bounds = event.currentTarget.getBoundingClientRect();
@@ -721,7 +729,8 @@ formattedTime: formatPrepTime(stateRef.current.elapsedMs),
     const vector = { x: x / length, z: z / length };
     stickRef.current = vector; setKnob(vector);
   };
-  const stickUp = () => {
+  const stickUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (stickIdRef.current !== event.pointerId) return;
     stickIdRef.current = null;
     stickRef.current = { x: 0, z: 0 };
     setKnob({ x: 0, z: 0 });
@@ -835,7 +844,7 @@ title={`${station.label} · ${stationAction(station.id)}`}>
 className={styles.joystick}
 aria-label="移动摇杆"
 role="application"
-          onPointerDown={event => { event.preventDefault(); stickIdRef.current = event.pointerId; event.currentTarget.setPointerCapture(event.pointerId); stickMove(event); }}
+          onPointerDown={event => { if (stickIdRef.current !== null || stateRef.current.paused) return; event.preventDefault(); stickIdRef.current = event.pointerId; event.currentTarget.setPointerCapture(event.pointerId); stickMove(event); }}
           onPointerMove={event => { if (stickIdRef.current === event.pointerId) stickMove(event); }}
           onPointerUp={stickUp}
 onPointerCancel={stickUp}
@@ -1014,8 +1023,8 @@ data-held={held}
 onPointerUp={actionUp}
 onPointerCancel={actionUp}
 onLostPointerCapture={actionUp}
-          onKeyDown={event => { if (holdMode && (event.code === 'Space' || event.code === 'Enter')) { event.preventDefault(); primaryRef.current = true; setHeld(true); } }}
-          onKeyUp={event => { if (event.code === 'Space' || event.code === 'Enter') actionUp(); }}
+          onKeyDown={event => { if (holdMode && (event.code === 'Space' || event.code === 'Enter')) { event.preventDefault(); if (!event.repeat) pressPrimary(`key:${event.code}`); } }}
+          onKeyUp={event => { if (event.code === 'Space' || event.code === 'Enter') { if (holdMode) event.preventDefault(); releasePrimary(`key:${event.code}`); } }}
           onClick={event => { if (event.detail === 0 && !holdMode) act(); }}>
           {minigameAction(state)}
         </button>

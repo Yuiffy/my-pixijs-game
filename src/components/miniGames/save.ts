@@ -4,6 +4,7 @@ import { selectAiRivalEnding } from './agiEndings';
 import { AI_DIFFICULTIES, initialCompetition, rivalCompetitionDefaults, AiCompetitionEntry } from './agiCompetition';
 import { AI_COMPANIES, AI_INDUSTRY_EVENTS, AiCompanyId, aiCompany, normalizeAiDisplayText } from "./agiIndustry";
 import { createFab, FAB_STYLES } from "./fabEngine";
+import { readFabQuarterReport } from './fabFinance';
 import { createSnack, SNACK_LEVELS } from "./snackEngine";
 
 function shape(value: unknown, reference: unknown): boolean {
@@ -157,6 +158,9 @@ difficulty: 'relaxed',
         }
       }
     } else if (kind === "fab") {
+      const report = readFabQuarterReport(value.lastQuarter, value.turn, !!value.ending);
+      if (report) value.lastQuarter = report;
+      else delete value.lastQuarter;
       if (
         !FAB_STYLES.some((s) => s.id === value.player.style) ||
         value.rivals.length !== 3 ||

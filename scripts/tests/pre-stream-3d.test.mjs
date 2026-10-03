@@ -329,7 +329,9 @@ test('food placement, measured scoops, mixer, poses and OBS each require their o
   state = visit(state, 'cat');
   state = stepPrepGame(state, 900, { ...idle, primary: true });
   state = stepPrepGame(state, 50, idle);
-  assert.equal(state.minigame.hits, 1, 'releasing held input measures the scoop once');
+  assert.equal(state.minigame.hits, 0, 'idle or cancelled input does not submit a scoop');
+  state = releaseCatPourPrep(state);
+  assert.equal(state.minigame.hits, 1, 'explicit release measures the scoop once');
   assert.equal(state.minigame.fillLevel, 0);
   state = stepPrepGame(state, 1450, { ...idle, primary: true });
   assert.ok(validatePrepGame(state), 'partly filled scoop can be saved');

@@ -81,7 +81,9 @@ test('seeded calendars keep bonus vouchers scarce while preserving reset opportu
         assert.notEqual(g.event.effect, 'bank');
         assert.ok(!g.events.includes('gift'));
         if (g.event.effect === 'instant') normals++;
-        if (g.event.effect === 'quiet') quietDays++;
+        // News replaces quiet slots, but has no morning or night gift of its own.
+        if (g.event.effect === 'industry') assert.equal(g.event.chance, 0);
+        if (g.event.effect === 'quiet' || g.event.effect === 'industry') quietDays++;
         // Sample event supply only; skip development so bot spending never obscures grants.
         g.minute = 480;
         g = E.endDay(g);

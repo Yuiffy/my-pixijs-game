@@ -8,6 +8,7 @@ import { VALLEY_ROUTE, VALLEY_ENTRY_ROUTE, VALLEY_WEST_ROUTE, VALLEY_EAST_ROUTE,
 const engine = await load('src/components/nightRain/engine.ts');
 const world = await load('src/components/nightRain/world.ts');
 const valley = await load('src/components/nightRain/valley.ts');
+const haven = await load('src/components/nightRain/haven.ts');
 const guide = await load('src/components/nightRain/companion.ts');
 const fixture = fs.readFileSync(new URL('./fixtures/night-rain-chapter-v5.json', import.meta.url), 'utf8');
 const fresh = () => { const s = engine.loadGame(fixture); assert.ok(s); return s; };
@@ -26,10 +27,11 @@ test('all river spawns, shrines, mechanisms and ferry landings stand on connecte
 
 test('actual completed v5 save migrates without changing the player, inventory or any old enemy', () => {
   const old = JSON.parse(fixture); const s = fresh();
-  assert.equal(s.worldVersion,7); assert.deepEqual(s.player, old.player);
+  assert.equal(s.worldVersion, 7); assert.deepEqual(s.player, old.player);
   assert.deepEqual(s.enemies.slice(0, old.enemies.length), old.enemies);
   for (const key of ['rice', 'level', 'bankedRice', 'defeatedGuests', 'litLamps', 'collected', 'chapterGates', 'chapterComplete']) assert.deepEqual(s[key], old[key], key);
   assert.equal(s.enemies.length, world.ENEMY_SPAWNS.length);
+  assert.equal(s.enemies.length - old.enemies.length, valley.VALLEY_ENEMIES.length + haven.HAVEN_ENEMIES.length);
   assert.deepEqual(s.valleyGates, []); assert.equal(s.valleyComplete, false);
   assert.ok(engine.loadGame(engine.saveGame(s)));
 });

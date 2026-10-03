@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" fill="none">
+  <defs>
+    <pattern id="paper" width="34" height="34" patternUnits="userSpaceOnUse"><circle cx="8" cy="12" r="1" fill="#ceb291" opacity=".16"/><circle cx="25" cy="29" r=".6" fill="#fff" opacity=".8"/></pattern>
+    <filter id="shadow" x="-35%" y="-35%" width="180%" height="190%"><feDropShadow dx="2" dy="10" stdDeviation="8" flood-color="#805650" flood-opacity=".1"/></filter>
+  </defs>
+  <rect width="900" height="520" fill="#f9efde"/>
+  <ellipse cx="70" cy="35" rx="230" ry="193" fill="#e5e9ce"/>
+  <ellipse cx="837" cy="548" rx="256" ry="208" fill="#e5e9ce"/>
+  <path d="M-40 337H950M451 140V560" stroke="#ead1b7" stroke-width="105" stroke-linecap="round"/>
+  <path d="M-40 335H950M449 140V560" stroke="#fff1da" stroke-width="95" stroke-linecap="round"/>
+  <rect width="900" height="520" fill="url(#paper)"/>
+  <circle cx="449" cy="337" r="123" stroke="#dbc1a0" stroke-dasharray="5 10"/>
+  <circle cx="449" cy="337" r="107" stroke="#ead5b6" stroke-width="2"/>
+  <g fill="#abc29d">
+    <ellipse cx="51" cy="472" rx="53" ry="28"/><ellipse cx="33" cy="451" rx="30" ry="28"/><ellipse cx="67" cy="449" rx="34" ry="31"/>
+    <ellipse cx="857" cy="77" rx="49" ry="28"/><ellipse cx="839" cy="54" rx="29" ry="26"/><ellipse cx="871" cy="55" rx="31" ry="29"/>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="58" y="212" width="169" height="107" rx="24" fill="#dce3bc" stroke="#b5bd98" stroke-width="2"/>
+    <rect x="70" y="224" width="145" height="83" rx="16" fill="#f5f1da"/>
+    <path d="M100 263H185" stroke="#7b8d73" stroke-width="8" stroke-linecap="round"/>
+    <rect x="93" y="244" width="13" height="40" rx="5" fill="#6d816b"/><rect x="180" y="244" width="13" height="40" rx="5" fill="#6d816b"/>
+    <rect x="88" y="185" width="110" height="36" rx="12" fill="#fff7e7" stroke="#dac2a9" stroke-width="2"/>
+    <text x="143" y="209" text-anchor="middle" fill="#785a5b" font-family="Microsoft YaHei,sans-serif" font-size="19" font-weight="700">健身房</text>
+    <rect x="673" y="191" width="165" height="117" rx="25" fill="#cde4dc" stroke="#a5c7bd" stroke-width="2"/>
+    <rect x="685" y="203" width="141" height="93" rx="18" fill="#a7d5d4"/>
+    <path d="M694 229H817M694 264H817" stroke="#dff4e8" stroke-width="3"/>
+    <path d="M706 239Q716 251 727 239M747 239Q758 251 769 239M788 239Q799 251 810 239" stroke="#79b8bb" stroke-width="2"/>
+    <rect x="697" y="164" width="115" height="36" rx="12" fill="#fff7e7" stroke="#dac2a9" stroke-width="2"/>
+    <text x="755" y="188" text-anchor="middle" fill="#785a5b" font-family="Microsoft YaHei,sans-serif" font-size="19" font-weight="700">游泳馆</text>
+    <rect x="626" y="405" width="171" height="89" rx="21" fill="#ead3c2" stroke="#cead98" stroke-width="2"/>
+    <rect x="638" y="417" width="147" height="64" rx="13" fill="#f9e8d5"/>
+    <rect x="688" y="419" width="49" height="56" rx="7" fill="#c8a8c6" stroke="#ae8baa" stroke-width="2"/>
+    <path d="M696 427H729M696 467H729" stroke="#e7cfe0" stroke-width="3"/>
+    <text x="711" y="393" text-anchor="middle" fill="#aa8b7b" font-family="Microsoft YaHei,sans-serif" font-size="16" font-weight="700">居家健身</text>
+  </g>
+  <g transform="translate(448 347)" filter="url(#shadow)">
+    <ellipse cx="0" cy="69" rx="61" ry="15" fill="#7c5867" opacity=".15"/>
+    <rect x="-29" y="28" width="22" height="43" rx="9" fill="#7d637d"/><rect x="9" y="25" width="22" height="43" rx="9" fill="#7d637d"/>
+    <rect x="-35" y="62" width="31" height="15" rx="7" fill="#fff6e8" stroke="#b28b8e" stroke-width="2"/><rect x="6" y="60" width="33" height="15" rx="7" fill="#fff6e8" stroke="#b28b8e" stroke-width="2"/>
+    <rect x="-37" y="-32" width="76" height="71" rx="25" fill="#e9979b" stroke="#c1808d" stroke-width="3"/>
+    <path d="M1 -23V25" stroke="#f4c7c0" stroke-width="3"/>
+    <rect x="-52" y="-20" width="25" height="47" rx="12" fill="#e9979b" transform="rotate(13 -39 -4)"/><rect x="27" y="-18" width="25" height="47" rx="12" fill="#e9979b" transform="rotate(-15 40 -4)"/>
+    <circle cx="-47" cy="26" r="9" fill="#ffe8d7"/><circle cx="48" cy="24" r="9" fill="#ffe8d7"/>
+    <ellipse cx="-43" cy="-48" rx="21" ry="51" fill="#dbd0dd"/><ellipse cx="44" cy="-47" rx="21" ry="51" fill="#dbd0dd"/>
+    <ellipse cx="-46" cy="-52" rx="16" ry="44" fill="#faf3ef"/><ellipse cx="47" cy="-52" rx="16" ry="44" fill="#faf3ef"/>
+    <ellipse cx="0" cy="-55" rx="49" ry="47" fill="#ffede3" stroke="#d9c2c3" stroke-width="2"/>
+    <ellipse cx="0" cy="-76" rx="50" ry="35" fill="#f7f1ed"/>
+    <path d="M-44 -87L-15 -44L-8 -70L17 -42L25 -77L46 -51V-93Z" fill="#f7f1ed"/>
+    <ellipse cx="-19" cy="-45" rx="8" ry="11" fill="#d8a453"/><ellipse cx="19" cy="-45" rx="8" ry="11" fill="#d8a453"/>
+    <ellipse cx="-20" cy="-48" rx="3" ry="4" fill="#fff8e8"/><ellipse cx="18" cy="-48" rx="3" ry="4" fill="#fff8e8"/>
+    <path d="M-29 -55Q-21 -60 -11 -54M10 -54Q20 -60 29 -55" stroke="#7a5a61" stroke-width="3" stroke-linecap="round"/>
+    <ellipse cx="-34" cy="-30" rx="8" ry="4" fill="#f4b7ab"/><ellipse cx="34" cy="-30" rx="8" ry="4" fill="#f4b7ab"/>
+    <path d="M-6 -25Q0 -18 6 -25" stroke="#b48680" stroke-width="3" stroke-linecap="round"/>
+    <path d="M-51 -88V-143L-20 -112Q1 -124 27 -110L54 -142V-89Z" fill="#655b70" stroke="#534b62" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M-44 -127L-42 -105L-29 -112M45 -126L43 -104L32 -111" stroke="#d2a6d9" stroke-width="7" stroke-linejoin="round"/>
+    <path d="M-51 -91Q0 -103 53 -90" stroke="#544c63" stroke-width="16" stroke-linecap="round"/>
+    <text x="19" y="-100" fill="#a391b8" font-family="sans-serif" font-size="14" font-weight="700" transform="rotate(8 19 -100)">SUI</text>
+    <path d="M-21 -105C-31 -118 -40 -105 -22 -97C-6 -108 -15 -116 -21 -105Z" stroke="#d6bfdc" stroke-width="2"/>
+    <path d="M-7 3L0 -4L7 3L0 10Z" fill="#fff2dd"/>
+  </g>
+  <g transform="translate(264 366) rotate(-12)" filter="url(#shadow)">
+    <path d="M27 -22L43 -83" stroke="#8bbacb" stroke-width="9" stroke-linecap="round"/><ellipse cx="43" cy="-86" rx="9" ry="14" fill="#add0dd"/>
+    <ellipse cx="-11" cy="-27" rx="30" ry="22" fill="#fff9ec"/><ellipse cx="18" cy="-35" rx="25" ry="23" fill="#f5c5c5"/><ellipse cx="0" cy="-51" rx="23" ry="17" fill="#ffdad1"/>
+    <path d="M-36 -23H36L26 40Q0 52 -26 40Z" fill="#fff8ee" stroke="#c58289" stroke-width="3"/>
+    <path d="M-29 -11H29" stroke="#f2bbb9" stroke-width="8"/>
+    <ellipse cy="12" rx="27" ry="18" fill="#dc6570"/>
+    <text x="0" y="21" text-anchor="middle" fill="#fff9ef" font-family="Arial,sans-serif" font-size="27" font-weight="800">DQ</text>
+    <circle cx="-12" cy="37" r="3" fill="#71505a"/><circle cx="12" cy="37" r="3" fill="#71505a"/>
+  </g>
+  <g transform="translate(620 340) rotate(9)" filter="url(#shadow)">
+    <path d="M12 -15L19 -68L40 -77" stroke="#91a778" stroke-width="6" stroke-linecap="round"/>
+    <path d="M-34 -36H34L24 43Q0 52 -24 43Z" fill="#efcf83" stroke="#b99a63" stroke-width="3"/>
+    <path d="M-28 2H28L24 43Q0 52 -24 43Z" fill="#e8ac70"/>
+    <rect x="-40" y="-41" width="80" height="13" rx="5" fill="#fff3d4" stroke="#beab80" stroke-width="3"/>
+    <circle cx="-26" cy="-27" r="18" fill="#f2d57a"/><circle cx="-26" cy="-27" r="12" fill="#fff1bb"/>
+    <path d="M-33 -45Q-52 -63 -27 -62Q-22 -55 -33 -45Z" fill="#a7b67e"/>
+    <circle cx="16" cy="18" r="17" fill="#f6da84"/><circle cx="16" cy="18" r="12" fill="#fff2c0"/>
+    <path d="M4 18H28M16 6V30" stroke="#e5c26b" stroke-width="2"/>
+    <circle cx="-10" cy="29" r="3" fill="#71505a"/><circle cx="5" cy="29" r="3" fill="#71505a"/>
+    <rect x="-17" y="-22" width="11" height="17" rx="3" fill="#fff7cf" opacity=".65"/>
+  </g>
+  <g fill="#977995">
+    <path d="M343 340L374 328" stroke="#977995" stroke-width="7" stroke-linecap="round"/><rect x="334" y="329" width="10" height="26" rx="4" transform="rotate(-20 339 342)"/><rect x="373" y="316" width="10" height="26" rx="4" transform="rotate(-20 378 329)"/>
+    <path d="M527 292L555 302" stroke="#977995" stroke-width="7" stroke-linecap="round"/><rect x="517" y="280" width="10" height="26" rx="4" transform="rotate(20 522 293)"/><rect x="555" y="290" width="10" height="26" rx="4" transform="rotate(20 560 303)"/>
+  </g>
+  <path d="M326 234L331 247L345 252L331 257L326 271L321 257L307 252L321 247Z" fill="#e7a59b"/>
+  <path d="M559 385L563 394L573 398L563 402L559 412L555 402L545 398L555 394Z" fill="#d5b67d"/>
+  <text x="41" y="49" fill="#b68d78" font-family="Arial,sans-serif" font-size="13" font-weight="700" letter-spacing="3">SUI MOVE CLUB</text>
+  <text x="39" y="100" fill="#664955" font-family="Microsoft YaHei,PingFang SC,sans-serif" font-size="38" font-weight="800">岁己：今天也要动</text>
+  <text x="42" y="131" fill="#a08079" font-family="Microsoft YaHei,PingFang SC,sans-serif" font-size="16">抵抗诱惑 · 把动力留给自己</text>
+  <text x="42" y="488" fill="#b5927f" font-family="Arial,sans-serif" font-size="12" font-weight="700" letter-spacing="2">ONE MORE STEP, SUI.</text>
+</svg>

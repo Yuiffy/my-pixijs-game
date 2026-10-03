@@ -1,4 +1,5 @@
 import { clamp, round, random, log, Ending, Log } from "./core";
+import { fabOperatingAccount, FabQuarterReport } from './fabFinance';
 
 export const FAB_STYLES = [
   {
@@ -53,6 +54,7 @@ export type FabState = {
   history: { turn: number; price: number; cash: number }[];
   logs: Log[];
   ending: Ending | null;
+  lastQuarter?: FabQuarterReport;
 };
 export const CYCLES = [
   {
@@ -205,13 +207,28 @@ export type FabOrders = {
 };
 export function fabForecast(s: FabState) {
   const produced = Math.floor(capacity(s.player) * s.production);
+  const offered = Math.floor((s.player.inventory + produced) * s.shipment);
+  const quote = fabQuote(s, s.player, s.pricing);
+  const account = (sold: number) => fabOperatingAccount(s.player, produced, unitCost(s.player), quote, sold);
+  const worst = account(0);
+  // Bound sales using only public demand and the player's offer. Competitor
+  // orders and future random prices are deliberately not simulated here.
+  const maxSold = Math.min(offered, Math.floor(s.demand * Math.min(1, 1.25 / s.pricing)));
+  const best = account(maxSold);
+  const fixed = worst.productionCost + worst.maintenance + worst.storage + worst.interest;
+  let breakEven = Math.max(0, Math.ceil(fixed / (quote + 0.08)));
+  if (breakEven > 0 && account(breakEven - 1).net >= 0) breakEven--;
   return {
     produced,
-    offered: Math.floor((s.player.inventory + produced) * s.shipment),
+    offered,
     cost: round(
       produced * unitCost(s.player) + s.player.fabs * 6 + s.player.debt * 0.04,
     ),
-    quote: fabQuote(s, s.player, s.pricing),
+    quote,
+    worst,
+    best,
+    maxSold,
+    breakEven,
   };
 }
 export function endFabTurn(state: FabState): FabState {
@@ -278,16 +295,25 @@ export function endFabTurn(state: FabState): FabState {
   firms.forEach((f, i) => {
     if (f.bankrupt) { f.sold = 0; f.profit = 0; return; }
     const offer = offers[i];
+    const account = fabOperatingAccount(
+      { ...f, inventory: f.inventory - offer.produced },
+      offer.produced,
+      unitCost(f),
+      offer.quote,
+      offer.sold,
+    );
     f.inventory -= offer.sold;
     f.sold = offer.sold;
-    f.profit = round(
-      offer.sold * offer.quote -
-        offer.produced * unitCost(f) -
-        f.fabs * 6 -
-        f.inventory * 0.08 -
-        f.debt * 0.04,
-    );
-    f.cash = round(f.cash + f.profit);
+    f.profit = account.net;
+    f.cash = account.cashAfter;
+    if (i === 0) s.lastQuarter = {
+      ...account,
+      turn: s.turn,
+      offered: offer.offer,
+      demand: s.demand,
+      totalOffered: offers.reduce((sum, item) => sum + item.offer, 0),
+      totalSold: allocated,
+    };
     if (f.building) {
       f.building--;
       if (!f.building) {

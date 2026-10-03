@@ -1,7 +1,8 @@
 export const zh = {
   pageTitle: "RESET / 开蹬！ · 开发者的额度桌游",
   language: "语言",
-  restartCopy: "当前牌局的自动存档会被新局替换。新局从 $20 账号起步，可重新选择赛程和种子。",
+  saveCandidate: "可用牌局：第 {{day}} 天 · {{minute}}",
+  restartCopy: "回到准备页会保留当前存档，直到新局成功保存才替换。新局从 $20 账号起步，可重新选择赛程和种子。",
   rules: {
     lead: "人负责安排，模型负责跑。把重置前的每一分钟变成作品。",
     dayTitle: "每天 480 分钟、12 精力。",
@@ -29,8 +30,8 @@ export const zh = {
     resetBody: "每号开通日起每 7 天自然补满；直接 reset、银行券不叠加余额，也不改变自然重置日。券绑定账号、30 天有效、持有与每日使用次数均无上限；用掉额度后可再用下一张。自然重置前烧这个号，另一个号留券等待，是一门手艺。",
     giftBody: "早晨公开消息，夜里按概率判定是否赠礼；再抽 {{normal}} 张普通 reset、{{bank}} 张 banked reset 的牌堆，抽完重洗。开局送 1 张教学券，此后没有固定送券日；日常更多平静消息。谜语不是承诺，今天刚用券、今晚又强制补满，就可能撞车。",
     platformTitle: "平台风向",
-    platformBody: "$20 / $100 / $200 对应 1× / 5× / 20×。账号只显示剩余百分比，展开“用量观察”可看自动估计。额度口径在基准上下 20% 内波动，不会直接扣掉百分比。",
-    platformChangeBody: "$200 停售会提前两天通知；老号连续续费可保留，断订或降档后不能恢复。新模型每隔 14–28 天更新，有时两款一起上线；现有 AI 对话自动升级，不用重新调度。",
+    platformBody: "初始 $20 / $100 / $200 为 1× / 5× / 20×。若抽到套餐回归，$200 改为 10×，$500 的 25× 档开放；现有账号保留剩余百分比。补偿余额只补有效账号的缺口，不是现金，不随重置清空。",
+    platformChangeBody: "$200 停售提前两天通知，回归、补偿、Sol 6.1、后续打磨与 Dots 均可能整局不出现。Dots 解锁后每天花 1 精力交接一项项目，夜间用剩余 Pro 额度最多运行 120 分钟，再结算赠礼。金额、性能与日程为游戏设定。",
     scoringTitle: "作品才是胜利点",
     scoringBody: "公司项目须在接单后第 8 天收工前交付，超期 −3 VP；主动放弃 −2 VP。所有人每周领 $35，个人项目每款再 +$15。项目发布得声望，先达成公共奖项可抢额外分。",
     finalBody: "终局加分：发布 4 类作品 +12 VP，3 类 +5 VP；每 $100 现金与每 120 算力点各 +1 VP，两项分别封顶 10。算力点按开发工作计量，不受额度口径或降价影响；不能只靠烧额度获胜。",
@@ -41,7 +42,8 @@ export const zh = {
 export const en = {
   pageTitle: "RESET / Build On! · A Developer Board Game",
   language: "Language",
-  restartCopy: "This new game will replace your autosave. You will start with a $20 account and can choose a new game length and seed.",
+  saveCandidate: "Available game: day {{day}} · {{minute}}",
+  restartCopy: "Returning to setup keeps your current save. A successfully saved new game will replace your autosave. You will start with a $20 account and can choose a new game length and seed.",
   rules: {
     lead: "You make the decisions. The models do the work. Turn every minute before the next reset into something you can ship.",
     dayTitle: "480 minutes and 12 energy each day.",
@@ -69,8 +71,8 @@ export const en = {
     resetBody: "Each account naturally refills every seven days from its opening date. Instant resets and vouchers refill only to capacity and do not move the natural reset date. Vouchers belong to an account, expire after 30 days, and have no holding or daily-use limit.",
     giftBody: "Morning news is public. At night, a gift chance is checked before drawing from a deck of {{normal}} instant resets and {{bank}} banked resets. Drawn cards stay out until the deck is empty. The opening voucher is a tutorial gift; there are no fixed gift days afterward.",
     platformTitle: "Platform changes",
-    platformBody: "$20 / $100 / $200 plans have 1× / 5× / 20× capacity. Accounts reveal percentages, while usage observations estimate actual token capacity. The rate can vary by 20% around the baseline.",
-    platformChangeBody: "The $200 plan gives two days' warning before closing to new buyers. Existing accounts can retain it through uninterrupted renewals. Model updates arrive every 14–28 days, sometimes in pairs; existing AI sessions upgrade automatically.",
+    platformBody: "Initial $20 / $100 / $200 plans have 1× / 5× / 20× capacity. If the return announcement arrives, $200 becomes 10× and $500 unlocks at 25×; existing accounts retain their remaining percentage. Compensation credits refill gaps in active accounts, are separate from cash, and survive resets.",
+    platformChangeBody: "The $200 plan gives two days' warning before closing. Its return, compensation, Sol 6.1, further improvements, and Dots may never appear during a season. Dots cost 1 handoff energy per day and run one project for up to 120 minutes using leftover Pro quota before gifts resolve. Amounts, performance, and timing use game balance.",
     scoringTitle: "Shipped work wins",
     scoringBody: "Contract jobs must ship by the end of their eighth day or lose 3 VP. Abandoning a job loses 2 VP. Everyone earns $35 each week; each shipped personal project adds $15 a week. Shipping earns reputation, and public awards go to the first developer to meet them.",
     finalBody: "Final bonuses: four project categories earn 12 VP; three earn 5 VP. Cash adds 1 VP per $100 and compute adds 1 VP per 120 points, each capped at 10. Compute measures work done, independent of quota rates.",

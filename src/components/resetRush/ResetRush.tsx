@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { GlobalOutlined } from "@ant-design/icons";
 import { I18nextProvider, useTranslation } from "react-i18next";
 import Link from "next/link";
@@ -15,14 +15,14 @@ import {
   developmentBlocker,
   fmt,
   timeLabel,
-  V3_SAVE_KEY,
-  V4_SAVE_KEY,
   quotaPercent,
   quotaObservation,
   modelEdition,
   proClosed,
   canKeepPro,
-  V2_SAVE_KEY,
+  availableTiers,
+  planCapacity,
+  dotAccount,
   activeAccount,
   CATEGORIES,
   createGame,
@@ -42,13 +42,10 @@ import {
   riskAssessment,
   modelExperience,
   collaborationSpeed,
-  LEGACY_SAVE_KEY,
   nextDay,
   PLANS,
   RESET_SUPPLY,
   TEMPLATES,
-  restoreGame,
-  SAVE_KEY,
   score,
   textState,
   type Action,
@@ -63,6 +60,7 @@ import {
   type Development,
 } from "./engine";
 import s from "./resetRush.module.css";
+import { readResetSave, writeResetSave, type SaveIssue } from './save';
 import { resetLanguageNames } from "./messages";
 import { browserLocale, createResetI18n, LOCALE_KEY, ResetLocaleContext, Translated, translateResetText, type ResetLocale } from "./i18n";
 
@@ -75,7 +73,7 @@ const ACCOUNT_POLICIES: { id: AccountPolicy; name: string; detail: string }[] = 
   { id: "late-expiry", name: "晚到期优先", detail: "先花订阅期限更长的账号" },
   { id: "balanced", name: "按比例均衡", detail: "按套餐剩余比例分散 AI 对话" },
 ];
-type ModalKind = "rules" | "shop" | "restart" | "portfolio" | "finish" | null;
+type ModalKind = "rules" | "shop" | "restart" | "portfolio" | "finish" | "recover" | null;
 
 function Art({ kind }: { kind: Category }) {
   return (
@@ -417,6 +415,9 @@ export default function ResetRush() {
   const [game, setGame] = useState<Game | null>(null);
   const [ready, setReady] = useState(false);
   const [saved, setSaved] = useState(true);
+  const [saveIssue, setSaveIssue] = useState<SaveIssue | null>(null);
+  const [pendingRecovery, setPendingRecovery] = useState<Game | null>(null);
+  const [recoveryFailed, setRecoveryFailed] = useState(false);
   const [length, setLength] = useState(42);
   const [seed, setSeed] = useState("260926");
   const [modal, setModal] = useState<ModalKind>(null);
@@ -446,30 +447,45 @@ export default function ResetRush() {
     try { localStorage.setItem(LOCALE_KEY, next); } catch { /* The choice still applies to this session. */ }
   };
 
-  useEffect(() => {
+  const readSave = useCallback(() => {
     try {
-      const restored =
-        restoreGame(localStorage.getItem(SAVE_KEY)) ??
-        restoreGame(localStorage.getItem(V4_SAVE_KEY)) ??
-        restoreGame(localStorage.getItem(V3_SAVE_KEY)) ??
-        restoreGame(localStorage.getItem(V2_SAVE_KEY)) ??
-        restoreGame(localStorage.getItem(LEGACY_SAVE_KEY));
+      const { game: restored, issue } = readResetSave(localStorage);
+      setSaveIssue(issue);
+      setSaved(!issue);
       setGame(restored);
       if (restored) setSelectedProjects(restored.players[0].projects.slice(0, 1).map((j) => j.id));
     } catch {
+      setSaveIssue({ kind: 'unavailable', unread: [], candidate: null });
       setSaved(false);
     }
     setReady(true);
   }, []);
-  useEffect(() => {
-    if (!ready || !game) return;
+  useEffect(() => { readSave(); }, [readSave]);
+  const persist = useCallback((current: Game, replaceDamaged = false) => {
     try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify(game));
-      setSaved(true);
+      const result = writeResetSave(localStorage, current, replaceDamaged);
+      setSaved(result.ok);
+      setSaveIssue(result.ok ? null : result.issue);
+      return result.ok;
     } catch {
       setSaved(false);
+      setSaveIssue({ kind: 'unavailable', unread: [], candidate: null });
+      return false;
     }
-  }, [game, ready]);
+  }, []);
+  useEffect(() => {
+    if (ready && game && !saveIssue) persist(game);
+  }, [game, ready, saveIssue, persist]);
+
+  const downloadSave = (raw: string, name: string) => {
+    const url = URL.createObjectURL(new Blob([raw], { type: 'application/json' }));
+    const link = document.createElement('a');
+    link.href = url; link.download = name; link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  const chooseRecovery = (candidate: Game) => {
+    setPendingRecovery(candidate); setRecoveryFailed(false); setModal('recover');
+  };
   useEffect(() => {
     const w = window as Window & {
       render_game_to_text?: () => string;
@@ -477,8 +493,8 @@ export default function ResetRush() {
     };
     w.render_game_to_text = () => JSON.stringify(
         game
-          ? textState(game)
-          : { title: "RESET / 开蹬！", phase: "intro", ready },
+          ? { ...textState(game), storage: { saved, issue: saveIssue?.kind ?? null } }
+          : { title: "RESET / 开蹬！", phase: "intro", ready, storage: { saved, issue: saveIssue?.kind ?? null } },
       );
     w.advanceTime = (ms: number) => {
       // Explicit test hook: one simulated minute per 60,000 ms, never a wall-clock timer.
@@ -489,7 +505,7 @@ export default function ResetRush() {
       delete w.render_game_to_text;
       delete w.advanceTime;
     };
-  }, [game, ready]);
+  }, [game, ready, saved, saveIssue]);
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (
@@ -598,6 +614,27 @@ export default function ResetRush() {
           )}
         </div>
       </header>
+
+      {ready && (!saved || saveIssue) && (
+        <section className={s.saveNotice} role="status" data-testid="save-notice">
+          <strong>{saveIssue?.kind === 'damaged' ? '存档需要恢复' : '牌局尚未保存'}</strong>
+          <p>{saveIssue?.kind === 'damaged'
+            ? '旧存档无法读取，原文已保留。可恢复上一份进度，或另开仅本页游玩的新局。选择替换前不会自动保存。'
+            : saveIssue?.kind === 'unavailable'
+              ? '无法读取设备存储。本页仍可游玩，暂不自动保存；恢复访问后请重试。'
+              : '保存失败，当前进度仍在页面中。请重试保存，或先下载牌局再离开。'}</p>
+          {saveIssue?.candidate && <p>{i18n.t('saveCandidate', { day: saveIssue.candidate.day, minute: timeLabel(saveIssue.candidate.minute) })}</p>}
+          <div>
+            {saveIssue?.unread.map((entry, index) => <button key={entry.key} onClick={() => downloadSave(entry.raw, `${entry.key}-unread.json`)}>下载原存档{saveIssue.unread.length > 1 ? ` ${index + 1}` : ''}</button>)}
+            {saveIssue?.candidate && <button onClick={() => chooseRecovery(saveIssue.candidate!)}>恢复上一份可用存档</button>}
+            {game && <button onClick={() => downloadSave(JSON.stringify(game), 'reset-rush-current.json')}>下载当前牌局</button>}
+            {game && (saveIssue?.kind === 'damaged'
+              ? <button onClick={() => chooseRecovery(game)}>以当前牌局替换存档</button>
+              : <button onClick={() => persist(game)}>重试保存</button>)}
+            {!game && <button onClick={readSave}>重新读取存档</button>}
+          </div>
+        </section>
+      )}
 
       {!game ? (
         <section className={s.intro}>
@@ -1229,7 +1266,7 @@ export default function ResetRush() {
                     </button>
                     <div className={s.quota}>
                       <strong>
-                        {quotaPercent(a)}<small>%</small>
+                        {quotaPercent(a, game)}<small>%</small>
                       </strong>
                       <span>
                         {activeAccount(game, a) ? "剩余额度" : "订阅到期"}
@@ -1238,7 +1275,7 @@ export default function ResetRush() {
                     <div className={s.quotaBar}>
                       <i
                         style={{
-                          width: `${quotaPercent(a)}%`,
+                          width: `${quotaPercent(a, game)}%`,
                         }}
                       />
                     </div>
@@ -1276,9 +1313,9 @@ export default function ResetRush() {
                     <details className={s.meter} data-testid="quota-observation">
                       <summary>用量观察 · 自动估算</summary>
                       <p>套餐 {PLANS[a.tier].capacity / PLANS[20].capacity}× · 只公布百分比，实际容量会波动。</p>
-                      <p>{quotaObservation(a).config ?? "运行付费任务后开始采样"}</p>
-                      <p>本段 {fmt(quotaObservation(a).tokens)}k token · 掉额 {Math.max(0, quotaObservation(a).drop)} 个百分点</p>
-                      <p>{quotaObservation(a).fullLow === null ? "至少观察 2 个百分点后给出范围。" : `按本段配置，满额约 ${fmt(quotaObservation(a).fullLow!)}–${fmt(quotaObservation(a).fullHigh!)}k token。`}</p>
+                      <p>{quotaObservation(a, game).config ?? "运行付费任务后开始采样"}</p>
+                      <p>本段 {fmt(quotaObservation(a, game).tokens)}k token · 掉额 {Math.max(0, quotaObservation(a, game).drop)} 个百分点</p>
+                      <p>{quotaObservation(a, game).fullLow === null ? "至少观察 2 个百分点后给出范围。" : `按本段配置，满额约 ${fmt(quotaObservation(a, game).fullLow!)}–${fmt(quotaObservation(a, game).fullHigh!)}k token。`}</p>
                       <small>游戏模拟 token；重置、换配置或口径变化会重新采样，估计不保证未来用量。</small>
                     </details>
                     {!activeAccount(game, a) && (
@@ -1323,8 +1360,23 @@ export default function ResetRush() {
               </div>
               <div className={s.platformStrip} data-testid="platform-status">
                 <strong>{(["luna", "sol", "astra"] as Model[]).map(m => modelEdition(game, m).name).join(" / ")}</strong>
-                <span>{proClosed(game) ? "$200 已停售 · 老号连续续费保留" : game.platform.proDeadline ? `$200 新开窗口：D${game.platform.proDeadline} 早晨关闭` : "套餐 1× / 5× / 20× · 新模型自动升级"}</span>
+                <span>{game.platform.news?.returned ? "$200 已回归 · 10× / $500 · 25×" : proClosed(game) ? "$200 已停售 · 老号连续续费保留" : game.platform.proDeadline ? `$200 新开窗口：D${game.platform.proDeadline} 早晨关闭` : "套餐 1× / 5× / 20× · 新模型自动升级"}</span>
               </div>
+              {game.platform.news?.dots && (
+                <details className={s.experienceNotes} data-testid="dots-night" open={game.event.id === "devday-dots"}>
+                  <summary>Dot 夜间委托 · 用额度换明早的进度</summary>
+                  <p>每天交接 1 精力，只做选中的项目；收工后用有效 Pro 账号的剩余额度，Astra Standard 最多运行 120 分钟，再结算赠礼。次日继续交接，完成后自动停止。工作量包含自动返工。</p>
+                  <label htmlFor="dot-project">今晚跟进
+                    <select id="dot-project" value={human.dot?.project ?? 0} disabled={game.phase !== "plan"} onChange={e => send({ type: "dot", project: Number(e.target.value) || null })}>
+                      <option value={0}>{human.dot?.paidDay === game.day ? "取消委托 · 今天交接精力不退" : "不委托 · 保留精力与额度"}</option>
+                      {human.projects.map(project => <option key={project.id} value={project.id} disabled={!!actionError(game, 0, { type: "dot", project: project.id })}>{project.name}</option>)}
+                    </select>
+                  </label>
+                  {!dotAccount(game, human) && <p>夜间委托需要有效的 Pro 账号。</p>}
+                  {human.dot?.project != null && <p>{human.dot.paidDay === game.day ? "今天已交接 · 改任务不重复扣精力" : "尚未交接 · 需要有效 Pro 账号"}</p>}
+                  {human.dot?.report && <p data-testid="dot-report">D{human.dot.report.day} · {human.dot.report.project} · +{fmt(human.dot.report.work)} 工作量 · −{human.dot.report.percent}% 额度 · {human.dot.report.shipped ? "已交付" : "进度保留"}</p>}
+                </details>
+              )}
               <div className={s.studioSettings}>
                 <label className={s.threadCount} htmlFor="studio-threads">
                   <span>同时开几个 AI 对话 <b>{studio?.threads ?? 1}</b></span>
@@ -1421,11 +1473,12 @@ checked={config.turbo}
               <details className={s.experienceNotes} data-testid="model-roadmap">
                 <summary>近期模型路线 · 两到四周一次</summary>
                 <p>轻量：GPT-5.6 Luna → GPT-6 Luna</p>
-                <p>主力：GPT-5.6 Sol → GPT-6 Sol</p>
+                <p>主力：GPT-5.6 Sol → GPT-6 Sol / GPT-6.1 Sol</p>
                 <p>攻坚：GPT-6 Astra → GPT-6.1 Astra（虚构）</p>
-                <p>21 / 42 天局从近期模型起步，每隔 14–28 天出现一次模型消息，有时两款一起上线。全系到 GPT-6 后，后续 6.1 明确标为虚构推演。发布间隔、免费 Luna、Ultra 协作和配额倍率均为游戏设定，不是官方日程或计费规则。</p>
+                <p>常规模型每隔 14–28 天换代。套餐回归、补偿、Sol 6.1、后续打磨与 Dots 为独立随机新闻，可能整局不出现。Sol 6.1 为真实型号；6.1 Astra 仍是虚构未来。容量、性能、补偿金额与夜班时长均为游戏设定。</p>
                 <a href="https://developers.openai.com/api/docs/models/gpt-5.6-luna" target="_blank" rel="noreferrer">OpenAI · GPT-5.6 Luna</a>{" · "}
                 <a href="https://developers.openai.com/api/docs/models/gpt-6-luna" target="_blank" rel="noreferrer">OpenAI · GPT-6 Luna</a>
+                {" · "}<a href="https://learn.chatgpt.com/docs/whats-new/devday-2026" target="_blank" rel="noreferrer">OpenAI · DevDay 2026</a>
               </details>
               <details className={s.advancedSettings}>
                 <summary>手动配置 · 选择模型或强度会切回统一配置</summary>
@@ -1656,7 +1709,7 @@ keepAutomatic: true,
       )}
       <footer className={s.footer}>
         <span>
-          RESET / 开蹬！ <i>v0.9 · 近期模型</i>
+          RESET / 开蹬！ <i>v0.10 · 风向又变了</i>
         </span>
         <span>
           {game
@@ -1693,15 +1746,7 @@ keepAutomatic: true,
                 setGame(null);
                 setModal(null);
                 setSeed(String((Number(seed) || 260926) + 1));
-                try {
-                  localStorage.removeItem(SAVE_KEY);
-                  localStorage.removeItem(V4_SAVE_KEY);
-                  localStorage.removeItem(V3_SAVE_KEY);
-                  localStorage.removeItem(LEGACY_SAVE_KEY);
-                  localStorage.removeItem(V2_SAVE_KEY);
-                } catch {
-                  setSaved(false);
-                }
+                // Keep the previous position until a new game can actually be saved.
               }}
             >
               回到准备页
@@ -1709,6 +1754,25 @@ keepAutomatic: true,
             <button className={s.textButton} onClick={close}>
               继续这一局
             </button>
+          </div>
+        </Modal>
+      )}
+      {modal === 'recover' && pendingRecovery && (
+        <Modal title="确认恢复与保存" close={close}>
+          <p className={s.modalCopy}>确认后将以选中的牌局继续。无法读取的原文会先另存保留，可用的旧进度也会保留备份；本页其他未保存进度会被替换。</p>
+          <p className={s.modalCopy}>{i18n.t('saveCandidate', { day: pendingRecovery.day, minute: timeLabel(pendingRecovery.minute) })}</p>
+          {recoveryFailed && <p className={s.modalCopy} role="alert">保存仍不可用，原存档未被替换。可先下载备份，稍后再试。</p>}
+          <div className={s.modalButtons}>
+            <button
+              className={s.primary}
+              onClick={() => {
+                if (!persist(pendingRecovery, true)) { setRecoveryFailed(true); return; }
+                setGame(pendingRecovery);
+                setSelectedProjects(pendingRecovery.players[0].projects.slice(0, 1).map(j => j.id));
+                setSelectedAccount(0); close();
+              }}
+            >确认使用并保存</button>
+            <button className={s.textButton} onClick={close}>暂不替换</button>
           </div>
         </Modal>
       )}
@@ -1728,8 +1792,9 @@ keepAutomatic: true,
             一个账号可带多个 AI 对话
           </p>
           <p className={s.shopNotice} data-testid="subscription-notice">
-            {proClosed(game) ? "$200 已停止新开和升级。仅现有 $200 账号可连续续费；断订或实际降档后失去资格。" : game.platform.proDeadline ? `$200 将于 D${game.platform.proDeadline} 早晨停售；现在仍可开通或升级。` : "$20 = 1×，$100 = 5×，$200 = 20×。界面只显示剩余百分比，真实可用量以运行观察估计。"}
+            {game.platform.news?.returned ? game.platform.news.compensated ? "$200 现为 10×，$500 为 25×；符合资格的旧账号补偿已发放，可用余额补额。" : "$200 恢复开通，现为 10×；$500 为 25×。容量缩减保留剩余百分比，补偿另等到账消息。" : proClosed(game) ? "$200 已停止新开和升级。仅现有 $200 账号可连续续费；断订或实际降档后失去资格。" : game.platform.proDeadline ? `$200 将于 D${game.platform.proDeadline} 早晨停售；现在仍可开通或升级。` : "$20 = 1×，$100 = 5×，$200 = 20×。界面只显示剩余百分比，真实可用量以运行观察估计。"}
           </p>
+          {(game.platform.news?.returned || (human.credits ?? 0) > 0) && <p className={s.shopNotice} data-testid="credit-balance">补偿余额 <b>{fmt(human.credits ?? 0)}</b> 点 · 1 点补 1 额度 · 不参与现金计分，重置不清空</p>}
           <div className={s.managedAccounts}>
             {human.accounts.map((a, index) => (
               <section
@@ -1743,7 +1808,7 @@ keepAutomatic: true,
                   </h3>
                   <b>
                     {activeAccount(game, a)
-                      ? `${quotaPercent(a)}% 剩余 · ${PLANS[a.tier].capacity / PLANS[20].capacity}×`
+                      ? `${quotaPercent(a, game)}% 剩余 · ${planCapacity(game, a.tier) / PLANS[20].capacity}×`
                       : "已暂停"}
                   </b>
                 </div>
@@ -1761,7 +1826,8 @@ keepAutomatic: true,
                   >
                     为此账号补满 · 用 1 张券
                   </button>
-                  {([20, 100, 200] as Tier[])
+                  {(human.credits ?? 0) > 0 && <button disabled={!!actionError(game, 0, { type: "credit", account: a.id })} title={actionError(game, 0, { type: "credit", account: a.id }) ?? "只补缺口，不花时间或精力"} data-credit-account={a.id} onClick={() => send({ type: "credit", account: a.id })}>用补偿余额补额 · 最多 {fmt(Math.min(human.credits ?? 0, planCapacity(game, a.tier) - a.quota))} 点</button>}
+                  {availableTiers(game)
                     .filter((t) => !activeAccount(game, a) || t > a.tier)
                     .map((t) => {
                       const action: Action = {
@@ -1800,7 +1866,7 @@ keepAutomatic: true,
                             : (Number(e.target.value) as Tier),
                       })}
                   >
-                    {([20, 100, 200] as Tier[]).map((t) => (
+                    {availableTiers(game).map((t) => (
                       <option key={t} value={t} disabled={t === 200 && proClosed(game) && !canKeepPro(game, a)}>
                         ${t} / 30 天
                         {t < a.tier
@@ -1818,7 +1884,7 @@ keepAutomatic: true,
                   {a.renewal === null
                     ? "到期清空额度并停用，银行券仍按原日期过期。"
                     : activeAccount(game, a)
-                      ? `D${a.paidUntil + 1} 自动扣 $${a.renewal}，恢复 100%；余额不足则暂停。${a.tier === 200 ? "停售后请保持连续续费。" : ""}`
+                      ? `D${a.paidUntil + 1} 自动扣 $${a.renewal}，恢复 100%；余额不足则暂停。${a.tier === 200 && !game.platform.news?.returned ? "停售后请保持连续续费。" : ""}`
                       : "已暂停的账号需手动续开；仅改到期方案不会扣款。"}
                 </p>
               </section>
@@ -1828,12 +1894,12 @@ keepAutomatic: true,
             加一个新账号 <small>{human.accounts.length} / 3</small>
           </h3>
           <div className={s.shopPlans}>
-            {([20, 100, 200] as Tier[]).map((t) => (
+            {availableTiers(game).map((t) => (
               <div key={t}>
                 <span>{PLANS[t].name}</span>
                 <strong>${t}</strong>
                 <p>
-                  {PLANS[t].capacity / PLANS[20].capacity}× 额度 / 7 天<br />
+                  {planCapacity(game, t) / PLANS[20].capacity}× 额度 / 7 天<br />
                   订阅有效 30 天
                 </p>
                 <button

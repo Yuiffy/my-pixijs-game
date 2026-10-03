@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { AiAction, AiState, AI_ACTIONS, actAi, aiBlocked, aiCost, aiDistillGain, aiDistillTarget, aiEffectiveProduct, aiIncome, aiTeacherBlock, aiTrainGain, aiUpkeep, decideAiEvent, endAiTurn, setAiDistillTarget, setAiOperating } from './agiEngine';
+import { AiAction, AiState, AI_ACTIONS, actAi, aiBlocked, aiCost, aiDistillGain, aiDistillTarget, aiEffectiveProduct, aiTeacherBlock, aiTrainGain, aiUpkeep, decideAiEvent, endAiTurn, setAiDistillTarget, setAiOperating } from './agiEngine';
 import { aiCompany, AiCompanyId, AiService, industryEvent } from './agiIndustry';
 import { money } from './core';
 import { AgiCompetitionControls, AgiQuarterBrief } from './AgiCompetitionPanel';
 import { Sources } from './AgiIndustryPanel';
+import AgiBudget from './AgiBudget';
 import styles from './agiIndustry.module.css';
 
 type Tab = 'research' | 'business' | 'ecosystem';
@@ -109,7 +110,7 @@ export default function AgiTurnPanel({ game, change }: { game: AiState; change: 
     </>
 )}
     <div className={styles.turnFooter}>
-      <div><span>剩余 {game.actions} 次行动</span><small>预计收入 {money(aiIncome(game))} · 运营 {money(aiUpkeep(game))}</small></div>
+      <AgiBudget game={game} />
       <div><button data-action="agi" disabled={!ready || !!agiReason} title={!ready ? '先处理行业事件' : agiReason || '启动 AGI'} onClick={() => change(actAi(game, 'agi'))}>启动 AGI</button><button className={styles.endTurn} disabled={!ready} onClick={() => change(endAiTurn(game))}>结束季度 →</button></div>
       {!ready ? <small>选择上面的事件回应，随后安排本季行动。</small> : <small>{game.actions ? '可继续行动，也可以直接结算。' : '行动已用完，准备进入下一季。'} {agiReason && `AGI：${agiReason}`}</small>}
     </div>

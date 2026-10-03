@@ -70,8 +70,9 @@ async function touchPoint(p,name,id) {
  assert.equal((await state(p)).controlMode,'toggle'); assert.equal((await state(p)).phase,'paused'); await inputs(p,{});
  await button(p,'继续直播').click(); await button(p,'切换说话').click(); await button(p,'按住操作').click(); await inputs(p,{});
  await button(p,'点按保持').click(); await button(p,'切换说话').click();
+ await p.keyboard.down('k'); await p.keyboard.down('k'); await inputs(p,{talk:true,mute:true}); await p.keyboard.up('k'); await inputs(p,{talk:true,mute:true}); await p.keyboard.press('k'); await inputs(p,{talk:true});
  await p.evaluate(()=>window.dispatchEvent(new Event('blur'))); assert.equal((await state(p)).phase,'paused'); await inputs(p,{});
- await button(p,'继续直播').click(); await fresh(p);
+ await button(p,'继续直播').click(); await button(p,'切换说话').click(); await advance(p,70000); assert.equal((await state(p)).phase,'lost'); await inputs(p,{}); await capture(p,'03-timeout-clears'); await fresh(p);
  // Complete five levels through the new latched buttons and single serving taps.
  for(let level=0;level<5;level++) {
   let s=await state(p), guard=0;
@@ -105,8 +106,8 @@ async function touchPoint(p,name,id) {
  await button(t,'切换说话').tap();await inputs(t,{});
  await button(t,'切换静音').tap();await button(t,'吃一口').tap();await advance(t,1500);assert.equal((await state(t)).eaten,1);
  await capture(t,'06-touch-eat-390');
- await t.setViewportSize({width:320,height:740});await capture(t,'07-touch-320');
- await t.setViewportSize({width:844,height:390});await capture(t,'08-touch-landscape');
+ await t.setViewportSize({width:320,height:740});await touchPoint(t,'切换说话',7);await touchPoint(t,'切换静音',8);await capture(t,'07-touch-320');
+ await t.setViewportSize({width:844,height:390});await touchPoint(t,'切换说话',7);await touchPoint(t,'切换静音',8);await capture(t,'08-touch-landscape');
  await t.keyboard.press('p');await inputs(t,{});
  await mobile.close();
  scenarios.push('CDP multitouch, partial release, cancellation, keyboard plus touch, real toggle taps, 320/390px and landscape');

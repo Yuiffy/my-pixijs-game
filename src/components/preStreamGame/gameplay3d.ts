@@ -814,7 +814,8 @@ function tickMini(state: PrepState, dt: number, primary: boolean) {
   updateTarget(mini);
   if (mini.kind === 'cat') {
     if (primary) mini.fillLevel = Math.min(1, mini.fillLevel + dt / 1500);
-    else if (mini.fillLevel > 0) finishCatPour(state);
+    // A stopped hold may be cancellation, pause, or a restored save. Only an
+    // explicit normal release submits a scoop through releaseCatPourPrep.
     return;
   }
   if (mini.kind !== 'toilet' || !primary) {

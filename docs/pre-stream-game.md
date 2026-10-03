@@ -105,3 +105,12 @@ WASD / 方向键移动，E / 空格交互；可点击场景物品、上方未完
 - 31 张完整流程截图经过像素检查和逐张目检；检查发现小游戏背景地点标签挡脸，已限制标签仅在探索时显示，桌面/320px 两张定点复查通过。另有 820px、390px、320px 待机/形象转场专项九张截图通过，无溢出和遮挡，报告在 `tmp/pre-stream-transition-layout/report.json` 和 `tmp/pre-stream-marker-fix/report.json`。
 - 通用游戏客户端静音移动冒烟通过，截图非黑且角色状态与画面一致，MP3 实际播放器为 playing/loop，未产生错误日志；产物 `tmp/pre-stream-op-shared/`。浏览器验证全部使用静音输出，未向用户设备播放测试声。
 - 隔离发布工作树顺序通过完整 `pnpm run check` 和 `pnpm run build`，Next 构建内 ESLint 与类型检查保持启用，生成 54/54 页。`/game/pre-stream` 路由 30.9 kB，首屏 141 kB；MP3 按用户手势启动后加载。
+
+
+### 2026-10-03 · 按住操作与触摸取消
+
+键盘 Enter/空格、每根手指与鼠标分别持有按住操作。松开一处不会中断其余输入；最后一次正常松手才结算猫粮。系统取消触摸、丢失指针捕获、暂停、失焦和刷新都不代替玩家提交猫粮，保留当前勺量供继续操作。规则层也取消了空闲帧自动结算，普通倒粮仍沿用原先目标范围、速度和评分。
+
+摇杆由第一根触点持有，额外手指不抢方向，其松手也不会使摇杆停转。离开小游戏、暂停、后台和切换阶段清理输入；恢复后需要重新按下。窄横屏的瞄准区域与发射/冲水按钮完整显示，不需要先滚动再操作。
+
+`pnpm pre-stream:controls:test` 运行输入与 3D 规则回归；`pnpm pre-stream:controls:verify` 验证真实键鼠混用、双键、多点触摸与取消、摇杆、暂停清理、部分勺量刷新恢复及 320/390px 和横屏。接受 `PRE_STREAM_BASE_URL`、`PRE_STREAM_QA_DIR`、`PLAYWRIGHT_MODULE`，浏览器使用静音系统 Chrome。原有完整流程仍用 `scripts/verify-pre-stream-3d.cjs` 验证。

@@ -553,17 +553,30 @@ export function aiTerrainAction(game: TerrainGame): TerrainAction {
   return completeSteps(aiTerrainActionSteps(game));
 }
 
+const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
+const integer = (value: unknown, min = 0, max = Number.MAX_SAFE_INTEGER): value is number => typeof value === 'number' && Number.isSafeInteger(value) && value >= min && value <= max;
+const finite = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
+const height = (value: unknown) => integer(value, TARGET_BED, 120);
+const cell = (value: unknown) => integer(value, 0, MAP_W * MAP_H - 1);
+const text = (value: unknown) => typeof value === 'string' && value.length > 0 && value.length <= 1000;
+
 export function restoreTerrain(raw: string): TerrainGame | null {
   try {
-    const game = JSON.parse(raw) as TerrainGame;
-    if (game.version !== 3 || !Number.isInteger(game.seed) || !Array.isArray(game.plots) || game.plots.length !== MAP_W * MAP_H || !Array.isArray(game.players) || game.players.length < 1 || game.players.length > 4) return null;
-    if (!Number.isInteger(game.round) || game.round < 1 || !Number.isInteger(game.turn) || game.turn < 0 || game.turn >= game.players.length * 3 || !Array.isArray(game.events)) return null;
-    if (game.plots.some(p => !Number.isInteger(p.height) || p.height < TARGET_BED || p.height > 120 || !p.cuts || !Array.isArray(p.fill))) return null;
-    if (game.plots.some(p => p.fillTarget !== undefined && (!Number.isInteger(p.fillTarget) || p.fillTarget < -3 || p.fillTarget > 120))) return null;
-    if (game.players.some((p, i) => p.id !== i || !Number.isFinite(p.cash) || !Number.isFinite(p.spent) || !p.piles || Object.values(p.piles).some(b => !Array.isArray(b) || b.some(s => !Number.isInteger(s.amount) || s.amount < 0)))) return null;
-    if (game.players.some(p => p.haulTarget !== undefined && (!Number.isInteger(p.haulTarget) || p.haulTarget < 0 || p.haulTarget >= game.plots.length))) return null;
-    if (!Array.isArray(game.locks) || game.locks.length !== 3 || game.locks.some(owner => owner !== null && (!Number.isInteger(owner) || owner < 0 || owner >= game.players.length))) return null;
-    if (game.order !== undefined && (!Array.isArray(game.order) || game.order.length !== game.players.length * 3 || game.order.some(id => !Number.isInteger(id) || id < 0 || id >= game.players.length) || game.players.some(p => game.order!.filter(id => id === p.id).length !== 3))) return null;
+    const data: unknown = JSON.parse(raw);
+    if (!record(data) || data.version !== 3 || !integer(data.seed) || !Array.isArray(data.plots) || data.plots.length !== MAP_W * MAP_H || !Array.isArray(data.players) || data.players.length < 1 || data.players.length > 4) return null;
+    const playerCount = data.players.length;
+    const owner = (value: unknown) => integer(value, 0, playerCount - 1);
+    if (!integer(data.round, 1) || !integer(data.turn, 0, data.players.length * 3 - 1) || !integer(data.moves) || !integer(data.limit, 1) || typeof data.finished !== 'boolean' || typeof data.sandbox !== 'boolean') return null;
+    if (data.finishRound !== null && !integer(data.finishRound, 1, data.limit)) return null;
+    if (data.players.some((p, i) => !record(p) || p.id !== i || !text(p.name) || typeof p.ai !== 'boolean' || !finite(p.cash) || !finite(p.spent) || p.spent < 0 || typeof p.style !== 'string' || !['river', 'shortcut', 'balanced'].includes(p.style) || !record(p.piles))) return null;
+    if (data.players.some(p => (p.haulTarget !== undefined && !cell(p.haulTarget)) || Object.entries(p.piles).some(([key, batches]) => !cell(Number(key)) || String(Number(key)) !== key || !Array.isArray(batches) || batches.some(b => !record(b) || b.source !== Number(key) || !height(b.level) || !integer(b.amount))))) return null;
+    if (data.plots.some(p => !record(p) || !height(p.initial) || !height(p.height) || typeof p.rock !== 'boolean' || typeof p.farm !== 'boolean' || (p.naturalWater !== undefined && typeof p.naturalWater !== 'boolean') || (p.fillTarget !== undefined && !height(p.fillTarget)) || !record(p.cuts) || !Array.isArray(p.fill))) return null;
+    if (data.plots.some(p => Object.entries(p.cuts).some(([level, id]) => !height(Number(level)) || String(Number(level)) !== level || !owner(id)) || p.fill.some((soil: unknown) => !record(soil) || !owner(soil.player) || !cell(soil.source) || !height(soil.level)))) return null;
+    if (!Array.isArray(data.events) || data.events.some(e => !record(e) || !integer(e.id, 1, data.moves as number) || !owner(e.player) || typeof e.tool !== 'string' || !['dig', 'blast', 'dredge', 'haul', 'fund', 'dispose', 'pass', 'lock'].includes(e.tool) || !Array.isArray(e.cells) || !e.cells.every(cell) || !integer(e.units) || !finite(e.cost) || !text(e.message) || (e.from !== undefined && !cell(e.from)) || (e.deliveries !== undefined && (!Array.isArray(e.deliveries) || e.deliveries.some(d => !record(d) || !cell(d.source) || !cell(d.target) || !integer(d.units)))))) return null;
+    if (!Array.isArray(data.locks) || data.locks.length !== 3 || data.locks.some(id => id !== null && !owner(id))) return null;
+    if (data.order !== undefined && (!Array.isArray(data.order) || data.order.length !== data.players.length * 3 || !data.order.every(owner) || data.players.some(p => (data.order as number[]).filter(id => id === p.id).length !== 3))) return null;
+    // Only validated data crosses into rendering, scoring and the AI worker.
+    const game = data as unknown as TerrainGame;
     // Finish a legacy round without reassigning already-used crews; group turns from the next round.
     if (!game.order) {
       const seats = game.players.map(p => p.id);

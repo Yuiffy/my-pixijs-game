@@ -1,4 +1,12 @@
 export const gameShareContent: Record<string, { title: string; description: string }> = {
+  '/game/tidal-duel': {
+    title: '晴海对决 · 岁己 vs 栞栞',
+    description: '拳脚、投技与反击，读懂对手的下一招，在晴海擂台一决胜负。',
+  },
+  '/game/sui-fitness': {
+    title: '岁己：今天也要动',
+    description: '击退 DQ、牛肉干和果茶的诱惑，攒起动力运动减脂，和岁己一起保住肌肉、变得更有力。',
+  },
   '/game/autochess': {
     title: '维阿自走棋：裂隙阵线',
     description: '购买 VR 和 PSP 成员棋子，组建队伍、凑齐羁绊、安排站位，挑战一轮比一轮更强的敌人！',

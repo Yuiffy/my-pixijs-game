@@ -1,6 +1,7 @@
 import type { GameState, Vec3, WorldAccess } from './types';
 import { canOccupy, supportAt, interactionPoint, LANDMARKS } from './world';
 import { CHAPTER_GATES, CHAPTER_LANDMARKS } from './chapter';
+import { HAVEN_GATES, HAVEN_LANDMARKS, havenAvailable, havenTarget } from './haven';
 import { riverSeals, VALLEY_GATES, VALLEY_LANDMARKS } from './valley';
 
 export type CompanionSkin = 'biscuit' | 'otter';
@@ -38,7 +39,7 @@ const labels: Record<string, string> = {
   'river-serpent': '那伽沉殿 · 千流',
   'gate-captain': '双象门楼 · 卫长',
   'rain-regent': '雨冠大殿 · 长夜司灯',
-  ...Object.fromEntries([...CHAPTER_LANDMARKS, ...VALLEY_LANDMARKS].map(l => [l.id, l.label.replace(/^(读|打开|收下|拾取|使用)/, '')])),
+  ...Object.fromEntries([...CHAPTER_LANDMARKS, ...VALLEY_LANDMARKS, ...HAVEN_LANDMARKS].map(l => [l.id, l.label.replace(/^(读|打开|收下|拾取|使用)/, '')])),
   'temple-lamp': '莲池旧灯',
 'canal-lamp': '摆渡旧灯',
 'temple-flask': '刻露瓶',
@@ -66,6 +67,16 @@ boss: '铁伞前的夜市入口',
 export const targetLabel = (id: string | null) => (id ? labels[id] ?? id : '下一处发现');
 export function guideTargets(s: GameState) {
   return LANDMARKS.filter(l => {
+    if (!havenAvailable(s, l.id)) return false;
+    if (HAVEN_LANDMARKS.some(h => h.id === l.id)) {
+      if (['well-testimony', 'well-return', 'well-choice'].includes(l.id) && !s.haven.gates.includes('well-door')) return false;
+      if (['keel-rubbing', 'boatwright-field', 'boatyard-ferry'].includes(l.id) && !s.valleyGates.includes('valley-entry')) return false;
+      if (['haven-bell', 'haven-water', 'haven-name', 'well-door'].includes(l.id) && (!s.valleyComplete || s.haven.recruits.length !== 2)) return false;
+      if (HAVEN_GATES.some(h => h.id === l.id)) return !s.haven.gates.includes(l.id);
+      if (l.kind === 'npc') return l.id !== 'well-choice' || s.defeatedGuests.includes('last-lamplighter');
+      if (l.id === 'keel-rubbing' || l.id === 'boatyard-ferry') return s.chapterComplete;
+      if (['haven-bell', 'haven-water', 'haven-name'].includes(l.id)) return s.haven.echoes < 3;
+    }
     if (VALLEY_LANDMARKS.some(v => v.id === l.id)) {
       if (!s.chapterComplete) return false;
       if (VALLEY_GATES.some(g => g.id === l.id)) return !s.valleyGates.includes(l.id);
@@ -85,6 +96,7 @@ export function guideTargets(s: GameState) {
   });
 }
 export function mainTarget(s: GameState): string {
+  if (s.valleyComplete) return havenTarget(s);
   if (s.chapterComplete && !s.valleyComplete) {
     if (!s.valleyGates.includes('valley-entry')) return 'valley-entry';
     if (!s.litLamps.includes('village-lamp')) return 'village-lamp';

@@ -40,7 +40,9 @@ export default function PhaserGame() {
   const recordRef = useRef<JumpRecord>(readRecord(null));
   const recorded = useRef(false);
   const pointerKeys = useRef(new Map<number, keyof Input>());
+  const pointerTargets = useRef(new Map<number, HTMLButtonElement>());
   const keyboardKeys = useRef(new Set<string>());
+  const buttonKeys = useRef(new Map<string, keyof Input>());
   const [record, setRecord] = useState(recordRef.current);
   const [notice, setNotice] = useState("");
   const [hud, setHud] = useState<Hud>({
@@ -57,7 +59,7 @@ export default function PhaserGame() {
     const bridge = bridgeRef.current;
     if (!bridge) return;
     const keys = keyboardKeys.current;
-    const touch = Array.from(pointerKeys.current.values());
+    const touch = [...Array.from(pointerKeys.current.values()), ...Array.from(buttonKeys.current.values())];
     bridge.input = {
       left: keys.has("ArrowLeft") || keys.has("KeyA") || touch.includes("left"),
       right:
@@ -77,6 +79,12 @@ export default function PhaserGame() {
   const clearInput = useCallback(() => {
     pointerKeys.current.clear();
     keyboardKeys.current.clear();
+    buttonKeys.current.clear();
+    const captures = Array.from(pointerTargets.current);
+    pointerTargets.current.clear();
+    for (const [id, target] of captures) {
+      if (target.hasPointerCapture(id)) target.releasePointerCapture(id);
+    }
     if (bridgeRef.current) bridgeRef.current.input = emptyInput();
   }, []);
   const fullscreen = useCallback(async () => {
@@ -141,6 +149,7 @@ export default function PhaserGame() {
       onChange: () => {
         const s = bridge.state;
         if (s.phase === "over" && !recorded.current) {
+          clearInput();
           recorded.current = true;
           let saved = recordRef.current;
           try {
@@ -256,6 +265,8 @@ export default function PhaserGame() {
       ) {
         event.preventDefault();
         if (bridge.state.phase === "playing") {
+          // A key held across pause/focus changes needs a fresh press to resume.
+          if (event.repeat && !keyboardKeys.current.has(event.code)) return;
           keyboardKeys.current.add(event.code);
           syncInput();
         }
@@ -263,6 +274,7 @@ export default function PhaserGame() {
     };
     const keyup = (event: KeyboardEvent) => {
       keyboardKeys.current.delete(event.code);
+      buttonKeys.current.delete(event.code);
       syncInput();
     };
     window.addEventListener("keydown", keydown);
@@ -276,6 +288,7 @@ export default function PhaserGame() {
       document.removeEventListener("visibilitychange", hidden);
       if (debug.render_game_to_text === renderText) delete debug.render_game_to_text;
       if (debug.advanceTime === advance) delete debug.advanceTime;
+      clearInput();
       bridgeRef.current = null;
       game.destroy(true);
     };
@@ -283,13 +296,17 @@ export default function PhaserGame() {
 
   const press = (event: PointerEvent<HTMLButtonElement>, key: keyof Input) => {
     event.preventDefault();
-    if (bridgeRef.current?.state.phase !== "playing") return;
+    if (event.button !== 0 || bridgeRef.current?.state.phase !== "playing") return;
     event.currentTarget.setPointerCapture(event.pointerId);
+    pointerTargets.current.set(event.pointerId, event.currentTarget);
     pointerKeys.current.set(event.pointerId, key);
     syncInput();
   };
   const release = (event: PointerEvent<HTMLButtonElement>) => {
     pointerKeys.current.delete(event.pointerId);
+    const target = pointerTargets.current.get(event.pointerId);
+    pointerTargets.current.delete(event.pointerId);
+    if (target?.hasPointerCapture(event.pointerId)) target.releasePointerCapture(event.pointerId);
     syncInput();
   };
   const control = (key: keyof Input) => ({
@@ -301,16 +318,17 @@ export default function PhaserGame() {
       if (!['Space', 'Enter'].includes(event.code)) return;
       event.preventDefault();
       if (bridgeRef.current?.state.phase === 'playing') {
-        pointerKeys.current.set(-1, key);
+        if (event.repeat && !buttonKeys.current.has(event.code)) return;
+        buttonKeys.current.set(event.code, key);
         syncInput();
       }
     },
     onKeyUp: (event: ReactKeyboardEvent<HTMLButtonElement>) => {
       if (['Space', 'Enter'].includes(event.code)) {
-        event.preventDefault(); pointerKeys.current.delete(-1); syncInput();
+        event.preventDefault(); buttonKeys.current.delete(event.code); syncInput();
       }
     },
-    onBlur: () => { pointerKeys.current.delete(-1); syncInput(); },
+    onBlur: () => { buttonKeys.current.clear(); syncInput(); },
   });
   const playing = hud.phase === "playing";
   return (

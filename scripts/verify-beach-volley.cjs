@@ -5,7 +5,7 @@ const os = require('node:os');
 const { chromium } = require(require.resolve('playwright', { paths: [process.cwd(), path.join(os.homedir(), '.codex/skills/develop-web-game')] }));
 const { inspectPng } = require('./lib/autochess-screenshot.cjs');
 const url = process.env.BEACH_VOLLEY_URL || 'http://localhost:3946/game/beach-volley';
-const output = path.resolve('tmp/beach-volley-qa');
+const output = path.resolve(process.env.BEACH_VOLLEY_OUTPUT || 'tmp/beach-volley-qa');
 fs.mkdirSync(output, { recursive: true });
 const errors = []; const screenshots = []; const checks = [];
 const state = page => page.evaluate(() => JSON.parse(window.render_game_to_text()));
@@ -36,6 +36,8 @@ async function rig(page, scenario) {
   const browser = await chromium.launch({ channel: 'chrome', headless: process.env.HEADED !== '1', args: ['--mute-audio', '--disable-speech-api'] });
   try {
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
+    await context.route('**/api/record', r => r.fulfill({ json: { success: true } }));
+    await context.route(/https:\/\/(pagead2\.googlesyndication\.com|hm\.baidu\.com)\//, r => r.fulfill({ body: '' }));
     await context.addInitScript(() => { if (window.speechSynthesis) window.speechSynthesis.speak = () => {}; });
     const page = await context.newPage();
     page.on('pageerror', err => errors.push(err.message));
@@ -113,6 +115,8 @@ async function rig(page, scenario) {
     await page.evaluate(() => window.dispatchEvent(new Event('blur'))); assert.equal((await state(page)).paused, true, 'blur pauses game');
     checks.push('390px menu and touch serve, 844px landscape, hidden/blur pause');
     const touchContext = await browser.newContext({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1 });
+    await touchContext.route('**/api/record', r => r.fulfill({ json: { success: true } }));
+    await touchContext.route(/https:\/\/(pagead2\.googlesyndication\.com|hm\.baidu\.com)\//, r => r.fulfill({ body: '' }));
     await touchContext.addInitScript(() => { if (window.speechSynthesis) window.speechSynthesis.speak = () => {}; });
     const mobile = await touchContext.newPage();
     mobile.on('pageerror', err => errors.push(err.message));

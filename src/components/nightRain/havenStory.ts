@@ -30,7 +30,7 @@ title: '船底刻着谁的名字',
     lines: ['河上的灯不怕水，怕的是再没人记得送灯的人。', !s.collected.includes('keel-rubbing') ? '高棚里有龙骨拓片。沿船坞西侧支架上去，别让看棚的人烧了它。' : !s.collected.includes('ferry-winch') ? '拓片还在，真好。但水车院的系缆没接上，我这条船出不了坞。先去修好它。' : '拓片和系缆都齐了。我把船停到归灯庭，日后你来船坞，我送你回去。'],
     choices: [{ id: 'invite-boatwright', label: '邀请温叔前往归灯庭', detail: '开通归灯庭与船坞的双向渡船；先点亮庭中雨灯。', disabled: !s.collected.includes('keel-rubbing') || !s.collected.includes('ferry-winch') }],
   };
-  if (id === 'haven-scribe') return { speaker: '弥音 · 抄名人', title: '让故事有名字', lines: [s.haven.ending === 'remember' ? '我把他们的名字刻进庭灯了。以后不用再说“那些人”。' : s.haven.ending === 'release' ? '名册我留着，灯让它们走。记得和不肯放手，原来不是同一件事。' : '城里敲钟，河上放灯，最后才叫人的名字。有人把最后一步删了，长夜才迟迟不肯过去。', s.collected.includes('well-testimony') ? '守簿人也被抹去名字了。你可以把名字刻回灯上，也可以让这些灯终于离开。两种选择都不该再替别人说谎。' : '庭南潮阶下面藏着旧灯库。两位归人落座、雾河灯归水后，再让钟、水、呼名依次响起。'], choices: [] };
+  if (id === 'haven-scribe') return { speaker: '弥音 · 抄名人', title: '让故事有名字', lines: [s.haven.ending === 'remember' ? '我把他们的名字刻进庭灯了。以后不用再说“那些人”。' : s.haven.ending === 'release' ? '名册我留着，灯让它们走。记得和不肯放手，原来不是同一件事。' : '城里敲钟，河上放灯，最后才叫人的名字。有人把最后一步删了，长夜才迟迟不肯过去。', s.haven.ending ? '守簿人的那一页也留着。我们不会再替没有回来的人说一切都好。' : s.collected.includes('well-testimony') ? '守簿人也被抹去名字了。你可以把名字刻回灯上，也可以让这些灯终于离开。两种选择都不该再替别人说谎。' : '庭南潮阶下面藏着旧灯库。两位归人落座、雾河灯归水后，再让钟、水、呼名依次响起。'], choices: [] };
   if (id === 'haven-boatwright') return { speaker: '温叔 · 补船人', title: '往返也是一段旅程', lines: [s.haven.ending ? '这回船上有灯，也有人。等风小一点，我们再去看河。' : '雨冠把灯留在城里，千流把愿留在水里。守灯簿却说人人都回了家。别急着信它。', '我的渡船停在东南的小渡。它只送你换个地方，不替你补药，也不改原先的归灯。'], choices: [] };
   return { speaker: '最后一盏无名灯',
 title: s.haven.ending ? '你的回答已经留下' : '你愿意怎样记住他们',
@@ -79,7 +79,7 @@ export function havenJournal(s: GameState) {
   return [
     { title: '归灯庭 · 留一张空椅', text: '旅馆南桥通向据点。阿莲照看寄存的钱；雨灯负责休息与整备。', id: 'haven-lamp', done: s.litLamps.includes('haven-lamp') },
     { title: '被擦掉的名字', text: s.haven.recruits.includes('scribe') ? '弥音已在听雨书廊重新誊写名册。' : '残钟雨寺西侧的小桥通往弃铃书房。找到名册，再与弥音交谈。', id: s.collected.includes('names-register') ? 'scribe-field' : 'names-register', done: s.haven.recruits.includes('scribe') },
-    { title: '船底的来人', text: s.haven.recruits.includes('boatwright') ? '温叔已到归灯小渡，可往返沉灯船坞。' : '雾河旧盐仓背桥通往船坞。取下高棚的龙骨拓片，修好水车院系缆，再邀请温叔。', id: s.collected.includes('keel-rubbing') ? 'boatwright-field' : 'keel-rubbing', done: s.haven.recruits.includes('boatwright') },
+    { title: '船底的来人', text: s.haven.recruits.includes('boatwright') ? '温叔已到归灯小渡，可往返沉灯船坞。' : '雾河旧盐仓背桥通往船坞。取下高棚的龙骨拓片，修好水车院系缆，再邀请温叔。', id: !s.collected.includes('keel-rubbing') ? 'keel-rubbing' : !s.collected.includes('ferry-winch') ? 'ferry-winch' : 'boatwright-field', done: s.haven.recruits.includes('boatwright') },
     { title: '钟、水与名字', text: s.haven.echoes === 3 ? '三声已齐，庭南的封门可以打开。' : '两位归人落座、雾河灯归水后，按名册里的顺序回应庭南三座灯台。', id: 'haven-bell', done: s.haven.echoes === 3 },
     { title: '灯下无名', text: s.haven.ending ? s.haven.ending === 'remember' ? '你选择记名。记名结：最大体力 +15。回庭听听大家的回应。' : '你选择放灯。归水结：每瓶恢复 +15。回庭听听大家的回应。' : '打开三声封门，寻访无名灯库中的最后一页。', id: s.haven.gates.includes('well-door') ? 'well-choice' : 'well-door', done: !!s.haven.ending },
   ];

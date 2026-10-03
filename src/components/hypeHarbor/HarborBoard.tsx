@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -122,6 +123,7 @@ function drawWater(
 
 type Gesture = {
   id: number;
+  target: HTMLButtonElement;
   kind: "character" | "position";
   index: number;
   streamer: StreamerId;
@@ -186,13 +188,37 @@ export default function HarborBoard({
   );
   const data = useRef({ boats, selected });
   data.current = { boats, selected };
+  // Polling returns fresh objects even when the arrangement has not changed.
+  const arrangementKey = state?.boats.map(boat => `${boat.streamer}:${boat.position}`).join('|');
 
-  useEffect(() => {
+  const releaseGesture = useCallback(() => {
+    const { current } = gesture;
+    gesture.current = null;
+    if (current?.target.hasPointerCapture(current.id)) current.target.releasePointerCapture(current.id);
+  }, []);
+  const cancel = useCallback(() => {
+    if (gesture.current) setFeedback('已取消拖动，以当前排布为准。');
+    releaseGesture();
     setPicked(null);
     setDrag(null);
     setDraftPosition(null);
-    gesture.current = null;
-  }, [state?.round, state?.phase, canArrange]);
+    suppressClick.current = true;
+  }, [releaseGesture]);
+
+  useEffect(() => {
+    cancel();
+  }, [state?.round, state?.phase, state?.turn, arrangementKey, canArrange, cancel]);
+
+  useEffect(() => {
+    const hidden = () => { if (document.hidden) cancel(); };
+    window.addEventListener('blur', cancel);
+    document.addEventListener('visibilitychange', hidden);
+    return () => {
+      window.removeEventListener('blur', cancel);
+      document.removeEventListener('visibilitychange', hidden);
+      releaseGesture();
+    };
+  }, [cancel, releaseGesture]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -234,13 +260,6 @@ export default function HarborBoard({
     };
   }, []);
 
-  const cancel = () => {
-    gesture.current = null;
-    setDrag(null);
-    setDraftPosition(null);
-    setPicked(null);
-    suppressClick.current = true;
-  };
   const arrange = (target: number, streamer: StreamerId) => {
     if (!canArrange || !state) return;
     if (target < 3) onArrange?.(target, streamer);
@@ -256,7 +275,7 @@ export default function HarborBoard({
     );
   };
   const select = (index: number, streamer: StreamerId) => {
-    if (suppressClick.current) return;
+    if (gesture.current || suppressClick.current) return;
     if (!canArrange) {
       if (index < 3) onSelect(index);
       return;
@@ -285,13 +304,16 @@ export default function HarborBoard({
     streamer: StreamerId,
   ) => ({
     onPointerDown: (event: PointerEvent<HTMLButtonElement>) => {
+      if (gesture.current) { event.preventDefault(); return; }
+      if (!event.isPrimary || event.button !== 0) return;
       suppressClick.current = false;
-      if (!canArrange || !state || !event.isPrimary || event.button !== 0) return;
+      if (!canArrange || !state) return;
       event.preventDefault();
       event.currentTarget.focus({ preventScroll: true });
       const initial = state.boats[index]?.position || 4;
       gesture.current = {
         id: event.pointerId,
+        target: event.currentTarget,
         kind,
         index,
         streamer,
@@ -333,7 +355,7 @@ export default function HarborBoard({
     onPointerUp: (event: PointerEvent<HTMLButtonElement>) => {
       const { current } = gesture;
       if (!current || current.id !== event.pointerId) return;
-      gesture.current = null;
+      releaseGesture();
       setDrag(null);
       setDraftPosition(null);
       if (kind === "position") {
@@ -347,7 +369,12 @@ export default function HarborBoard({
       } else select(index, streamer);
       suppressClick.current = true;
     },
-    onPointerCancel: cancel,
+    onPointerCancel: (event: PointerEvent<HTMLButtonElement>) => {
+      if (gesture.current?.id === event.pointerId) cancel();
+    },
+    onBlur: (event: React.FocusEvent<HTMLButtonElement>) => {
+      if (gesture.current?.target === event.currentTarget) cancel();
+    },
     onLostPointerCapture: (event: PointerEvent<HTMLButtonElement>) => {
       if (gesture.current?.id === event.pointerId) cancel();
     },
@@ -430,6 +457,7 @@ export default function HarborBoard({
                 data-wind={wind !== 0}
                 data-testid={`boat-${index}`}
                 onClick={(event) => {
+                  if (canArrange && event.detail !== 0) return;
                   if (event.detail === 0) suppressClick.current = false;
                   select(index, boat.streamer);
                 }}
@@ -483,6 +511,7 @@ export default function HarborBoard({
                   aria-label={`${streamer.name}，${canArrange ? "拖动换活动，也可点击后选目标" : project.name}`}
                   {...handlers("character", index, boat.streamer)}
                   onClick={(event) => {
+                    if (canArrange && event.detail !== 0) return;
                     if (event.detail === 0) suppressClick.current = false;
                     select(index, boat.streamer);
                   }}
@@ -520,7 +549,9 @@ export default function HarborBoard({
                   }
                   aria-orientation={canArrange ? "horizontal" : undefined}
                   {...handlers("position", index, boat.streamer)}
-                  onClick={() => {
+                  onClick={(event) => {
+                    if (canArrange && event.detail !== 0) return;
+                    if (event.detail === 0) suppressClick.current = false;
                     if (suppressClick.current) return;
                     if (canArrange && picked) arrange(index, picked);
                     else onSelect(index);
@@ -634,6 +665,7 @@ export default function HarborBoard({
           aria-pressed={picked === resting}
           {...handlers("character", 3, resting)}
           onClick={(event) => {
+            if (canArrange && event.detail !== 0) return;
             if (event.detail === 0) suppressClick.current = false;
             select(3, resting);
           }}

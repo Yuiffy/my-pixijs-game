@@ -143,6 +143,8 @@ export const REST_POINTS: Record<string, Vec3> = {
 export function interactionPoint(l: Landmark): Vec3 {
   if (l.id === 'temple-lamp') return { x: -32, y: 0, z: -10.8 };
   if (l.id === 'canal-lamp') return { x: 17, y: 0, z: -30 };
+  if (['haven-bell', 'haven-water', 'haven-name', 'well-choice'].includes(l.id)) return { x: l.x, y: l.y, z: l.z - 1.5 };
+  if (l.kind === 'npc') return { x: l.x, y: l.y, z: l.z + 1.3 };
   return l.kind === 'rest' ? REST_POINTS[l.id] : l;
 }
 

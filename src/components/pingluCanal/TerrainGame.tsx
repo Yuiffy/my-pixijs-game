@@ -6,16 +6,17 @@ import GameShareButton from '@/app/game/GameShareButton';
 import { SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   bedLevel, GEOGRAPHY, LOCKS, lockCells, START, waterLevel, applyTerrainAction, createTerrain, currentPlayer, finishTerrain, lineSelection,
-  AUTO_FILL_RADIUS, MAP_H, MAP_W, MAX_CELLS, pileSize, PILE_CAPACITY, PLAYER_COLORS, quoteTerrain, reclamationLevel, restoreTerrain,
+  AUTO_FILL_RADIUS, MAP_H, MAP_W, MAX_CELLS, pileSize, PILE_CAPACITY, PLAYER_COLORS, quoteTerrain, reclamationLevel,
   scoreTerrain, Survey, surveyTerrain, TerrainAction, TerrainGame as Game, tileId, tileName, Tool, turnOrder, xy,
 } from './terrainEngine';
 import styles from './terrain.module.css';
 import { regionName, WATER_STEPS } from './geography';
 import useTerrainAI from './useTerrainAI';
+import { readTerrainSave, writeTerrainSave } from './terrainSave';
+import type { Recovery } from './terrainSave';
 import type { AIResponse } from './terrainAIProtocol';
 
 const Scene = dynamic(() => import('./TerrainScene'), { ssr: false, loading: () => <div className={styles.loading}>正在测绘山岭与河谷…</div> });
-const SAVE_KEY = 'pinglu-geography-v3';
 const EMPTY_SELECTION: number[] = [];
 const km = (metres: number) => `${(metres / 1000).toFixed(1)} km`;
 const TOOLS: { id: Tool; icon: string; name: string; detail: string }[] = [
@@ -30,6 +31,8 @@ export default function TerrainGame() {
   const [game, setGame] = useState<Game>(() => createTerrain());
   const [aiSurvey, setAiSurvey] = useState<{ game: Game; survey: Survey } | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [recovery, setRecovery] = useState<Recovery | null>(null);
+  const [saveNotice, setSaveNotice] = useState('');
   const [tool, setTool] = useState<Tool>('blast');
   const [selections, setSelections] = useState<Record<number, number[]>>({});
   const [managed, setManaged] = useState<number[]>([]);
@@ -75,7 +78,7 @@ export default function TerrainGame() {
   const quote = useMemo(() => quoteTerrain(game, { tool, cells: selection, source: effectiveSource }), [game, tool, selection, effectiveSource]);
   const plotId = hovered ?? selected[0];
   const plot = plotId === undefined ? null : game.plots[plotId];
-  const modal = rules || setup || ledger || handoff || atlas;
+  const modal = rules || setup || ledger || handoff || atlas || !!recovery;
   const commitAI = useCallback((result: Extract<AIResponse, { kind: 'applied' }>) => {
     if (game.players.length === 1 && !player.ai) setHistory(previous => [...previous.slice(-11), game]);
     setAiSurvey({ game: result.game, survey: result.survey }); setGame(result.game); setAnchor(null);
@@ -88,25 +91,30 @@ export default function TerrainGame() {
   const selectedOwners = game.players.map(p => ({ name: p.name, units: selection.reduce((sum, id) => sum + Object.values(game.plots[id]?.cuts ?? {}).filter(owner => owner === p.id).length, 0) })).filter(p => p.units);
   const clickHint = game.finished || controlled ? '观战中，可调整镜头' : ai.busy ? '正在施工，请稍候' : pickingHaulTarget ? '指定回填中心' : selectionMode === 'multi' ? '加入选区，再点取消' : selectionMode === 'line' ? (anchor === null ? '点起点，再点终点' : '再点一下终点') : '选择施工地块';
 
+  const restore = (saved: Game) => {
+    const restored = saved.moves === 0 ? createTerrain(saved.players.filter(p => !p.ai).length, saved.players.filter(p => p.ai).length, saved.seed, saved.sandbox) : saved;
+    restored.players.forEach(p => { p.haulTarget = saved.players[p.id].haulTarget; });
+    setGame(restored); setHumans(saved.players.filter(p => !p.ai).length); setAis(saved.players.filter(p => p.ai).length); setSandbox(saved.sandbox);
+  };
   useEffect(() => {
     try {
-      const raw = window.localStorage.getItem(SAVE_KEY);
-      if (raw) {
-        const saved = restoreTerrain(raw);
-        if (saved) {
-          const restored = saved.moves === 0 ? createTerrain(saved.players.filter(p => !p.ai).length, saved.players.filter(p => p.ai).length, saved.seed, saved.sandbox) : saved;
-          restored.players.forEach(p => { p.haulTarget = saved.players[p.id].haulTarget; });
-          setGame(restored); setHumans(saved.players.filter(p => !p.ai).length); setAis(saved.players.filter(p => p.ai).length); setSandbox(saved.sandbox);
-        } else setNotice('旧工程存档无法读取，已展开新地形。');
-      }
-      if (!raw && window.localStorage.getItem('pinglu-terrain-v2')) setNotice('已开启真实地理版的独立存档；旧版沙盘存档仍保留在本机。');
-    } catch { setNotice('本机无法读取存档，仍可开始新工程。'); }
+      const saved = readTerrainSave(window.localStorage);
+      if (saved.game) restore(saved.game);
+      setRecovery(saved.recovery);
+      if (!saved.game && !saved.recovery && window.localStorage.getItem('pinglu-terrain-v2')) setNotice('已开启真实地理版的独立存档；旧版沙盘存档仍保留在本机。');
+    } catch { setSaveNotice('本机无法读取存档，当前工程仍可游玩；进度可能无法保存。'); }
     setLoaded(true);
   }, []);
   useEffect(() => {
-    if (!loaded) return;
-    try { window.localStorage.setItem(SAVE_KEY, JSON.stringify(game)); } catch { setNotice('本机无法保存，当前工程仍可继续。'); }
-  }, [game, loaded]);
+    if (!loaded || recovery) return;
+    try { writeTerrainSave(window.localStorage, game); setSaveNotice(''); } catch { setSaveNotice('本机未能保存这次进度，旧存档未被清除。请保持页面打开后重试。'); }
+  }, [game, loaded, recovery]);
+  const downloadUnreadable = () => {
+    if (recovery?.raw === null || !recovery) return;
+    const url = URL.createObjectURL(new Blob([recovery.raw], { type: 'application/json' }));
+    const link = document.createElement('a'); link.href = url; link.download = 'pinglu-unreadable-save.json';
+    link.click(); window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
   useEffect(() => { if (humanCount > 1 && !controlled && !game.finished) setHandoff(true); }, [player.id, humanCount, game.finished, controlled]);
   useEffect(() => { setAnchor(null); setPickingHaulTarget(false); }, [player.id]);
   useEffect(() => {
@@ -118,6 +126,8 @@ export default function TerrainGame() {
     const target = window as DebugWindow;
     target.render_game_to_text = () => JSON.stringify({
       mode: 'pinglu-dem-geography',
+      save: { loaded, recoveryPending: !!recovery, backupAvailable: !!recovery?.backup, notice: saveNotice },
+      moves: game.moves,
 round: game.round,
 active: player.id,
 finished: game.finished,
@@ -143,7 +153,7 @@ last,
 plots: game.plots.map((p, id) => ({ id, height: p.height, waterLevel: waterLevel(id), targetBed: bedLevel(id), wet: survey.wet[id], farm: p.farm, fillTarget: reclamationLevel(p) })),
     });
     return () => { delete target.render_game_to_text; };
-  }, [game, player.id, player.haulTarget, survey, scores, selected, quote, last, selectionMode, tool, pickingHaulTarget, haulPlan, ai.ready, ai.lastResult, ai.error, ai.busy, managed, watchPaused]);
+  }, [game, player.id, player.haulTarget, survey, scores, selected, quote, last, selectionMode, tool, pickingHaulTarget, haulPlan, ai.ready, ai.lastResult, ai.error, ai.busy, managed, watchPaused, loaded, recovery, saveNotice]);
   useEffect(() => {
     if (!modal) return undefined;
     const before = document.activeElement as HTMLElement | null;
@@ -159,7 +169,7 @@ plots: game.plots.map((p, id) => ({ id, height: p.height, waterLevel: waterLevel
     };
     window.addEventListener('keydown', keydown);
     return () => { window.removeEventListener('keydown', keydown); before?.focus(); };
-  }, [modal, handoff]);
+  }, [modal, handoff, setup, recovery]);
 
   const choose = (id: number) => {
     if (game.finished || controlled || ai.busy || modal) return;
@@ -196,6 +206,7 @@ plots: game.plots.map((p, id) => ({ id, height: p.height, waterLevel: waterLevel
     setTool(high ? 'blast' : 'dredge'); setSelected(cells); setAnchor(null); setShowSurvey(true); setFocus(first);
   };
   const restart = () => {
+    setRecovery(null);
     setGame(createTerrain(humans, ais, game.seed + 1, sandbox)); setSetup(false); setHistory([]); setSelections({}); setManaged([]); setWatchPaused(false); setPickingHaulTarget(false); setSource(undefined); setAnchor(null); setNotice(''); setFocus(null); setReset(n => n + 1);
   };
   const workOnLock = (index: number) => {
@@ -236,6 +247,12 @@ plots: game.plots.map((p, id) => ({ id, height: p.height, waterLevel: waterLevel
         {last && <div key={last.id} className={styles.workToast} role="status"><i style={{ background: PLAYER_COLORS[last.player] }} />{last.message}{last.cost > 0 ? ` · ¥${last.cost}` : last.cost < 0 ? ` · +¥${-last.cost}` : ''}</div>}
       </section>
       <aside className={styles.panel}>
+        {saveNotice && (
+<div className={styles.notice} role="status">{saveNotice}<button onClick={() => {
+          try { writeTerrainSave(window.localStorage, game); setSaveNotice(''); } catch { setSaveNotice('本机仍未能保存，当前进度保留在此页面。'); }
+        }}>重试保存</button></div>
+)}
+
         {game.finished ? (
 <section className={styles.end}>
           <small>联合验收 / FINAL SURVEY</small><h1>{survey.route ? '通江，达海。' : '航道尚未贯通'}</h1>
@@ -283,11 +300,26 @@ plots: game.plots.map((p, id) => ({ id, height: p.height, waterLevel: waterLevel
     </div>
     <footer className={styles.footer}><span>DEM 高程 · © OpenStreetMap · 地理压缩沙盘</span><span>{game.sandbox ? '自由模式不设工期与预算限制' : '每家连续行动 3 次 · 首家逐轮轮换 · 每轮拨款 ¥24'}</span><button onClick={() => setLedger(true)}>采用贡献 {scores.find(s => s.id === player.id)?.useful ?? 0} 方 · 账本 ↗</button></footer>
     {modal && (
-<div className={styles.backdrop}><section ref={modalRef} className={styles.modal} role="dialog" aria-modal="true" aria-label={atlas ? '真实地理资料' : handoff ? '施工交接' : setup ? '新工程' : rules ? '游戏规则' : '工程账本'}>
-      {!handoff && <button className={styles.close} aria-label="关闭面板" onClick={() => { setRules(false); setSetup(false); setLedger(false); setAtlas(false); }}>×</button>}
-      {handoff ? <><small>交接工程指挥台</small><h2>轮到{player.name}</h2><p>地形与投入全部公开。轮到你，决定是延续现有航道，还是修一条会被采用的捷径。</p><button className={styles.primary} onClick={() => setHandoff(false)}>接手施工 →</button></> : setup ? (
+<div className={styles.backdrop}><section ref={modalRef} className={styles.modal} role="dialog" aria-modal="true" aria-label={recovery && !setup ? '工程存档恢复' : atlas ? '真实地理资料' : handoff ? '施工交接' : setup ? '新工程' : rules ? '游戏规则' : '工程账本'}>
+      {!handoff && (!recovery || setup) && <button className={styles.close} aria-label="关闭面板" onClick={() => { setRules(false); setSetup(false); setLedger(false); setAtlas(false); }}>×</button>}
+      {recovery && !setup ? (
 <>
-        <small>新地图 / NEW EARTHWORKS</small><h2>从平塘江口到北部湾</h2><p>真实地理版使用固定的高程与河网，每局重置施工进度。单人可撤销，多人共同建设；旧版存档另行保留。</p>
+        <small>工程存档恢复</small><h2>先保住旧工程。</h2>
+        <p>本机存档无法完整读取，已暂停自动保存与施工。原始内容仍保留，不会被新地图自动覆盖。</p>
+        {recovery.backup ? <p>找到上一份有效进度：第 {recovery.backup.round} 轮，已完成 {recovery.backup.moves} 次施工。恢复后可能少一次行动。</p> : <p>暂未找到有效备份。可先下载原始内容留存，再另开工程。</p>}
+        {recovery.raw !== null && <button onClick={downloadUnreadable}>下载原存档</button>}
+        {recovery.backup && (
+<button
+className={styles.primary}
+onClick={() => {
+          restore(recovery.backup!); setRecovery(null); setNotice('已恢复上一份有效工程；无法读取的原始内容另行保留在本机。');
+        }}>恢复上次有效工程 →</button>
+)}
+        <button className={styles.primary} onClick={() => setSetup(true)}>另开新工程</button>
+      </>
+) : handoff ? <><small>交接工程指挥台</small><h2>轮到{player.name}</h2><p>地形与投入全部公开。轮到你，决定是延续现有航道，还是修一条会被采用的捷径。</p><button className={styles.primary} onClick={() => setHandoff(false)}>接手施工 →</button></> : setup ? (
+<>
+        <small>新地图 / NEW EARTHWORKS</small><h2>从平塘江口到北部湾</h2><p>真实地理版使用固定的高程与河网。确认后将替换当前工程，单人可撤销施工，多人共同建设。上一份有效进度或无法读取的原始内容将另行保留在本机。</p>
         <div className={styles.brush}><button onClick={() => { setHumans(1); setAis(2); setSandbox(false); }}>1 真人 + 2 AI</button><button onClick={() => { setHumans(0); setAis(3); setSandbox(false); }}>3 AI · 纯观战</button></div>
         <label htmlFor="terrain-humans" className={styles.setupField}>真人承包商<select id="terrain-humans" value={humans} onChange={e => { const n = Number(e.target.value); setHumans(n); setAis(a => Math.max(n === 0 ? 1 : 0, Math.min(a, 4 - n))); }}>{[0, 1, 2, 3, 4].map(n => <option key={n} value={n}>{n} 人{n === 0 ? ' · 纯观战' : n > 1 ? ' · 同机交接' : ''}</option>)}</select></label>
         <label htmlFor="terrain-ais" className={styles.setupField}>AI 工程局<select id="terrain-ais" value={ais} onChange={e => setAis(Number(e.target.value))}>{Array.from({ length: 5 - humans }, (_, n) => n).filter(n => humans > 0 || n > 0).map(n => <option key={n} value={n}>{n} 家</option>)}</select></label>

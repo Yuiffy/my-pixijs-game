@@ -64,3 +64,15 @@ SRT 与 XML 使用各自文件内时钟；特别是 10 月 1 日有明显偏移�
 浏览器复现使用 `pnpm run needle:verify`，默认检查 `http://127.0.0.1:3930`；可通过 `NEEDLE_BASE_URL` 和 `NEEDLE_QA_DIR` 指定服务地址与输出目录。检查当前生产预览时先在 PowerShell 中设置 `$env:NEEDLE_BASE_URL = 'http://127.0.0.1:3931'`。脚本先确认 HTTP 响应，再启动已安装的 Chrome，统一静音并替换 speech API。`window.render_game_to_text()` 提供状态，`window.advanceTime(ms)` 供确定性验收。
 
 本地生产预览：`http://127.0.0.1:3931/game/golden-needle`，由上述独立工作树的构建提供。游戏与 `/demos` 入口的源码分支为 `codex/golden-needle-game`；线上尚未部署。
+
+
+### 2026-10-03 · 完整键盘操作
+
+操作台现在是单一 Tab 停靠点。左右方向键按编号循环选点，上下方向键选邻近行，Home / End 到首末点；光圈与文字显示当前落点。空格或 Enter 按住并松开，1–4 换工具，Q / E 仍按原速率旋转，P 暂停。按住期间锁定选点，Tab 离开、失焦、弹窗与暂停会取消操作，之后松键不会补落针。键盘与指针同用时只接受首先按下的一方，另一方松手不会结束当前操作。
+
+选点只把工具放到落点中心（与触屏一致），不改变计分、目标角度、时机窗口、手抖、热量或冷却规则。仍需要自己控制蓄力和角度，也需换冷敷包降痛降温。键盘选点没有代替任何护理步骤。
+
+`pnpm needle:test` 运行规则与导航测试。`pnpm needle:verify:keyboard` 用静音安装版 Chrome 验证三档难度的键盘五阶段通关、选点、焦点取消、暂停、角度与冷敷，接受 `NEEDLE_BASE_URL`、`NEEDLE_QA_DIR` 和 `PLAYWRIGHT_MODULE`。原有鼠标与真实触摸完整流程仍用 `pnpm needle:verify`。
+
+
+本轮 19 项规则/导航测试、三档键盘五阶段通关（均 S 评级）、原鼠标/触屏完整流程在开发与生产均通过；真实动画帧按住与暂停复验通过。开发/生产各 22 张验收截图已逐张目检，浏览器无错误。修改文件 ESLint、全量 check 和随后 build 通过，未关闭构建 lint。最新本地试玩 `http://localhost:3987/game/golden-needle`，未部署。

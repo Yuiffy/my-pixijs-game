@@ -616,7 +616,7 @@ export function upgrade(s: GameState): boolean {
 export function continueExploring(s: GameState): void {
   if (s.mode !== 'ending') return;
   s.mode = 'playing'; s.paused = false; s.lockedId = null; clearHeldActions(s);
-  say(s, s.valleyComplete ? '灯随河流，路仍相连。' : s.chapterComplete ? '钟声翻过后山，雾河里的灯还在等你。' : '吃饱了。北口香料街尽头，王寺的灯还亮着。', 9, 'lore', s.valleyComplete ? '两关已完成。可以沿双岸步道、已开启的近门、雨灯行旅或渡船重访整个世界。' : s.chapterComplete ? '从钟台东侧的后山门进入第二关「雾河回响」。新区域与王寺直接相连，原有战斗和探索进度保留。' : '从夜市西北角向北，沿香料水街进入织坊下城。榕树下有新的雨灯。'); updatePrompt(s);
+  say(s, s.haven.ending ? '灯有了归处，你也有。' : s.valleyComplete ? '灯随河流，路仍相连。' : s.chapterComplete ? '钟声翻过后山，雾河里的灯还在等你。' : '吃饱了。北口香料街尽头，王寺的灯还亮着。', 9, 'lore', s.haven.ending ? '沿灯库东侧归廊回庭，打开后门。阿莲、弥音和温叔都想听听你的回答。' : s.valleyComplete ? '旅馆南桥通向归灯庭。旧寺西侧书房和盐仓背后的船坞，还留着关于未归之人的线索。' : s.chapterComplete ? '从钟台东侧的后山门进入第二关「雾河回响」。新区域与王寺直接相连，原有战斗和探索进度保留。' : '从夜市西北角向北，沿香料水街进入织坊下城。榕树下有新的雨灯。'); updatePrompt(s);
 }
 
 /** Travel is available only beside a lit, safe lamp and never grants a free heal. */
@@ -710,7 +710,7 @@ function interactHaven(s: GameState, id: string): boolean {
 
 export function chooseConversation(s: GameState, choice: string): boolean {
   const id = s.haven.talking; const l = LANDMARKS.find(landmark => landmark.id === id && landmark.kind === 'npc');
-  if (s.mode !== 'playing' || !l || !havenAvailable(s, l.id) || distance(s.player, l) >= 2.05 || Math.abs(s.player.y - l.y) >= 0.8 || !lineClear(s.player, l, s) || !safeToRest(s)) return false;
+  if (s.mode !== 'playing' || !l || !havenAvailable(s, l.id) || distance(s.player, l) >= 2.05 || Math.abs(s.player.y - l.y) >= 0.8 || !lineClear(s.player, l, s, l.id) || !safeToRest(s)) return false;
   const result = applyConversation(s, choice); if (!result) return false;
   say(s, result, 8, 'event'); updatePrompt(s); return true;
 }

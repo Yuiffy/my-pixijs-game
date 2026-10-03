@@ -1,0 +1,31 @@
+.summary { padding-bottom: 8px; font-size: 12px; }
+.summary > div { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.summary > div > button { padding: 3px 0 !important; min-height: 30px !important; border: 0 !important; background: transparent !important; font-size: 12px !important; color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.summary > p { margin: 2px 0 0 !important; font-size: 12px; line-height: 1.5; }
+.summary[data-shortfall="true"] > p { color: #a04424; }
+.dialog { width: min(560px, calc(100vw - 24px)); max-width: none; max-height: calc(100dvh - 24px); padding: 0; margin: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); color: var(--ink); box-shadow: 0 18px 60px #162d3640; }
+.dialog::backdrop { background: #132c3266; backdrop-filter: blur(3px); }
+.dialog[open] { display: flex; flex-direction: column; }
+.dialog header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 18px 22px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
+.dialog header small { color: var(--muted); font-size: 11px; }
+.dialog h2 { font-size: 23px; margin: 5px 0 0; }
+.dialog header button { flex-shrink: 0; min-height: 40px; font-size: 12px; }
+.body { padding: 20px 22px; overflow-y: auto; overscroll-behavior: contain; }
+.balance { display: grid; gap: 5px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+.balance > span { font-size: 12px; color: var(--muted); }
+.balance > strong { font-size: 34px; font-variant-numeric: tabular-nums; }
+.balance > small { color: var(--muted); font-size: 12px; }
+.balance[data-shortfall="true"] > strong, .body dl > div[data-shortfall="true"] { color: #a04424; }
+.body h3 { margin: 19px 0 8px; font-size: 14px; }
+.body dl { margin: 0; font-size: 12px; }
+.body dl > div { display: flex; justify-content: space-between; align-items: baseline; gap: 18px; padding: 7px 0; }
+.body dd { margin: 0; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.total { border-top: 1px solid var(--line); font-weight: 700; }
+.body .note, .body .warning { font-size: 12px; line-height: 1.8; margin: 14px 0 0; }
+.note { color: var(--muted); }
+.warning { padding: 10px 12px; background: #fae6cf; color: #914021; border-left: 3px solid #b96d36; }
+@media (max-width: 360px) {
+  .dialog header { padding: 14px; }
+  .dialog h2 { font-size: 19px; }
+  .body { padding: 16px 14px; }
+}
