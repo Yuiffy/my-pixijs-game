@@ -132,3 +132,19 @@ Enter 不能结束必杀，视频中的 Esc / P 只暂停或继续；开场和�
 修改源文件 ESLint、24 项规则测试、完整 `pnpm run check` 及随后顺序执行的 `pnpm run build` 已通过，构建 ESLint 保持启用。日志为 `tmp/beach-v3-{tests,check,build}.log`；既有其他游戏未使用变量和浏览器数据过期提示未影响构建。本轮开发服务 4010 已停止，两项本任务临时 tsconfig 类型路径已清理。当前可试玩生产预览为 `http://localhost:4011/game/beach-volley`（`.next-beach-v2-build`），此前预览地址是历史记录；本轮未提交、推送或部署。
 
 随后按用户「提交 master」要求，对本次提交内容建立独立检出，再次通过 24 项晴海规则测试、完整 check 与顺序 build；构建保留 ESLint。日志为 `tmp/beach-publish-{tests,check,build}.log`，发布验证使用独立依赖及构建目录，不影响运行中的 4011 预览。
+
+## 2026-10-03 视频轻量版与对局预加载
+
+原有 720p 视频全部保留，清单版本升级为 4，每段增加 `lite.src` 和 `lite.bytes`。23 段轻量版采用 640×360 / 24fps、H.264 CRF 30、faststart、无音轨，总计 **5.60 MB**，相同清单的原视频为 **41.71 MB**，减少 **86.6%**。新文件位于 `lite-v4/`，由已有视频直接转码，没有新增生成任务或积分消耗。逐段大小、来源和实际时长见 [`beach-volley-media-delivery.json`](beach-volley-media-delivery.json)。设置 `FFMPEG_PATH` / `FFPROBE_PATH` 后运行 `node scripts/prepare-beach-media.mjs` 可重新生成。
+
+选角菜单在图片就绪后启动后台缓存，按实际角色、岁栞双人覆盖和演出模式选择本场片段。先出场与双方必杀，再得分／结算；两个并发请求，完整轻量集合先于大文件。Save-Data、2G／3G 或报告带宽低于 1.5 Mbps 时只预取轻量版；精彩模式不取小分，关闭演出／减少动态效果不下载视频。改选、关闭和离开释放旧资源并取消过期下载，缓存上限 32 MiB，单次后台请求最长 45 秒，迟到响应不会污染当前对局。
+
+触发演出时优先使用已缓存的 720p，其次已缓存的 360p，否则直接流播 360p。缓存片段用 Blob URL 播放，复播无需网络；每段固定源，清晰版就绪后供后续演出使用，不在当前片段中途换源。冷片段播放时暂停其他预取来让出带宽，缓存演出期间仅继续轻量预取。自然结束、暂停、说明、失焦、跳过和错误恢复仍沿用原队列与时序保护，必杀不可跳过，结束后完整保留 0.8 秒场内防守反应。
+
+`pnpm beach:test` 共 39 项通过，包含媒体字节／faststart、当前对局选择、并发与优先级、冷流播、固定选源、取消／迟到响应、资源释放、错误与容量限制。专项 `node scripts/verify-beach-media.cjs` 使用静音安装版 Chrome，记录预取请求、首帧和整段时间，验证缓存复播零新增视频请求、队列下一角色、Save-Data、模式关闭和资源释放。可用 `BEACH_VOLLEY_URL`、`BEACH_MEDIA_OUTPUT` 指定地址与证据目录。
+
+本机 1 Mbps / 120ms 延迟的冷缓存实测中，四秒岁己必杀从调用播放到完整结束约 **8.34 秒**，原 720p 同条件约 **15.68 秒**；这是包含缓冲的整段墙钟时间，不是首帧优化或对真实手机网络的保证。提前缓存后，出场、必杀和复播均无新增视频网络请求。来源和测量位于 `tmp/beach-media-dev/report.json`。
+
+开发网络专项 8 张、角色／队列回归 30 张、静音通用客户端 1 张和生产公开操作 8 张截图，全部通过像素、文字状态／DOM／画布检查并逐张打开目检，页面／控制台错误为空。生产版分别验证 720p 和 Save-Data 360p 缓存：正常接回 11 次球后触发必杀，完整播放、暂停／恢复、0.8 秒防守和出球一致，且没有开发修改钩子或新视频请求。证据在 `tmp/beach-media-{dev,roster-dev,shared-final,production-standard,production-lite}/`。
+
+修改源文件 ESLint、39 项测试、独立检出中的完整 `pnpm run check` 及随后顺序执行的 `pnpm run build` 通过，保留构建 ESLint；日志为 `tmp/beach-media-{tests,check,build}.log`。当前生产试玩 **`http://localhost:4013/game/beach-volley`**，构建目录 `.next-beach-media-build`。后续新增角色只需按同样方式登记个人片与轻量版，缓存选择自动跟随演出队列。

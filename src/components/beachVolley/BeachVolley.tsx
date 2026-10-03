@@ -39,7 +39,9 @@ import { loadAssets, renderGame } from "./renderer";
 import type { Assets } from "./renderer";
 import BeachAudio from "./audio";
 import { createControls } from "./controls";
-import { nextCinematic, selectCinematic } from "./cinematics";
+import { matchMediaClips, nextCinematic, selectCinematic } from "./cinematics";
+import { CinemaCache } from "./mediaCache";
+import type { MediaPlayback } from "./mediaCache";
 import type {
   CinemaKind,
   CinemaMode,
@@ -48,6 +50,7 @@ import type {
 } from "./cinematics";
 import styles from "./beachVolley.module.css";
 
+type PlaybackCinematic = Cinematic & { playback: MediaPlayback };
 type GameWindow = Window & {
   render_game_to_text?: () => string;
   advanceTime?: (ms: number) => void;
@@ -102,13 +105,15 @@ export default function BeachVolley() {
   const [muted, setMuted] = useState(false);
   const [best, setBest] = useState(0);
   const helpRef = useRef(false);
-  const [cinematic, setCinematic] = useState<Cinematic | null>(null);
+  const [cinematic, setCinematic] = useState<PlaybackCinematic | null>(null);
   const [cinemaMode, setCinemaMode] = useState<CinemaMode>("all");
   const [cinemaPaused, setCinemaPaused] = useState(false);
   const cinemaPauseRef = useRef(false);
   const mediaRef = useRef<MediaManifest | null>(null);
+  const [media, setMedia] = useState<MediaManifest | null>(null);
+  const cacheRef = useRef<CinemaCache | null>(null);
   const modeRef = useRef<CinemaMode>("all");
-  const playbackRef = useRef<Cinematic | null>(null);
+  const playbackRef = useRef<PlaybackCinematic | null>(null);
   const cinemaSerialRef = useRef(0);
   const seenEventRef = useRef(0);
   const returnPausedRef = useRef(false);
@@ -154,11 +159,13 @@ export default function BeachVolley() {
       resetInput();
       returnPausedRef.current = pausedStart;
       g.paused = true;
-      playbackRef.current = plan;
+      const playback = cacheRef.current!.play(plan);
+      const movie = { ...plan, playback };
+      playbackRef.current = movie;
       cinemaRef.current = true;
       cinemaPauseRef.current = pausedStart;
       setCinemaPaused(pausedStart);
-      setCinematic(plan);
+      setCinematic(movie);
       return true;
     },
     [resetInput],
@@ -179,6 +186,7 @@ export default function BeachVolley() {
       if (plan.kind === "special" && !expectedId) return;
       resetInput();
       playbackRef.current = null;
+      cacheRef.current?.finish();
       cinemaRef.current = false;
       setCinematic(null);
       setCinemaPaused(false);
@@ -202,8 +210,9 @@ export default function BeachVolley() {
       const next = nextCinematic(plan);
       if (!next) finishCinema(expectedId);
       else {
-        playbackRef.current = next;
-        setCinematic(next);
+        const movie = { ...next, playback: cacheRef.current!.play(next) };
+        playbackRef.current = movie;
+        setCinematic(movie);
       }
     },
     [finishCinema],
@@ -239,6 +248,7 @@ export default function BeachVolley() {
     resetInput();
     cinemaRef.current = false;
     playbackRef.current = null;
+    cacheRef.current?.finish();
     setCinematic(null);
     seenEventRef.current = 0;
     gameRef.current = createGame(options);
@@ -293,6 +303,9 @@ export default function BeachVolley() {
     let lastUi = 0;
     let manual = false;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const cache = new CinemaCache();
+    cacheRef.current = cache;
+    const manifestController = new AbortController();
     const audio = new BeachAudio();
     audioRef.current = audio;
     const target = window as GameWindow;
@@ -331,6 +344,9 @@ export default function BeachVolley() {
               side: playbackRef.current.side,
               character: playbackRef.current.character,
               src: playbackRef.current.src,
+              playbackSrc: playbackRef.current.playback.src,
+              quality: playbackRef.current.playback.quality,
+              cached: playbackRef.current.playback.cached,
               paused: cinemaPauseRef.current,
               outcome: playbackRef.current.outcome,
               index: playbackRef.current.index,
@@ -338,6 +354,7 @@ export default function BeachVolley() {
             }
           : null,
         cinemaMode: modeRef.current,
+        mediaCache: cache.snapshot(),
       });
     target.advanceTime = advance;
     if (process.env.NODE_ENV !== "production") {
@@ -363,10 +380,13 @@ export default function BeachVolley() {
       .catch((reason) => {
         if (alive) setError(String(reason));
       });
-    fetch("/games/beach-volley/media.json")
+    fetch("/games/beach-volley/media.json", { signal: manifestController.signal })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (alive && data?.characters) mediaRef.current = data;
+        if (alive && data?.characters) {
+          mediaRef.current = data;
+          setMedia(data);
+        }
       })
       .catch(() => {});
     try {
@@ -484,6 +504,8 @@ export default function BeachVolley() {
     document.addEventListener("visibilitychange", visibility);
     return () => {
       alive = false;
+      manifestController.abort();
+      cache.dispose();
       cancelAnimationFrame(frame);
       audio.dispose();
       window.removeEventListener("keydown", keyDown);
@@ -495,6 +517,26 @@ export default function BeachVolley() {
       delete target.beachVolley;
     };
   }, [finishCinema, pause, resetInput, showCinema, sync]);
+  useEffect(() => {
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const { connection } = navigator as Navigator & {
+      connection?: EventTarget & { saveData?: boolean; effectiveType?: string; downlink?: number };
+    };
+    const preload = () => {
+      const lightOnly = connection?.saveData || ["slow-2g", "2g", "3g"].includes(connection?.effectiveType || "") || (connection?.downlink !== undefined && connection.downlink < 1.5);
+      cacheRef.current?.update(
+        ready ? matchMediaClips(createGame(options), media, cinemaMode, reduced.matches) : [],
+        !lightOnly,
+      );
+    };
+    preload();
+    reduced.addEventListener("change", preload);
+    connection?.addEventListener("change", preload);
+    return () => {
+      reduced.removeEventListener("change", preload);
+      connection?.removeEventListener("change", preload);
+    };
+  }, [ready, media, options, cinemaMode]);
   useEffect(() => {
     audioRef.current?.setEnabled(!muted);
   }, [muted]);
@@ -875,7 +917,8 @@ export default function BeachVolley() {
             <video
               key={cinematic.id}
               ref={videoRef}
-              src={cinematic.src}
+              src={cinematic.playback.src}
+              data-quality={cinematic.playback.quality}
               poster={cinematic.poster}
               preload="auto"
               playsInline

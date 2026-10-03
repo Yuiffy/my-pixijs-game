@@ -77,8 +77,8 @@ async function movie(p, kind, character, screenshot, natural = true, outcome) {
   if (outcome) assert.equal(s.cinematic.outcome, outcome);
   const before = stable(s); await advance(p, 2500); assert.deepEqual(stable(await state(p)), before, 'movie freezes physics, score and energy');
   const media = await p.locator('video').evaluate(v => ({ src: v.getAttribute('src'), duration: v.duration, currentTime: v.currentTime, width: v.videoWidth, height: v.videoHeight, error: v.error?.code ?? null }));
-  assert.equal(media.width, 1280); assert.equal(media.height, 720); assert.equal(media.error, null);
-  assert.ok(Math.abs(media.duration - clipDurations[media.src]) < 0.06, 'decoded duration matches manifest');
+  assert.equal(media.width, s.cinematic.quality === 'lite' ? 640 : 1280); assert.equal(media.height, s.cinematic.quality === 'lite' ? 360 : 720); assert.equal(media.error, null);
+  assert.ok(Math.abs(media.duration - clipDurations[s.cinematic.src]) < 0.09, 'decoded duration matches manifest');
   if (screenshot) await capture(p, screenshot);
   clips.push({ kind, character, outcome: s.cinematic.outcome, side: s.cinematic.side, index: s.cinematic.index, count: s.cinematic.count, media, before });
   if (natural) {

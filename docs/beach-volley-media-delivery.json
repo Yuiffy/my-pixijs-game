@@ -1,0 +1,215 @@
+{
+  "method": "Local ffmpeg transcode from existing delivery; no generation or source edits",
+  "encoding": "640x360 H.264, 24 fps, CRF 30, maxrate 400k, bufsize 800k, GOP 48, yuv420p, faststart, silent",
+  "originalBytes": 41709546,
+  "liteBytes": 5596601,
+  "clips": [
+    {
+      "src": "/games/beach-volley/intro-sui-v3.mp4",
+      "originalBytes": 1758547,
+      "lite": {
+        "src": "/games/beach-volley/lite-v4/intro-sui-v3.mp4",
+        "bytes": 223677
+      },
+      "duration": 4.083333
+    },
+    {
+      "src": "/games/beach-volley/special-sui-v2.mp4",
+      "originalBytes": 1943114,
+      "lite": {
+        "src": "/games/beach-volley/lite-v4/special-sui-v2.mp4",
+        "bytes": 237798
+      },
+      "duration": 4.083333
+    },
+    {
+      "src": "/games/beach-volley/point-sui-win-v3.mp4",
+      "originalBytes": 831271,
+      "lite": {
+        "src": "/games/beach-volley/lite-v4/point-sui-win-v3.mp4",
+        "bytes": 130351
+      },
+      "duration": 2.916667
+    },
+    {
+      "src": "/games/beach-volley/point-sui-lose-v3.mp4",
+      "originalBytes": 727281,
+      "lite": {
+        "src": "/games/beach-volley/lite-v4/point-sui-lose-v3.mp4",
+        "bytes": 99408
+      },
+      "duration": 2.791667
+    },
+    {
+      "src": "/games/beach-volley/result-sui-win-v3.mp4",
+      "originalBytes": 1742687,
+      "lite": {
+        "src": "/games/beach-volley/lite-v4/result-sui-win-v3.mp4",
+        "bytes": 256118
+      },
+      "duration": 4.958333
+    },
+    {
+      "src": "/games/beach-volley/result-sui-lose-v3.mp4",
+      "originalBytes": 416374,
+      "lite": {
+        "src": "/games/beach-volley/lite-v4/result-sui-lose-v3.mp4",
+        "bytes": 54663
+      },
+      "duration": 1.666667
+    },
+    {
+      "src": "/games/beach-volley/intro-shiori-v3.mp4",
+      "originalBytes": 1630448,
+      "lite": {
+        "src": "/games/beach-volley/lite-v4/intro-shiori-v3.mp4",
+        "bytes": 223341
+      },
+      "duration": 4.083333
+    },
+    {
+      "src": "/games/beach-volley/special-shiori-v2.mp4",
+      "originalBytes": 1672440,
+      "lite": {
+        "src": "/games/beach-volley/lite-v4/special-shiori-v2.mp4",
+        "bytes": 200558
+      },
+      "duration": 4.083333
+    },
+    {
+      "src": "/games/beach-volley/point-shiori-win-v3.mp4",
+      "originalBytes": 1050137,
+      "lite": {
+        "src": "/games/beach-volley/lite-v4/point-shiori-win-v3.mp4",
+        "bytes": 150728
+      },
+      "duration": 2.916667
+    },
+    {
+      "src": "/games/beach-volley/point-shiori-lose-v3.mp4",
+      "originalBytes": 686892,
+      "lite": {
+        "src": "/games/beach-volley/lite-v4/point-shiori-lose-v3.mp4",
+        "bytes": 105507
+      },
+      "duration": 2.791667
+    },
+    {
+      "src": "/games/beach-volley/result-shiori-win-v3.mp4",
+      "originalBytes": 1714631,
+      "lite": {
+        "src": "/games/beach-volley/lite-v4/result-shiori-win-v3.mp4",
+        "bytes": 231864
+      },
+      "duration": 4.958333
+    },
+    {
+      "src": "/games/beach-volley/result-shiori-lose-v3.mp4",
+      "originalBytes": 332700,
+      "lite": {
+        "src": "/games/beach-volley/lite-v4/result-shiori-lose-v3.mp4",
+        "bytes": 43938
+      },
+      "duration": 1.666667
+    },
+    {
+      "src": "/games/beach-volley/intro-nagisa-v3.mp4",
+      "originalBytes": 2179475,
+      "lite": {
+        "src": "/games/beach-volley/lite-v4/intro-nagisa-v3.mp4",
+        "bytes": 295925
+      },
+      "duration": 6.083333
+    },
+    {
+      "src": "/games/beach-volley/special-nagisa-v3.mp4",
+      "originalBytes": 1760964,
+      "lite": {
+        "src": "/games/beach-volley/lite-v4/special-nagisa-v3.mp4",
+        "bytes": 236477
+      },
+      "duration": 4.083333
+    },
+    {
+      "src": "/games/beach-volley/point-nagisa-win-v3.mp4",
+      "originalBytes": 1426262,
+      "lite": {
+        "src": "/games/beach-volley/lite-v4/point-nagisa-win-v3.mp4",
+        "bytes": 202032
+      },
+      "duration": 4.083333
+    },
+    {
+      "src": "/games/beach-volley/point-nagisa-lose-v3.mp4",
+      "originalBytes": 1442099,
+      "lite": {
+        "src": "/games/beach-volley/lite-v4/point-nagisa-lose-v3.mp4",
+        "bytes": 192499
+      },
+      "duration": 4.083333
+    },
+    {
+      "src": "/games/beach-volley/result-nagisa-win-v3.mp4",
+      "originalBytes": 3603158,
+      "lite": {
+        "src": "/games/beach-volley/lite-v4/result-nagisa-win-v3.mp4",
+        "bytes": 502763
+      },
+      "duration": 12.083333
+    },
+    {
+      "src": "/games/beach-volley/result-nagisa-lose-v3.mp4",
+      "originalBytes": 2615157,
+      "lite": {
+        "src": "/games/beach-volley/lite-v4/result-nagisa-lose-v3.mp4",
+        "bytes": 361002
+      },
+      "duration": 10.083333
+    },
+    {
+      "src": "/games/beach-volley/intro-v2.mp4",
+      "originalBytes": 2732211,
+      "lite": {
+        "src": "/games/beach-volley/lite-v4/intro-v2.mp4",
+        "bytes": 350611
+      },
+      "duration": 8.083333
+    },
+    {
+      "src": "/games/beach-volley/point-sui-v2.mp4",
+      "originalBytes": 1785544,
+      "lite": {
+        "src": "/games/beach-volley/lite-v4/point-sui-v2.mp4",
+        "bytes": 246054
+      },
+      "duration": 6.083333
+    },
+    {
+      "src": "/games/beach-volley/point-shiori-v2.mp4",
+      "originalBytes": 2093935,
+      "lite": {
+        "src": "/games/beach-volley/lite-v4/point-shiori-v2.mp4",
+        "bytes": 264829
+      },
+      "duration": 6.083333
+    },
+    {
+      "src": "/games/beach-volley/result-sui-v2.mp4",
+      "originalBytes": 3717314,
+      "lite": {
+        "src": "/games/beach-volley/lite-v4/result-sui-v2.mp4",
+        "bytes": 498025
+      },
+      "duration": 12.083333
+    },
+    {
+      "src": "/games/beach-volley/result-shiori-v2.mp4",
+      "originalBytes": 3846905,
+      "lite": {
+        "src": "/games/beach-volley/lite-v4/result-shiori-v2.mp4",
+        "bytes": 488433
+      },
+      "duration": 12.083333
+    }
+  ]
+}

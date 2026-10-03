@@ -1,39 +1,63 @@
 {
-  "version": 3,
+  "version": 4,
   "characters": {
     "sui": {
       "intro": {
         "src": "/games/beach-volley/intro-sui-v3.mp4",
         "poster": "/games/beach-volley/special-sui-v2.webp",
-        "duration": 4
+        "duration": 4,
+        "lite": {
+          "src": "/games/beach-volley/lite-v4/intro-sui-v3.mp4",
+          "bytes": 223677
+        }
       },
       "special": {
         "src": "/games/beach-volley/special-sui-v2.mp4",
         "poster": "/games/beach-volley/special-sui-v2.webp",
-        "duration": 4
+        "duration": 4,
+        "lite": {
+          "src": "/games/beach-volley/lite-v4/special-sui-v2.mp4",
+          "bytes": 237798
+        }
       },
       "point": {
         "win": {
           "src": "/games/beach-volley/point-sui-win-v3.mp4",
           "poster": "/games/beach-volley/special-sui-v2.webp",
-          "duration": 2.85
+          "duration": 2.85,
+          "lite": {
+            "src": "/games/beach-volley/lite-v4/point-sui-win-v3.mp4",
+            "bytes": 130351
+          }
         },
         "lose": {
           "src": "/games/beach-volley/point-sui-lose-v3.mp4",
           "poster": "/games/beach-volley/special-sui-v2.webp",
-          "duration": 2.75
+          "duration": 2.75,
+          "lite": {
+            "src": "/games/beach-volley/lite-v4/point-sui-lose-v3.mp4",
+            "bytes": 99408
+          }
         }
       },
       "result": {
         "win": {
           "src": "/games/beach-volley/result-sui-win-v3.mp4",
           "poster": "/games/beach-volley/special-sui-v2.webp",
-          "duration": 4.9
+          "duration": 4.9,
+          "lite": {
+            "src": "/games/beach-volley/lite-v4/result-sui-win-v3.mp4",
+            "bytes": 256118
+          }
         },
         "lose": {
           "src": "/games/beach-volley/result-sui-lose-v3.mp4",
           "poster": "/games/beach-volley/special-sui-v2.webp",
-          "duration": 1.6
+          "duration": 1.6,
+          "lite": {
+            "src": "/games/beach-volley/lite-v4/result-sui-lose-v3.mp4",
+            "bytes": 54663
+          }
         }
       }
     },
@@ -41,35 +65,59 @@
       "intro": {
         "src": "/games/beach-volley/intro-shiori-v3.mp4",
         "poster": "/games/beach-volley/special-shiori-v2.webp",
-        "duration": 4
+        "duration": 4,
+        "lite": {
+          "src": "/games/beach-volley/lite-v4/intro-shiori-v3.mp4",
+          "bytes": 223341
+        }
       },
       "special": {
         "src": "/games/beach-volley/special-shiori-v2.mp4",
         "poster": "/games/beach-volley/special-shiori-v2.webp",
-        "duration": 4
+        "duration": 4,
+        "lite": {
+          "src": "/games/beach-volley/lite-v4/special-shiori-v2.mp4",
+          "bytes": 200558
+        }
       },
       "point": {
         "win": {
           "src": "/games/beach-volley/point-shiori-win-v3.mp4",
           "poster": "/games/beach-volley/special-shiori-v2.webp",
-          "duration": 2.85
+          "duration": 2.85,
+          "lite": {
+            "src": "/games/beach-volley/lite-v4/point-shiori-win-v3.mp4",
+            "bytes": 150728
+          }
         },
         "lose": {
           "src": "/games/beach-volley/point-shiori-lose-v3.mp4",
           "poster": "/games/beach-volley/special-shiori-v2.webp",
-          "duration": 2.75
+          "duration": 2.75,
+          "lite": {
+            "src": "/games/beach-volley/lite-v4/point-shiori-lose-v3.mp4",
+            "bytes": 105507
+          }
         }
       },
       "result": {
         "win": {
           "src": "/games/beach-volley/result-shiori-win-v3.mp4",
           "poster": "/games/beach-volley/special-shiori-v2.webp",
-          "duration": 4.9
+          "duration": 4.9,
+          "lite": {
+            "src": "/games/beach-volley/lite-v4/result-shiori-win-v3.mp4",
+            "bytes": 231864
+          }
         },
         "lose": {
           "src": "/games/beach-volley/result-shiori-lose-v3.mp4",
           "poster": "/games/beach-volley/special-shiori-v2.webp",
-          "duration": 1.6
+          "duration": 1.6,
+          "lite": {
+            "src": "/games/beach-volley/lite-v4/result-shiori-lose-v3.mp4",
+            "bytes": 43938
+          }
         }
       }
     },
@@ -77,35 +125,59 @@
       "intro": {
         "src": "/games/beach-volley/intro-nagisa-v3.mp4",
         "poster": "/games/beach-volley/special-nagisa-v2.webp",
-        "duration": 6
+        "duration": 6,
+        "lite": {
+          "src": "/games/beach-volley/lite-v4/intro-nagisa-v3.mp4",
+          "bytes": 295925
+        }
       },
       "special": {
         "src": "/games/beach-volley/special-nagisa-v3.mp4",
         "poster": "/games/beach-volley/special-nagisa-v2.webp",
-        "duration": 4
+        "duration": 4,
+        "lite": {
+          "src": "/games/beach-volley/lite-v4/special-nagisa-v3.mp4",
+          "bytes": 236477
+        }
       },
       "point": {
         "win": {
           "src": "/games/beach-volley/point-nagisa-win-v3.mp4",
           "poster": "/games/beach-volley/special-nagisa-v2.webp",
-          "duration": 4
+          "duration": 4,
+          "lite": {
+            "src": "/games/beach-volley/lite-v4/point-nagisa-win-v3.mp4",
+            "bytes": 202032
+          }
         },
         "lose": {
           "src": "/games/beach-volley/point-nagisa-lose-v3.mp4",
           "poster": "/games/beach-volley/special-nagisa-v2.webp",
-          "duration": 4
+          "duration": 4,
+          "lite": {
+            "src": "/games/beach-volley/lite-v4/point-nagisa-lose-v3.mp4",
+            "bytes": 192499
+          }
         }
       },
       "result": {
         "win": {
           "src": "/games/beach-volley/result-nagisa-win-v3.mp4",
           "poster": "/games/beach-volley/special-nagisa-v2.webp",
-          "duration": 12
+          "duration": 12,
+          "lite": {
+            "src": "/games/beach-volley/lite-v4/result-nagisa-win-v3.mp4",
+            "bytes": 502763
+          }
         },
         "lose": {
           "src": "/games/beach-volley/result-nagisa-lose-v3.mp4",
           "poster": "/games/beach-volley/special-nagisa-v2.webp",
-          "duration": 10
+          "duration": 10,
+          "lite": {
+            "src": "/games/beach-volley/lite-v4/result-nagisa-lose-v3.mp4",
+            "bytes": 361002
+          }
         }
       }
     }
@@ -115,30 +187,50 @@
       "intro": {
         "src": "/games/beach-volley/intro-v2.mp4",
         "poster": "/games/beach-volley/intro-v2.webp",
-        "duration": 8
+        "duration": 8,
+        "lite": {
+          "src": "/games/beach-volley/lite-v4/intro-v2.mp4",
+          "bytes": 350611
+        }
       },
       "point": {
         "sui": {
           "src": "/games/beach-volley/point-sui-v2.mp4",
           "poster": "/games/beach-volley/intro-v2.webp",
-          "duration": 6
+          "duration": 6,
+          "lite": {
+            "src": "/games/beach-volley/lite-v4/point-sui-v2.mp4",
+            "bytes": 246054
+          }
         },
         "shiori": {
           "src": "/games/beach-volley/point-shiori-v2.mp4",
           "poster": "/games/beach-volley/intro-v2.webp",
-          "duration": 6
+          "duration": 6,
+          "lite": {
+            "src": "/games/beach-volley/lite-v4/point-shiori-v2.mp4",
+            "bytes": 264829
+          }
         }
       },
       "result": {
         "sui": {
           "src": "/games/beach-volley/result-sui-v2.mp4",
           "poster": "/games/beach-volley/intro-v2.webp",
-          "duration": 12
+          "duration": 12,
+          "lite": {
+            "src": "/games/beach-volley/lite-v4/result-sui-v2.mp4",
+            "bytes": 498025
+          }
         },
         "shiori": {
           "src": "/games/beach-volley/result-shiori-v2.mp4",
           "poster": "/games/beach-volley/intro-v2.webp",
-          "duration": 12
+          "duration": 12,
+          "lite": {
+            "src": "/games/beach-volley/lite-v4/result-shiori-v2.mp4",
+            "bytes": 488433
+          }
         }
       }
     }

@@ -415,5 +415,14 @@
     }
   ],
   "cinematicPolicy": "New footage is single-character. Sui/Shiori pair override preserves existing paired videos. Other matches compose actual winner then actual loser clips.",
-  "generationCreditCeilingThisUpdate": 600
+  "generationCreditCeilingThisUpdate": 600,
+  "lightVideoDelivery": {
+    "method": "Local ffmpeg transcode of the 23 existing manifest clips; original footage retained; no new generation credits",
+    "directory": "lite-v4/",
+    "encoding": "640x360 H.264, 24 fps, CRF 30, maxrate 400k, bufsize 800k, GOP 48, yuv420p, faststart, no audio",
+    "report": "docs/beach-volley-media-delivery.json",
+    "reproduce": "scripts/prepare-beach-media.mjs",
+    "originalBytes": 41709546,
+    "liteBytes": 5596601
+  }
 }

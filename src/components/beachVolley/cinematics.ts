@@ -8,6 +8,7 @@ export interface MediaClip {
   src: string;
   poster: string;
   duration: number;
+  lite?: { src: string; bytes: number };
 }
 export interface CharacterMedia {
   intro?: MediaClip;
@@ -40,6 +41,24 @@ export interface Cinematic extends CinemaSegment {
   index: number;
 }
 export const pairKey = (a: Character, b: Character) => [a, b].sort().join(":");
+
+// Use the same selection rules as playback: paired footage only belongs to that matchup.
+export function matchMediaClips(
+  g: Game,
+  media: MediaManifest | null,
+  mode: CinemaMode,
+  reduced: boolean,
+): MediaClip[] {
+  const clips = new Map<string, MediaClip>();
+  for (const kind of ["intro", "special", "point", "result"] as CinemaKind[]) {
+    for (const side of (kind === "intro" ? [0] : [0, 1]) as Side[]) {
+      selectCinematic(g, media, mode, reduced, kind, side)?.clips.forEach((clip) => {
+        if (!clips.has(clip.src)) clips.set(clip.src, clip);
+      });
+    }
+  }
+  return Array.from(clips.values());
+}
 export function nextCinematic(plan: Cinematic): Cinematic | null {
   const index = plan.index + 1;
   const segment = plan.clips[index];
