@@ -1,0 +1,772 @@
+{
+  "jobKey": "beach-volley-audio-20261004",
+  "canvasId": "f16018b1-98ce-43ab-9ae7-8a4f26778611",
+  "region": "cn",
+  "cliVersion": "1.0.1",
+  "actors": {
+    "sui": {
+      "name": "岁己",
+      "voiceName": "明媚女声",
+      "lines": {
+        "intro": "海风正好，一起打场漂亮的比赛吧！",
+        "special": "这一球，飞到晴空去！",
+        "pointWin": "好球！下一分也加油！",
+        "pointLose": "没关系，下一球我会接住！",
+        "victory": "赢啦！今天的海风，都是甜的！",
+        "defeat": "这次输了，下次再好好比一场！"
+      }
+    },
+    "shiori": {
+      "name": "栞栞",
+      "voiceName": "清润女声",
+      "lines": {
+        "intro": "听，海浪来了。准备好，和我一起出发吧。",
+        "special": "听见了吗？海浪的声音。",
+        "pointWin": "接得不错。继续跟上海浪的节奏。",
+        "pointLose": "调整呼吸，下一球再来。",
+        "victory": "赢下来了。谢谢你，陪我打到这一刻。",
+        "defeat": "今天就到这里。下次，我们再一起打到日落。"
+      }
+    },
+    "nagisa": {
+      "name": "米汀",
+      "voiceName": "清冷女主",
+      "lines": {
+        "intro": "场地确认完毕。让我看看，你的球路。",
+        "special": "找到破绽了。看这道星光！",
+        "pointWin": "这一分，拿下了。",
+        "pointLose": "记住了。下一球，我会改变路线。",
+        "victory": "胜负已定。和你交手，很有意思。",
+        "defeat": "这次是你赢了。下次，我会找到新的答案。"
+      }
+    }
+  },
+  "items": {
+    "music-menu": {
+      "nodeId": "node_8990579775",
+      "updateId": "f34434b0-ed17-4b5e-a784-fc8c9a485c66",
+      "submitId": "bc5e19a6-3148-47ea-bf50-9cf3d4340881",
+      "mode": "music",
+      "model": "seed_music_1.0",
+      "title": "晴海双打 · menu BGM",
+      "duration": 45,
+      "prompt": "纯器乐，无人声，无歌词，无哼唱。夏日海边排球游戏选角菜单音乐，清新温暖的轻快 city pop，112 BPM，D大调，柔和电钢琴、干净的切分节奏吉他、温暖贝斯、轻盈架子鼓与少量马林巴。旋律明快、有海风和午后阳光的感觉。平稳节拍，开头立刻进入音乐，音色柔和，不要突兀音效，不要海浪实录，适合连续循环。",
+      "saved": true,
+      "saveRequestId": "2026100402012008378D5B6496C5239B9B",
+      "submitted": true,
+      "submissionState": "accepted",
+      "runRequestId": "20261004020326FD7CD8D90E17A0262D11",
+      "operationRef": "bc5e19a6-3148-47ea-bf50-9cf3d4340881",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004020627DD5F6AAD9FB33E12430C",
+      "resourceId": "7e7b762a-b0aa-43a4-9dfd-9610deeeff27",
+      "resourceVerified": true,
+      "showRequestId": "20261004020808F9B472B8FDB02E1A6EFF",
+      "download": {
+        "resourceId": "7e7b762a-b0aa-43a4-9dfd-9610deeeff27",
+        "path": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-audio\\music-menu.source",
+        "size": 1441168,
+        "sha256": "30304f532dcb28bc53635421f0122dd76a0f80dcf61e22d08e7ec19281368bce",
+        "requestId": "202610040208117C5A265E62D2A983C3E5"
+      }
+    },
+    "music-match": {
+      "nodeId": "node_6db198b362",
+      "updateId": "64daafcc-4c0c-480e-8ade-c236d861b8de",
+      "submitId": "c919380e-0a12-479b-ae52-982d8d3448f4",
+      "mode": "music",
+      "model": "seed_music_1.0",
+      "title": "晴海双打 · match BGM",
+      "duration": 60,
+      "prompt": "纯器乐，无人声，无歌词，无哼唱。夏日沙滩排球街机游戏对局音乐，明亮而充满竞技感的日系运动游戏 jazz funk 与 city pop，128 BPM，E大调。清爽电吉他、灵动贝斯、紧凑轻鼓、明亮电钢琴和少量合成器主旋律。有来回击球的律动，保持稳定积极的动能，旋律简洁不抢注意力，不要沉重失真，不要复杂停顿，不要音效，开头立即进入节拍，适合连续循环。",
+      "saved": true,
+      "saveRequestId": "202610040201210730B48A77E27E17D364",
+      "submitted": true,
+      "submissionState": "accepted",
+      "runRequestId": "20261004020326FD7CD8D90E17A0262D11",
+      "operationRef": "c919380e-0a12-479b-ae52-982d8d3448f4",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004020628733784E6B88AFA0AA7E7",
+      "resourceId": "e3ffab95-4b21-4263-8fbc-99b63172fa55",
+      "resourceVerified": true,
+      "showRequestId": "20261004020808F9B472B8FDB02E1A6EFF",
+      "download": {
+        "resourceId": "e3ffab95-4b21-4263-8fbc-99b63172fa55",
+        "path": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-audio\\music-match.source",
+        "size": 1920985,
+        "sha256": "ee891af5decb187f93d9dc6e9ff76e47be64c4f652ca14b0cf8498cbb68befd3",
+        "requestId": "20261004020812E1611BC143E722271ED6"
+      }
+    },
+    "music-victory": {
+      "nodeId": "node_ded30f54a6",
+      "updateId": "9db8ef2a-d70a-4f99-8bc5-33539d7ea85a",
+      "submitId": "4f0283f5-d81c-4e6e-9ddf-ea675c00247a",
+      "mode": "music",
+      "model": "seed_music_1.0",
+      "title": "晴海双打 · victory BGM",
+      "duration": 30,
+      "prompt": "纯器乐，无人声，无歌词，无哼唱。夏日沙滩排球游戏胜利结算音乐。开头立即奏出明亮的五音上行庆祝旋律，悦耳铜管、钢琴、吉他和轻快鼓点，D大调，120 BPM。轻松雀跃，像海边朋友们庆祝一场精彩比赛。前十秒有明确胜利主题和自然收束，之后保持温暖欢快的余韵，不要大音量冲击，不要音效。",
+      "saved": true,
+      "saveRequestId": "2026100402012212595D020F587DE85BF2",
+      "submitted": true,
+      "submissionState": "accepted",
+      "runRequestId": "20261004020326FD7CD8D90E17A0262D11",
+      "operationRef": "4f0283f5-d81c-4e6e-9ddf-ea675c00247a",
+      "operationState": "succeeded",
+      "statusRequestId": "2026100402062986D1669E60B1C3DA319C",
+      "resourceId": "81a107a5-0014-4538-a78b-73143f993abe",
+      "resourceVerified": true,
+      "showRequestId": "20261004020808F9B472B8FDB02E1A6EFF",
+      "download": {
+        "resourceId": "81a107a5-0014-4538-a78b-73143f993abe",
+        "path": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-audio\\music-victory.source",
+        "size": 961351,
+        "sha256": "fa9a88022d44a75bdcd2c15929821dd26c84d7e563e6de9035dc779029e65eb7",
+        "requestId": "202610040208133540717E91CA911705F0"
+      }
+    },
+    "music-defeat": {
+      "nodeId": "node_e2fde2f2bb",
+      "updateId": "0fcbd1a1-814a-4187-baf9-944484d0aa72",
+      "submitId": "52f98718-d203-4897-8d36-6803fb10c48f",
+      "mode": "music",
+      "model": "seed_music_1.0",
+      "title": "晴海双打 · defeat BGM",
+      "duration": 30,
+      "prompt": "纯器乐，无人声，无歌词，无哼唱。夏日沙滩排球游戏失败结算音乐，温柔鼓励的短曲。开头立即奏出轻柔下行钢琴旋律，温暖电钢琴、木吉他、柔和贝斯和少量轻鼓，G大调，92 BPM。略有遗憾但不悲伤，表达下次再挑战的希望。前十秒有清晰完整的结算主题，随后温暖平静地延续，不要沉重情绪，不要音效。",
+      "saved": true,
+      "saveRequestId": "20261004020123CC952C93CE25680ED64D",
+      "submitted": true,
+      "submissionState": "accepted",
+      "runRequestId": "20261004020326FD7CD8D90E17A0262D11",
+      "operationRef": "52f98718-d203-4897-8d36-6803fb10c48f",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004020629C34589C14F2588DE134F",
+      "resourceId": "740719ea-16fc-415f-bfc6-8539887833d4",
+      "resourceVerified": true,
+      "showRequestId": "20261004020808F9B472B8FDB02E1A6EFF",
+      "download": {
+        "resourceId": "740719ea-16fc-415f-bfc6-8539887833d4",
+        "path": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-audio\\music-defeat.source",
+        "size": 961351,
+        "sha256": "bb5f8a0430251bde5fa81d3a5e854c822fe3cfb95a79de06a526037c17f267e4",
+        "requestId": "20261004020814CF32E7FE34F5E7943B3E"
+      }
+    },
+    "sui-intro": {
+      "nodeId": "node_5a09f40f30",
+      "updateId": "da6d2a59-be9a-4ec0-a549-775e993c9b48",
+      "submitId": "8f3bebcb-d1b5-4bfd-9eae-1946989b4a63",
+      "mode": "tts",
+      "voiceName": "明媚女声",
+      "title": "岁己 · 出场语音",
+      "prompt": "海风正好，一起打场漂亮的比赛吧！",
+      "saved": true,
+      "saveRequestId": "2026100402012356BA5F85F203B874BFDC",
+      "submitted": true,
+      "submissionState": "accepted",
+      "runRequestId": "20261004020326FD7CD8D90E17A0262D11",
+      "operationRef": "8f3bebcb-d1b5-4bfd-9eae-1946989b4a63",
+      "operationState": "succeeded",
+      "statusRequestId": "202610040206305CBC25DF1BB6A40C62E9",
+      "resourceId": "80b17c70-ae2f-41ee-a944-5f3bf43d3d2e",
+      "resourceVerified": true,
+      "showRequestId": "20261004020808F9B472B8FDB02E1A6EFF",
+      "download": {
+        "resourceId": "80b17c70-ae2f-41ee-a944-5f3bf43d3d2e",
+        "path": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-audio\\sui-intro.source",
+        "size": 104534,
+        "sha256": "36d7a4d815c2047af1377e8654331dfe4a2d5f36d2704be07386081ea98c9abf",
+        "requestId": "20261004020816D0698CBCB5362A1102EC"
+      }
+    },
+    "sui-special": {
+      "nodeId": "node_d24238eb1e",
+      "updateId": "b0833c70-9731-438a-b3bd-73a0f7514840",
+      "submitId": "2f3d05b1-d3ca-4af2-966e-ce0d2de8ac5a",
+      "mode": "tts",
+      "voiceName": "明媚女声",
+      "title": "岁己 · 必杀语音",
+      "prompt": "这一球，飞到晴空去！",
+      "saved": true,
+      "saveRequestId": "20261004020124A1B70E7D3B338B0AE874",
+      "submitted": true,
+      "submissionState": "accepted",
+      "runRequestId": "20261004020326FD7CD8D90E17A0262D11",
+      "operationRef": "2f3d05b1-d3ca-4af2-966e-ce0d2de8ac5a",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004020631080A85E0521F2A730B22",
+      "resourceId": "772068d5-3f00-4b75-8711-7e55175b7907",
+      "resourceVerified": true,
+      "showRequestId": "20261004020808F9B472B8FDB02E1A6EFF",
+      "download": {
+        "resourceId": "772068d5-3f00-4b75-8711-7e55175b7907",
+        "path": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-audio\\sui-special.source",
+        "size": 81965,
+        "sha256": "b4cf652d3344389e3b840c8a2bfa5983609ad238303f62bbf85b52dd78a93444",
+        "requestId": "2026100402081746908EBFC4412E2FC5DE"
+      }
+    },
+    "sui-pointWin": {
+      "nodeId": "node_825260977e",
+      "updateId": "7c74f1b7-283e-435b-9673-d55c8641ee6e",
+      "submitId": "d54ef436-6898-4429-b5bf-5e23faa8e4e7",
+      "mode": "tts",
+      "voiceName": "明媚女声",
+      "title": "岁己 · 得分语音",
+      "prompt": "好球！下一分也加油！",
+      "saved": true,
+      "saveRequestId": "20261004020125D8EEB78D6C0CFB15E0FA",
+      "submitted": true,
+      "submissionState": "accepted",
+      "runRequestId": "20261004020327AE57DC443605A8DE9B69",
+      "operationRef": "d54ef436-6898-4429-b5bf-5e23faa8e4e7",
+      "operationState": "succeeded",
+      "statusRequestId": "2026100402063133EBC5B8A3223CE1CD4E",
+      "resourceId": "fcdfa875-e49a-4ca9-b53e-93ff0beb99dc",
+      "resourceVerified": true,
+      "showRequestId": "2026100402080949D964B63FA771A25086",
+      "download": {
+        "resourceId": "fcdfa875-e49a-4ca9-b53e-93ff0beb99dc",
+        "path": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-audio\\sui-pointWin.source",
+        "size": 80293,
+        "sha256": "a94247e8e16d591a74d29d9bdcc90351d0bc41d518eb538081d02c2d3634c7b9",
+        "requestId": "20261004020818CD77EBF17711FF311E22"
+      }
+    },
+    "sui-pointLose": {
+      "nodeId": "node_ae01034c31",
+      "updateId": "d0c06693-9b5f-4b7f-adae-17db5f37cd67",
+      "submitId": "c1335b90-3d9a-4ff3-917c-225ad6a5f0f6",
+      "mode": "tts",
+      "voiceName": "明媚女声",
+      "title": "岁己 · 失分语音",
+      "prompt": "没关系，下一球我会接住！",
+      "saved": true,
+      "saveRequestId": "202610040201264F4572C86770A84C39F2",
+      "submitted": true,
+      "submissionState": "accepted",
+      "runRequestId": "20261004020327AE57DC443605A8DE9B69",
+      "operationRef": "c1335b90-3d9a-4ff3-917c-225ad6a5f0f6",
+      "operationState": "succeeded",
+      "statusRequestId": "2026100402063257918CF18261130BF76B",
+      "resourceId": "d4891f0f-f9d7-4c38-8b38-ee8e0f1459ea",
+      "resourceVerified": true,
+      "showRequestId": "2026100402080949D964B63FA771A25086",
+      "download": {
+        "resourceId": "d4891f0f-f9d7-4c38-8b38-ee8e0f1459ea",
+        "path": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-audio\\sui-pointLose.source",
+        "size": 89488,
+        "sha256": "49cfc781539580519ed3d65cffc612592b4212b2abdc7cc530caada43b8d1d64",
+        "requestId": "20261004020819AD8EFBB96A2DFD97945B"
+      }
+    },
+    "sui-victory": {
+      "nodeId": "node_4495286895",
+      "updateId": "7090fb96-9d70-438e-81c8-daa16ae61b2d",
+      "submitId": "a4b8d70f-e41e-4228-a835-57f752eb8ed8",
+      "mode": "tts",
+      "voiceName": "明媚女声",
+      "title": "岁己 · 胜利语音",
+      "prompt": "赢啦！今天的海风，都是甜的！",
+      "saved": true,
+      "saveRequestId": "2026100402012671BE5DEF30151F30342D",
+      "submitted": true,
+      "submissionState": "accepted",
+      "runRequestId": "20261004020327AE57DC443605A8DE9B69",
+      "operationRef": "a4b8d70f-e41e-4228-a835-57f752eb8ed8",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004020633437F97299EB196F08F6B",
+      "resourceId": "54263ebc-2263-4826-a11b-22cf31b11825",
+      "resourceVerified": true,
+      "showRequestId": "2026100402080949D964B63FA771A25086",
+      "download": {
+        "resourceId": "54263ebc-2263-4826-a11b-22cf31b11825",
+        "path": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-audio\\sui-victory.source",
+        "size": 108714,
+        "sha256": "39b28c1026928072e32108369fb2e91744f9339ed8d764ea68b6bdbd97273f3d",
+        "requestId": "2026100402082081A09FBC9C10CD4BD13E"
+      }
+    },
+    "sui-defeat": {
+      "nodeId": "node_eda319e48b",
+      "updateId": "d1b299da-9494-4c30-a6a3-81109bc169dc",
+      "submitId": "07e03b16-f76c-4a90-a9a7-6e0161d3f19f",
+      "mode": "tts",
+      "voiceName": "明媚女声",
+      "title": "岁己 · 失败语音",
+      "prompt": "这次输了，下次再好好比一场！",
+      "saved": true,
+      "saveRequestId": "2026100402012710EFADE5599785E6FF54",
+      "submitted": true,
+      "submissionState": "accepted",
+      "runRequestId": "20261004020327AE57DC443605A8DE9B69",
+      "operationRef": "07e03b16-f76c-4a90-a9a7-6e0161d3f19f",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004020633712535C97C5C1B57E5D0",
+      "resourceId": "fe310cb3-cb52-446f-aa80-77e944dc4340",
+      "resourceVerified": true,
+      "showRequestId": "2026100402080949D964B63FA771A25086",
+      "download": {
+        "resourceId": "fe310cb3-cb52-446f-aa80-77e944dc4340",
+        "path": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-audio\\sui-defeat.source",
+        "size": 108714,
+        "sha256": "a7bb4d6737639e72d5433e7bd80bb3b449ff246b67cac46c670074fabc0c6e86",
+        "requestId": "20261004020821943CE2B42231B9D442AA"
+      }
+    },
+    "shiori-intro": {
+      "nodeId": "node_6488a0f16a",
+      "updateId": "da917263-95fc-4305-b8ee-dcc79ea87f26",
+      "submitId": "19770640-a3b6-4931-9cd3-2aedc1477df5",
+      "mode": "tts",
+      "voiceName": "清润女声",
+      "title": "栞栞 · 出场语音",
+      "prompt": "听，海浪来了。准备好，和我一起出发吧。",
+      "saved": true,
+      "saveRequestId": "2026100402012836D9A5626223466D4360",
+      "submitted": true,
+      "submissionState": "accepted",
+      "runRequestId": "20261004020327AE57DC443605A8DE9B69",
+      "operationRef": "19770640-a3b6-4931-9cd3-2aedc1477df5",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004020634F1856378753B89293D34",
+      "resourceId": "bc78531a-cc3e-411d-b9ac-c2a107518e63",
+      "resourceVerified": true,
+      "showRequestId": "2026100402080949D964B63FA771A25086",
+      "download": {
+        "resourceId": "bc78531a-cc3e-411d-b9ac-c2a107518e63",
+        "path": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-audio\\shiori-intro.source",
+        "size": 146330,
+        "sha256": "0d7517bbe63b9e9c325c9fbe02521c6407ac1a7a6a83c743c95a2bb957bdcd23",
+        "requestId": "2026100402082232339668FF3C1AD52EE3"
+      }
+    },
+    "shiori-special": {
+      "nodeId": "node_29ee7860dd",
+      "updateId": "da4e424e-717e-4c9b-aad8-d6adda6574ba",
+      "submitId": "e33f0572-89fe-48ed-87dd-3b710865a74d",
+      "mode": "tts",
+      "voiceName": "清润女声",
+      "title": "栞栞 · 必杀语音",
+      "prompt": "听见了吗？海浪的声音。",
+      "saved": true,
+      "saveRequestId": "2026100402012907157C4F52E593E72AAD",
+      "submitted": true,
+      "submissionState": "accepted",
+      "runRequestId": "20261004020327AE57DC443605A8DE9B69",
+      "operationRef": "e33f0572-89fe-48ed-87dd-3b710865a74d",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004020635E752517C28BFEF1893F7",
+      "resourceId": "ab2f2f33-1b6a-4935-bafa-5d4ad7517751",
+      "resourceVerified": true,
+      "showRequestId": "2026100402080949D964B63FA771A25086",
+      "download": {
+        "resourceId": "ab2f2f33-1b6a-4935-bafa-5d4ad7517751",
+        "path": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-audio\\shiori-special.source",
+        "size": 89488,
+        "sha256": "2bc5d1ad921732c99b7c7bc7f8bf697460868bf7d5e1d46657ac0c497ab65918",
+        "requestId": "2026100402082321BB52DFC4C9962ED85A"
+      }
+    },
+    "shiori-pointWin": {
+      "nodeId": "node_a25349aea9",
+      "updateId": "61648420-6655-471e-931d-5994f0218169",
+      "submitId": "e96ebf08-a569-4931-b3b7-c6ae73e21e81",
+      "mode": "tts",
+      "voiceName": "清润女声",
+      "title": "栞栞 · 得分语音",
+      "prompt": "接得不错。继续跟上海浪的节奏。",
+      "saved": true,
+      "saveRequestId": "202610040201294DDD7C6B97F7A97161C0",
+      "submitted": true,
+      "submissionState": "accepted",
+      "runRequestId": "20261004020328C9965774C557E42F5714",
+      "operationRef": "e96ebf08-a569-4931-b3b7-c6ae73e21e81",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004020635E667C03620100CDDCC16",
+      "resourceId": "52c63625-eec8-4f2d-95a8-f42c1357dec4",
+      "resourceVerified": true,
+      "showRequestId": "2026100402080932C85131C69C5D7C5924",
+      "download": {
+        "resourceId": "52c63625-eec8-4f2d-95a8-f42c1357dec4",
+        "path": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-audio\\shiori-pointWin.source",
+        "size": 121253,
+        "sha256": "5a151502b063cbc2c11ddca2098a74bb56a729f52afb567bd97a882ce556891d",
+        "requestId": "2026100402082409886BBF63F65A0D7990"
+      }
+    },
+    "shiori-pointLose": {
+      "nodeId": "node_d00759c27c",
+      "updateId": "b8d55b3d-68fe-4192-aa07-c0dbc4c10f47",
+      "submitId": "c6715fed-75a5-4abd-b502-acd5f678aaf2",
+      "mode": "tts",
+      "voiceName": "清润女声",
+      "title": "栞栞 · 失分语音",
+      "prompt": "调整呼吸，下一球再来。",
+      "saved": true,
+      "saveRequestId": "20261004020130266425D7575693FD0FCE",
+      "submitted": true,
+      "submissionState": "accepted",
+      "runRequestId": "20261004020328C9965774C557E42F5714",
+      "operationRef": "c6715fed-75a5-4abd-b502-acd5f678aaf2",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004020636DCBC9759C09BE3E0FDEC",
+      "resourceId": "919f418c-5a68-4edd-b448-0c7174d7955a",
+      "resourceVerified": true,
+      "showRequestId": "2026100402080932C85131C69C5D7C5924",
+      "download": {
+        "resourceId": "919f418c-5a68-4edd-b448-0c7174d7955a",
+        "path": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-audio\\shiori-pointLose.source",
+        "size": 81129,
+        "sha256": "af6ec0267925ed469093a7acee28d22165ca773a1e8cd87b2de2d5b5e69bf225",
+        "requestId": "202610040208255577DAC103850712FB5D"
+      }
+    },
+    "shiori-victory": {
+      "nodeId": "node_2fdf2656b7",
+      "updateId": "f1ec759a-cb88-4886-b3eb-84d3263346d9",
+      "submitId": "4bcfadd1-ee36-4912-9dfe-d5c9cc75002c",
+      "mode": "tts",
+      "voiceName": "清润女声",
+      "title": "栞栞 · 胜利语音",
+      "prompt": "赢下来了。谢谢你，陪我打到这一刻。",
+      "saved": true,
+      "saveRequestId": "202610040201314DB4D1B227D01BEDEB73",
+      "submitted": true,
+      "submissionState": "accepted",
+      "runRequestId": "20261004020328C9965774C557E42F5714",
+      "operationRef": "4bcfadd1-ee36-4912-9dfe-d5c9cc75002c",
+      "operationState": "succeeded",
+      "statusRequestId": "2026100402063798740099FE8C2C14C799",
+      "resourceId": "17cb4937-52e5-4e22-9763-3f35ce049417",
+      "resourceVerified": true,
+      "showRequestId": "2026100402080932C85131C69C5D7C5924",
+      "download": {
+        "resourceId": "17cb4937-52e5-4e22-9763-3f35ce049417",
+        "path": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-audio\\shiori-victory.source",
+        "size": 127940,
+        "sha256": "5555b78269973458b9c69026abff7a35c1fd075e6db73b9f2ac9f6bbdf8faa65",
+        "requestId": "20261004020826BCB0BBE75ABF77100160"
+      }
+    },
+    "shiori-defeat": {
+      "nodeId": "node_7db4bab9e9",
+      "updateId": "0f02252d-5de6-441c-b91b-3b8013c3be7d",
+      "submitId": "6caff7e7-f832-416f-a71d-c885d77fd630",
+      "mode": "tts",
+      "voiceName": "清润女声",
+      "title": "栞栞 · 失败语音",
+      "prompt": "今天就到这里。下次，我们再一起打到日落。",
+      "saved": true,
+      "saveRequestId": "20261004020131FC6D33F216ED10E6AAC2",
+      "submitted": true,
+      "submissionState": "accepted",
+      "runRequestId": "20261004020328C9965774C557E42F5714",
+      "operationRef": "6caff7e7-f832-416f-a71d-c885d77fd630",
+      "operationState": "succeeded",
+      "statusRequestId": "202610040206385CBC25DF1BB6A40C63A9",
+      "resourceId": "9e4d98db-34d5-40af-a2f1-53467b08f6be",
+      "resourceVerified": true,
+      "showRequestId": "2026100402080932C85131C69C5D7C5924",
+      "download": {
+        "resourceId": "9e4d98db-34d5-40af-a2f1-53467b08f6be",
+        "path": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-audio\\shiori-defeat.source",
+        "size": 153854,
+        "sha256": "b41c0a2f8740747755989f95ca2ed06a9255c4f83113cc14ec41e11e5aa90946",
+        "requestId": "20261004020826C9A46C226C2600180805"
+      }
+    },
+    "nagisa-intro": {
+      "nodeId": "node_ced64a1507",
+      "updateId": "fac5a851-6bc6-443f-8785-f6035902e4fd",
+      "submitId": "5e78e9b0-1076-480c-a34a-d1d7d4f2585b",
+      "mode": "tts",
+      "voiceName": "清冷女主",
+      "title": "米汀 · 出场语音",
+      "prompt": "场地确认完毕。让我看看，你的球路。",
+      "saved": true,
+      "saveRequestId": "20261004020132286697D711DC19E39E55",
+      "submitted": true,
+      "submissionState": "accepted",
+      "runRequestId": "20261004020328C9965774C557E42F5714",
+      "operationRef": "5e78e9b0-1076-480c-a34a-d1d7d4f2585b",
+      "operationState": "succeeded",
+      "statusRequestId": "2026100402063966C42EF76D7CB318DF63",
+      "resourceId": "1c8e3077-5256-45ca-be0d-99fedf66753a",
+      "resourceVerified": true,
+      "showRequestId": "2026100402080932C85131C69C5D7C5924",
+      "download": {
+        "resourceId": "1c8e3077-5256-45ca-be0d-99fedf66753a",
+        "path": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-audio\\nagisa-intro.source",
+        "size": 148002,
+        "sha256": "a7260c5a1951906c2cd218c68b6927087b41a2ffccde2475fb80dab8da15b845",
+        "requestId": "202610040208283540717E91CA91170728"
+      }
+    },
+    "nagisa-special": {
+      "nodeId": "node_e322f6e5cb",
+      "updateId": "a07ae49c-baee-4d26-b648-89581b0f6c18",
+      "submitId": "9bf88a68-2125-46aa-bc59-c522b0dd9c93",
+      "mode": "tts",
+      "voiceName": "清冷女主",
+      "title": "米汀 · 必杀语音",
+      "prompt": "找到破绽了。看这道星光！",
+      "saved": true,
+      "saveRequestId": "2026100402013351CACE4FCABF111A8B15",
+      "submitted": true,
+      "submissionState": "accepted",
+      "runRequestId": "20261004020328C9965774C557E42F5714",
+      "operationRef": "9bf88a68-2125-46aa-bc59-c522b0dd9c93",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004020640E0528BE04C1493229312",
+      "resourceId": "0ebfd8b1-d024-4c4b-9d2a-002fdd7dfae9",
+      "resourceVerified": true,
+      "showRequestId": "2026100402080932C85131C69C5D7C5924",
+      "download": {
+        "resourceId": "0ebfd8b1-d024-4c4b-9d2a-002fdd7dfae9",
+        "path": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-audio\\nagisa-special.source",
+        "size": 86144,
+        "sha256": "0db55639b79d44db976248715af133498985de0e566fa3bffa6002043abf7839",
+        "requestId": "20261004020828254A2CD28859936ED597"
+      }
+    },
+    "nagisa-pointWin": {
+      "nodeId": "node_81574b60a0",
+      "updateId": "70c779a5-44fc-4469-97a1-7a17d0d3270e",
+      "submitId": "6ef82f1e-a106-437f-bc88-1646e7e44609",
+      "mode": "tts",
+      "voiceName": "清冷女主",
+      "title": "米汀 · 得分语音",
+      "prompt": "这一分，拿下了。",
+      "saved": true,
+      "saveRequestId": "202610040201332185BA1CC1AC9EDB47A9",
+      "submitted": true,
+      "submissionState": "accepted",
+      "runRequestId": "20261004020330FC82E56742C17121F518",
+      "operationRef": "6ef82f1e-a106-437f-bc88-1646e7e44609",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004020641E8B02A7295F50F113E98",
+      "resourceId": "0ca15881-e006-405f-a1cb-f0b99f6cb5ac",
+      "resourceVerified": true,
+      "showRequestId": "2026100402081054D8A618E00376E74D44",
+      "download": {
+        "resourceId": "0ca15881-e006-405f-a1cb-f0b99f6cb5ac",
+        "path": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-audio\\nagisa-pointWin.source",
+        "size": 80293,
+        "sha256": "f94ff31f479103dbeedcf2e452a1e0a0641bed6c012ed311bcc035541b422ff3",
+        "requestId": "202610040208304253FB668753A32C25E3"
+      }
+    },
+    "nagisa-pointLose": {
+      "nodeId": "node_bfc92865dc",
+      "updateId": "c943a920-c8a4-4e86-9a09-0ff6509d3b0e",
+      "submitId": "8823dab2-d154-43cf-b8fb-7f987f3c9da9",
+      "mode": "tts",
+      "voiceName": "清冷女主",
+      "title": "米汀 · 失分语音",
+      "prompt": "记住了。下一球，我会改变路线。",
+      "saved": true,
+      "saveRequestId": "20261004020134922649B9F94330F37114",
+      "submitted": true,
+      "submissionState": "accepted",
+      "runRequestId": "20261004020330FC82E56742C17121F518",
+      "operationRef": "8823dab2-d154-43cf-b8fb-7f987f3c9da9",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004020642857F14C21453E21C0414",
+      "resourceId": "e211e84e-2989-4c79-803b-b8b556a97e2f",
+      "resourceVerified": true,
+      "showRequestId": "2026100402081054D8A618E00376E74D44",
+      "download": {
+        "resourceId": "e211e84e-2989-4c79-803b-b8b556a97e2f",
+        "path": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-audio\\nagisa-pointLose.source",
+        "size": 131284,
+        "sha256": "df13388a896614738e8c273515ffb9a86ea4e49fdb35ea67abcbde422cd8f866",
+        "requestId": "20261004020830BF6AC33DD292AC519652"
+      }
+    },
+    "nagisa-victory": {
+      "nodeId": "node_c5ec654267",
+      "updateId": "f363a307-88b7-4281-b505-02647e3b7264",
+      "submitId": "7e6f3be6-e0ad-453e-9db7-ff23867e7a08",
+      "mode": "tts",
+      "voiceName": "清冷女主",
+      "title": "米汀 · 胜利语音",
+      "prompt": "胜负已定。和你交手，很有意思。",
+      "saved": true,
+      "saveRequestId": "20261004020135773491AA63CA3A28260F",
+      "submitted": true,
+      "submissionState": "accepted",
+      "runRequestId": "20261004020330FC82E56742C17121F518",
+      "operationRef": "7e6f3be6-e0ad-453e-9db7-ff23867e7a08",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004020643CAA951CD7B3364117C01",
+      "resourceId": "40f2d592-59c0-4920-b298-b64d6ba3c84d",
+      "resourceVerified": true,
+      "showRequestId": "2026100402081054D8A618E00376E74D44",
+      "download": {
+        "resourceId": "40f2d592-59c0-4920-b298-b64d6ba3c84d",
+        "path": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-audio\\nagisa-victory.source",
+        "size": 144658,
+        "sha256": "f489de17020f4e1da5115aefd34ce4afccb20fe56c30cdc815259fee7e42580f",
+        "requestId": "20261004020832A9B4509FF8571F0D0622"
+      }
+    },
+    "nagisa-defeat": {
+      "nodeId": "node_00632f7d34",
+      "updateId": "b17edaa9-5352-4ad6-bac5-b0de9d070e87",
+      "submitId": "d1ff3493-6ff8-4216-b8b7-71ad2d178764",
+      "mode": "tts",
+      "voiceName": "清冷女主",
+      "title": "米汀 · 失败语音",
+      "prompt": "这次是你赢了。下次，我会找到新的答案。",
+      "saved": true,
+      "saveRequestId": "202610040201355E9F79FFE095B9AFCE11",
+      "submitted": true,
+      "submissionState": "accepted",
+      "runRequestId": "20261004020330FC82E56742C17121F518",
+      "operationRef": "d1ff3493-6ff8-4216-b8b7-71ad2d178764",
+      "operationState": "succeeded",
+      "statusRequestId": "202610040206444DB4D1B227D01BEE0F41",
+      "resourceId": "4d141eb9-99ab-4ac7-9da1-77bcac0a3bc2",
+      "resourceVerified": true,
+      "showRequestId": "2026100402081054D8A618E00376E74D44",
+      "download": {
+        "resourceId": "4d141eb9-99ab-4ac7-9da1-77bcac0a3bc2",
+        "path": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-audio\\nagisa-defeat.source",
+        "size": 185618,
+        "sha256": "3dc6503998f0ac77a1bb976d5020c38d462455936f6f1f20866204de27e4fca0",
+        "requestId": "202610040208331950E92BF40D5C23E291"
+      }
+    }
+  },
+  "createRequestId": "202610040201202710C8456952E112148E",
+  "webUrl": "https://jimeng.jianying.com/ai-tool/ai-canvas/f16018b1-98ce-43ab-9ae7-8a4f26778611",
+  "quotes": [
+    {
+      "items": [
+        {
+          "nodeId": "node_8990579775",
+          "maxCredits": 6
+        },
+        {
+          "nodeId": "node_6db198b362",
+          "maxCredits": 6
+        },
+        {
+          "nodeId": "node_ded30f54a6",
+          "maxCredits": 6
+        },
+        {
+          "nodeId": "node_e2fde2f2bb",
+          "maxCredits": 6
+        },
+        {
+          "nodeId": "node_5a09f40f30",
+          "maxCredits": 1
+        },
+        {
+          "nodeId": "node_d24238eb1e",
+          "maxCredits": 1
+        }
+      ],
+      "totalMaxCredits": 26,
+      "draftVersion": 22,
+      "confirmable": true,
+      "confirmationRequired": false,
+      "requestId": "202610040203018D42383FD463650EBC3C"
+    },
+    {
+      "items": [
+        {
+          "nodeId": "node_825260977e",
+          "maxCredits": 1
+        },
+        {
+          "nodeId": "node_ae01034c31",
+          "maxCredits": 1
+        },
+        {
+          "nodeId": "node_4495286895",
+          "maxCredits": 1
+        },
+        {
+          "nodeId": "node_eda319e48b",
+          "maxCredits": 1
+        },
+        {
+          "nodeId": "node_6488a0f16a",
+          "maxCredits": 1
+        },
+        {
+          "nodeId": "node_29ee7860dd",
+          "maxCredits": 1
+        }
+      ],
+      "totalMaxCredits": 6,
+      "draftVersion": 22,
+      "confirmable": true,
+      "confirmationRequired": false,
+      "requestId": "20261004020302C2E2B232BF40CB188B4E"
+    },
+    {
+      "items": [
+        {
+          "nodeId": "node_a25349aea9",
+          "maxCredits": 1
+        },
+        {
+          "nodeId": "node_d00759c27c",
+          "maxCredits": 1
+        },
+        {
+          "nodeId": "node_2fdf2656b7",
+          "maxCredits": 1
+        },
+        {
+          "nodeId": "node_7db4bab9e9",
+          "maxCredits": 1
+        },
+        {
+          "nodeId": "node_ced64a1507",
+          "maxCredits": 1
+        },
+        {
+          "nodeId": "node_e322f6e5cb",
+          "maxCredits": 1
+        }
+      ],
+      "totalMaxCredits": 6,
+      "draftVersion": 22,
+      "confirmable": true,
+      "confirmationRequired": false,
+      "requestId": "20261004020303DCBC9759C09BE3E0E925"
+    },
+    {
+      "items": [
+        {
+          "nodeId": "node_81574b60a0",
+          "maxCredits": 1
+        },
+        {
+          "nodeId": "node_bfc92865dc",
+          "maxCredits": 1
+        },
+        {
+          "nodeId": "node_c5ec654267",
+          "maxCredits": 1
+        },
+        {
+          "nodeId": "node_00632f7d34",
+          "maxCredits": 1
+        }
+      ],
+      "totalMaxCredits": 4,
+      "draftVersion": 22,
+      "confirmable": true,
+      "confirmationRequired": false,
+      "requestId": "202610040203044048090565C434E246DD"
+    }
+  ]
+}

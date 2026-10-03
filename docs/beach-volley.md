@@ -28,7 +28,7 @@ Original prompt: 制作岁己和栞栞在美丽的沙滩上玩沙滩排球的游
 
 完整生成提示词、参考图、用途和最终资源记录保存在 [`assets.json`](../public/games/beach-volley/assets.json)。交付素材总计约 3.8 MB；图片压缩为保留透明通道的 WebP。岁己庆祝姿态使用单独生成的完整立绘，修复动作图集中的脚部裁切。
 
-开场由 Dreamina CLI 1.0.1 的 `seedance_2.0_fast_vip` 生成，五秒、720p，报价上限 30 积分，返回 `confirmationRequired: false`。仅提交一次，已确认资源成功；任务及资源 ID 见 [`beach-volley-media-job.json`](beach-volley-media-job.json)。交付视频重新编码为 1280×720、30 fps、H.264 faststart，约 2.17 MB，移除生成音轨。运行时本地播放，支持跳过、失败回退和减少动态效果设置；游戏声音采用合成击球、得分与必杀音效。
+开场由 Dreamina CLI 1.0.1 的 `seedance_2.0_fast_vip` 生成，五秒、720p，报价上限 30 积分，返回 `confirmationRequired: false`。仅提交一次，已确认资源成功；任务及资源 ID 见 [`beach-volley-media-job.json`](beach-volley-media-job.json)。交付视频重新编码为 1280×720、30 fps、H.264 faststart，约 2.17 MB，移除生成音轨。运行时本地播放，支持跳过、失败回退和减少动态效果设置。合成击球、得分与必杀音效保留，新增的器乐和角色语音由独立音频混音器播放，详见下文。
 
 原始生成图暂存于 `tmp/beach-volley-source/`，原始视频与抽帧证据暂存于 `tmp/beach-volley-qa/`。这些本地检验文件不随站点发布。
 
@@ -148,3 +148,27 @@ Enter 不能结束必杀，视频中的 Esc / P 只暂停或继续；开场和�
 开发网络专项 8 张、角色／队列回归 30 张、静音通用客户端 1 张和生产公开操作 8 张截图，全部通过像素、文字状态／DOM／画布检查并逐张打开目检，页面／控制台错误为空。生产版分别验证 720p 和 Save-Data 360p 缓存：正常接回 11 次球后触发必杀，完整播放、暂停／恢复、0.8 秒防守和出球一致，且没有开发修改钩子或新视频请求。证据在 `tmp/beach-media-{dev,roster-dev,shared-final,production-standard,production-lite}/`。
 
 修改源文件 ESLint、39 项测试、独立检出中的完整 `pnpm run check` 及随后顺序执行的 `pnpm run build` 通过，保留构建 ESLint；日志为 `tmp/beach-media-{tests,check,build}.log`。当前生产试玩 **`http://localhost:4013/game/beach-volley`**，构建目录 `.next-beach-media-build`。后续新增角色只需按同样方式登记个人片与轻量版，缓存选择自动跟随演出队列。
+
+## 2026-10-04 · 音乐与角色语音
+
+新增四段独立器乐：选角菜单的夏日 city pop、对局 jazz funk、胜利与失败结算短曲。直接使用实时目录的 Dreamina `seed_music_1.0` 音频模型，没有调用视频生成模型。菜单／对局处理成约 43／58 秒的循环，尾部与开头有两秒交叉混合，新的循环接缝位于原素材连续采样之间；结算裁取十秒主题并渐弱，只播一次。
+
+岁己、栞栞、米汀各有出场、必杀、得分、失分、胜利、失败六句台词，共十八句，采用目录中的「明媚女声」「清润女声」「清冷女主」三种预设声线。TTS 只使用语音入口和音色名；台词、模型、权威报价、画布／节点／提交／成功资源身份、下载校验均记录在 [`beach-volley-audio-job.json`](beach-volley-audio-job.json)。22 个生成任务各提交一次，四批报价上限合计 42 积分，均明确免服务端确认；这个报价不是最终净消费账单。
+
+交付目录为 `audio-v1/`，清单为 [`audio.json`](../public/games/beach-volley/audio.json)。统一响度，语音加峰值限制和开头极短渐入，去掉前后空白；音乐 MP3 96 kbps／32 kHz 双声道，语音 MP3 64 kbps／24 kHz 单声道。全部 **1,894,280 bytes（约 1.89 MB）**。逐项 SHA256、时长、实际解码采样数、RMS 和峰值见 [`beach-volley-audio-delivery.json`](beach-volley-audio-delivery.json)。原始资源保留在忽略目录 `tmp/beach-audio/`；设置 `FFMPEG_PATH`、`FFPROBE_PATH`，运行 `node scripts/prepare-beach-audio.mjs` 可复现转码，不会再生成或扣分。
+
+第一下鼠标、触摸或键盘操作解锁 Web Audio。图片就绪后仅准备本场角色的音频，一个下载请求；语音优先，小体积资源不会阻塞物理、视频或按钮。冷视频期间暂停音乐和其他背景音频下载，当前短台词可加载；正在播放的源不因为后台准备而重播。换角色释放无关音频缓存，离开取消请求并关闭音频上下文。语音在三秒内未就绪就略过，不把迟到台词带到下一回合。
+
+音乐随菜单／比赛／结算变化；单人模式按 1P 胜败选音乐，同机双人庆祝实际冠军。个人视频按当前演员配音，保留的岁栞双人片在一个片段里先胜者再败者；镜像对局按两边位置区分。关闭演出或减少动态效果仍有必杀和胜败语音；短小分过渡采用 1P 的得失分反应，同机模式采用得分方反应。击球／发球事件按固定步长处理，重赛清空事件去重记录。
+
+台词播放时降低背景音乐，播完平滑恢复。P／Esc、说明、失焦和页面隐藏同时暂停声音与演出，恢复沿用同一音频源；跳过、换片、开始新局或返回沙滩立即清掉旧台词。右上角控制总静音，「玩法说明」内有背景音乐／角色语音独立开关，偏好本地保存，击球音效独立于这两个开关。音频失败略过该句，对局继续；必杀仍不可跳过，视频结束或静态特写结束后的完整 0.8 秒防守动作窗口保持一致。
+
+`pnpm beach:test` 包括音频资源、九种组合、真实演员与胜败映射、单人／同机／练习音乐、串行后台下载、冷片让带宽、迟到语音取消、循环与单次音乐、暂停／静音／独立开关、重赛事件和失败回退测试。`pnpm beach:verify:audio` 使用静音安装版 Chrome，通过真实 `AudioContext` 解码、文件来源和非零 PCM／最终混音信号验证出声，配合公开状态、DOM、画布和截图核对；不是只检查文件名或假的播放状态。开发环境用现有状态钩子准备得分／必杀场景，生产验收使用公开按键和步长时钟。
+
+本轮 48 项规则／媒体／音频测试通过，开发音频专项验证全部十八句实际资源；手机减少动态效果、独立开关与持久化、一次点击解除静音、静态必杀 Enter 无效、说明／失焦暂停、慢台词取消和音频缺失回退通过。页面隐藏生命周期采用测试内 `document.hidden` 与 `visibilitychange` 模拟，未覆盖实体手机或 Safari。预期的音频 404 单列记录，游戏页面与控制台没有其他错误。
+
+必杀和网络专项回归通过。本机 1 Mbps／120 ms 冷缓存，四秒轻量必杀从播放到结束约 8.36 秒，原片约 15.73 秒。生产版分别验证完整清晰缓存和 Save-Data 轻量缓存：公开操作接回十一球后触发栞栞必杀，实际解码、语音／BGM 信号、暂停时音频时钟停止并恢复同一声源、视频零新请求、不可跳过、自然结束后的完整 0.8 秒动作、防守移动和出球均通过。公开操作另完成同机岁己 7:0 米汀与单人岁己 0:7 米汀，核对逐分反应、冠军／失败 BGM、实际胜者及败者台词和重赛清理；生产无开发修改钩子。
+
+最终开发与生产共 44 张截图逐张打开目检，且通过像素 sanity、公开文字状态、DOM 和 Canvas 尺寸交叉检查。证据为 `tmp/beach-audio-{dev,special-dev,media-dev,shared,production-standard,production-lite,production-results}/report.json`（通用客户端为 `state-0.json`）；本地生产用例为 `tmp/beach-audio-production-special.cjs` 与 `tmp/beach-audio-production-results.cjs`。修改源文件 ESLint、完整 check 与随后顺序 build 在独立检出通过，日志 `tmp/beach-audio-{tests,check,build}.log`；构建保留 ESLint。当前生产试玩为 **`http://localhost:4015/game/beach-volley`**，启动时设置 `NEXT_DIST_DIR=.next-beach-audio-build`。此前端口为历史验收记录。
+
+提交前整合 master `555ec96`，再次通过修改源码 ESLint、48 项规则、完整 check 与随后顺序 build，日志 `tmp/beach-audio-master-{tests,check,build}.log`。该最终构建的公开操作音频、缓存、必杀和防守回归通过，无页面／控制台错误；四张新增截图均打开目检，累计 48 张，证据 `tmp/beach-audio-master-production/report.json`。4015 预览现使用 **`NEXT_DIST_DIR=.next-beach-audio-master-build`**。开发服务器已停止并只清理本任务临时类型路径；提交仅包含音乐／语音源码、22 个音频及清单、来源与验收记录，保留其他正在开发的内容。

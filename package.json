@@ -44,7 +44,7 @@
     "check": "pnpm lint && pnpm exec tsc --noEmit",
     "library:test": "node --test scripts/tests/game-library.test.mjs",
     "library:verify": "node scripts/verify-game-library.cjs",
-    "beach:test": "node --test scripts/tests/beach-volley.test.mjs scripts/tests/beach-controls.test.mjs scripts/tests/beach-direction.test.mjs scripts/tests/beach-media.test.mjs",
+    "beach:test": "node --test scripts/tests/beach-volley.test.mjs scripts/tests/beach-controls.test.mjs scripts/tests/beach-direction.test.mjs scripts/tests/beach-media.test.mjs scripts/tests/beach-audio.test.mjs",
     "beach:verify:v2": "node scripts/verify-beach-v2.cjs",
     "beach:verify:controls": "node scripts/verify-beach-controls.cjs",
     "beach:verify": "node scripts/verify-beach-volley.cjs",
@@ -136,7 +136,8 @@
     "night:verify:haven": "node scripts/verify-night-rain-haven.cjs",
     "night:verify:valley": "node scripts/verify-night-rain-valley.cjs",
     "night:verify:chapter": "node scripts/verify-night-rain-chapter.cjs",
-    "night:verify": "node scripts/verify-night-rain.cjs && node scripts/verify-night-rain-journey.cjs && node scripts/verify-night-rain-assistance.cjs && node scripts/verify-night-rain-devices.cjs"
+    "night:verify": "node scripts/verify-night-rain.cjs && node scripts/verify-night-rain-journey.cjs && node scripts/verify-night-rain-assistance.cjs && node scripts/verify-night-rain-devices.cjs",
+    "beach:verify:audio": "node scripts/verify-beach-audio.cjs"
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",

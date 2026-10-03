@@ -1,16 +1,421 @@
-import type { GameEvent } from "./engine";
+import manifest from "../../../public/games/beach-volley/audio.json";
+import type { Character, GameEvent } from "./engine";
+import type { MusicKind, VoiceCue, VoiceKind } from "./audioCues";
 
-/** Original synthetic percussion and melodies; no speech playback or voice imitation. */
+interface AudioClip {
+  src: string;
+  bytes: number;
+  duration: number;
+  loop?: boolean;
+  text?: string;
+}
+interface AudioManifest {
+  music: Record<MusicKind, AudioClip>;
+  voices: Record<Character, Record<VoiceKind, AudioClip>>;
+}
+export const AUDIO = manifest as AudioManifest;
+export interface AudioSettings {
+  enabled: boolean;
+  music: boolean;
+  voices: boolean;
+}
+export const DEFAULT_AUDIO_SETTINGS: AudioSettings = {
+  enabled: true,
+  music: true,
+  voices: true,
+};
+interface Download {
+  clip: AudioClip;
+  urgent: boolean;
+  resolve: () => void;
+}
+interface PlayingMusic {
+  kind: MusicKind;
+  source: AudioBufferSourceNode;
+  gain: GainNode;
+  ended: boolean;
+}
+
+/** One gesture-unlocked mixer for music, generated voice clips and court effects. */
 export default class BeachAudio {
   private context: AudioContext | null = null;
-  private enabled = true;
+  private master: GainNode | null = null;
+  private musicBus: GainNode | null = null;
+  private voiceBus: GainNode | null = null;
+  private settings = { ...DEFAULT_AUDIO_SETTINGS };
+  private paused = false;
+  private backgroundPaused = false;
+  private disposed = false;
   private lastEvent = 0;
-  setEnabled(value: boolean) {
-    this.enabled = value;
+  private scene: MusicKind = "menu";
+  private music: PlayingMusic | null = null;
+  private voice: { cue: VoiceCue; source: AudioBufferSourceNode } | null = null;
+  private voiceQueue: VoiceCue[] = [];
+  private voiceTag = "";
+  private voiceSerial = 0;
+  private pendingVoice: VoiceCue | null = null;
+  private voiceDeadline = 0;
+  private loadingMusic = "";
+  private effects = new Set<OscillatorNode>();
+  private desired = new Set<string>();
+  private encoded = new Map<string, ArrayBuffer>();
+  private decoded = new Map<string, AudioBuffer>();
+  private decoding = new Map<string, Promise<AudioBuffer | null>>();
+  private failures = new Set<string>();
+  private downloads = new Map<string, Promise<void>>();
+  private queue: Download[] = [];
+  private active: { task: Download; controller: AbortController } | null = null;
+
+  configure(settings: AudioSettings) {
+    this.settings = { ...settings };
+    if (!settings.enabled || !settings.voices) this.clearVoices();
+    if (!settings.enabled) {
+      this.clearEffects();
+      this.active?.controller.abort();
+    }
+    if (!settings.music) this.stopMusic();
+    this.duck(!!this.voice);
+    this.reconcileContext();
+    this.pump();
+    this.playMusic();
   }
   unlock() {
-    if (!this.context) this.context = new AudioContext();
-    if (this.context.state === "suspended") this.context.resume().catch(() => {});
+    if (this.disposed || !this.settings.enabled) return;
+    if (!this.context) {
+      try {
+        const ctx = new AudioContext({ sampleRate: 32000 });
+        this.context = ctx;
+        this.master = ctx.createGain();
+        this.musicBus = ctx.createGain();
+        this.voiceBus = ctx.createGain();
+        this.master.connect(ctx.destination);
+        this.musicBus.connect(this.master);
+        this.voiceBus.connect(this.master);
+        this.musicBus.gain.value = 0.38;
+        this.voiceBus.gain.value = 0.85;
+      } catch {
+        return;
+      }
+    }
+    this.reconcileContext();
+    this.playMusic();
+    this.playNextVoice();
+  }
+  private reconcileContext() {
+    const ctx = this.context;
+    if (!ctx || this.disposed) return;
+    const audible = this.settings.enabled && !this.paused;
+    this.master!.gain.cancelScheduledValues(ctx.currentTime);
+    this.master!.gain.value = audible ? 1 : 0;
+    if (audible && ctx.state !== "running" && ctx.state !== "closed") ctx
+        .resume()
+        .then(() => {
+          if (this.disposed) return;
+          if (this.paused || !this.settings.enabled) this.reconcileContext();
+          else {
+            this.playMusic();
+            this.playNextVoice();
+          }
+        })
+        .catch(() => {});
+    else if (!audible && ctx.state === "running") ctx.suspend().catch(() => {});
+  }
+  setPaused(paused: boolean) {
+    if (this.paused === paused) return;
+    this.paused = paused;
+    this.reconcileContext();
+    if (!paused) {
+      this.playMusic();
+      this.playNextVoice();
+    }
+  }
+  setBackgroundPaused(paused: boolean) {
+    if (this.backgroundPaused === paused) return;
+    this.backgroundPaused = paused;
+    if (paused && this.active && !this.active.task.clip.text) this.active.controller.abort();
+    if (!paused) this.pump();
+  }
+  setScene(scene: MusicKind) {
+    if (this.scene !== scene) {
+      this.scene = scene;
+      this.stopMusic();
+    }
+    this.playMusic();
+  }
+  prepare(characters: Character[]) {
+    const clips = [AUDIO.music.menu];
+    const actors = Array.from(new Set(characters));
+    for (const actor of actors) clips.push(AUDIO.voices[actor].intro, AUDIO.voices[actor].special);
+    clips.push(AUDIO.music.match, AUDIO.music.victory, AUDIO.music.defeat);
+    for (const actor of actors) for (const kind of [
+        "pointWin",
+        "pointLose",
+        "victory",
+        "defeat",
+      ] as VoiceKind[]) clips.push(AUDIO.voices[actor][kind]);
+    this.desired = new Set(
+      clips.filter((c) => this.allowed(c)).map((c) => c.src),
+    );
+    for (const key of Array.from(this.encoded.keys())) if (!this.desired.has(key)) this.encoded.delete(key);
+    for (const key of Array.from(this.decoded.keys())) if (!this.desired.has(key)) this.decoded.delete(key);
+    this.queue = this.queue.filter((t) => {
+      if (this.desired.has(t.clip.src)) return true;
+      t.resolve();
+      this.downloads.delete(t.clip.src);
+      return false;
+    });
+    if (this.active && !this.desired.has(this.active.task.clip.src)) this.active.controller.abort();
+    for (const clip of clips) if (this.allowed(clip)) this.download(clip);
+  }
+  private allowed(clip: AudioClip) {
+    return (
+      this.settings.enabled &&
+      (clip.text ? this.settings.voices : this.settings.music)
+    );
+  }
+  private download(clip: AudioClip, urgent = false): Promise<void> {
+    if (
+      this.disposed ||
+      !this.allowed(clip) ||
+      this.encoded.has(clip.src) ||
+      this.failures.has(clip.src)
+    ) return Promise.resolve();
+    const existing = this.downloads.get(clip.src);
+    if (existing) {
+      if (urgent) {
+        const task = this.queue.find((t) => t.clip.src === clip.src);
+        if (task) {
+          task.urgent = true;
+          this.queue = [task, ...this.queue.filter((t) => t !== task)];
+        }
+        if (this.active?.task.clip.src === clip.src) this.active.task.urgent = true;
+        else if (clip.text && this.active && !this.active.task.clip.text) this.active.controller.abort();
+        this.pump();
+      }
+      return existing;
+    }
+    let complete!: () => void;
+    const pending = new Promise<void>((resolve) => {
+      complete = resolve;
+    });
+    this.downloads.set(clip.src, pending);
+    const task = { clip, urgent, resolve: complete };
+    if (urgent) this.queue.unshift(task);
+    else this.queue.push(task);
+    if (urgent && clip.text && this.active && !this.active.task.clip.text) this.active.controller.abort();
+    this.pump();
+    return pending;
+  }
+  private pump() {
+    if (this.disposed || this.active || !this.settings.enabled) return;
+    const available = (t: Download) => this.allowed(t.clip) &&
+      (!this.backgroundPaused || (t.urgent && !!t.clip.text));
+    let index = this.queue.findIndex(
+      (t) => available(t) && t.urgent && t.clip.text,
+    );
+    if (index < 0) index = this.queue.findIndex((t) => available(t) && t.urgent);
+    if (index < 0) index = this.queue.findIndex(available);
+    if (index < 0) return;
+    const [task] = this.queue.splice(index, 1);
+    const controller = new AbortController();
+    this.active = { task, controller };
+    let timedOut = false;
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, 15000);
+    fetch(task.clip.src, { signal: controller.signal, cache: "force-cache" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`Audio HTTP ${response.status}`);
+        const bytes = await response.arrayBuffer();
+        if (!bytes.byteLength || bytes.byteLength > 2 * 1024 * 1024) throw new Error("Invalid audio size");
+        if (
+          !this.disposed &&
+          !controller.signal.aborted &&
+          this.desired.has(task.clip.src)
+        ) this.encoded.set(task.clip.src, bytes);
+      })
+      .catch(() => {
+        if (timedOut || !controller.signal.aborted) this.failures.add(task.clip.src);
+      })
+      .finally(() => {
+        clearTimeout(timeout);
+        if (this.active?.task === task) this.active = null;
+        this.downloads.delete(task.clip.src);
+        task.resolve();
+        if (
+          controller.signal.aborted &&
+          !timedOut &&
+          !this.disposed &&
+          this.allowed(task.clip) &&
+          this.desired.has(task.clip.src)
+        ) this.download(task.clip, task.urgent);
+        this.pump();
+      });
+  }
+  private async buffer(clip: AudioClip): Promise<AudioBuffer | null> {
+    if (!this.context || this.disposed || !this.allowed(clip)) return null;
+    await this.download(clip, true);
+    if (!this.context || this.disposed || !this.allowed(clip)) return null;
+    const existing = this.decoded.get(clip.src);
+    if (existing) return existing;
+    const decoding = this.decoding.get(clip.src);
+    if (decoding) return decoding;
+    const bytes = this.encoded.get(clip.src);
+    if (!bytes) return null;
+    const pending = this.context
+      .decodeAudioData(bytes.slice(0))
+      .then((buffer) => {
+        if (this.disposed || !this.desired.has(clip.src)) return null;
+        this.decoded.set(clip.src, buffer);
+        return buffer;
+      })
+      .catch(() => {
+        this.failures.add(clip.src);
+        return null;
+      })
+      .finally(() => {
+        this.decoding.delete(clip.src);
+      });
+    this.decoding.set(clip.src, pending);
+    return pending;
+  }
+  private playMusic() {
+    if (
+      !this.context ||
+      this.disposed ||
+      this.paused ||
+      !this.settings.enabled ||
+      !this.settings.music ||
+      this.music?.kind === this.scene ||
+      this.loadingMusic === this.scene
+    ) return;
+    const kind = this.scene;
+    const clip = AUDIO.music[kind];
+    if (this.failures.has(clip.src) || !this.desired.has(clip.src)) return;
+    this.loadingMusic = kind;
+    this.buffer(clip).then((buffer) => {
+      if (this.loadingMusic === kind) this.loadingMusic = "";
+      if (
+        !buffer ||
+        !this.context ||
+        this.disposed ||
+        this.paused ||
+        !this.settings.enabled ||
+        !this.settings.music ||
+        this.scene !== kind ||
+        this.music?.kind === kind
+      ) return;
+      const source = this.context.createBufferSource();
+      const gain = this.context.createGain();
+      source.buffer = buffer;
+      source.loop = !!clip.loop;
+      source.connect(gain);
+      gain.connect(this.musicBus!);
+      const track = { kind, source, gain, ended: false };
+      this.music = track;
+      gain.gain.setValueAtTime(0, this.context.currentTime);
+      gain.gain.linearRampToValueAtTime(1, this.context.currentTime + 0.3);
+      source.onended = () => {
+        track.ended = true;
+        source.disconnect();
+        gain.disconnect();
+      };
+      source.start();
+    });
+  }
+  private stopMusic() {
+    this.loadingMusic = "";
+    const track = this.music;
+    this.music = null;
+    if (!track || track.ended || !this.context) return;
+    const now = this.context.currentTime;
+    track.gain.gain.cancelScheduledValues(now);
+    track.gain.gain.setValueAtTime(track.gain.gain.value, now);
+    track.gain.gain.linearRampToValueAtTime(0, now + 0.12);
+    track.source.stop(now + 0.13);
+  }
+  queueVoices(cues: VoiceCue[], tag: string) {
+    if (tag === this.voiceTag) return;
+    this.clearVoices();
+    this.voiceTag = tag;
+    if (!this.settings.enabled || !this.settings.voices) return;
+    this.voiceQueue = [...cues];
+    this.playNextVoice();
+  }
+  private playNextVoice() {
+    if (
+      !this.context ||
+      this.disposed ||
+      this.paused ||
+      !this.settings.enabled ||
+      !this.settings.voices ||
+      this.voice ||
+      this.pendingVoice
+    ) return;
+    const cue = this.voiceQueue.shift();
+    if (!cue) {
+      this.duck(false);
+      return;
+    }
+    const serial = this.voiceSerial;
+    this.pendingVoice = cue;
+    this.voiceDeadline = performance.now() + 3000;
+    this.buffer(AUDIO.voices[cue.character][cue.kind]).then((buffer) => {
+      if (this.disposed || serial !== this.voiceSerial) return;
+      this.pendingVoice = null;
+      if (this.paused) {
+        this.voiceQueue.unshift(cue);
+        return;
+      }
+      if (
+        !buffer ||
+        !this.context ||
+        !this.settings.enabled ||
+        !this.settings.voices ||
+        performance.now() > this.voiceDeadline
+      ) {
+        this.playNextVoice();
+        return;
+      }
+      const source = this.context.createBufferSource();
+      source.buffer = buffer;
+      source.connect(this.voiceBus!);
+      this.voice = { cue, source };
+      this.duck(true);
+      source.onended = () => {
+        source.disconnect();
+        if (serial !== this.voiceSerial) return;
+        this.voice = null;
+        this.playNextVoice();
+      };
+      source.start();
+    });
+  }
+  private duck(voice: boolean) {
+    if (!this.musicBus || !this.context) return;
+    const now = this.context.currentTime;
+    this.musicBus.gain.cancelScheduledValues(now);
+    const level = this.settings.music ? (voice ? 0.1 : 0.38) : 0;
+    this.musicBus.gain.setTargetAtTime(level, now, voice ? 0.06 : 0.2);
+  }
+  clearVoices() {
+    this.voiceSerial++;
+    this.voiceQueue = [];
+    this.pendingVoice = null;
+    this.voiceTag = "";
+    if (this.voice) {
+      this.voice.source.onended = null;
+      this.voice.source.stop();
+      this.voice.source.disconnect();
+      this.voice = null;
+    }
+    this.duck(false);
+  }
+  resetMatch() {
+    this.lastEvent = 0;
+    this.clearVoices();
+    this.clearEffects();
   }
   private tone(
     frequency: number,
@@ -19,7 +424,13 @@ export default class BeachAudio {
     delay = 0,
     type: OscillatorType = "sine",
   ) {
-    if (!this.context || !this.enabled) return;
+    if (
+      !this.context ||
+      this.disposed ||
+      !this.settings.enabled ||
+      this.paused ||
+      this.context.state !== "running"
+    ) return;
     const ctx = this.context;
     const now = ctx.currentTime + delay;
     const oscillator = ctx.createOscillator();
@@ -33,13 +444,19 @@ export default class BeachAudio {
     gain.gain.setValueAtTime(volume, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
     oscillator.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.master!);
     oscillator.start(now);
     oscillator.stop(now + duration);
+    this.effects.add(oscillator);
     oscillator.onended = () => {
+      this.effects.delete(oscillator);
       oscillator.disconnect();
       gain.disconnect();
     };
+  }
+  private clearEffects() {
+    for (const effect of Array.from(this.effects)) effect.stop();
+    this.effects.clear();
   }
   event(event: GameEvent | null) {
     if (!event || event.id === this.lastEvent) return;
@@ -55,7 +472,51 @@ export default class BeachAudio {
     else if (event.type === "jump") this.tone(370, 0.09, 0.022);
     else if (event.type === "net") this.tone(85, 0.08, 0.07, 0, "triangle");
   }
+  snapshot() {
+    const voice = this.voice?.cue;
+    return {
+      ...this.settings,
+      unlocked: !!this.context,
+      context: this.context?.state || "locked",
+      paused: this.paused,
+      scene: this.scene,
+      musicPlaying:
+        !!this.music &&
+        !this.music.ended &&
+        this.settings.enabled &&
+        this.settings.music &&
+        !this.paused && this.context?.state === "running",
+      musicGain: this.musicBus?.gain.value || 0,
+      voice: voice
+        ? { ...voice, text: AUDIO.voices[voice.character][voice.kind].text }
+        : null,
+      voicePlaying:
+        !!voice &&
+        this.settings.enabled &&
+        this.settings.voices &&
+        !this.paused && this.context?.state === "running",
+      pendingVoices: this.voiceQueue.length + (this.pendingVoice ? 1 : 0),
+      loaded: this.encoded.size,
+      decoded: this.decoded.size,
+      queued: this.queue.length,
+      fetching: this.active?.task.clip.src || null,
+      bytes: Array.from(this.encoded.values()).reduce(
+        (sum, bytes) => sum + bytes.byteLength,
+        0,
+      ),
+      failures: Array.from(this.failures),
+    };
+  }
   dispose() {
+    this.disposed = true;
+    this.active?.controller.abort();
+    for (const task of this.queue) task.resolve();
+    this.queue = [];
+    this.clearVoices();
+    this.clearEffects();
+    this.stopMusic();
+    this.encoded.clear();
+    this.decoded.clear();
     this.context?.close().catch(() => {});
     this.context = null;
   }

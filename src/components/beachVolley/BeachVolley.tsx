@@ -37,7 +37,8 @@ import type {
 } from "./engine";
 import { loadAssets, renderGame } from "./renderer";
 import type { Assets } from "./renderer";
-import BeachAudio from "./audio";
+import BeachAudio, { DEFAULT_AUDIO_SETTINGS } from "./audio";
+import { introVoices, musicForGame, voicesForCinema, voicesForEvent } from "./audioCues";
 import { createControls } from "./controls";
 import { matchMediaClips, nextCinematic, selectCinematic } from "./cinematics";
 import { CinemaCache } from "./mediaCache";
@@ -103,6 +104,10 @@ export default function BeachVolley() {
   const [view, setView] = useState(() => describeGame(gameRef.current));
   const [help, setHelp] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [musicEnabled, setMusicEnabled] = useState(true);
+  const [voicesEnabled, setVoicesEnabled] = useState(true);
+  const [audioSettingsReady, setAudioSettingsReady] = useState(false);
+  const [audioView, setAudioView] = useState<ReturnType<BeachAudio["snapshot"]> | null>(null);
   const [best, setBest] = useState(0);
   const helpRef = useRef(false);
   const [cinematic, setCinematic] = useState<PlaybackCinematic | null>(null);
@@ -119,7 +124,19 @@ export default function BeachVolley() {
   const returnPausedRef = useRef(false);
   const helpCinemaPausedRef = useRef(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const sync = useCallback(() => setView(describeGame(gameRef.current)), []);
+  const sync = useCallback(() => {
+    setView(describeGame(gameRef.current));
+    setAudioView(audioRef.current?.snapshot() || null);
+  }, []);
+  const syncAudio = useCallback(() => {
+    const audio = audioRef.current;
+    const g = gameRef.current;
+    const movie = playbackRef.current;
+    const activePaused = g.phase !== "menu" && g.phase !== "result" && g.paused;
+    audio?.setPaused(document.hidden || !document.hasFocus() || helpRef.current || (movie ? cinemaPauseRef.current : activePaused));
+    audio?.setBackgroundPaused(!!movie && !movie.playback.cached);
+    audio?.setScene(musicForGame(g, movie));
+  }, []);
   const resetInput = useCallback(() => {
     controlsRef.current.clear();
     gameRef.current.players.forEach((player) => {
@@ -140,6 +157,8 @@ export default function BeachVolley() {
     if (next.character && merged.character === merged.opponent) merged.opponent = options.character;
     setOptions(merged);
     gameRef.current = createGame(merged);
+    audioRef.current?.resetMatch();
+    syncAudio();
     sync();
   };
   const showCinema = useCallback(
@@ -166,17 +185,21 @@ export default function BeachVolley() {
       cinemaPauseRef.current = pausedStart;
       setCinemaPaused(pausedStart);
       setCinematic(movie);
+      syncAudio();
+      audioRef.current?.queueVoices(voicesForCinema(g, movie), movie.id);
       return true;
     },
-    [resetInput],
+    [resetInput, syncAudio],
   );
   const begin = (showIntro = true) => {
     audioRef.current?.unlock();
+    audioRef.current?.resetMatch();
     resetInput();
     gameRef.current = createGame(options, Date.now() % 4294967296);
     seenEventRef.current = 0;
     startGame(gameRef.current);
-    if (showIntro) showCinema("intro");
+    syncAudio();
+    if (!showIntro || !showCinema("intro")) audioRef.current?.queueVoices(introVoices(gameRef.current), `intro:${++cinemaSerialRef.current}`);
     sync();
   };
   const finishCinema = useCallback(
@@ -184,6 +207,7 @@ export default function BeachVolley() {
       const plan = playbackRef.current;
       if (!plan || (expectedId && expectedId !== plan.id)) return;
       if (plan.kind === "special" && !expectedId) return;
+      audioRef.current?.clearVoices();
       resetInput();
       playbackRef.current = null;
       cacheRef.current?.finish();
@@ -197,11 +221,13 @@ export default function BeachVolley() {
       g.paused = document.hidden || helpRef.current || returnPausedRef.current;
       if (plan.kind === "point" && g.event?.type === "win") {
         seenEventRef.current = g.event.id;
-        showCinema("result", g.event.side, g.paused);
+        audioRef.current?.event(g.event);
+        if (!showCinema("result", g.event.side, g.paused)) audioRef.current?.queueVoices(voicesForEvent(g, g.event), `event:${g.event.id}`);
       }
+      syncAudio();
       sync();
     },
-    [resetInput, showCinema, sync],
+    [resetInput, showCinema, sync, syncAudio],
   );
   const endClip = useCallback(
     (expectedId: string) => {
@@ -213,9 +239,11 @@ export default function BeachVolley() {
         const movie = { ...next, playback: cacheRef.current!.play(next) };
         playbackRef.current = movie;
         setCinematic(movie);
+        syncAudio();
+        audioRef.current?.queueVoices(voicesForCinema(gameRef.current, movie), movie.id);
       }
     },
-    [finishCinema],
+    [finishCinema, syncAudio],
   );
   const playCinema = useCallback(() => {
     const id = playbackRef.current?.id;
@@ -236,14 +264,17 @@ export default function BeachVolley() {
         returnPausedRef.current = false;
         playCinema();
       }
+      syncAudio();
+      sync();
       return;
     }
     const g = gameRef.current;
     if (g.phase === "menu" || g.phase === "result") return;
     g.paused = !g.paused;
     resetInput();
+    syncAudio();
     sync();
-  }, [playCinema, resetInput, sync]);
+  }, [playCinema, resetInput, sync, syncAudio]);
   const menu = () => {
     resetInput();
     cinemaRef.current = false;
@@ -252,6 +283,8 @@ export default function BeachVolley() {
     setCinematic(null);
     seenEventRef.current = 0;
     gameRef.current = createGame(options);
+    audioRef.current?.resetMatch();
+    syncAudio();
     sync();
   };
   const openHelp = () => {
@@ -265,6 +298,7 @@ export default function BeachVolley() {
     }
     if (gameRef.current.phase !== "menu") gameRef.current.paused = true;
     resetInput();
+    syncAudio();
     sync();
   };
   const closeHelp = () => {
@@ -280,6 +314,7 @@ export default function BeachVolley() {
       playCinema();
       setCinemaPaused(false);
     }
+    syncAudio();
     sync();
   };
   const press = (source: string, side: Side, action: Action) => {
@@ -317,12 +352,17 @@ export default function BeachVolley() {
       const g = gameRef.current;
       stepGame(g, controlsRef.current.inputs, STEP);
       const { event } = g;
+      audio.event(event);
       if (event && event.id !== seenEventRef.current && !cinemaRef.current) {
         seenEventRef.current = event.id;
-        if (event.type === "special") showCinema("special", event.side);
-        else if (event.type === "point") showCinema("point", event.side);
-        else if (event.type === "win") showCinema("result", event.side);
+        let shown = false;
+        if (event.type === "special") shown = showCinema("special", event.side);
+        else if (event.type === "point") shown = showCinema("point", event.side);
+        else if (event.type === "win") shown = showCinema("result", event.side);
+        else if (event.type === "serve") audio.clearVoices();
+        if (!shown && ["special", "point", "win"].includes(event.type)) audio.queueVoices(voicesForEvent(g, event), `event:${event.id}`);
       }
+      syncAudio();
     };
     const advance = (ms: number) => {
       const steps = Math.max(
@@ -330,6 +370,7 @@ export default function BeachVolley() {
         Math.round(Math.min(120000, ms) / (STEP * 1000)),
       );
       for (let i = 0; i < steps; i++) step();
+      syncAudio();
       draw();
       sync();
     };
@@ -355,6 +396,7 @@ export default function BeachVolley() {
           : null,
         cinemaMode: modeRef.current,
         mediaCache: cache.snapshot(),
+        audio: audio.snapshot(),
       });
     target.advanceTime = advance;
     if (process.env.NODE_ENV !== "production") {
@@ -400,6 +442,14 @@ export default function BeachVolley() {
     } catch {
       /* Storage is optional. */
     }
+    try {
+      const saved = JSON.parse(localStorage.getItem("beach-volley-audio") || "null");
+      if (saved && typeof saved.enabled === "boolean" && typeof saved.music === "boolean" && typeof saved.voices === "boolean") {
+        setMuted(!saved.enabled); setMusicEnabled(saved.music); setVoicesEnabled(saved.voices);
+        audio.configure(saved);
+      } else audio.configure(DEFAULT_AUDIO_SETTINGS);
+    } catch { audio.configure(DEFAULT_AUDIO_SETTINGS); }
+    setAudioSettingsReady(true);
     const loop = (now: number) => {
       const elapsed = Math.min((now - last) / 1000, 0.06);
       last = now;
@@ -410,7 +460,7 @@ export default function BeachVolley() {
           accumulator -= STEP;
         }
       }
-      audio.event(gameRef.current.event);
+      syncAudio();
       draw();
       if (now - lastUi > 85) {
         sync();
@@ -467,7 +517,7 @@ export default function BeachVolley() {
         g.phase === "result"
       ) return;
       if (event.code === "Enter") {
-        if (!event.repeat) skipTransition(g);
+        if (!event.repeat && (g.phase === "intro" || g.phase === "point")) { audio.clearVoices(); skipTransition(g); syncAudio(); }
         event.preventDefault();
         return;
       }
@@ -482,6 +532,7 @@ export default function BeachVolley() {
       controlsRef.current.release(`key:${event.code}`);
     };
     const blur = () => {
+      audio.setPaused(true);
       resetInput();
       if (cinemaRef.current) {
         returnPausedRef.current = true;
@@ -497,10 +548,12 @@ export default function BeachVolley() {
     };
     const visibility = () => {
       if (document.hidden) blur();
+      else syncAudio();
     };
     window.addEventListener("keydown", keyDown);
     window.addEventListener("keyup", keyUp);
     window.addEventListener("blur", blur);
+    window.addEventListener("focus", syncAudio);
     document.addEventListener("visibilitychange", visibility);
     return () => {
       alive = false;
@@ -511,12 +564,13 @@ export default function BeachVolley() {
       window.removeEventListener("keydown", keyDown);
       window.removeEventListener("keyup", keyUp);
       window.removeEventListener("blur", blur);
+      window.removeEventListener("focus", syncAudio);
       document.removeEventListener("visibilitychange", visibility);
       delete target.render_game_to_text;
       delete target.advanceTime;
       delete target.beachVolley;
     };
-  }, [finishCinema, pause, resetInput, showCinema, sync]);
+  }, [finishCinema, pause, resetInput, showCinema, sync, syncAudio]);
   useEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
     const { connection } = navigator as Navigator & {
@@ -538,8 +592,14 @@ export default function BeachVolley() {
     };
   }, [ready, media, options, cinemaMode]);
   useEffect(() => {
-    audioRef.current?.setEnabled(!muted);
-  }, [muted]);
+    if (!audioSettingsReady) return;
+    const settings = { enabled: !muted, music: musicEnabled, voices: voicesEnabled };
+    audioRef.current?.configure(settings);
+    try { localStorage.setItem("beach-volley-audio", JSON.stringify(settings)); } catch { /* Optional preferences. */ }
+  }, [muted, musicEnabled, voicesEnabled, audioSettingsReady]);
+  useEffect(() => {
+    if (ready && audioSettingsReady) audioRef.current?.prepare([options.character, options.opponent]);
+  }, [ready, options.character, options.opponent, muted, musicEnabled, voicesEnabled, audioSettingsReady]);
   useEffect(() => {
     if (view.bestRally > best) {
       setBest(view.bestRally);
@@ -614,6 +674,8 @@ export default function BeachVolley() {
     <div
       ref={rootRef}
       className={`${styles.root} ${isResult && !cinematic ? styles.resultRoot : ""}`}
+      onPointerDownCapture={() => audioRef.current?.unlock()}
+      onKeyDownCapture={(event) => { if (!event.repeat) audioRef.current?.unlock(); }}
     >
       <header className={styles.header}>
         <Link href="/demos" className={styles.back}>
@@ -636,7 +698,8 @@ export default function BeachVolley() {
             title={muted ? "开启声音" : "关闭声音"}
             aria-label={muted ? "开启声音" : "关闭声音"}
             onClick={() => {
-              audioRef.current?.unlock();
+              audioRef.current?.configure({ enabled: muted, music: musicEnabled, voices: voicesEnabled });
+              if (muted) audioRef.current?.unlock();
               setMuted(!muted);
             }}
           >
@@ -899,7 +962,9 @@ export default function BeachVolley() {
                 type="button"
                 className={styles.skip}
                 onClick={() => {
+                  audioRef.current?.clearVoices();
                   skipTransition(gameRef.current);
+                  syncAudio();
                   sync();
                 }}
               >
@@ -939,7 +1004,9 @@ export default function BeachVolley() {
                       : "SUMMER FINALE"}
               </small>
               <span>{cinematic.title}</span>
-              <p>{cinematic.line}</p>
+              <p>{audioView?.voice
+                ? `${audioView.voice.side + 1}P · ${CHARACTERS[audioView.voice.character].name}「${audioView.voice.text}」`
+                : cinematic.line}</p>
               {cinemaPaused && (
                 <button type="button" onClick={pause}>
                   继续演出 ▶
@@ -1048,6 +1115,11 @@ export default function BeachVolley() {
               </button>
               <span className={styles.label}>HOW TO PLAY</span>
               <h2 id="beach-help-title">把球，留在空中。</h2>
+              <fieldset className={styles.audioSettings}>
+                <legend>声音</legend>
+                <label htmlFor="beach-music"><input id="beach-music" type="checkbox" checked={musicEnabled} onChange={(event) => setMusicEnabled(event.target.checked)} />背景音乐</label>
+                <label htmlFor="beach-voices"><input id="beach-voices" type="checkbox" checked={voicesEnabled} onChange={(event) => setVoicesEnabled(event.target.checked)} />角色语音</label>
+              </fieldset>
               <p>
                 移动到球下方会自动接球。让球落在对方沙滩，就得一分。先到目标分且领先
                 2 分获胜，加赛最多 4 分。

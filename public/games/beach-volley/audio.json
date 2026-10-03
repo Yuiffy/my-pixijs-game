@@ -1,0 +1,145 @@
+{
+  "version": 1,
+  "music": {
+    "menu": {
+      "src": "/games/beach-volley/audio-v1/music-menu.mp3",
+      "bytes": 517580,
+      "duration": 43.092,
+      "loop": true
+    },
+    "match": {
+      "src": "/games/beach-volley/audio-v1/music-match.mp3",
+      "bytes": 697292,
+      "duration": 58.068,
+      "loop": true
+    },
+    "victory": {
+      "src": "/games/beach-volley/audio-v1/music-victory.mp3",
+      "bytes": 121004,
+      "duration": 10.044,
+      "loop": false
+    },
+    "defeat": {
+      "src": "/games/beach-volley/audio-v1/music-defeat.mp3",
+      "bytes": 121004,
+      "duration": 10.044,
+      "loop": false
+    }
+  },
+  "voices": {
+    "sui": {
+      "intro": {
+        "src": "/games/beach-volley/audio-v1/sui-intro.mp3",
+        "bytes": 21932,
+        "duration": 2.712,
+        "text": "海风正好，一起打场漂亮的比赛吧！"
+      },
+      "special": {
+        "src": "/games/beach-volley/audio-v1/sui-special.mp3",
+        "bytes": 16364,
+        "duration": 2.016,
+        "text": "这一球，飞到晴空去！"
+      },
+      "pointWin": {
+        "src": "/games/beach-volley/audio-v1/sui-pointWin.mp3",
+        "bytes": 16364,
+        "duration": 2.016,
+        "text": "好球！下一分也加油！"
+      },
+      "pointLose": {
+        "src": "/games/beach-volley/audio-v1/sui-pointLose.mp3",
+        "bytes": 17132,
+        "duration": 2.112,
+        "text": "没关系，下一球我会接住！"
+      },
+      "victory": {
+        "src": "/games/beach-volley/audio-v1/sui-victory.mp3",
+        "bytes": 21740,
+        "duration": 2.688,
+        "text": "赢啦！今天的海风，都是甜的！"
+      },
+      "defeat": {
+        "src": "/games/beach-volley/audio-v1/sui-defeat.mp3",
+        "bytes": 22124,
+        "duration": 2.736,
+        "text": "这次输了，下次再好好比一场！"
+      }
+    },
+    "shiori": {
+      "intro": {
+        "src": "/games/beach-volley/audio-v1/shiori-intro.mp3",
+        "bytes": 31916,
+        "duration": 3.96,
+        "text": "听，海浪来了。准备好，和我一起出发吧。"
+      },
+      "special": {
+        "src": "/games/beach-volley/audio-v1/shiori-special.mp3",
+        "bytes": 20204,
+        "duration": 2.496,
+        "text": "听见了吗？海浪的声音。"
+      },
+      "pointWin": {
+        "src": "/games/beach-volley/audio-v1/shiori-pointWin.mp3",
+        "bytes": 25388,
+        "duration": 3.144,
+        "text": "接得不错。继续跟上海浪的节奏。"
+      },
+      "pointLose": {
+        "src": "/games/beach-volley/audio-v1/shiori-pointLose.mp3",
+        "bytes": 17900,
+        "duration": 2.208,
+        "text": "调整呼吸，下一球再来。"
+      },
+      "victory": {
+        "src": "/games/beach-volley/audio-v1/shiori-victory.mp3",
+        "bytes": 26924,
+        "duration": 3.336,
+        "text": "赢下来了。谢谢你，陪我打到这一刻。"
+      },
+      "defeat": {
+        "src": "/games/beach-volley/audio-v1/shiori-defeat.mp3",
+        "bytes": 32684,
+        "duration": 4.056,
+        "text": "今天就到这里。下次，我们再一起打到日落。"
+      }
+    },
+    "nagisa": {
+      "intro": {
+        "src": "/games/beach-volley/audio-v1/nagisa-intro.mp3",
+        "bytes": 32108,
+        "duration": 3.984,
+        "text": "场地确认完毕。让我看看，你的球路。"
+      },
+      "special": {
+        "src": "/games/beach-volley/audio-v1/nagisa-special.mp3",
+        "bytes": 16556,
+        "duration": 2.04,
+        "text": "找到破绽了。看这道星光！"
+      },
+      "pointWin": {
+        "src": "/games/beach-volley/audio-v1/nagisa-pointWin.mp3",
+        "bytes": 15596,
+        "duration": 1.92,
+        "text": "这一分，拿下了。"
+      },
+      "pointLose": {
+        "src": "/games/beach-volley/audio-v1/nagisa-pointLose.mp3",
+        "bytes": 28268,
+        "duration": 3.504,
+        "text": "记住了。下一球，我会改变路线。"
+      },
+      "victory": {
+        "src": "/games/beach-volley/audio-v1/nagisa-victory.mp3",
+        "bytes": 32108,
+        "duration": 3.984,
+        "text": "胜负已定。和你交手，很有意思。"
+      },
+      "defeat": {
+        "src": "/games/beach-volley/audio-v1/nagisa-defeat.mp3",
+        "bytes": 42092,
+        "duration": 5.232,
+        "text": "这次是你赢了。下次，我会找到新的答案。"
+      }
+    }
+  }
+}
