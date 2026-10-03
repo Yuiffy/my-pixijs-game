@@ -13,6 +13,8 @@ export default function Analytics() {
   // const isFirstRender = useRef(true);
 
   useEffect(() => {
+    if (process.env.NEXT_PUBLIC_ESA_PAGES === '1') return;
+
     // 拼接完整路径，例如 /game/wuxia?id=123
     const url = `${pathname}${query ? `?${query}` : ''}`;
 
