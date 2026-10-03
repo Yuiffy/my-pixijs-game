@@ -1,0 +1,41 @@
+[
+  {
+    "sessionId": "781977dcd37f5b1b516c738b725db57178ead246759649d2250874c5b57bce22",
+    "activityId": "activity-1",
+    "start": 4302,
+    "end": 4565,
+    "name": "泡泡",
+    "evidence": {
+      "transcript": "ALIGNED.srt",
+      "cue": 1044,
+      "time": "01:07:30.539",
+      "quote": "今天就直接看那个奇异博士泡泡"
+    }
+  },
+  {
+    "sessionId": "cdf353cc4ce461ed592cbf70ae3249da2e0c8cdab39d6859f68b30e744a15743",
+    "activityId": "activity-1",
+    "start": 5906,
+    "end": 6207,
+    "name": "Don't Look Back in Anger",
+    "evidence": {
+      "transcript": "2026-10-02 source SRT",
+      "cue": 1620,
+      "time": "01:37:38.239",
+      "quote": "嗯嗯不要愤怒的回头看这首歌"
+    }
+  },
+  {
+    "sessionId": "cdf353cc4ce461ed592cbf70ae3249da2e0c8cdab39d6859f68b30e744a15743",
+    "activityId": "activity-2",
+    "start": 6518,
+    "end": 6726,
+    "name": "Moon River",
+    "evidence": {
+      "transcript": "2026-10-02 source SRT",
+      "cue": 1701,
+      "time": "01:44:44.760",
+      "quote": "嗯moonriver"
+    }
+  }
+]

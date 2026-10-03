@@ -27,9 +27,9 @@ export default function LiverIndexPage() {
   return (
     <main className={styles.page}>
       <header className={styles.topbar}>
-        <Link href="/" className={styles.brand} aria-label="返回首页">
-          <span className={styles.brandMark}>S</span>
-          <span className={styles.brandLabel}>鹿饼AI直播总结</span>
+        <Link href="/" className={styles.brand} aria-label="返回岁己首页">
+          <span className={styles.brandMark}>←</span>
+          <span className={styles.brandLabel}>岁己首页</span>
         </Link>
         <nav className={styles.topbarMeta} aria-label="相关入口">
           <Link href="/liver/sui/songs">岁己歌单<BetaBadge /> ↗</Link>

@@ -18,6 +18,7 @@ fs.mkdirSync(output, { recursive: true });
     await context.addInitScript(() => { if (window.speechSynthesis) window.speechSynthesis.speak = () => {}; });
     const page = await context.newPage();
     await page.route('**/api/record', route => route.fulfill({ json: { success: true } }));
+    for (const pattern of ['**/pagead/**', '**/hm.baidu.com/**']) await page.route(pattern, route => route.fulfill({ body: '', contentType: 'application/javascript' }));
     page.on('pageerror', e => errors.push(e.message));
     page.on('console', e => { if (e.type() === 'error') errors.push(e.text()); });
     let response = {};
@@ -31,8 +32,18 @@ fs.mkdirSync(output, { recursive: true });
     }
     await page.goto(url);
     await page.getByText('暂时无法获取最新歌单，正在显示已保存的数据。', { exact: false }).waitFor();
-    assert.equal(await page.getByRole('link', { name: '播放歌切' }).getAttribute('href'), real.performances[0].clip.url);
-    assert.match(await page.locator('time').innerText(), /2026\/10\/01 21:25:20/);
+    const bubble = page.locator('section[aria-label="歌曲与演唱记录"] > details').filter({ has: page.locator('summary').filter({ hasText: '泡泡' }) });
+    await bubble.locator('summary').click();
+    assert.equal(await bubble.getByRole('link', { name: '播放歌切' }).getAttribute('href'), real.performances.find(p => p.name === '泡泡').clip.url);
+    assert.match(await bubble.locator('time').innerText(), /2026\/10\/01 21:25:20/);
+    for (const name of ['泡泡', "Don't Look Back in Anger", 'Moon River']) {
+      assert.equal(await page.locator('summary strong').getByText(name, { exact: true }).count(), 1);
+    }
+    assert.equal(await page.getByRole('link', { name: '返回岁己首页' }).getAttribute('href'), '/');
+    response = { ...real, generatedAt: '2026-10-02T00:00:00Z', performances: real.performances.map(p => ({ ...p, name: null })) };
+    await page.getByRole('button', { name: '刷新数据' }).click();
+    await page.getByText('远端数据尚未更新', { exact: false }).waitFor();
+    assert.equal(await page.locator('summary strong').getByText('Moon River', { exact: true }).count(), 1);
     await capture('01-real-desktop');
     await page.setViewportSize({ width: 390, height: 844 });
     await capture('02-real-mobile');

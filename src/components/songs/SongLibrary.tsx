@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import BetaBadge from '@/components/BetaBadge';
@@ -16,7 +16,8 @@ const defaults: Filters = { q: '', kind: 'all', upload: 'all', certainty: 'all',
 
 export default function SongLibrary() {
   const [catalog, setCatalog] = useState<SongCatalog>(snapshot as SongCatalog);
-  const [status, setStatus] = useState<'loading' | 'live' | 'cached'>('loading');
+  const latestCatalog = useRef<SongCatalog>(snapshot as SongCatalog);
+  const [status, setStatus] = useState<'loading' | 'live' | 'cached' | 'stale'>('loading');
   const [attempt, setAttempt] = useState(0);
   const [filters, setFilters] = useState(defaults);
   const [ready, setReady] = useState(false);
@@ -54,7 +55,13 @@ export default function SongLibrary() {
       if (!res.ok) throw new Error('Catalog unavailable');
       const data: unknown = await res.json();
       if (!isSongCatalog(data)) throw new Error('Invalid catalog');
-      if (active) { setCatalog(data); setStatus('live'); }
+      if (active) {
+        if (Date.parse(data.generatedAt) < Date.parse(latestCatalog.current.generatedAt)) {
+          setStatus('stale');
+        } else {
+          latestCatalog.current = data; setCatalog(data); setStatus('live');
+        }
+      }
     }).catch(() => { if (active) setStatus('cached'); }).finally(() => window.clearTimeout(timeout));
     return () => { active = false; controller.abort(); window.clearTimeout(timeout); };
   }, [attempt]);
@@ -99,7 +106,7 @@ export default function SongLibrary() {
   return (
     <main className={styles.page}>
       <header className={styles.topbar}>
-        <Link href="/liver" className={styles.brand}>鹿饼<span>AI 直播总结</span></Link>
+        <Link href="/" className={styles.brand} aria-label="返回岁己首页">← 岁己首页</Link>
         <Link href="/liver/sui">岁己直播记录 ↗</Link>
       </header>
       <div className={styles.shell}>
@@ -159,7 +166,7 @@ export default function SongLibrary() {
         </section>
         {pages > 1 && <nav className={styles.pagination} aria-label="歌曲分页"><button disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>上一页</button><span>{currentPage} / {pages}</span><button disabled={currentPage === pages} onClick={() => setPage(currentPage + 1)}>下一页</button></nav>}
         <footer className={styles.footer}>
-          <p>{status === 'loading' ? '正在检查最新数据…' : status === 'live' ? '已加载最新歌单' : '暂时无法获取最新歌单，正在显示已保存的数据。'} <button onClick={() => setAttempt(n => n + 1)} disabled={status === 'loading'}>刷新数据</button></p>
+          <p>{status === 'loading' ? '正在检查最新数据…' : status === 'live' ? '已加载最新歌单' : status === 'stale' ? '远端数据尚未更新，正在显示较新的已保存歌单。' : '暂时无法获取最新歌单，正在显示已保存的数据。'} <button onClick={() => setAttempt(n => n + 1)} disabled={status === 'loading'}>刷新数据</button></p>
           <p>数据更新：{formatBeijingTime(Date.parse(catalog.generatedAt))}（北京时间）</p>
           <p>统计仅覆盖已收录检查的录播，并非全部历史。待核验记录与未识别歌名不会增加已确认歌曲数；未知歌名逐次展示，不合并为同一首歌。所有演唱日期按北京时间显示。</p>
           <details><summary>录播检查记录 · {catalog.sessions.length} 场</summary><ul>{catalog.sessions.map(session => <li key={session.id}>{session.recordedAt} · {session.title} · {session.complete ? '检查完成' : '检查未完成'} · {catalog.performances.filter(p => p.sessionId === session.id).length} 条演唱记录</li>)}</ul></details>

@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { buildSongCatalog, collectSongFiles, syncSongs } from '../sync-songs.mjs';
+import { buildSongCatalog, collectSongFiles, correctedSongName, syncSongs } from '../sync-songs.mjs';
 import { loadTypescriptModule } from './helpers/load-typescript-module.mjs';
 
 const { isSongCatalog, performedAt, normalizeSongName } = await loadTypescriptModule('src/components/songs/catalog.ts');
@@ -84,4 +84,26 @@ test('public schema rejects unsafe links and invalid dates; time uses Beijing ac
   data.performances[0].clip = null;
   data.sessions[0].recordedAt = '2026-99-99 99:00:00';
   assert.equal(isSongCatalog(data), false);
+});
+
+test('title corrections match exact revisions, preserve source names and review uncertainty', t => {
+  const corrections = JSON.parse(fs.readFileSync('src/data/songs/title-corrections.json', 'utf8'));
+  for (const correction of corrections) {
+    const song = { ...correction, name: null };
+    assert.equal(correctedSongName(correction.sessionId, song), correction.name);
+    assert.equal(correctedSongName('different-session', song), null);
+    assert.equal(correctedSongName(correction.sessionId, { ...song, start: song.start + 1 }), null);
+    assert.equal(correctedSongName(correction.sessionId, { ...song, end: song.end + 1 }), null);
+    assert.equal(correctedSongName(correction.sessionId, { ...song, activityId: 'reused' }), null);
+    assert.equal(correctedSongName(correction.sessionId, { ...song, name: '上游已核验歌名' }), '上游已核验歌名');
+  }
+  const f = fixture(t); const correction = corrections[0];
+  f.record.sessionId = correction.sessionId;
+  f.record.songs = [{ ...f.song, ...correction, name: null, verificationStatus: 'uncertain', startObserved: false, endObserved: false }];
+  f.save(f.file, f.record);
+  const [performance] = buildSongCatalog([f.file]).performances;
+  assert.equal(performance.name, correction.name);
+  assert.equal(performance.confirmed, false);
+  assert.equal(performance.boundariesConfirmed, false);
+  assert.doesNotMatch(JSON.stringify(performance), /evidence|quote|transcript/);
 });

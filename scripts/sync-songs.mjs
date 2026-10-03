@@ -5,6 +5,14 @@ import { getLiverConfig } from './liver-config.js';
 import { getIndexLiverDir } from './stream-shards.mjs';
 
 const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const titleCorrections = read(new URL('../src/data/songs/title-corrections.json', import.meta.url));
+
+// A title correction belongs to one reviewed activity revision, never just an ID.
+export function correctedSongName(sessionId, song, corrections = titleCorrections) {
+  if (typeof song.name === 'string' && song.name.trim()) return song.name.trim();
+  return corrections.find(entry => entry.sessionId === sessionId
+    && entry.activityId === song.activityId && entry.start === song.start && entry.end === song.end)?.name || null;
+}
 const portableBase = file => String(file || '').split(/[\\/]/).at(-1);
 const recordingKey = file => portableBase(file).replace(/\.[^.]+$/, '');
 
@@ -90,7 +98,7 @@ export function buildSongCatalog(files, generatedAt = new Date().toISOString()) 
         && !(song.reviewIssues || []).some(issue => ['media_verification_unconfirmed', 'source_transcript_timing_unreliable'].includes(issue));
       performances.push({
         id: `${record.sessionId}:${song.activityId}`, sessionId: record.sessionId,
-        name: typeof song.name === 'string' && song.name.trim() ? song.name.trim() : null,
+        name: correctedSongName(record.sessionId, song),
         start: song.start, end: song.end, performance: song.performance,
         confirmed, boundariesConfirmed: song.startObserved === true && song.endObserved === true,
         clip: publications.get(song.activityId) || null,

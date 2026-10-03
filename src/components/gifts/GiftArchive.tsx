@@ -133,7 +133,7 @@ export default function GiftArchive() {
   return (
     <main className={styles.page}>
       <header className={styles.topbar}>
-        <Link href="/liver/sui" className={styles.brand}>鹿饼 <span>／ 岁己 SUI</span></Link>
+        <Link href="/" className={styles.brand} aria-label="返回岁己首页">← 岁己首页</Link>
         <nav aria-label="相关页面"><Link href="/liver/sui">直播档案</Link><Link href="/liver/sui/songs">岁己歌单<BetaBadge /> ↗</Link></nav>
       </header>
       <div className={styles.shell}>

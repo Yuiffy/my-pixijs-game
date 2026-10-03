@@ -111,14 +111,15 @@ function LiverPageContent({ liverId }: { liverId: string }) {
         </div>
 
         {/* Navigation */}
-        <nav aria-label="主播页面导航" className="fixed top-0 inset-x-0 z-[100] p-4 flex justify-center">
-          <div className="bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-3xl flex flex-wrap justify-center items-center px-2 py-2 text-sm">
+        <nav aria-label="主播页面导航" className="fixed top-0 inset-x-0 z-[100] p-4 flex justify-start">
+          <div className="bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-3xl grid grid-cols-2 sm:flex sm:flex-wrap items-center px-2 py-2 text-sm">
+            <Link href="/" aria-label="返回岁己首页" className="col-span-2 flex items-center min-h-11 gap-2 text-white px-3 py-1"><ArrowLeftOutlined /><span>岁己首页</span></Link>
             <Link
               href="/liver"
               className="flex items-center min-h-11 gap-2 text-slate-400 hover:text-white transition-colors px-3 py-1"
             >
               <ArrowLeftOutlined />
-              <span>返回列表</span>
+              <span>主播列表</span>
             </Link>
             {liverId === 'sui' && <Link href="/liver/sui/songs" className="flex items-center min-h-11 text-emerald-300 hover:text-white px-2 py-1">岁己歌单<BetaBadge /></Link>}
             {liverId === 'sui' && <Link href="/liver/sui/gifts" className="flex items-center min-h-11 text-rose-300 hover:text-white px-2 py-1">舰礼档案<BetaBadge /></Link>}
@@ -126,7 +127,7 @@ function LiverPageContent({ liverId }: { liverId: string }) {
           </div>
         </nav>
 
-        <div className={`max-w-5xl mx-auto px-6 pb-24 relative z-10 ${liverId === 'sui' ? 'pt-40 sm:pt-24' : 'pt-24'}`}>
+        <div className={`max-w-5xl mx-auto px-6 pb-24 relative z-10 ${liverId === 'sui' ? 'pt-48 sm:pt-24' : 'pt-36 sm:pt-24'}`}>
           {/* Header */}
           <div className="text-center mb-12">
             <LiverAvatar

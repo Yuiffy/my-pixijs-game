@@ -1,7 +1,13 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-02T13:39:08.999Z",
+  "generatedAt": "2026-10-03T18:35:46.676Z",
   "sessions": [
+    {
+      "id": "cdf353cc4ce461ed592cbf70ae3249da2e0c8cdab39d6859f68b30e744a15743",
+      "recordedAt": "2026-10-02 20:24:20",
+      "title": "陪你这个猪过周四五！唱唱聊聊",
+      "complete": true
+    },
     {
       "id": "781977dcd37f5b1b516c738b725db57178ead246759649d2250874c5b57bce22",
       "recordedAt": "2026-10-01 20:13:38",
@@ -13,7 +19,7 @@
     {
       "id": "781977dcd37f5b1b516c738b725db57178ead246759649d2250874c5b57bce22:activity-1",
       "sessionId": "781977dcd37f5b1b516c738b725db57178ead246759649d2250874c5b57bce22",
-      "name": null,
+      "name": "泡泡",
       "start": 4302,
       "end": 4565,
       "performance": "fragment",
@@ -23,6 +29,36 @@
         "bvid": "BV1pvaU6xE6i",
         "part": 1,
         "url": "https://www.bilibili.com/video/BV1pvaU6xE6i/?p=1"
+      }
+    },
+    {
+      "id": "cdf353cc4ce461ed592cbf70ae3249da2e0c8cdab39d6859f68b30e744a15743:activity-1",
+      "sessionId": "cdf353cc4ce461ed592cbf70ae3249da2e0c8cdab39d6859f68b30e744a15743",
+      "name": "Don't Look Back in Anger",
+      "start": 5906,
+      "end": 6207,
+      "performance": "full",
+      "confirmed": true,
+      "boundariesConfirmed": true,
+      "clip": {
+        "bvid": "BV1HnHh61ES8",
+        "part": 1,
+        "url": "https://www.bilibili.com/video/BV1HnHh61ES8/?p=1"
+      }
+    },
+    {
+      "id": "cdf353cc4ce461ed592cbf70ae3249da2e0c8cdab39d6859f68b30e744a15743:activity-2",
+      "sessionId": "cdf353cc4ce461ed592cbf70ae3249da2e0c8cdab39d6859f68b30e744a15743",
+      "name": "Moon River",
+      "start": 6518,
+      "end": 6726,
+      "performance": "full",
+      "confirmed": true,
+      "boundariesConfirmed": true,
+      "clip": {
+        "bvid": "BV1HnHh61ES8",
+        "part": 2,
+        "url": "https://www.bilibili.com/video/BV1HnHh61ES8/?p=2"
       }
     }
   ]

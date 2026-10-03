@@ -309,14 +309,14 @@ export default function DemosPage() {
         <Link
           href="/"
           className={styles.backLink}
-          title="返回首页"
-          aria-label="返回首页"
+          title="返回岁己首页"
+          aria-label="返回岁己首页"
         >
           <ArrowLeftOutlined aria-hidden />
         </Link>
-        <Link href="/demos" className={styles.labMark} aria-label="实验室首页">
+        <Link href="/demos" className={styles.labMark} aria-label="同人游戏首页">
           <ExperimentOutlined aria-hidden />
-          <span>LAB / 实验室</span>
+          <span>同人游戏</span>
         </Link>
         <nav className={styles.nav} aria-label="实验室分类">
           <a href="#games">游戏列表</a>
