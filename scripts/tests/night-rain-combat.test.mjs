@@ -28,30 +28,30 @@ test('light combo follows 1/2/3 and expires; one late buffer cannot queue severa
   const spam = fresh(); step(spam, 20, { light: true }); step(spam, 20, { light: true }); step(spam, 550); assert.equal(spam.player.stamina, 83); assert.equal(spam.player.action, 'idle');
 });
 test('charge starts without damage, releases once, full charge earns posture and damage at higher cost', () => {
-  const { s, e } = duel(); step(s, 740, { heavy: true, heavyHeld: true }); assert.equal(s.player.action, 'charge'); assert.equal(e.hp, e.maxHp);
-  step(s, 60, { heavyHeld: true }); assert.equal(s.player.attack, 'charged'); assert.equal(e.hp, e.maxHp); step(s, 270); assert.equal(e.hp, 0); assert.equal(s.player.stamina, 57);
-  const partial = duel(); step(partial.s, 200, { heavy: true, heavyHeld: true }); step(partial.s, 350); assert.equal(partial.e.hp, partial.e.maxHp - 41);
-  const held = fresh(); step(held, 1400, { heavy: true, heavyHeld: true }); assert.equal(held.player.attack, 'charged'); assert.equal(held.player.stamina, 57); step(held, 300, { heavyHeld: true }); assert.equal(held.player.action, 'idle');
+  const { s, e } = duel(); step(s, 940, { heavy: true, heavyHeld: true }); assert.equal(s.player.action, 'charge'); assert.equal(e.hp, e.maxHp);
+  step(s, 30, { heavyHeld: true }); assert.equal(s.player.attack, 'charged'); assert.equal(e.hp, e.maxHp); step(s, 350); assert.equal(e.hp, e.maxHp - 57); assert.equal(s.player.stamina, 48);
+  const partial = duel(); step(partial.s, 200, { heavy: true, heavyHeld: true }); step(partial.s, 400); assert.equal(partial.e.hp, partial.e.maxHp); step(partial.s, 250); assert.equal(partial.e.hp, partial.e.maxHp - 36);
+  const held = fresh(); step(held, 1400, { heavy: true, heavyHeld: true }); assert.equal(held.player.attack, 'charged'); assert.equal(held.player.stamina, 48); step(held, 1300, { heavyHeld: true }); assert.equal(held.player.action, 'idle');
 });
 test('attack steering is bounded before impact and much slower after impact; no free walking during swings', () => {
   const s = fresh(); s.player.facing = 0; step(s, 180, { heavy: true, x: 1 });
-  assert.ok(s.player.facing > .6 && s.player.facing <= ATTACKS.heavy.turn + .001);
+  assert.ok(s.player.facing > .3 && s.player.facing <= ATTACKS.heavy.turn + .001);
   const initial = { ...s.player }; step(s, 30, { x: -1 }); assert.equal(s.player.x, initial.x); assert.equal(s.player.z, initial.z);
-  step(s, 320); const facing = s.player.facing; step(s, 50, { x: -1 }); assert.ok(Math.abs(s.player.facing - facing) <= .034);
-  const aim = fresh(); aim.player.facing = 0; step(aim, 120, { heavy: true, aim: .5 }); assert.ok(aim.player.facing > .4);
+  step(s, 520); const facing = s.player.facing; step(s, 50, { x: -1 }); assert.ok(Math.abs(s.player.facing - facing) <= .012);
+  const aim = fresh(); aim.player.facing = 0; step(aim, 120, { heavy: true, aim: .5 }); assert.ok(aim.player.facing > .3 && aim.player.facing < .46);
 });
 test('running attacks are contextual, consume stamina and advance safely; both aerial attacks execute once', () => {
   for (const heavy of [false, true]) {
     const run = fresh(); step(run, 350, { x: 1, dashHeld: true }); const x = run.player.x;
     step(run, 50, { x: 1, dashHeld: true, [heavy ? 'heavy' : 'light']: true, heavyHeld: heavy });
-    assert.equal(run.player.attack, heavy ? 'sprintHeavy' : 'sprintLight'); step(run, 500); assert.ok(run.player.x > x + .6);
+    assert.equal(run.player.attack, heavy ? 'sprintHeavy' : 'sprintLight'); step(run, 710); assert.ok(run.player.x > x + .6);
     const air = fresh(); step(air, 150, { jump: true }); step(air, 20, { [heavy ? 'heavy' : 'light']: true }); assert.equal(air.player.attack, heavy ? 'airHeavy' : 'airLight');
     step(air, 300, { light: true }); assert.equal(air.player.airAttackUsed, true); step(air, 800); assert.equal(air.player.jumpHeight, 0);
   }
 });
 test('aerial heavy connects on landing, not at takeoff, and jump is not universal invulnerability', () => {
   const { s, e } = duel(); step(s, 160, { jump: true }); step(s, 80, { heavy: true }); assert.equal(e.hp, e.maxHp);
-  step(s, 400); assert.equal(e.hp, e.maxHp - 46); assert.equal(s.player.jumpHeight, 0);
+  step(s, 400); assert.equal(e.hp, e.maxHp - 41); assert.equal(s.player.jumpHeight, 0);
   const body = duel(); Object.assign(body.e, { action: 'attack', timer: .2, hitDone: false, facing: 0 }); step(body.s, 100, { jump: true }); assert.ok(body.s.player.hp < 100);
 });
 test('jump cannot cross a tall locked gate, but clears a low corridor parapet', () => {

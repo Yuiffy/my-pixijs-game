@@ -16,6 +16,7 @@ import { isBoss, enemyRole, ROLE_NAMES } from './encounters';
 import { slotKey, migrateLegacy, selectedSlot, SLOT_COUNT } from './saveSlots';
 import { BOSS_ROSTER } from './bossRoster';
 import { enemyTell } from './enemyCombat';
+import { playerMotionPhase } from './playerMotion';
 import { LANDMARKS } from './world';
 import HavenPanel from './HavenPanel';
 import WorldMap from './WorldMap';
@@ -161,7 +162,7 @@ previousDiscoveries = s.discoveredDungeons.length;
     const sound = new NightAudio(root.current); audio.current = sound;
     const target = window as GameWindow;
     target.nightRain = { getState: () => JSON.parse(JSON.stringify(stateRef.current)), input: action => { external.current = { ...action }; }, resetCamera, save };
-    target.render_game_to_text = () => JSON.stringify({ ...stateRef.current, enemyTells: stateRef.current.enemies.filter(e => e.aggro && ['windup', 'attack', 'recover'].includes(e.action)).map(e => ({ id: e.id, ...enemyTell(e) })), presentation: noticeRef.current ? { kind: noticeRef.current.kind, label: noticeRef.current.label } : null, journey: { chapter: stateRef.current.chapterComplete ? 2 : 1, sluices: riverSeals(stateRef.current), ferry: stateRef.current.collected.includes('ferry-winch'), complete: stateRef.current.valleyComplete }, coordinateSystem: '+x east, +z south, +y up; metres', camera: camera.current, companion: companionRef.current, panel: panelRef.current, saveSlot: slot.current, audio: sound.snapshot(), pickups: LANDMARKS.filter(l => ['cache', 'charm', 'flask'].includes(l.kind) && !stateRef.current.collected.includes(l.id)).map(l => ({ id: l.id, tier: lootTier(l) })), encounters: stateRef.current.enemies.filter(e => e.hp > 0).map(e => ({ id: e.id, role: enemyRole(e), label: ROLE_NAMES[enemyRole(e)] })), controls: { source: devices.source, family: devices.family, pointerLocked: devices.locked, altHeld: devices.altHeld, gamepadConnected: devices.gamepadConnected, look: devices.lookSettings } });
+    target.render_game_to_text = () => JSON.stringify({ ...stateRef.current, playerMotion: playerMotionPhase(stateRef.current), enemyTells: stateRef.current.enemies.filter(e => e.aggro && ['windup', 'attack', 'recover'].includes(e.action)).map(e => ({ id: e.id, ...enemyTell(e) })), presentation: noticeRef.current ? { kind: noticeRef.current.kind, label: noticeRef.current.label } : null, journey: { chapter: stateRef.current.chapterComplete ? 2 : 1, sluices: riverSeals(stateRef.current), ferry: stateRef.current.collected.includes('ferry-winch'), complete: stateRef.current.valleyComplete }, coordinateSystem: '+x east, +z south, +y up; metres', camera: camera.current, companion: companionRef.current, panel: panelRef.current, saveSlot: slot.current, audio: sound.snapshot(), pickups: LANDMARKS.filter(l => ['cache', 'charm', 'flask'].includes(l.kind) && !stateRef.current.collected.includes(l.id)).map(l => ({ id: l.id, tier: lootTier(l) })), encounters: stateRef.current.enemies.filter(e => e.hp > 0).map(e => ({ id: e.id, role: enemyRole(e), label: ROLE_NAMES[enemyRole(e)] })), controls: { source: devices.source, family: devices.family, pointerLocked: devices.locked, altHeld: devices.altHeld, gamepadConnected: devices.gamepadConnected, look: devices.lookSettings } });
     target.advanceTime = ms => {
       if (!Number.isFinite(ms) || ms < 0) return;
       manualUntil.current = performance.now() + 1200;
@@ -371,7 +372,7 @@ onPointerCancel={() => { drag.current = null; }}
           {Object.entries(WEAPONS).filter(([, w]) => !('item' in w)).map(([id, w]) => (
 <div key={id} className={styles.forgeWeapon}>
             <EquipmentPortrait id={id as GameState['weapon']} /><div><h3>{w.name}{g.weapon === id ? ' · 已握持' : ''}</h3><p>{w.description}</p>
-            <small>轻击 {24 + w.lightDamage} · 重击 {41 + w.heavyDamage} · 轻击耗力 {17 + w.stamina}{w.tier === 2 ? ' · 击败栞栞后解锁' : ''}</small>
+            <small>轻击 {weaponAttack({ ...g, weapon: id as GameState['weapon'] }, 'light1').damage} · 重击 {weaponAttack({ ...g, weapon: id as GameState['weapon'] }, 'heavy').damage} · 轻击耗力 {weaponAttack({ ...g, weapon: id as GameState['weapon'] }, 'light1').cost}{w.tier === 2 ? ' · 击败栞栞后解锁' : ''}</small>
             {w.tier <= g.weaponLevel ? <button disabled={g.weapon === id} onClick={() => { equipWeapon(g, id as GameState['weapon']); save(); redraw(); }}>握持{w.name}</button> : <button disabled={w.tier !== g.weaponLevel + 1 || g.rice < w.cost || (w.tier === 2 && !g.bossDefeated)} onClick={() => { forgeWeapon(g); save(); redraw(); }}>锻造 · {w.cost} 夜市钱</button>}</div>
           </div>
 ))}

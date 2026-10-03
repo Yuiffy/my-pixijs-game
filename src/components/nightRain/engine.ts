@@ -13,9 +13,9 @@ import { FERRY_DESTINATIONS, riverSeals, VALLEY_BOSSES, VALLEY_ENEMIES, VALLEY_G
 import { enemyAttack, enemyTiming, ENEMY_STRIKE_TIME, ENEMY_CONTACT_TIME } from './enemyCombat';
 
 import { BOSS_ROSTER } from './bossRoster';
-import { WEAPONS, weaponAttack, weaponUnlocked } from './weapons';
+import { WEAPONS, chargeCredit, chargeTime, weaponAttack, weaponUnlocked } from './weapons';
 
-import { ATTACKS, BUFFER_TIME, CHARGE_TIME, DASH_HOLD_TIME, PARRY_WINDOW } from './combat';
+import { ATTACKS, BUFFER_TIME, DASH_HOLD_TIME, PARRY_WINDOW, cancelAt } from './combat';
 
 export { enemyAttack } from './enemyCombat';
 
@@ -83,7 +83,7 @@ function makePlayer(position: Vec3): Player {
 export function createGame(): GameState {
   return {
     version: 1,
-motionVersion: 1,
+motionVersion: 2,
 hitstop: 0,
 messageSerial: 0,
 messageKind: 'hint',
@@ -290,6 +290,7 @@ function spend(s: GameState, amount: number): boolean {
 function beginAttack(s: GameState, id: AttackId, paid = false): boolean {
   const p = s.player; const spec = weaponAttack(s, id);
   if (!paid && !spend(s, spec.cost)) return false;
+  if (!paid) p.charge = 0;
   p.action = id === 'heavy' || id === 'charged' || id === 'sprintHeavy' || id === 'airHeavy' ? 'heavy' : 'light';
   p.attack = id; p.actionTime = 0; p.attackFacing = p.facing; p.hitDone = false; p.buffer = null;
   p.combo = id === 'light1' ? 1 : id === 'light2' ? 2 : id === 'light3' ? 3 : 0;
@@ -313,11 +314,12 @@ function actionInput(s: GameState, input: GameInput): void {
   if (input.jump || input.light || input.heavy || input.parry || input.heal) p.dashUsed = true;
   const requested = dodge ? 'dodge' : input.parry ? 'parry' : input.jump ? 'jump' : input.heavy ? 'heavy' : input.light ? 'light' : null;
   const spec = p.attack ? weaponAttack(s, p.attack) : null;
-  const canCancel = !!spec && p.actionTime >= spec.cancel;
+  const cancelTime = spec && requested ? cancelAt(spec, requested) : Infinity;
+  const canCancel = !!spec && p.actionTime >= cancelTime;
   const airborne = isAirborne(p);
   const leaveGuard = p.action === 'guardRelease' || (p.action === 'guard' && p.guardImpact <= 0.12);
   if (p.action !== 'idle' && !leaveGuard && !(canCancel && requested) && !(p.action === 'charge' && (dodge || input.parry))) {
-    if (requested && spec && spec.cancel - p.actionTime <= BUFFER_TIME) p.buffer = { action: requested, until: s.time + BUFFER_TIME };
+    if (requested && spec && cancelTime - p.actionTime <= BUFFER_TIME) p.buffer = { action: requested, until: s.time + BUFFER_TIME };
     return;
   }
   if (input.interact && p.action === 'idle' && !airborne) { interact(s); return; }
@@ -386,17 +388,20 @@ function updatePlayer(s: GameState, dt: number, input: GameInput): void {
     const desired = length > 0.15 ? Math.atan2(x, z) : target && s.lockedId ? facingToward(p, target) : finite(input.aim, -100000, 100000) ? input.aim : p.facing;
     const limit = p.action === 'charge' ? 1.05 : spec!.turn;
     const goal = p.attackFacing + Math.max(-limit, Math.min(limit, angleDiff(desired, p.attackFacing)));
-    const speed = p.action === 'charge' || p.actionTime < (spec?.impact ?? 0) ? 5 : 0.65;
+    const heavy = p.action === 'heavy';
+    const committed = heavy && p.actionTime >= Math.max(0, (spec?.impact ?? 0) - 0.18);
+    const speed = committed ? 0.22 : p.action === 'charge' || p.actionTime < (spec?.impact ?? 0) ? heavy ? 3.2 : 5 : 0.65;
     p.facing += Math.max(-speed * dt, Math.min(speed * dt, angleDiff(goal, p.facing)));
   }
   if (p.action === 'charge') {
-    p.charge = Math.min(CHARGE_TIME, p.charge + dt); p.actionTime += dt;
-    if (!input.heavyHeld || p.charge >= CHARGE_TIME) {
-      const charged = p.charge >= CHARGE_TIME && p.stamina >= weaponAttack(s, 'charged').cost;
+    const limit = chargeTime(s);
+    p.charge = Math.min(limit, p.charge + dt); p.actionTime += dt;
+    if (!input.heavyHeld || p.charge >= limit) {
+      const charged = p.charge >= limit && p.stamina >= weaponAttack(s, 'charged').cost;
       if (charged) spend(s, weaponAttack(s, 'charged').cost);
       const prep = p.charge;
       beginAttack(s, charged ? 'charged' : 'heavy', true);
-      if (!charged) p.actionTime = Math.min(0.35, prep); // Holding has already paid part of the wind-up.
+      if (!charged) p.actionTime = chargeCredit(s, prep);
     }
   } else if (p.action !== 'idle') {
     const previousTime = p.actionTime; p.actionTime = p.action === 'guard' ? Math.min(1, p.actionTime + dt) : p.actionTime + dt;
@@ -424,7 +429,7 @@ function updatePlayer(s: GameState, dt: number, input: GameInput): void {
     }
     if (p.action === 'heal' && !p.hitDone && p.actionTime >= 0.72) { p.hitDone = true; p.hp = Math.min(maxHp(s), p.hp + healAmount(s)); effect(s, p, 'heal', '椰子水'); }
     if (p.buffer && p.buffer.until < s.time) p.buffer = null;
-    if (p.buffer && spec && p.actionTime >= spec.cancel) {
+    if (p.buffer && spec && p.actionTime >= cancelAt(spec, p.buffer.action)) {
       const buffered = p.buffer.action; p.buffer = null;
       actionInput(s, { ...input, light: false, heavy: false, jump: false, dodge: false, parry: false, [buffered]: true });
     } else if (p.actionTime >= (spec?.duration ?? DURATIONS[p.action])) { p.action = 'idle'; p.actionTime = 0; p.attack = null; p.charge = 0; }
@@ -867,7 +872,8 @@ export function loadGame(raw: string | null): GameState | null {
     const s = JSON.parse(raw) as GameState;
     if (!s || s.version !== 1 || !['title', 'playing', 'dead', 'ending', 'interlude'].includes(s.mode) || typeof s.paused !== 'boolean') return null;
     const legacyMotion = s.motionVersion === undefined;
-    if (!legacyMotion && s.motionVersion !== 1) return null;
+    const legacyPlayerMotion = legacyMotion || (s.motionVersion as number) === 1;
+    if (!legacyMotion && ![1, 2].includes(s.motionVersion)) return null;
     if (s.worldVersion !== undefined && ![2, 3, 4, 5, 6, 7, 8, 9, 10].includes(s.worldVersion)) return null;
     const oldWorld = s.worldVersion === undefined; const oldDistrict = (s.worldVersion ?? 0) < 4; const oldChapter = (s.worldVersion ?? 0) < 5; const oldValley = (s.worldVersion ?? 0) < 6; const oldHaven = (s.worldVersion ?? 0) < 7;
     if (oldWorld) { s.templeGate = false; s.flaskUpgrade = false; s.litLamps = s.checkpoint === 'courtyard' ? ['courtyard'] : []; }
@@ -975,7 +981,11 @@ export function loadGame(raw: string | null): GameState | null {
         e.timer += ENEMY_STRIKE_TIME - 0.24;
       }
     }
-    s.motionVersion = 1;
+    if (legacyPlayerMotion && s.mode === 'playing' && ['light', 'heavy', 'charge'].includes(p.action)) {
+      // Old attack clocks cannot release damage using a new animation's contact frame.
+      p.action = 'idle'; p.attack = null; p.actionTime = 0; p.charge = 0; p.buffer = null; p.combo = 0;
+    }
+    s.motionVersion = 2;
     if (s.enemies.some(e => isBoss(e) && e.kind !== 'boss' && ((e.hp === 0) !== s.defeatedGuests.includes(e.id)))) return null;
     if (s.bossDefeated !== (s.enemies.find(e => e.kind === 'boss')?.hp === 0) || (['ending', 'interlude'].includes(s.mode) && !s.bossDefeated) || (s.mode === 'interlude' && !s.collected.includes('food'))) return null;
     if (s.flaskUpgrade !== s.collected.includes('temple-flask')) return null;

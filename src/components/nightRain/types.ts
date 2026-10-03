@@ -35,7 +35,7 @@ export type GameInput = {
 export type Effect = Vec3 & { id: number; kind: 'hit' | 'parry' | 'block' | 'dodge' | 'heal' | 'death' | 'reward'; life: number; text?: string };
 export type Projectile = Vec3 & { id: number; owner: string; vx: number; vy: number; vz: number; life: number; damage: number; kind: 'bolt' | 'stone' };
 export type GameState = {
-  version: 1; motionVersion: 1; mode: 'title' | 'playing' | 'dead' | 'ending' | 'interlude'; paused: boolean;
+  version: 1; motionVersion: 2; mode: 'title' | 'playing' | 'dead' | 'ending' | 'interlude'; paused: boolean;
   projectiles: Projectile[];
   bestiary: string[];
   liftRide: LiftRide | null; discoveredDungeons: DungeonId[];

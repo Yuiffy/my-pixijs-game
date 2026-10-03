@@ -2,6 +2,7 @@ import voices from './voiceManifest.json';
 import type { CompanionSkin } from './companion';
 import type { GameState } from './types';
 import { DUNGEONS, dungeonFoyer } from './dungeons';
+import { weaponAttack } from './weapons';
 
 export type AudioSettings = { music: number; effects: number; narration: number; muted: boolean };
 type Track = 'exploration' | 'haven' | 'boss';
@@ -26,6 +27,7 @@ export class NightAudio {
   private deck = 0;
   private lastFx = 0;
   private lastAction = '';
+  private lastSwing = '';
   private lastMode = '';
   private stepAt = 0;
   private lastPosition: { x: number; z: number } | null = null;
@@ -136,7 +138,11 @@ export class NightAudio {
     const combat = s.enemies.some(e => e.hp > 0 && e.aggro && ['boss', 'nana', 'azi', 'captain', 'regent', 'warden', 'abbot', 'serpent', 'elegist', 'colossus', 'sentinel'].includes(e.kind));
     this.music(combat ? 'boss' : s.mode === 'interlude' || s.region.includes('归灯庭') ? 'haven' : 'exploration');
     const { action } = s.player;
-    if (action !== this.lastAction && ['light', 'heavy', 'dodge', 'heal'].includes(action)) this.sound(action);
+    if (action !== this.lastAction && ['dodge', 'heal'].includes(action)) this.sound(action);
+    if (s.player.attack && ['light', 'heavy'].includes(action)) {
+      const spec = weaponAttack(s, s.player.attack); const token = `${s.player.attack}:${s.player.comboUntil}`;
+      if (token !== this.lastSwing && s.player.actionTime >= spec.impact - Math.min(0.12, spec.impact * 0.35)) { this.sound(action); this.lastSwing = token; }
+    }
     if (s.mode === 'dead' && this.lastMode !== 'dead') { const quietBefore = this.quiet; this.quiet = false; this.sound('death'); this.quiet = quietBefore; }
     this.lastAction = action; this.lastMode = s.mode;
     if (s.liftRide && s.time - this.chainAt > 0.65) { this.sound('chain'); this.chainAt = s.time; }
@@ -157,6 +163,6 @@ export class NightAudio {
     return { unlocked: this.unlocked, context: this.context?.state ?? 'locked', track: this.track, voiceLine: this.voiceLine, settings: this.settings, events: this.events, recent: this.recent, rms, status: this.status };
   }
   suspend() { this.decks.forEach(d => d.audio.pause()); this.cancelVoice(); }
-  reset() { this.lastFx = 0; this.lastProjectile = 0; this.chainAt = -10; this.windAt = -10; this.lastPosition = null; this.lastAction = ''; this.lastMode = ''; this.cancelVoice(); }
+  reset() { this.lastFx = 0; this.lastProjectile = 0; this.chainAt = -10; this.windAt = -10; this.lastPosition = null; this.lastAction = ''; this.lastSwing = ''; this.lastMode = ''; this.cancelVoice(); }
   dispose() { this.disposed = true; this.listeners.forEach(fn => fn()); this.suspend(); this.decks.forEach(d => { d.audio.removeAttribute('src'); d.audio.load(); }); this.narration?.removeAttribute('src'); this.context?.close().catch(() => {}); }
 }

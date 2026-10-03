@@ -82,10 +82,10 @@ test('an old save mid-strike retains its remaining time to contact and migrates 
   Object.assign(old.player, { x: e.x, y: e.y, z: e.z + 1.5, facing: Math.PI });
   Object.assign(e, { action: 'attack', timer: .2, hitDone: false, aggro: true, facing: 0 });
   delete old.motionVersion;
-  const s = engine.loadGame(JSON.stringify(old)); assert.ok(s); assert.equal(s.motionVersion, 1);
+  const s = engine.loadGame(JSON.stringify(old)); assert.ok(s); assert.equal(s.motionVersion, 2);
   assert.ok(Math.abs(s.enemies[0].timer - .32) < 1e-8);
   assert.deepEqual(engine.loadGame(engine.saveGame(s)).enemies, s.enemies);
   step(s, 20); assert.equal(s.player.hp, 100);
   step(s, 30); assert.equal(s.player.hp, 100 - engine.enemyAttack(e).damage);
-  const future = fresh(); future.motionVersion = 2; assert.equal(engine.loadGame(JSON.stringify(future)), null);
+  const future = fresh(); future.motionVersion = 3; assert.equal(engine.loadGame(JSON.stringify(future)), null);
 });

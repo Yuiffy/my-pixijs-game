@@ -40,8 +40,8 @@ test('light and heavy hit only at impact in the forward arc and spend actual sta
   advance(s, 180, { ...neutral, light: true }); assert.equal(e.hp, hp); assert.equal(s.player.stamina, 83);
   advance(s, 70); assert.equal(e.hp, hp - 24);
   advance(s, 150); assert.equal(e.hp, hp - 24, 'one attack cannot hit repeatedly across substeps');
-  const heavy = courtyardDuel(); advance(heavy.s, 450, { ...neutral, heavy: true }); assert.equal(heavy.e.hp, hp);
-  advance(heavy.s, 60); assert.equal(heavy.e.hp, hp - 41); assert.equal(heavy.s.player.stamina, 69);
+  const heavy = courtyardDuel(); advance(heavy.s, 680, { ...neutral, heavy: true }); assert.equal(heavy.e.hp, hp);
+  advance(heavy.s, 60); assert.equal(heavy.e.hp, hp - 36); assert.equal(heavy.s.player.stamina, 65);
   const away = courtyardDuel(); away.s.player.facing = 0; advance(away.s, 550, { ...neutral, light: true }); assert.equal(away.e.hp, hp);
 });
 
@@ -87,7 +87,7 @@ test('guard absorbs frontal light blows but a heavy strike threatens both health
     const s = fresh(); const e = s.enemies.find(x => x.kind === 'guard'); Object.assign(s.player, { x: e.x, y: 0, z: e.z + 1.8, facing: Math.PI }); e.facing = 0; return { s, e };
   };
   const light = fixture(); advance(light.s, 300, { ...neutral, light: true }); assert.ok(light.e.maxHp - light.e.hp < 12); assert.ok(light.e.posture > 19);
-  const heavy = fixture(); advance(heavy.s, 550, { ...neutral, heavy: true }); assert.equal(heavy.e.maxHp - heavy.e.hp, 41); assert.ok(heavy.e.posture > 43);
+  const heavy = fixture(); advance(heavy.s, 740, { ...neutral, heavy: true }); assert.equal(heavy.e.maxHp - heavy.e.hp, 36); assert.ok(heavy.e.posture > 32);
 });
 
 test('stamina exhausts, recovers only after delay, and healing is finite and interruptible', () => {

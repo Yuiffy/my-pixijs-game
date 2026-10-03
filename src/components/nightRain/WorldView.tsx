@@ -18,6 +18,7 @@ import { CHAPTER_GATES } from "./chapter";
 import { createStoneTexture } from './stoneTexture';
 import CompanionView from './CompanionView';
 import CombatTrail from './CombatTrail';
+import PlayerActor from './PlayerActor';
 import RainEffects, { ShrineWisps } from './RainEffects';
 import BossSignatures from './BossSignatures';
 import BossStyle, { BossWeapon } from './BossStyle';
@@ -1104,6 +1105,13 @@ function Landmarks({ stateRef }: { stateRef: StateRef }) {
 }
 
 export function Actor({
+  stateRef,
+  enemyId,
+}: { stateRef: StateRef; enemyId?: string }) {
+  return enemyId ? <LegacyActor stateRef={stateRef} enemyId={enemyId} /> : <PlayerActor stateRef={stateRef} />;
+}
+
+function LegacyActor({
   stateRef,
   enemyId,
 }: {

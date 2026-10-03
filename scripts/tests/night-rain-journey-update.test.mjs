@@ -64,10 +64,10 @@ test('all bosses resist heavy hit interruption and charge auto-releases once whi
   for (const kind of ['boss', 'nana', 'azi', 'colossus', 'sentinel']) {
     const s = fresh(); const enemy = s.enemies.find(x => x.kind === kind); s.enemies = [enemy];
     place(s, { x: enemy.x, y: enemy.y, z: enemy.z + 2, facing: Math.PI }); Object.assign(enemy, { action: 'windup', timer: 2.1, aggro: true, attackIndex: 1, facing: 0 });
-    e.stepGame(s, 500, { x: 0, z: 0, heavy: true }); assert.equal(enemy.action, 'windup'); assert.ok(enemy.posture < 20); assert.ok(enemy.hp < enemy.maxHp);
+    e.stepGame(s, 740, { x: 0, z: 0, heavy: true }); assert.equal(enemy.action, 'windup'); assert.ok(enemy.posture < 20); assert.ok(enemy.hp < enemy.maxHp);
   }
-  const s = fresh(); e.stepGame(s, 800, { x: 0, z: 0, heavy: true, heavyHeld: true }); assert.equal(s.player.attack, 'charged');
-  e.stepGame(s, 1000, { x: 0, z: 0, heavyHeld: true }); assert.equal(s.player.action, 'idle');
+  const s = fresh(); e.stepGame(s, 970, { x: 0, z: 0, heavy: true, heavyHeld: true }); assert.equal(s.player.attack, 'charged');
+  e.stepGame(s, 1600, { x: 0, z: 0, heavyHeld: true }); assert.equal(s.player.action, 'idle');
 });
 
 test('continuous charged pressure takes hits from a live boss; a timing-based mixed pilot still wins', () => {

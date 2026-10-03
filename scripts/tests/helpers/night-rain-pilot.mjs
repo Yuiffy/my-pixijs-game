@@ -3,6 +3,7 @@
 import { loadTypescriptModule } from './load-typescript-module.mjs';
 const { findPath } = await loadTypescriptModule('src/components/nightRain/companion.ts');
 const { enemyAttack } = await loadTypescriptModule('src/components/nightRain/enemyCombat.ts');
+const { weaponAttack } = await loadTypescriptModule('src/components/nightRain/weapons.ts');
 export const NIGHT_ROUTE = [
   { x: 1, z: 15, interact: 'laptop' },
   { x: 10, z: 15 }, { x: 10, z: 8 }, { x: 10, z: -1 },
@@ -47,8 +48,10 @@ export function chooseInput(s, destination, { parryOnly = false } = {}) {
     else input.parry = true;
   } else if (p.hp <= 48 && p.flasks > 0 && enemy.action === 'recover' && enemy.timer > 0.8) {
     input.heal = true;
-  } else if (!parryOnly && enemy.action === 'recover' && enemy.timer > 0.65 && d < 2.6 && p.stamina > 55) {
+  } else if (!parryOnly && enemy.action === 'recover' && enemy.timer > weaponAttack(s, 'heavy').duration + 0.08 && d < 2.6 && p.stamina > 55) {
     input.heavy = true;
+  } else if (!parryOnly && enemy.action === 'recover' && enemy.timer > weaponAttack(s, 'light1').duration + 0.08 && d < 2.25 && p.stamina > 35) {
+    input.light = true;
   } else if (d > (sweep ? 2.1 : 1.7) && enemy.action !== 'attack') {
     input.x = dx; input.z = dz;
   }
