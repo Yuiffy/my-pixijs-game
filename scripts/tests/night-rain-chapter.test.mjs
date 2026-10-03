@@ -32,7 +32,7 @@ test('version four saves add the northern city without healing, respawning or lo
   const raw = JSON.parse(engine.saveGame(s)); raw.worldVersion = 4; raw.enemies = raw.enemies.slice(0, 13); delete raw.chapterGates; delete raw.chapterComplete;
   const loaded = engine.loadGame(JSON.stringify(raw)); assert.ok(loaded);
   assert.deepEqual(loaded.player, s.player); assert.deepEqual(loaded.enemies.slice(0, 13), raw.enemies);
-  assert.equal(loaded.worldVersion, 7); assert.equal(loaded.enemies.length, world.ENEMY_SPAWNS.length);
+  assert.equal(loaded.worldVersion, 8); assert.equal(loaded.enemies.length, world.ENEMY_SPAWNS.length);
   for (const corrupt of [s => s.chapterGates.push('archive-door'), s => s.chapterComplete = true, s => s.chapterGates.push('missing')]) { const bad = fresh(); corrupt(bad); assert.equal(engine.loadGame(engine.saveGame(bad)), null); }
 });
 

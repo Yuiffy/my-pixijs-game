@@ -28,4 +28,6 @@ node scripts/verify-night-rain-pickup.cjs
 
 修复前证据在 `tmp/night-rain-pickup-before/`；最终开发和生产证据在 `tmp/night-rain-pickup-verify-dev/`、`tmp/night-rain-pickup-verify-production/`。两组最终截图各四张，均已逐张打开目检，页面／控制台错误为空。100 项游戏规则测试、修改源文件 ESLint、完整 `pnpm run check` 及随后顺序执行的 `pnpm run build` 全部通过，保留构建 ESLint。浏览器脚本另通过 Node 语法检查与开发／生产运行验证。
 
-开发预览 `http://localhost:3926/game/night-rain` 使用 `.next-night-rain-pickup-dev`；生产验证使用独立 `.next-night-rain-pickup-build`。已清理本任务自动加入的 tsconfig 路径，保留其他任务配置；本轮未提交、推送或部署。
+拾取修复已提交为 `1763322`，推送 `origin/master`；Vercel Git 自动发布的 production 状态已确认为 **Ready**。正式别名为 `https://my-pixijs-game-yuiffys-projects-66066860.vercel.app`，发布记录在 `tmp/night-rain-release-inspect.log`。发布前以独立 checkout 完成顺序检查与构建，避免带入工作目录里其他任务的改动。
+
+后续[角色首领、武器与魂系反馈](night-rain-experience.md)已完成验收，单独提交 master 发布。开发预览 `http://localhost:3926/game/night-rain`；原拾取生产验证使用独立 `.next-night-rain-pickup-build`，新体验生产版的拾取回归也保持零新增着色器编译和零长任务。

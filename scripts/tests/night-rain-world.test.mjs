@@ -85,7 +85,7 @@ test('first ignition only registers; subsequent rest is free, refills and resets
 test('v2 retired checkpoint migrates without moving, healing, restocking or reviving enemies',()=>{
  for(const oldLamp of ['temple-lamp','canal-lamp']){
   const s=fresh();Object.assign(s.player,{...world.interactionPoint(world.LANDMARKS.find(l=>l.id===oldLamp)),hp:31,flasks:1});s.enemies[0].hp=0;s.enemies[0].action='dead';
-  s.worldVersion=2;s.checkpoint=oldLamp;s.litLamps=[oldLamp];const loaded=engine.loadGame(engine.saveGame(s));assert.ok(loaded);assert.equal(loaded.worldVersion,7);assert.equal(loaded.checkpoint,'courtyard');assert.deepEqual(loaded.litLamps,['courtyard']);assert.deepEqual(loaded.player,s.player);assert.deepEqual(loaded.enemies,s.enemies);assert.equal(loaded.restCount,s.restCount);
+  s.worldVersion=2;s.checkpoint=oldLamp;s.litLamps=[oldLamp];const loaded=engine.loadGame(engine.saveGame(s));assert.ok(loaded);assert.equal(loaded.worldVersion,8);assert.equal(loaded.checkpoint,'courtyard');assert.deepEqual(loaded.litLamps,['courtyard']);assert.deepEqual(loaded.player,s.player);assert.deepEqual(loaded.enemies,s.enemies);assert.equal(loaded.restCount,s.restCount);
   s.litLamps=[];assert.equal(engine.loadGame(engine.saveGame(s)),null);
  }
 });

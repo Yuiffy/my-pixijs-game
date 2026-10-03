@@ -31,7 +31,7 @@ title: '船底刻着谁的名字',
     choices: [{ id: 'invite-boatwright', label: '邀请温叔前往归灯庭', detail: '开通归灯庭与船坞的双向渡船；先点亮庭中雨灯。', disabled: !s.collected.includes('keel-rubbing') || !s.collected.includes('ferry-winch') }],
   };
   if (id === 'haven-scribe') return { speaker: '弥音 · 抄名人', title: '让故事有名字', lines: [s.haven.ending === 'remember' ? '我把他们的名字刻进庭灯了。以后不用再说“那些人”。' : s.haven.ending === 'release' ? '名册我留着，灯让它们走。记得和不肯放手，原来不是同一件事。' : '城里敲钟，河上放灯，最后才叫人的名字。有人把最后一步删了，长夜才迟迟不肯过去。', s.haven.ending ? '守簿人的那一页也留着。我们不会再替没有回来的人说一切都好。' : s.collected.includes('well-testimony') ? '守簿人也被抹去名字了。你可以把名字刻回灯上，也可以让这些灯终于离开。两种选择都不该再替别人说谎。' : '庭南潮阶下面藏着旧灯库。两位归人落座、雾河灯归水后，再让钟、水、呼名依次响起。'], choices: [] };
-  if (id === 'haven-boatwright') return { speaker: '温叔 · 补船人', title: '往返也是一段旅程', lines: [s.haven.ending ? '这回船上有灯，也有人。等风小一点，我们再去看河。' : '雨冠把灯留在城里，千流把愿留在水里。守灯簿却说人人都回了家。别急着信它。', '我的渡船停在东南的小渡。它只送你换个地方，不替你补药，也不改原先的归灯。'], choices: [] };
+  if (id === 'haven-boatwright') return { speaker: '温叔 · 补船人', title: '往返也是一段旅程', lines: [s.haven.ending ? '这回船上有灯，也有人。等风小一点，我们再去看河。' : '弥月把灯留在城里，悠亚把愿留在水里。礼墨的守灯簿却说人人都回了家。别急着信它。', '我的渡船停在东南的小渡。它只送你换个地方，不替你补药，也不改原先的归灯。'], choices: [] };
   return { speaker: '最后一盏无名灯',
 title: s.haven.ending ? '你的回答已经留下' : '你愿意怎样记住他们',
 lines: s.haven.ending ? [s.haven.ending === 'remember' ? '庭灯有名，归路有声。' : '愿灯远行，空椅留温。', '回到归灯庭，听听大家想说的话。'] : ['灯里没有索取火种的神，只有没来得及说出口的名字。', '记名，让后来者知道他们曾在这里；放灯，让未尽的愿望离开长夜。决定之后，归灯庭与同伴的回应会随之改变。'],

@@ -1,5 +1,7 @@
 // The same observer/controller drives unit and real browser playtests. It only
 // emits ordinary world movement and button presses; never alters game state.
+import { loadTypescriptModule } from './load-typescript-module.mjs';
+const { findPath } = await loadTypescriptModule('src/components/nightRain/companion.ts');
 export const NIGHT_ROUTE = [
   { x: 1, z: 15, interact: 'laptop' },
   { x: 10, z: 15 }, { x: 10, z: 8 }, { x: 10, z: -1 },
@@ -51,11 +53,18 @@ export function chooseInput(s, destination, { parryOnly = false } = {}) {
 }
 
 export function walkTo(engine, s, target, limitMs = 45000, options = {}) {
-  let ms = 0;
+  let ms = 0; let blockedMs = 0; let detour = [];
   while (ms < limitMs && s.mode === 'playing') {
     const inCombat = s.enemies.some(e => e.hp > 0 && e.aggro && !(target.ignoreBoss && e.kind === 'boss') && Math.abs(e.y - s.player.y) < 1.5 && gap(e, s.player) < 8);
     if (gap(s.player, target) < 0.22 && !inCombat && s.player.action === 'idle') return ms;
-    engine.stepGame(s, 40, chooseInput(s, target, options)); ms += 40;
+    if (inCombat) detour = [];
+    while (detour.length && gap(s.player, detour[0]) < 0.22) detour.shift();
+    const before = { ...s.player };
+    engine.stepGame(s, 40, chooseInput(s, detour[0] ?? target, options)); ms += 40;
+    blockedMs = !inCombat && s.player.action === 'idle' && gap(before, s.player) < 0.01 ? blockedMs + 40 : 0;
+    // Combat can leave the pilot on the other side of a crate from its old waypoint.
+    // Replan the walking path, as a player or the live guide would, without teleporting.
+    if (blockedMs >= 600) { detour = findPath(s.player, target, s).slice(1); blockedMs = 0; }
   }
   throw new Error(`Route stalled at ${JSON.stringify(target)} after ${ms}ms: ${JSON.stringify({ p: s.player, mode: s.mode, enemies: s.enemies.filter(e => e.aggro), target })}`);
 }

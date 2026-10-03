@@ -75,7 +75,7 @@ export const HAVEN_ENEMIES: (Vec3 & { id: string; kind: EnemyKind; name: string;
   { id: 'boatyard-watch', kind: 'reaver', name: '沉船钩镰客', x: -276, y: 2, z: -350, facing: Math.PI / 2 },
   { id: 'boatyard-loft-watch', kind: 'monk', name: '焚图行脚僧', x: -280, y: 8, z: -389, facing: Math.PI / 2 },
   { id: 'well-monk', kind: 'monk', name: '无名库守簿人', x: -9, y: 0, z: 115, facing: Math.PI },
-  { id: 'last-lamplighter', kind: 'elegist', name: '末灯守簿 · 无名', x: -9, y: 0, z: 137, facing: Math.PI },
+  { id: 'last-lamplighter', kind: 'elegist', name: '礼墨 · 末灯绘名', x: -9, y: 0, z: 137, facing: Math.PI },
 ];
 export const HAVEN_STRUCTURES: Solid[] = [
   ...HAVEN_SURFACES.filter(s => s.endY === undefined).map(s => ({ id: `${s.id}-base`, position: [(s.x1 + s.x2) / 2, (s.y - 1.2) / 2, (s.z1 + s.z2) / 2] as [number, number, number], size: [s.x2 - s.x1 - 0.7, s.y + 0.8, s.z2 - s.z1 - 0.7] as [number, number, number], color: '#637e75' })),
@@ -133,5 +133,5 @@ export const HAVEN_LORE: Record<string, [string, string]> = {
   'haven-sign': ['雨再大，也留一张空椅。旅馆南桥尽头，是归灯庭。', '沿窄桥往南，可休息、整备、存钱。归灯庭可以随时回访。'],
   'names-register': ['名册被刮去的不是罪人，是没有回城的人。末页写着：先叩归钟，再听流水，最后呼名。', '旧寺西侧书房里的弥音正在找这份名册。把它带给她，也记住钟、水、名字的顺序。'],
   'keel-rubbing': ['每根龙骨下都刻着名字。渡船不只运灯，还运回那些没能返乡的人。', '船坞的温叔认得这份拓片。修复雾河渡船系缆后，可以邀请他去归灯庭。'],
-  'well-testimony': ['雨冠替城守灯，千流替河收愿。我替他们删去名字，好让留下的人以为一切已归。如今我也忘了自己。', '两关的守灯人守着同一次失约。库底最后一盏灯，等待你决定怎样记住未归之人。'],
+  'well-testimony': ['弥月替城守灯，悠亚替河收愿。礼墨替她们删去名字，好让留下的人以为一切已归。守簿人终于把自己的名字也压进了墨里。', '两关的守灯人守着同一次失约。库底最后一盏灯，等待你决定怎样记住未归之人。'],
 };

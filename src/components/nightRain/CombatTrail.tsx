@@ -3,7 +3,8 @@
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, type MutableRefObject } from 'react';
 import * as THREE from 'three';
-import { attackSpec, combatPose } from './combat';
+import { combatPose } from './combat';
+import { weaponAttack } from './weapons';
 import type { GameState } from './types';
 
 /** Sample the same authored arm/body poses as Actor, not an unrelated spinning ring. */
@@ -17,7 +18,7 @@ export default function CombatTrail({ stateRef }: { stateRef: MutableRefObject<G
   useEffect(() => () => data.geometry.dispose(), [data]);
   useFrame(() => {
     if (!mesh.current) return;
-    const p = stateRef.current.player; const spec = attackSpec(p);
+    const s = stateRef.current; const p = s.player; const spec = p.attack ? weaponAttack(s, p.attack) : null;
     mesh.current.visible = !!spec && p.actionTime >= spec.impact - 0.06 && p.actionTime <= spec.impact + spec.active + 0.09;
     if (!spec || !mesh.current.visible) return;
     const mat = mesh.current.material as THREE.MeshBasicMaterial; mat.color.set(spec.color);

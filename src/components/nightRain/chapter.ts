@@ -96,7 +96,7 @@ export const CHAPTER_ENEMIES: (Vec3 & { id: string; kind: EnemyKind; name: strin
   { id: 'weaver-prowler', kind: 'prowler', name: '染布伏兵', x: -73, y: 3, z: -87, facing: 0 },
   { id: 'weaver-duelist', kind: 'duelist', name: '染布刀客', x: -61, y: 6, z: -99, facing: -1.57 },
   { id: 'elephant-lancer', kind: 'lancer', name: '象门长枪卫', x: -47, y: 9.157894736842106, z: -114, facing: 0 },
-  { id: 'gate-captain', kind: 'captain', name: '双象卫长 · 铜印', x: -57, y: 12, z: -130, facing: 0 },
+  { id: 'gate-captain', kind: 'captain', name: '米汀 · 双象断潮', x: -57, y: 12, z: -130, facing: 0 },
   { id: 'wall-guard', kind: 'guard', name: '西垛守夜人', x: -85, y: 12, z: -130, facing: 1.57 },
   { id: 'wall-lancer', kind: 'lancer', name: '烽灯枪卫', x: -100.5, y: 15.130434782608695, z: -146, facing: 0 },
   { id: 'wall-duelist', kind: 'duelist', name: '高墙巡刀', x: -80, y: 18, z: -161, facing: -1.57 },
@@ -109,7 +109,7 @@ export const CHAPTER_ENEMIES: (Vec3 & { id: string; kind: EnemyKind; name: strin
   { id: 'bridge-guard', kind: 'guard', name: '千灯桥卫', x: -104, y: 12, z: -193, facing: 1.57 },
   { id: 'royal-lancer', kind: 'lancer', name: '王寺长枪卫', x: -127, y: 16.90909090909091, z: -206, facing: 0 },
   { id: 'royal-duelist', kind: 'duelist', name: '雨冠侍刀', x: -130, y: 24, z: -225, facing: 0 },
-  { id: 'rain-regent', kind: 'regent', name: '长夜司灯 · 雨冠', x: -133, y: 24, z: -247, facing: 0 },
+  { id: 'rain-regent', kind: 'regent', name: '弥月 · 机巧雨冠', x: -133, y: 24, z: -247, facing: 0 },
 ];
 
 const box = (id: string, position: Triple, size: Triple, color: string): Solid => ({ id, position, size, color });
@@ -157,9 +157,9 @@ export const CHAPTER_HOUSES: House[] = [
 ];
 
 export const CHAPTER_LORE: Record<string, [string, string]> = {
-  'castle-note': ['铁伞收处，长街未尽。循香过水，双象守印。', '北口通往香料水街和织坊下城。榕树下有新的雨灯。门楼卫长携带打开藏经院的象纹铜印。'],
+  'castle-note': ['栞栞收刃，长街未尽。循香过水，双象守印。', '北口通往香料水街和织坊下城。榕树下有新的雨灯。米汀在门楼守着打开藏经院的象纹铜印。'],
   'weaver-note': ['布染长夜，梯绕旧窗。归人从背后解闩。', '从长廊东头上象门长阶。门楼南面的内阶可以绕回下城，打开织坊归巷的门。'],
   'cistern-note': ['高墙饮雨，莲根藏露。水闸只迎归人。', '沿苔壁长阶到底是蓄水院，那里藏着第二个瓶数提升。打开水闸，就能直接返回织坊下城。'],
   'archive-note': ['一印开经，一灯送客。桥上千盏，皆望雨冠。', '西侧朝圣桥通往王寺。东侧抄经人回廊可以直接回到双象门楼。经院东厢的雨灯能补给和记录复活点。'],
-  'royal-note': ['他为长夜掌灯，竟忘了天明。钟声须过雨冠。', '最后的守灯人就在大殿。枪刺可以弹反，红色横扫要闪避或跳过。击败后走到殿后的钟台，为这一晚敲钟。'],
+  'royal-note': ['弥月为长夜掌灯，竟忘了天明。钟声须过雨冠。', '弥月在大殿用兔耳炮守灯。点射可以弹反，也可横移躲开射线；红色双炮横扫要闪避或跳过。击败后走到殿后的钟台，为这一晚敲钟。'],
 };

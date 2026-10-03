@@ -6,7 +6,7 @@ const { ATTACKS, combatPose, rollPose } = await loadTypescriptModule('src/compon
 const world = await loadTypescriptModule('src/components/nightRain/world.ts');
 const fresh = () => { const s = engine.createGame(); engine.startGame(s); return s; };
 const step = (s, ms, input = {}) => engine.stepGame(s, ms, { x: 0, z: 0, ...input });
-const duel = () => { const s = fresh(); Object.assign(s.player, { x: -4, y: 0, z: 3.9, facing: Math.PI }); const e = s.enemies[0]; e.action = 'recover'; e.timer = 4; e.aggro = true; return { s, e }; };
+const duel = () => { const s = fresh(); Object.assign(s.player, { x: -6, y: 0, z: 1.9, facing: Math.PI }); const e = s.enemies[0]; e.action = 'recover'; e.timer = 4; e.aggro = true; return { s, e }; };
 
 test('jump has real ascent/descent, finite cost, air control, landing and no double jump', () => {
   const s = fresh(); const x = s.player.x; step(s, 150, { jump: true, x: 1 });

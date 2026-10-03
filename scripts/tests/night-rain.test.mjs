@@ -16,7 +16,7 @@ const waitUntil = (s, predicate, limit = 15000) => {
 // Isolated fixtures use documented world positions. The full-act tests below
 // start from createGame and do not modify state, resources or coordinates.
 const courtyardDuel = () => {
-  const s = fresh(); Object.assign(s.player, { x: -4, y: 0, z: 3.75, facing: Math.PI });
+  const s = fresh(); Object.assign(s.player, { x: -6, y: 0, z: 1.75, facing: Math.PI });
   return { s, e: s.enemies[0] };
 };
 const beforeAttack = (s, e, margin = 0.12) => waitUntil(s, () => e.action === 'windup' && e.timer <= margin);
@@ -73,7 +73,7 @@ test('repeated legitimate parries break posture and allow exactly one execution 
 
 test('dodge invulnerability works even against a wall, but late recovery is vulnerable', () => {
   const fixture = () => {
-    const { s, e } = courtyardDuel(); Object.assign(s.player, { z: 9.6 }); Object.assign(e, { z: 8.6, action: 'windup', timer: 0.12, aggro: true }); return { s, e };
+    const { s, e } = courtyardDuel(); Object.assign(s.player, { x: -4, z: 9.6 }); Object.assign(e, { x: -4, z: 8.6, action: 'windup', timer: 0.12, aggro: true }); return { s, e };
   };
   const good = fixture(); advance(good.s, 350, { ...neutral, dodge: true });
   assert.ok(good.s.player.z < 9.68); assert.equal(good.s.player.hp, 100); assert.equal(good.s.player.stamina, 75);
@@ -118,10 +118,10 @@ test('a legal route descends stairs and lights checkpoint; the shortcut cannot o
 
 test('all enemies, reward branches, shortcut loop, upgrade and dinner are completed with ordinary inputs only', () => {
   const run = playFirstLevel(engine); const s = run.state;
-  assert.equal(s.mode, 'ending'); assert.equal(s.deaths, 0); assert.equal(s.kills, 6); assert.ok(s.parries > 10); assert.ok(s.executions >= 6);
+  assert.equal(s.mode, 'ending'); assert.equal(s.deaths, 0); assert.equal(s.kills, 7); assert.ok(s.parries > 10); assert.ok(s.executions >= 6);
   assert.equal(s.level, 1); assert.equal(s.bankedRice, 40); assert.equal(s.charm, true); assert.equal(s.shortcut, true); assert.equal(s.bossDefeated, true);
   assert.ok(s.visited.includes('金塔屋脊')); assert.ok(s.visited.includes('运河侧廊')); assert.ok(s.visited.includes('封街夜市'));
-  assert.ok(run.stages.find(stage => stage.target.interact === 'shortcut').kills === 5, 'shortcut is opened before boss victory');
+  assert.ok(run.stages.find(stage => stage.target.interact === 'shortcut').kills === 6, 'shortcut is opened before boss victory');
   assert.ok(s.enemies.find(e => e.kind === 'boss').phase === 2); assert.ok(s.time > 100 && s.time < 250);
   const saved = loadGame(saveGame(s)); assert.ok(saved); assert.equal(saved.mode, 'ending'); assert.equal(saved.rice, s.rice);
 });
@@ -136,7 +136,7 @@ test('boss phase two offers a genuinely unparryable sweep and an intentionally d
 });
 
 test('death requires explicit respawn; a legal return retrieves the last bloodstain', () => {
-  const s = fresh(); reachLamp(s); walkTo(engine, s, { x: -3, z: 4 }); assert.equal(s.rice, 18);
+  const s = fresh(); reachLamp(s); walkTo(engine, s, { x: -6, z: 2 }); assert.equal(s.rice, 18);
   walkTo(engine, s, { x: -8, z: 2 });
   advance(s, 800, { x: -0.7, z: -0.7 });
   for (let i = 0; i < 30 && s.mode === 'playing'; i += 1) advance(s, 1000);

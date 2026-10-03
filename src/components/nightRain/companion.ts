@@ -34,11 +34,11 @@ routeAt: -100,
 });
 const distance = (a: Vec3, b: Vec3) => Math.hypot(a.x - b.x, a.z - b.z, a.y - b.y);
 const labels: Record<string, string> = {
-  'drowned-warden': '沉舟水车院 · 缚流',
-  'silent-abbot': '无声山寺 · 听澜',
-  'river-serpent': '那伽沉殿 · 千流',
-  'gate-captain': '双象门楼 · 卫长',
-  'rain-regent': '雨冠大殿 · 长夜司灯',
+  'drowned-warden': '沉舟水车院 · 花礼',
+  'silent-abbot': '无声山寺 · 瑞娅',
+  'river-serpent': '那伽沉殿 · 悠亚',
+  'gate-captain': '双象门楼 · 米汀',
+  'rain-regent': '雨冠大殿 · 弥月',
   ...Object.fromEntries([...CHAPTER_LANDMARKS, ...VALLEY_LANDMARKS, ...HAVEN_LANDMARKS].map(l => [l.id, l.label.replace(/^(读|打开|收下|拾取|使用)/, '')])),
   'temple-lamp': '莲池旧灯',
 'canal-lamp': '摆渡旧灯',
@@ -62,7 +62,7 @@ courtyard: '中庭雨灯',
 'lookout-cache': '望台宝箱',
 shortcut: '侧门门闩',
 food: '深夜食堂',
-boss: '铁伞前的夜市入口',
+boss: '栞栞守着的夜市入口',
 };
 export const targetLabel = (id: string | null) => (id ? labels[id] ?? id : '下一处发现');
 export function guideTargets(s: GameState) {
@@ -129,12 +129,12 @@ export function speak(c: Companion, s: GameState, text: string, seconds = 7) {
 
 // Navigation uses the same radii, ramp heights and closed gate as the player.
 // The guide never cuts across a wall or takes an aerial shortcut over a courtyard.
-export function walkSegment(a: Vec3, b: Vec3, shortcut: WorldAccess, maxStep = 0.25): boolean {
+export function walkSegment(a: Vec3, b: Vec3, shortcut: WorldAccess, maxStep = 0.25, radius = 0.36): boolean {
   const count = Math.max(1, Math.ceil(distance(a, b) / 0.15));
   let { y } = a;
   for (let i = 1; i <= count; i += 1) {
     const t = i / count; const x = a.x + (b.x - a.x) * t; const z = a.z + (b.z - a.z) * t;
-    if (!canOccupy(x, z, y, shortcut, 0.36)) return false;
+    if (!canOccupy(x, z, y, shortcut, radius)) return false;
     const nextY = supportAt(x, z, y + 0.6) ?? y;
     // Navigation leaves clearance at stair edges; followers do not hit exact
     // mathematical waypoints and must not be sent over the step-height limit.
@@ -166,11 +166,15 @@ export function findPath(start: Vec3, destination: Vec3, shortcut: WorldAccess):
     }
     return first;
   };
+  const startRadius = canOccupy(start.x, start.z, start.y, shortcut, 0.36) ? 0.36 : 0.24;
   for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) {
     const x = Math.round(start.x / step) * step + dx * step;
     const z = Math.round(start.z / step) * step + dz * step; const y = supportAt(x, z, start.y + 0.6);
     if (y === null) continue;
-    const p = { x, y, z }; if (!walkSegment(start, p, shortcut)) continue;
+    const p = { x, y, z };
+    // Combat may leave the player closer to a crate than the guide clearance.
+    // Use the real player radius only for the escape segment to a clear grid node.
+    if (!canOccupy(x, z, y, shortcut, 0.36) || !walkSegment(start, p, shortcut, 0.25, startRadius)) continue;
     const id = key(x, z, y); points.set(id, p); costs.set(id, distance(start, p)); push(id, distance(start, p) + distance(p, destination));
   }
   const closed = new Set<string>();

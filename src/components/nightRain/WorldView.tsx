@@ -17,6 +17,11 @@ import { CHAPTER_GATES } from "./chapter";
 import { createStoneTexture } from './stoneTexture';
 import CompanionView from './CompanionView';
 import CombatTrail from './CombatTrail';
+import RainEffects, { ShrineWisps } from './RainEffects';
+import BossSignatures from './BossSignatures';
+import BossStyle, { BossWeapon } from './BossStyle';
+import { BOSS_ROSTER } from './bossRoster';
+import WeaponView, { Katana, ShioriBloom } from './WeaponView';
 import { combatPose, rollPose, CHARGE_TIME } from './combat';
 import type { Companion } from './companion';
 import {
@@ -928,12 +933,13 @@ function RainShrine({ stateRef, id, position }: { stateRef: StateRef; id: string
   const glow = useRef<THREE.Mesh>(null); const flame = useRef<THREE.Mesh>(null); const light = useRef<THREE.PointLight>(null);
   useFrame(() => {
     const s = stateRef.current; const lit = s.litLamps.includes(id); const current = s.checkpoint === id;
-    if (glow.current) { glow.current.rotation.z = s.time * 0.12; const mat = glow.current.material as THREE.MeshBasicMaterial; mat.color.set(current ? '#ffda89' : lit ? '#86dacc' : '#6f9caa'); mat.opacity = (lit ? 0.45 : 0.2) + Math.sin(s.time * 2) * 0.08; }
-    if (flame.current) { flame.current.visible = lit; flame.current.scale.setScalar((lit ? 1 : 0.65) + Math.sin(s.time * 4) * 0.08); (flame.current.material as THREE.MeshBasicMaterial).color.set(lit ? '#ffe4a0' : '#83c4d5'); }
-    if (light.current) { light.current.intensity = lit ? 8 : 0; light.current.color.set(lit ? '#ffce82' : '#8cd5e5'); }
+    if (glow.current) { glow.current.rotation.z = s.time * 0.12; const mat = glow.current.material as THREE.MeshBasicMaterial; mat.color.set(current ? '#ffda89' : lit ? '#86dacc' : '#ffe2a0'); mat.opacity = (lit ? 0.45 : 0.48) + Math.sin(s.time * 2) * 0.08; }
+    if (flame.current) { flame.current.visible = true; flame.current.scale.setScalar((lit ? 1 : 0.65) + Math.sin(s.time * 4) * 0.08); (flame.current.material as THREE.MeshBasicMaterial).color.set(lit ? '#ffe4a0' : '#ffdf9b'); }
+    if (light.current) { light.current.intensity = lit ? 8 : 2.2; light.current.color.set(lit ? '#ffce82' : '#8cd5e5'); }
   });
   return (
 <group position={position}>
+    <ShrineWisps stateRef={stateRef} id={id} />
     <mesh ref={glow} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.035, 0]}><ringGeometry args={[0.7, 1, 48]} /><meshBasicMaterial transparent opacity={0.4} depthWrite={false} /></mesh>
     <Block position={[0, 0.15, 0]} size={[0.8, 0.3, 0.8]} color="#827d69" />
     <Pole position={[0, 0.85, 0]} height={1.4} radius={0.045} />
@@ -1106,14 +1112,16 @@ function Actor({
     ? (ENEMY_SPAWNS.find((e) => e.id === enemyId)?.kind ?? "prowler")
     : "player";
   const boss = ["boss", "nana", "captain", "regent", "warden", "abbot", "serpent", "elegist"].includes(kind ?? "");
-  const lancer = ["lancer", "captain", "regent", "monk", "abbot", "serpent", "elegist"].includes(kind ?? "");
-  const guest = kind === "nana" || kind === "azi";
+  const lancer = !BOSS_ROSTER[kind as EnemyKind] && ["lancer", "captain", "regent", "monk", "abbot", "serpent", "elegist"].includes(kind ?? "");
+  const namedBoss = kind === "player" ? undefined : BOSS_ROSTER[kind];
+  const shioriBoss = kind === "boss";
+  const guest = kind === "nana" || kind === "azi" || !!namedBoss;
   const player = kind === "player";
   const guard = kind === "guard";
-  const size = kind === "serpent" ? 2.05 : kind === "warden" ? 1.7 : kind === "regent" ? 1.85 : boss ? 1.5 : kind === "prowler" ? 0.94 : 1.05;
+  const size = namedBoss ? 1.22 : boss ? 1.5 : kind === "prowler" ? 0.94 : 1.05;
   const coat = player
     ? PLAYER_SKINS[appearance].coat
-    : kind === 'elegist' ? '#897050' : kind === 'serpent' ? '#3d7c74' : kind === 'warden' ? '#536f81' : ['monk', 'abbot'].includes(kind ?? '') ? '#ae8651' : kind === 'reaver' ? '#667459' : kind === 'regent' ? '#673e48' : kind === 'captain' ? '#8a713f' : guest ? kind === "nana" ? "#303b49" : "#91a269" : boss
+    : namedBoss ? namedBoss.coat : kind === 'elegist' ? '#897050' : kind === 'serpent' ? '#3d7c74' : kind === 'warden' ? '#536f81' : ['monk', 'abbot'].includes(kind ?? '') ? '#ae8651' : kind === 'reaver' ? '#667459' : kind === 'regent' ? '#673e48' : kind === 'captain' ? '#8a713f' : guest ? kind === "nana" ? "#303b49" : "#91a269" : boss
       ? "#335a63"
       : guard
         ? "#7c6653"
@@ -1121,7 +1129,7 @@ function Actor({
           ? "#933e48"
           : "#697870";
   const skin = player || guest ? "#ead0bd" : "#b0927b";
-  const eye = player ? PLAYER_SKINS[appearance].eye : guest ? "#e5b855" : "#efcda0";
+  const eye = player ? PLAYER_SKINS[appearance].eye : namedBoss ? namedBoss.eye : guest ? "#e5b855" : "#efcda0";
   const attackShapes = useMemo(() => {
     const enemy = stateRef.current.enemies.find((e) => e.id === enemyId);
     if (!enemy) return [];
@@ -1351,6 +1359,8 @@ function Actor({
           color={COLORS.wood}
         />
 )}
+        {shioriBoss && enemyId && <ShioriBloom stateRef={stateRef} enemyId={enemyId} />}
+        {shioriBoss && <Block position={[-0.27, 0.8, -0.16]} size={[0.06, 1.2, 0.06]} color="#69533f" rotation={[0, 0, -0.45]} />}
         <mesh position={[0, 1.5, 0]} castShadow>
           <sphereGeometry args={[0.245, 12, 10]} />
           <meshStandardMaterial color={skin} />
@@ -1424,7 +1434,7 @@ function Actor({
             </mesh>
           </group>
         )
-        ) : (guest ? <GuestStyle kind={kind as "nana" | "azi"} /> : (
+        ) : (namedBoss ? <BossStyle kind={kind as EnemyKind} /> : guest ? <GuestStyle kind={kind as "nana" | "azi"} /> : (
           <group>
             <mesh position={[0, 1.73, 0]} castShadow>
               <coneGeometry
@@ -1437,7 +1447,7 @@ function Actor({
               <meshStandardMaterial color={boss ? "#9b977a" : "#43565a"} />
             </mesh>
             {kind === 'serpent' && <group>{[-2, -1, 0, 1, 2].map(i => <group key={i} position={[i * 0.24, 1.92 - Math.abs(i) * 0.06, -0.13]}><mesh rotation={[0, 0, -i * 0.22]}><cylinderGeometry args={[0.095, 0.055, 0.7, 6]} /><meshStandardMaterial color="#c3b775" metalness={0.45} /></mesh><mesh position={[0, 0.36, 0.08]} scale={[1.3, 1, 0.6]}><sphereGeometry args={[0.14, 8, 6]} /><meshStandardMaterial color="#a6c092" /></mesh><mesh position={[0, 0.36, 0.17]}><boxGeometry args={[0.14, 0.025, 0.02]} /><meshBasicMaterial color="#d9ffe6" /></mesh></group>)}</group>}
-            {['monk', 'abbot'].includes(kind ?? '') && <group><mesh position={[0, 1.4, 0.16]} rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.23, 0.055, 6, 14]} /><meshStandardMaterial color="#decaa1" /></mesh><Block position={[-0.1, 1.05, 0.28]} size={[0.23, 0.72, 0.08]} color="#c2a169" rotation={[0, 0, -0.2]} /></group>}
+            {!namedBoss && ['monk', 'abbot'].includes(kind ?? '') && <group><mesh position={[0, 1.4, 0.16]} rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.23, 0.055, 6, 14]} /><meshStandardMaterial color="#decaa1" /></mesh><Block position={[-0.1, 1.05, 0.28]} size={[0.23, 0.72, 0.08]} color="#c2a169" rotation={[0, 0, -0.2]} /></group>}
             {kind === 'reaver' && <mesh position={[0, 1.76, 0]}><coneGeometry args={[0.48, 0.28, 10]} /><meshStandardMaterial color="#ac9e70" /></mesh>}
             {kind === 'regent' && <group><mesh position={[0, 1.85, 0]}><cylinderGeometry args={[0.18, 0.29, 0.3, 8]} /><meshStandardMaterial color="#cca958" metalness={0.5} /></mesh>{[-1, 0, 1].map(i => <mesh key={i} position={[i * 0.18, 2.07 + (i === 0 ? 0.13 : 0), 0]}><coneGeometry args={[0.075, 0.44, 5]} /><meshStandardMaterial color="#ddbd75" metalness={0.45} /></mesh>)}<Block position={[0, 1.03, -0.31]} size={[0.6, 0.73, 0.06]} color="#9c514d" /></group>}
             <Block
@@ -1463,6 +1473,7 @@ function Actor({
         )
         )}
         <group ref={leftArm} position={[-0.36, 1.24, 0]}>
+          {kind === 'captain' && <group position={[0, -0.46, 0.07]} rotation={[Math.PI / 2, 0, 0]}><Katana /></group>}
           <Pole
             position={[0, -0.24, 0]}
             radius={0.105}
@@ -1487,8 +1498,11 @@ function Actor({
           </mesh>
           {player && <group ref={medicine} visible={false} position={[0, -0.52, 0.09]} rotation={[Math.PI / 2, 0, 0]}><mesh><cylinderGeometry args={[0.09, 0.12, 0.28, 10]} /><meshStandardMaterial color="#76cbb2" metalness={0.2} roughness={0.2} emissive="#255346" /></mesh><mesh position={[0, 0.2, 0]}><cylinderGeometry args={[0.045, 0.055, 0.13, 8]} /><meshStandardMaterial color="#dcc698" /></mesh></group>}
           <group ref={heldWeapon} position={[0, -0.46, 0.07]} rotation={[Math.PI / 2, 0, 0]}>
+            {player && <WeaponView stateRef={stateRef} />}
+            {(shioriBoss || kind === 'captain') && <Katana />}
+            {namedBoss && <BossWeapon kind={kind as EnemyKind} />}
             {player && <mesh ref={chargeGlow} position={[0, 1.05, 0]} visible={false}><sphereGeometry args={[0.14, 12, 8]} /><meshBasicMaterial color="#ffe5a8" transparent opacity={0.6} depthWrite={false} /></mesh>}
-            {kind !== 'nana' && (
+            {!player && !namedBoss && kind !== 'nana' && (
 <Pole
               position={[0, 0.45, 0]}
               radius={player ? 0.035 : 0.045}
@@ -1496,7 +1510,7 @@ function Actor({
               color={guard ? "#a38a62" : "#b6c3bf"}
             />
 )}
-            {(player || (boss && !guest && !lancer && kind !== 'warden')) && (
+            {(boss && !guest && !lancer && kind !== 'warden') && (
               <mesh position={[0, 0.54, 0]} castShadow>
                 <coneGeometry
                   args={[boss ? 0.28 : 0.115, boss ? 1.3 : 0.95, 8]}
@@ -1508,11 +1522,11 @@ function Actor({
                 />
               </mesh>
             )}
-            {kind === 'elegist' && <mesh position={[0, 1.6, 0]}><boxGeometry args={[0.48, 0.68, 0.48]} /><meshStandardMaterial color="#bfb289" emissive="#846e3d" emissiveIntensity={0.7} /></mesh>}
-            {kind === 'warden' && <Block position={[0, 1.2, 0]} size={[0.47, 1.1, 0.12]} color="#a7a17a" />}
+            {!namedBoss && kind === 'elegist' && <mesh position={[0, 1.6, 0]}><boxGeometry args={[0.48, 0.68, 0.48]} /><meshStandardMaterial color="#bfb289" emissive="#846e3d" emissiveIntensity={0.7} /></mesh>}
+            {!namedBoss && kind === 'warden' && <Block position={[0, 1.2, 0]} size={[0.47, 1.1, 0.12]} color="#a7a17a" />}
             {kind === 'reaver' && <mesh position={[0.19, 1.05, 0]} rotation={[0, 0, -0.6]}><torusGeometry args={[0.3, 0.05, 6, 12, Math.PI]} /><meshStandardMaterial color="#c1cdc3" metalness={0.6} /></mesh>}
-            {['monk', 'abbot'].includes(kind ?? '') && <mesh position={[0, 1.9, 0]}><torusGeometry args={[0.2, 0.04, 6, 12]} /><meshStandardMaterial color="#d6ba7c" metalness={0.6} /></mesh>}
-            {guest && <GuestWeapon kind={kind as "nana" | "azi"} />}
+            {!namedBoss && ['monk', 'abbot'].includes(kind ?? '') && <mesh position={[0, 1.9, 0]}><torusGeometry args={[0.2, 0.04, 6, 12]} /><meshStandardMaterial color="#d6ba7c" metalness={0.6} /></mesh>}
+            {!namedBoss && guest && <GuestWeapon kind={kind as "nana" | "azi"} />}
             {lancer && <group position={[0, 1.8, 0]}><mesh castShadow><coneGeometry args={[0.12, 0.6, 4]} /><meshStandardMaterial color={kind === 'regent' ? '#e5bd67' : '#cbd4cf'} metalness={0.65} roughness={0.32} /></mesh><Block position={[0, -0.25, 0]} size={[0.35, 0.045, 0.06]} color="#b9a16b" /></group>}
             {kind === "duelist" && (
               <Block
@@ -1622,71 +1636,6 @@ function Weather({ stateRef }: { stateRef: StateRef }) {
         depthWrite={false}
       />
     </lineSegments>
-  );
-}
-
-function HitEffects({ stateRef }: { stateRef: StateRef }) {
-  const groups = useRef<(THREE.Group | null)[]>([]);
-  useFrame(() => {
-    const { effects } = stateRef.current;
-    groups.current.forEach((g, index) => {
-      if (!g) return;
-      const effect = effects[index];
-      g.visible = !!effect;
-      if (!effect) return;
-      g.position.set(effect.x, effect.y + 0.9, effect.z);
-      g.rotation.set(0, stateRef.current.time * 4, Math.PI / 4);
-      const progress = Math.max(0, 1 - effect.life);
-      const big = effect.kind === "parry" || effect.kind === "death";
-      g.scale.setScalar((0.4 + progress * 2) * (big ? 1.5 : 0.8));
-      g.children.forEach((child) => {
-        const mat = (child as THREE.Mesh).material as THREE.MeshBasicMaterial;
-        mat.color.set(
-          effect.kind === "parry"
-            ? "#fff0ac"
-            : effect.kind === "block"
-              ? "#9edaff"
-            : effect.kind === "heal"
-              ? "#8df6ce"
-              : effect.kind === "hit"
-                ? "#ffbb89"
-                : "#dbe7ff",
-        );
-        mat.opacity = Math.min(1, effect.life * 2);
-      });
-    });
-  });
-  return (
-    <group>
-      {Array.from({ length: 20 }, (_, i) => (
-        <group
-          key={i}
-          ref={(g) => {
-            groups.current[i] = g;
-          }}
-          visible={false}
-        >
-          {Array.from({ length: 6 }, (__, j) => (
-            <mesh
-              key={j}
-              position={[
-                Math.sin(j * 2.4) * 0.28,
-                Math.cos(j * 2.4) * 0.28,
-                Math.sin(j * 1.3) * 0.2,
-              ]}
-              rotation={[j * 0.6, 0, j]}
-            >
-              <boxGeometry args={[0.024, 0.25, 0.025]} />
-              <meshBasicMaterial
-                color="#ffe1ab"
-                transparent
-                depthWrite={false}
-              />
-            </mesh>
-          ))}
-        </group>
-      ))}
-    </group>
   );
 }
 
@@ -1847,7 +1796,8 @@ function Scene({ stateRef, cameraControl, onReady, onError, companionRef }: Worl
         <Actor key={e.id} stateRef={stateRef} enemyId={e.id} />
       ))}
       <Weather stateRef={stateRef} />
-      <HitEffects stateRef={stateRef} />
+      <RainEffects stateRef={stateRef} />
+      <BossSignatures stateRef={stateRef} />
       <CameraRig stateRef={stateRef} cameraControl={cameraControl} />
     </>
   );

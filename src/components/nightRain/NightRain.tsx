@@ -4,9 +4,11 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import GameShareButton from '@/app/game/GameShareButton';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { escapeStuck, continueExploring, clearHeldActions, createGame, enemyAttack, getObjective, loadGame, maxFlasks, healAmount, maxHp, maxStamina, respawn, saveGame, setPaused, startGame, stepGame, upgrade, upgradeCost, travelToLamp, chooseConversation } from './engine';
+import { escapeStuck, continueExploring, clearHeldActions, createGame, enemyAttack, getObjective, loadGame, maxFlasks, healAmount, maxHp, maxStamina, forgeWeapon, equipWeapon, canForge, respawn, saveGame, setPaused, startGame, stepGame, upgrade, upgradeCost, travelToLamp, chooseConversation } from './engine';
 import { companionName, createCompanion, guideTargets, leadTo, mainTarget, recommendedTarget, speak, stopLeading, targetLabel, updateCompanion } from './companion';
 import type { CameraControl, GameInput, GameState, PlayerSkin } from './types';
+import { WEAPONS } from './weapons';
+import { BOSS_ROSTER } from './bossRoster';
 import { LANDMARKS } from './world';
 import HavenPanel from './HavenPanel';
 import WorldMap from './WorldMap';
@@ -17,7 +19,7 @@ import styles from './nightRain.module.css';
 
 const WorldView = dynamic(() => import('./WorldView'), { ssr: false });
 const STORAGE = 'night-rain-v1';
-type Panel = 'pause' | 'map' | 'companion' | 'story' | 'journal' | null;
+type Panel = 'pause' | 'map' | 'companion' | 'story' | 'journal' | 'forge' | null;
 type GameWindow = Window & { render_game_to_text?: () => string; advanceTime?: (ms: number) => void; nightRain?: {
   getState: () => GameState; input: (action: GameInput) => void; resetCamera: () => void; save: () => void;
 } };
@@ -44,6 +46,8 @@ export default function NightRain() {
   const [ready, setReady] = useState(false); const [sceneError, setSceneError] = useState(false);
   const [sceneVersion, setSceneVersion] = useState(0); const [canResume, setCanResume] = useState(false);
   const [storageError, setStorageError] = useState(false); const [voiceStatus, setVoiceStatus] = useState('');
+  const [notice, setNotice] = useState<{ id: number; kind: 'lamp' | 'death'; label: string } | null>(null);
+  const noticeSerial = useRef(0); const noticeRef = useRef(notice); noticeRef.current = notice;
   const [restartConfirm, setRestartConfirm] = useState(false);
   const confirmRef = useRef(false); confirmRef.current = restartConfirm;
   const redraw = useCallback(() => setView(v => v + 1), []);
@@ -92,6 +96,8 @@ sprint: pad?.sprint,
     const previousEchoes = s.haven.echoes;
     const before = s.time; const previousMessage = s.messageSerial;
     stepGame(s, ms, action);
+    if (s.litLamps.length > previousLamps) setNotice({ id: ++noticeSerial.current, kind: 'lamp', label: LANDMARKS.find(l => l.id === s.checkpoint)?.label ?? '雨灯' });
+    if (stateRef.current.mode === 'dead') setNotice({ id: ++noticeSerial.current, kind: 'death', label: '雨灯仍为你守夜' });
     if (s.haven.talking) showPanel('story');
     if (Math.hypot(s.player.x - previousPosition.x, s.player.z - previousPosition.z) > 30) {
       cc.position = { ...s.player }; cc.path = []; cc.targetId = null; cc.status = 'following';
@@ -122,7 +128,7 @@ sprint: pad?.sprint,
     controls.current = devices;
     const target = window as GameWindow;
     target.nightRain = { getState: () => JSON.parse(JSON.stringify(stateRef.current)), input: action => { external.current = { ...action }; }, resetCamera, save };
-    target.render_game_to_text = () => JSON.stringify({ ...stateRef.current, journey: { chapter: stateRef.current.chapterComplete ? 2 : 1, sluices: riverSeals(stateRef.current), ferry: stateRef.current.collected.includes('ferry-winch'), complete: stateRef.current.valleyComplete }, coordinateSystem: '+x east, +z south, +y up; metres', camera: camera.current, companion: companionRef.current, panel: panelRef.current, controls: { source: devices.source, pointerLocked: devices.locked, altHeld: devices.altHeld, gamepadConnected: devices.gamepadConnected, look: devices.lookSettings } });
+    target.render_game_to_text = () => JSON.stringify({ ...stateRef.current, presentation: noticeRef.current ? { kind: noticeRef.current.kind, label: noticeRef.current.label } : null, journey: { chapter: stateRef.current.chapterComplete ? 2 : 1, sluices: riverSeals(stateRef.current), ferry: stateRef.current.collected.includes('ferry-winch'), complete: stateRef.current.valleyComplete }, coordinateSystem: '+x east, +z south, +y up; metres', camera: camera.current, companion: companionRef.current, panel: panelRef.current, controls: { source: devices.source, pointerLocked: devices.locked, altHeld: devices.altHeld, gamepadConnected: devices.gamepadConnected, look: devices.lookSettings } });
     target.advanceTime = ms => {
       if (!Number.isFinite(ms) || ms < 0) return;
       manualUntil.current = performance.now() + 1200;
@@ -180,6 +186,11 @@ sprint: pad?.sprint,
     };
   }, [cancelVoice, clearInput, fullscreen, queue, redraw, resetCamera, save, showPanel, tick]);
   useEffect(() => {
+    if (!notice) return undefined;
+    const timeout = window.setTimeout(() => setNotice(null), notice.kind === 'death' ? 3100 : 3300);
+    return () => window.clearTimeout(timeout);
+  }, [notice]);
+  useEffect(() => {
     const dialog = root.current?.querySelector<HTMLElement>('[role="alertdialog"]') ?? root.current?.querySelector<HTMLElement>('[role="dialog"]');
     dialog?.querySelector<HTMLElement>('button:not(:disabled)')?.focus();
   }, [panel, restartConfirm]);
@@ -197,6 +208,7 @@ sprint: pad?.sprint,
     const old = companionRef.current; const chosenSkin = stateRef.current.playerSkin;
     stateRef.current = resume && saved.current ? saved.current : createGame();
     stateRef.current.playerSkin = chosenSkin;
+    setNotice(null);
     startGame(stateRef.current); stateRef.current.paused = false;
     companionRef.current = { ...createCompanion(stateRef.current), enabled: old.enabled, skin: old.skin, voice: old.voice };
     lastVoice.current = 0; resetCamera(); confirmRef.current = false; setRestartConfirm(false); showPanel(null);
@@ -284,7 +296,10 @@ onPointerCancel={() => { drag.current = null; }}
           {locked && <div className={styles.locked}>◎ {locked.name} {locked.action === 'windup' ? `· ${enemyAttack(locked).name}` : locked.action === 'stagger' ? (c.enabled ? '· 破架！靠近轻击处决' : '· 破架') : ''}</div>}
           {threat && <div className={styles.combatCue}>{enemyAttack(threat).parryable ? `现在弹反 · ${usingPad ? 'LB' : 'F'}` : `红色横扫，闪开 · ${usingPad ? 'B' : 'Shift'}`}</div>}
           {g.messageTime > 0 && g.messageKind !== 'hint' && <p className={`${styles.message} ${g.messageKind === 'lore' ? styles.inscription : styles.discovery}`} role="status" data-narrative={g.messageKind}>{g.message}</p>}
-          {g.prompt && g.player.action === 'idle' && g.player.jumpHeight === 0 && <div className={styles.interact}><button onClick={() => queue({ interact: true })}><kbd>{usingPad ? 'Y' : 'E'}</kbd> {g.prompt}</button>{LANDMARKS.some(l => l.id === g.nearbyId && l.kind === 'rest' && g.litLamps.includes(l.id)) && <button disabled={g.level >= 15} onClick={() => { upgrade(g); save(); redraw(); }}>{g.level >= 15 ? '行装 +15 · 已整备完毕' : `${usingPad ? '十字键↑ · ' : ''}强化装备 · ${upgradeCost(g)} 钱`}</button>}</div>}
+          {g.prompt && g.player.action === 'idle' && g.player.jumpHeight === 0 && (
+<div className={styles.interact}><button onClick={() => queue({ interact: true })}><kbd>{usingPad ? 'Y' : 'E'}</kbd> {g.prompt}</button>{LANDMARKS.some(l => l.id === g.nearbyId && l.kind === 'rest' && g.litLamps.includes(l.id)) && <button disabled={g.level >= 15} onClick={() => { upgrade(g); save(); redraw(); }}>{g.level >= 15 ? '行装 +15 · 已整备完毕' : `${usingPad ? '十字键↑ · ' : ''}强化装备 · ${upgradeCost(g)} 钱`}</button>}
+            {canForge(g) && <button onClick={() => showPanel('forge')}>锻造武器 · {WEAPONS[g.weapon].name}</button>}</div>
+)}
           {c.enabled && c.subtitle && g.time < c.until && <div className={styles.subtitle} role="status"><b>{companionName(c.skin)}</b><p>{c.subtitle}</p></div>}
           {c.enabled && c.targetId && <button className={styles.guideStatus} onClick={focusGuide}>{c.status === 'waiting' ? '精灵在等你' : c.status === 'danger' ? '先应对敌人' : c.status === 'arrived' ? '到达啦' : '跟随精灵'} · {targetLabel(c.targetId)} · 看向精灵</button>}
           <div className={styles.mobile}>
@@ -294,15 +309,28 @@ onPointerCancel={() => { drag.current = null; }}
           {c.enabled && <div className={styles.keyHelp}>{usingPad ? '左摇杆移动 · 右摇杆视角 · RB / RT 攻击 · LB 轻按弹反 / 按住防御 · A 跳跃 · B 轻按闪避 / 按住跑 · R3 锁定 · Menu 暂停' : `${controls.current?.locked ? '鼠标转视角 · 按住 Alt 显示光标' : controls.current?.altHeld ? '松开 Alt 返回视角控制' : controls.current?.lockMessage || '点击画面捕获鼠标'} · WASD 移动 · 左 / 右键攻击 · 空格跳跃 · Shift 轻按闪避 / 按住跑`}</div>}
         </>
 )}
-        {boss && !panel && <div className={styles.boss}><p>{boss.name}<span>{boss.kind === 'elegist' ? boss.phase === 2 ? '抹名余烬' : '末灯守簿' : boss.kind === 'serpent' ? boss.phase === 2 ? '千流逆行' : '沉殿守愿' : boss.kind === 'warden' ? boss.phase === 2 ? '沉舟起浪' : '缆锁西流' : boss.kind === 'abbot' ? boss.phase === 2 ? '无声回杖' : '山寺听澜' : boss.kind === 'regent' ? boss.phase === 2 ? '百灯尽燃' : '长夜守灯' : boss.kind === 'captain' ? boss.phase === 2 ? '铜印碎甲' : '象门守印' : boss.kind === 'nana' ? boss.phase === 2 ? '七潮叠浪' : '潮声初起' : boss.kind === 'azi' ? boss.phase === 2 ? '夜曲 · 变奏' : '夜曲 · 序拍' : boss.phase === 2 ? '第二式 · 铁伞破裂' : '守街第一式'}</span></p><div className={styles.meter}><i style={{ width: `${(boss.hp / boss.maxHp) * 100}%` }} /></div><div className={`${styles.meter} ${styles.posture}`}><i style={{ width: `${(boss.posture / boss.maxPosture) * 100}%` }} /></div></div>}
+        {boss && !panel && <div className={styles.boss}><p>{boss.name}<span>{BOSS_ROSTER[boss.kind] ? boss.phase === 2 ? BOSS_ROSTER[boss.kind]!.second : BOSS_ROSTER[boss.kind]!.first : boss.kind === 'nana' ? boss.phase === 2 ? '七潮叠浪' : '潮声初起' : boss.phase === 2 ? '夜曲 · 变奏' : '夜曲 · 序拍'}</span></p><div className={styles.meter}><i style={{ width: `${(boss.hp / boss.maxHp) * 100}%` }} /></div><div className={`${styles.meter} ${styles.posture}`}><i style={{ width: `${(boss.posture / boss.maxPosture) * 100}%` }} /></div></div>}
       </>
 )}
       {panel && g.mode === 'playing' && (
-<div className={styles.scrim}><section className={`${styles.panel} ${panel === 'map' ? styles.mapPanel : ''}`} role="dialog" aria-modal="true" aria-label={panel === 'story' ? '与归人交谈' : panel === 'journal' ? '归灯手记' : panel === 'map' ? '旧城与雾河地图' : panel === 'companion' ? '与精灵交谈' : '旅程暂停'}>
+<div className={styles.scrim}><section className={`${styles.panel} ${panel === 'map' ? styles.mapPanel : ''}`} role="dialog" aria-modal="true" aria-label={panel === 'forge' ? '雨灯锻造' : panel === 'story' ? '与归人交谈' : panel === 'journal' ? '归灯手记' : panel === 'map' ? '旧城与雾河地图' : panel === 'companion' ? '与精灵交谈' : '旅程暂停'}>
         <button className={styles.close} onClick={() => showPanel(null)} aria-label="关闭">×</button>
         <p className={styles.eyebrow}>雨暂时停在这一刻</p>
-        {panel !== 'story' && <h2>{panel === 'journal' ? '归灯手记' : panel === 'map' ? '旧城与雾河地图' : panel === 'companion' ? '我陪你慢慢找' : '歇一会儿'}</h2>}
-        {panel === 'story' || panel === 'journal' ? <><HavenPanel state={g} mode={panel} guide={id => { if (!c.enabled) c.enabled = true; guideTo(id); }} choose={choice => { if (chooseConversation(g, choice)) { save(); redraw(); if (!g.haven.talking) showPanel(null); } }} /><button onClick={() => showPanel(panel === 'story' ? 'journal' : null)}>{panel === 'story' ? '翻开归灯手记' : '继续旅程'}</button></> : panel === 'map' ? (
+        {panel !== 'story' && <h2>{panel === 'forge' ? '收伞，试一把新刃' : panel === 'journal' ? '归灯手记' : panel === 'map' ? '旧城与雾河地图' : panel === 'companion' ? '我陪你慢慢找' : '歇一会儿'}</h2>}
+        {panel === 'forge' ? (
+<div className={styles.forge}>
+          <p>在灯火旁锻造，雨夜里选择自己的打法。武器和锻造进度会永久保留。</p>
+          <p className={styles.forgeBalance}>夜市钱 {g.rice} · 当前握持 {WEAPONS[g.weapon].name}</p>
+          {Object.entries(WEAPONS).map(([id, w]) => (
+<div key={id} className={styles.forgeWeapon}>
+            <h3>{w.name}{g.weapon === id ? ' · 已握持' : ''}</h3><p>{w.description}</p>
+            <small>轻击 {24 + w.lightDamage} · 重击 {41 + w.heavyDamage} · 轻击耗力 {17 + w.stamina}{w.tier === 2 ? ' · 击败栞栞后解锁' : ''}</small>
+            {w.tier <= g.weaponLevel ? <button disabled={g.weapon === id} onClick={() => { equipWeapon(g, id as GameState['weapon']); save(); redraw(); }}>握持{w.name}</button> : <button disabled={w.tier !== g.weaponLevel + 1 || g.rice < w.cost || (w.tier === 2 && !g.bossDefeated)} onClick={() => { forgeWeapon(g); save(); redraw(); }}>锻造 · {w.cost} 夜市钱</button>}
+          </div>
+))}
+          <button className={styles.primary} onClick={() => showPanel(null)}>携刃出发</button>
+        </div>
+) : panel === 'story' || panel === 'journal' ? <><HavenPanel state={g} mode={panel} guide={id => { if (!c.enabled) c.enabled = true; guideTo(id); }} choose={choice => { if (chooseConversation(g, choice)) { save(); redraw(); if (!g.haven.talking) showPanel(null); } }} /><button onClick={() => showPanel(panel === 'story' ? 'journal' : null)}>{panel === 'story' ? '翻开归灯手记' : '继续旅程'}</button></> : panel === 'map' ? (
 <>
           <p>{getObjective(g)}</p>
           {g.chapterComplete && <p className={styles.mapLegend}>西岸水闸 {g.collected.includes('mill-sluice') ? '已开' : '未开'} · 东岸水闸 {g.collected.includes('monastery-sluice') ? '已开' : '未开'} · 渡船 {g.collected.includes('ferry-winch') ? '已恢复' : '待修缆'}</p>}
@@ -354,7 +382,8 @@ onClick={() => {
 )}
       </section></div>
 )}
-      {(g.mode === 'dead' || g.mode === 'ending') && (
+      {notice && !panel && <div key={notice.id} className={`${styles.soulNotice} ${notice.kind === 'death' ? styles.deathNotice : ''}`} role="status" data-soul-notice={notice.kind}><small>{notice.kind === 'death' ? 'YOU DIED' : 'BONFIRE LIT'}</small><strong>{notice.kind === 'death' ? '身 死' : '雨 灯 初 燃'}</strong><span>{notice.label}</span></div>}
+      {((g.mode === 'dead' && notice?.kind !== 'death') || g.mode === 'ending') && (
 <div className={styles.scrim}><section className={styles.panel} data-game-menu>
         <p className={styles.eyebrow}>{g.mode === 'dead' ? '雨灯未熄' : g.haven.ending ? '归灯暗线 · 灯下无名' : g.valleyComplete ? '第二关完成 · 雾河回响' : g.chapterComplete ? '第一关完成 · 长夜归灯' : '旅居手记 · 夜市小憩'}</p>
         <h2>{g.mode === 'dead' ? '再走一次就好' : g.haven.ending ? g.haven.ending === 'remember' ? '庭灯有名，归路有声' : '愿灯远行，空椅留温' : g.valleyComplete ? '钟声越山，愿灯归水' : g.chapterComplete ? '整座城，等到了钟声' : '吃饱了，继续北行'}</h2>

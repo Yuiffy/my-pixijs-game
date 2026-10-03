@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import fs from 'node:fs';
 import { loadTypescriptModule as load } from './helpers/load-typescript-module.mjs';
+import { expectedLegacyEnemies } from './helpers/night-rain-experience.mjs';
 import { walkTo } from './helpers/night-rain-pilot.mjs';
 import { HAVEN_HUB_ROUTE, HAVEN_SCRIBE_ROUTE, HAVEN_BOATWRIGHT_ROUTE, HAVEN_PUZZLE_ROUTE, HAVEN_RETURN_ROUTE } from './helpers/night-rain-haven-pilot.mjs';
 
@@ -38,10 +39,10 @@ const route = (s, targets) => {
 
 test('authentic v6 save migrates with all previous progress and six new living enemies', () => {
   const before = JSON.parse(fixture); const s = fresh();
-  assert.equal(s.worldVersion, 7); assert.deepEqual(s.player, before.player);
-  assert.deepEqual(s.enemies.slice(0, before.enemies.length), before.enemies);
+  assert.equal(s.worldVersion, 8); assert.deepEqual(s.player, before.player);
+  assert.deepEqual(s.enemies.slice(0, before.enemies.length), expectedLegacyEnemies(before.enemies));
   for (const key of ['rice', 'bankedRice', 'level', 'litLamps', 'checkpoint', 'collected', 'chapterGates', 'valleyGates', 'valleyComplete', 'defeatedGuests', 'deaths']) assert.deepEqual(s[key], before[key], key);
-  assert.equal(s.enemies.length - before.enemies.length, 6);
+  assert.equal(s.enemies.length - before.enemies.length, 8);
   assert.ok(s.enemies.slice(-6).every(e => e.hp === e.maxHp && !e.aggro));
   assert.deepEqual(s.haven, haven.freshHaven());
 });

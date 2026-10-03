@@ -35,7 +35,7 @@ export type GameState = {
   player: Player; enemies: Enemy[]; effects: Effect[]; nextEffectId: number;
   time: number; deaths: number; kills: number; parries: number; executions: number;
   rice: number; bankedRice: number; level: number; charm: boolean; shortcut: boolean;
-  worldVersion: 7; haven: HavenState; templeGate: boolean; flaskUpgrade: boolean; litLamps: string[];
+  worldVersion: 8; weaponLevel: number; weapon: 'umbrella' | 'ironUmbrella' | 'katana'; haven: HavenState; templeGate: boolean; flaskUpgrade: boolean; litLamps: string[];
   chapterGates: string[]; chapterComplete: boolean; valleyGates: string[]; valleyComplete: boolean;
   playerSkin: PlayerSkin; harborGate: boolean; defeatedGuests: string[];
   checkpoint: 'courtyard' | 'room' | 'lower-lamp' | 'archive-lamp' | 'royal-lamp' | 'village-lamp' | 'monastery-lamp' | 'confluence-lamp' | 'haven-lamp'; bossDefeated: boolean; collected: string[];

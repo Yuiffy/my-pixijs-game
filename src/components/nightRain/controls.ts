@@ -1,6 +1,6 @@
 import type { CameraControl, GameInput, GameState } from './types';
 
-type Panel = 'pause' | 'map' | 'companion' | 'story' | 'journal' | null;
+type Panel = 'pause' | 'map' | 'companion' | 'story' | 'journal' | 'forge' | null;
 type ControlHost = {
   root: HTMLElement;
   camera: { current: CameraControl };

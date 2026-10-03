@@ -106,7 +106,7 @@ export const VALLEY_ENEMIES: (Vec3 & { id: string; kind: EnemyKind; name: string
   { id: 'salt-monk', kind: 'monk', name: '旧仓行脚僧', x: -239, y: 2, z: -347, facing: 1.57 },
   { id: 'mill-bank-reaver', kind: 'reaver', name: '水车收网客', x: -204, y: 2, z: -377, facing: 0 },
   { id: 'mill-lancer', kind: 'lancer', name: '沉舟守院人', x: -211, y: 2, z: -391, facing: 0 },
-  { id: 'drowned-warden', kind: 'warden', name: '沉舟摆渡 · 缚流', x: -202, y: 2, z: -404, facing: 0 },
+  { id: 'drowned-warden', kind: 'warden', name: '花礼 · 沉舟花渡', x: -202, y: 2, z: -404, facing: 0 },
   { id: 'aqueduct-reaver', kind: 'reaver', name: '白沫钩镰客', x: -202, y: 8, z: -443, facing: 0 },
   { id: 'aqueduct-monk', kind: 'monk', name: '引水桥行僧', x: -176, y: 8, z: -444, facing: -1.57 },
   { id: 'mountain-monk', kind: 'monk', name: '竹影拦路僧', x: -96, y: 2, z: -337, facing: -1.57 },
@@ -114,11 +114,11 @@ export const VALLEY_ENEMIES: (Vec3 & { id: string; kind: EnemyKind; name: string
   { id: 'garden-monk', kind: 'monk', name: '灵露守竹人', x: -67, y: 10, z: -375, facing: -1.57 },
   { id: 'monastery-lancer', kind: 'lancer', name: '百阶执枪僧', x: -78, y: 14.8, z: -395, facing: 0 },
   { id: 'monastery-monk', kind: 'monk', name: '山寺迎客僧', x: -79, y: 18, z: -408, facing: 0 },
-  { id: 'silent-abbot', kind: 'abbot', name: '无声住持 · 听澜', x: -96, y: 18, z: -417, facing: 1.57 },
+  { id: 'silent-abbot', kind: 'abbot', name: '瑞娅 · 霜钟听澜', x: -96, y: 18, z: -417, facing: 1.57 },
   { id: 'east-monk', kind: 'monk', name: '流经行脚僧', x: -119, y: 8, z: -449, facing: 1.57 },
   { id: 'reed-reaver', kind: 'reaver', name: '芦苇藏钩客', x: -147, y: 2, z: -390, facing: Math.PI },
   { id: 'bridge-monk', kind: 'monk', name: '锁桥护灯僧', x: -151, y: 8, z: -487, facing: 0 },
-  { id: 'river-serpent', kind: 'serpent', name: '那伽守愿 · 千流', x: -150, y: 8, z: -511, facing: 0 },
+  { id: 'river-serpent', kind: 'serpent', name: '悠亚 · 星河守愿', x: -150, y: 8, z: -511, facing: 0 },
 ];
 
 const box = (id: string, position: Triple, size: Triple, color: string): Solid => ({ id, position, size, color });
@@ -144,7 +144,7 @@ export const VALLEY_HOUSES: House[] = [
 
 export const VALLEY_LORE: Record<string, [string, string]> = {
   'valley-note': ['钟送归城人，水载未归灯。山河两岸，终汇一流。', '第二关「雾河回响」。沿下山阶到渡村；西边水路、东边山道均可先走。两岸各有一座水闸，开启后才能进入河心神殿。'],
-  'village-note': ['渡船缆断在旧水车，归城的灯却还亮着。', '西行穿过盐市，击败沉舟摆渡后修好系缆，渡船就能往返渡村、水车院与第一关的摆渡庵。东边竹关背后也有一扇回村近门。'],
+  'village-note': ['渡船缆断在旧水车，归城的灯却还亮着。', '西行穿过盐市，击败花礼后修好系缆，渡船就能往返渡村、水车院与第一关的摆渡庵。东边竹关背后也有一扇回村近门。'],
   'bamboo-note': ['采茶人走后阶，行脚人循钟上山。', '西边的采茶栈桥下行能开回渡村的近路；向北登百阶是无声寺。东侧竹园藏着增强回血量的灵竹露。'],
-  'river-note': ['双流归一，锁不认铜印，只认两岸的水声。', '西岸水车院与东岸无声寺的水闸都要亲手转动。汇灯台南边芦苇径可返回渡村，北面是那伽守愿。首领的红色扫尾用跳跃或闪避。'],
+  'river-note': ['双流归一，锁不认铜印，只认两岸的水声。', '西岸水车院与东岸无声寺的水闸都要亲手转动。汇灯台南边芦苇径可返回渡村，北面是悠亚守着的那伽沉殿。星杖直刺可以弹反，红色环流用跳跃或闪避。'],
 };

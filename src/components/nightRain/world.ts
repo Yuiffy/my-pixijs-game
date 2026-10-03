@@ -110,13 +110,17 @@ export const LANDMARKS: Landmark[] = [
   ...HAVEN_LANDMARKS,
 ];
 
+export const AMBUSH_ENEMIES: (Vec3 & { id: string; kind: EnemyKind; name: string; facing: number })[] = [
+  { id: 'alley-ambusher', kind: 'prowler', name: '箱后伏伞客', x: -17, y: 0, z: -0.4, facing: 0 },
+  { id: 'market-ambusher', kind: 'duelist', name: '柱后拔刀客', x: 11, y: 0, z: -46, facing: 0 },
+];
 export const ENEMY_SPAWNS: (Vec3 & { id: string; kind: EnemyKind; name: string; facing: number })[] = [
-  { id: 'courtyard-prowler', kind: 'prowler', name: '雨巷游荡者', x: -4, y: 0, z: 2, facing: 0 },
+  { id: 'courtyard-prowler', kind: 'prowler', name: '雨巷游荡者', x: -6, y: 0, z: 0, facing: 0 },
   { id: 'alley-guard', kind: 'guard', name: '守巷棍客', x: -12, y: 0, z: -3, facing: 0.8 },
   { id: 'stair-prowler', kind: 'prowler', name: '高阶伏兵', x: -15.5, y: 3, z: -13, facing: 0 },
   { id: 'roof-duelist', kind: 'duelist', name: '屋脊刀客', x: -5, y: 6, z: -22.5, facing: -1.57 },
   { id: 'canal-guard', kind: 'guard', name: '侧廊看守', x: 12, y: 0, z: -22, facing: Math.PI },
-  { id: 'market-boss', kind: 'boss', name: '封街人 · 铁伞', x: 4, y: 0, z: -41, facing: 0 },
+  { id: 'market-boss', kind: 'boss', name: '栞栞 · 雨切守街', x: 4, y: 0, z: -41, facing: 0 },
   { id: 'temple-duelist', kind: 'duelist', name: '守钟客', x: -31.5, y: 6, z: -27, facing: Math.PI / 2 },
   { id: 'temple-prowler', kind: 'prowler', name: '石阶拾灯人', x: -32, y: 3.6, z: -18, facing: Math.PI },
   { id: 'harbor-prowler', kind: 'prowler', name: '提灯收网人', x: 38, y: 0, z: -29, facing: Math.PI / 2 },
@@ -127,6 +131,7 @@ export const ENEMY_SPAWNS: (Vec3 & { id: string; kind: EnemyKind; name: string; 
   ...CHAPTER_ENEMIES,
   ...VALLEY_ENEMIES,
   ...HAVEN_ENEMIES,
+  ...AMBUSH_ENEMIES,
 ];
 
 export const SPAWN: Vec3 = { x: 1.8, y: 6, z: 15.5 };
