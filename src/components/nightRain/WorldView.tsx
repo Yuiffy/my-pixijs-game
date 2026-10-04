@@ -3,7 +3,7 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { memo, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import * as THREE from "three";
-import type { CameraControl, EnemyKind, GameState, Surface } from "./types";
+import type { CameraControl, Enemy, EnemyKind, GameState, Surface } from "./types";
 import { enemyAttack, enemyMotion, enemyTell } from "./enemyCombat";
 import EnemyStrike, { EnemyWeaponTell } from "./EnemyStrike";
 import { HOUSES, STRUCTURES, houseParts, architectureIntervals, type House } from './architecture';
@@ -19,6 +19,7 @@ import { createStoneTexture } from './stoneTexture';
 import CompanionView from './CompanionView';
 import CombatTrail from './CombatTrail';
 import PlayerActor from './PlayerActor';
+import { characterAppearance, type CharacterAppearance } from './characterAppearance';
 import RainEffects, { ShrineWisps } from './RainEffects';
 import BossSignatures from './BossSignatures';
 import BossStyle, { BossWeapon } from './BossStyle';
@@ -54,6 +55,12 @@ type WorldProps = {
   onError?: (message: string) => void;
   companionRef?: MutableRefObject<Companion>;
 };
+
+/** The portrait camera and world actor share the same visual body size. */
+export function enemyModelScale({ id, kind }: Pick<Enemy, 'id' | 'kind'>) {
+  const giant = giantScale(id);
+  return giant > 1 ? giant : BOSS_ROSTER[kind] ? 1.22 : kind === 'nana' ? 1.5 : kind === 'prowler' ? 0.94 : 1.05;
+}
 
 const COLORS = {
   stone: "#4c686b",
@@ -1147,10 +1154,11 @@ function LegacyActor({
   const shioriBoss = kind === "boss";
   const guest = kind === "nana" || kind === "azi" || !!namedBoss;
   const player = kind === "player";
+  const characterPalette: CharacterAppearance | null = player ? PLAYER_SKINS[appearance] : namedBoss?.character ? characterAppearance(namedBoss.character) : kind === 'nana' || kind === 'azi' ? characterAppearance(kind) : null;
   const guard = kind === "guard";
   const role = enemyId ? enemyRole({ id: enemyId, kind: kind as EnemyKind }) : null;
   const ranged = role === 'crossbow' || role === 'slinger';
-  const size = enemyId && giantScale(enemyId) > 1 ? giantScale(enemyId) : namedBoss ? 1.22 : boss ? 1.5 : kind === "prowler" ? 0.94 : 1.05;
+  const size = enemyId ? enemyModelScale({ id: enemyId, kind: kind as EnemyKind }) : 1.05;
   const [armor, setArmor] = useState(stateRef.current.gear.armor);
   const mealClock = useRef(0);
   const coat = player
@@ -1162,7 +1170,7 @@ function LegacyActor({
         : kind === "duelist"
           ? "#933e48"
           : "#697870";
-  const skin = player || guest ? "#ead0bd" : "#b0927b";
+  const skin = characterPalette?.skin ?? (player || guest ? "#ead0bd" : "#b0927b");
   const eye = player ? PLAYER_SKINS[appearance].eye : namedBoss ? namedBoss.eye : guest ? "#e5b855" : "#efcda0";
   const attackShapes = useMemo(() => {
     const enemy = stateRef.current.enemies.find((e) => e.id === enemyId);
@@ -1371,12 +1379,12 @@ function LegacyActor({
             position={[0, -0.28, 0]}
             radius={0.105}
             height={0.52}
-            color={player ? appearance === "sui" ? "#c7b7ce" : appearance === "nagisa" ? "#edcdb8" : "#f2eadd" : "#33444a"}
+            color={characterPalette?.leg ?? "#33444a"}
           />
           <Block
             position={[0, -0.65, 0.05]}
             size={[0.2, 0.25, 0.35]}
-            color="#263741"
+            color={characterPalette?.boots ?? "#263741"}
           />
         </group>
         <group ref={rightLeg} position={[0.14, 0.8, 0]}>
@@ -1384,12 +1392,12 @@ function LegacyActor({
             position={[0, -0.28, 0]}
             radius={0.105}
             height={0.52}
-            color={player ? appearance === "sui" ? "#c7b7ce" : appearance === "nagisa" ? "#edcdb8" : "#f2eadd" : "#33444a"}
+            color={characterPalette?.leg ?? "#33444a"}
           />
           <Block
             position={[0, -0.65, 0.05]}
             size={[0.2, 0.25, 0.35]}
-            color="#263741"
+            color={characterPalette?.boots ?? "#263741"}
           />
         </group>
         <mesh position={[0, 0.96, 0]} castShadow>
@@ -1401,7 +1409,7 @@ function LegacyActor({
         <Block
           position={[0, 1.08, 0.24]}
           size={[0.07, 0.52, 0.035]}
-          color={player ? PLAYER_SKINS[appearance].trim : "#be9d6f"}
+          color={characterPalette?.trim ?? "#be9d6f"}
         />
         {((!player && !guest) || (player && appearance === 'sui')) && (
 <Block
@@ -1418,7 +1426,7 @@ function LegacyActor({
         </mesh>
         {[-1, 1].map((s) => (
           <group key={s} position={[s * 0.088, 1.52, 0.225]}>
-            <mesh scale={[0.027, 0.038, 0.013]}><sphereGeometry args={[1, 12, 10]} /><meshStandardMaterial color={eye} roughness={0.32} /></mesh>
+            <mesh scale={[0.027, 0.038, 0.013]}><sphereGeometry args={[1, 12, 10]} /><meshStandardMaterial color={s === 1 ? characterPalette?.rightEye ?? eye : eye} roughness={0.32} /></mesh>
             <mesh position={[-0.007, 0.012, 0.012]}><sphereGeometry args={[0.009, 8, 6]} /><meshBasicMaterial color="#fff8e9" /></mesh>
           </group>
         ))}

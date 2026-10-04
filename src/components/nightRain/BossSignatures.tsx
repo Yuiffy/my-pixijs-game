@@ -3,7 +3,6 @@
 import { useFrame } from '@react-three/fiber';
 import { useRef, type MutableRefObject } from 'react';
 import * as THREE from 'three';
-import { BOSS_ROSTER } from './bossRoster';
 import { enemyAttack } from './enemyCombat';
 import type { GameState } from './types';
 
@@ -31,7 +30,7 @@ export default function BossSignatures({ stateRef }: { stateRef: MutableRefObjec
   });
   return (
     <group name="character-signatures">
-      <mesh ref={frost} visible={false} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[3.8, 4, 64]} /><meshBasicMaterial color={BOSS_ROSTER.abbot!.trim} transparent depthWrite={false} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} /></mesh>
+      <mesh ref={frost} visible={false} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[3.8, 4, 64]} /><meshBasicMaterial color="#b9eaff" transparent depthWrite={false} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} /></mesh>
       <group ref={guns} visible={false}>{[-1, 1].map((side, i) => <mesh key={side} ref={el => { beams.current[i] = el; }} rotation={[Math.PI / 2, 0, 0]} position={[side * 0.4, 1.65, 2.8]}><cylinderGeometry args={[0.018, 0.018, 1, 6]} /><meshBasicMaterial transparent opacity={0.2} depthWrite={false} blending={THREE.AdditiveBlending} /></mesh>)}</group>
     </group>
   );

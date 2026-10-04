@@ -1,21 +1,16 @@
 import type { PlayerSkin } from './types';
+import { DoubleSide } from 'three';
+import { CHARACTER_APPEARANCES as A } from './characterAppearance';
+import { Ball, Box, Braid, Ribbon } from './AppearancePrimitives';
 
 export const PLAYER_SKINS = {
-  sui: { name: '岁己', coat: '#73618d', hair: '#d9dbe2', eye: '#78549c', trim: '#d9baa7', boots: '#263741' },
-  shiori: { name: '栞栞', coat: '#eee7db', hair: '#f2dfb7', eye: '#78a5cb', trim: '#86704d', boots: '#61503f' },
-  nagisa: { name: '米汀', coat: '#eee7dd', hair: '#bcc9d8', eye: '#7a9bb0', trim: '#343643', boots: '#242936' },
+  sui: A.sui,
+  shiori: A.shiori,
+  nagisa: A.nagisa,
 };
-function Ball({ at, scale, color }:{ at:[number, number, number];scale:[number, number, number];color:string }) {
-  return <mesh position={at} scale={scale} castShadow><sphereGeometry args={[1, 16, 12]} /><meshStandardMaterial color={color} roughness={0.72} /></mesh>;
-}
-function Box({ at, size, color, angle = 0 }:{ at:[number, number, number];size:[number, number, number];color:string;angle?:number }) {
-  return <mesh position={at} rotation={[0, 0, angle]} castShadow><boxGeometry args={size} /><meshStandardMaterial color={color} /></mesh>;
-}
-function Ribbon({ at, color, scale = 1 }:{ at:[number, number, number];color:string;scale?:number }) {
-  return <group position={at} scale={scale}>{[-1, 1].map(n => <group key={n}><Ball at={[n * 0.07, 0, 0]} scale={[0.085, 0.055, 0.035]} color={color} /><Box at={[n * 0.055, -0.09, 0]} size={[0.045, 0.15, 0.02]} color={color} angle={n * -0.25} /></group>)}<Ball at={[0, 0, 0.015]} scale={[0.032, 0.035, 0.03]} color={color} /></group>;
-}
 /** Reference-based silhouette and clothing mounted on the common combat rig. */
-export function CharacterStyle({ skin, part = 'all' }:{ skin:Exclude<PlayerSkin, 'sui'>; part?: 'all' | 'head' | 'body' }) {
+export function CharacterStyle({ skin, part = 'all' }:{ skin:PlayerSkin; part?: 'all' | 'head' | 'body' }) {
+  if (skin === 'sui') return <SuiStyle part={part} />;
   const palette = PLAYER_SKINS[skin]; const
 shiori = skin === 'shiori';
   return (
@@ -27,9 +22,9 @@ shiori = skin === 'shiori';
     {[-2, -1, 0, 1, 2].map(n => <Ball key={n} at={[n * 0.085, 1.715 - Math.abs(n) * 0.012, 0.18]} scale={[0.073, 0.077, 0.067]} color={palette.hair} />)}
     {[-1, 1].map(n => (
 <group key={n}>
-      <Ball at={[n * 0.235, 1.22, -0.08]} scale={[0.09, 0.42, 0.10]} color={palette.hair} />
-      <Ball at={[n * 0.25, 0.96, -0.12]} scale={[0.08, 0.2, 0.08]} color={palette.hair} />
-      {shiori && <Ribbon at={[n * 0.26, 1.4, 0.02]} color="#fff7df" scale={0.65} />}
+      <Ball at={[n * 0.235, shiori ? 1.42 : 1.22, -0.08]} scale={[0.09, shiori ? 0.22 : 0.42, 0.10]} color={palette.hair} />
+      {!shiori && <Ball at={[n * 0.25, 0.96, -0.12]} scale={[0.08, 0.2, 0.08]} color={palette.hair} />}
+      {shiori && n === 1 && <><Braid x={0.26} y={1.34} z={0.02} color={palette.hair} length={5} /><Ribbon at={[0.26, 0.97, 0.055]} color="#fff7df" scale={0.65} /></>}
       <Ball at={[n * 0.145, 1.43, 0.201]} scale={[0.046, 0.018, 0.018]} color="#e7aaa0" />
     </group>
 ))}
@@ -126,6 +121,36 @@ hair = nana ? '#79544f' : '#7663bb';
       <mesh position={[0, 0.69, 0]}><cylinderGeometry args={[0.27, 0.39, 0.24, 14]} /><meshStandardMaterial color="#e4daba" /></mesh>
       <Box at={[-0.17, 1.71, 0.19]} size={[0.035, 0.11, 0.025]} color="#acb869" angle={0.7} />
     </>
+)}
+  </group>
+);
+}
+
+const WING_VERTICES = new Float32Array([0, 0, 0, 0.3, 0.24, 0, 0.22, -0.09, 0, 0, 0, 0, 0.22, -0.09, 0, 0.12, -0.045, 0, 0, 0, 0, 0.12, -0.045, 0, 0.09, -0.18, 0]);
+const WING_NORMALS = new Float32Array([0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1]);
+function SuiStyle({ part }: { part: 'all' | 'head' | 'body' }) {
+  const p = A.sui;
+  return (
+<group name="outfit-sui">
+    {part !== 'body' && (
+<group name="sui-silver-twins-cat-cap">
+      <mesh position={[0, 1.57, -0.035]} castShadow><sphereGeometry args={[0.275, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.65]} /><meshStandardMaterial color={p.hair} /></mesh>
+      {[-2, -1, 0, 1, 2].map(n => <Ball key={n} at={[n * 0.081, 1.7 - Math.abs(n) * 0.012, 0.19]} scale={[0.071, 0.075, 0.067]} color={p.hair} />)}
+      {[-1, 1].map(n => <group key={n}>{Array.from({ length: 5 }, (_, i) => <Ball key={i} at={[n * (0.25 + Math.sin(i * 1.5) * 0.018), 1.51 - i * 0.115, -0.075]} scale={[0.077, 0.09, 0.073]} color={p.hair} />)}<Ribbon at={[n * 0.25, 0.99, -0.035]} color={p.accent} scale={0.55} /><mesh position={[n * 0.185, 1.98, -0.03]} rotation={[0, 0, n * -0.16]}><coneGeometry args={[0.105, 0.27, 3]} /><meshStandardMaterial color={p.trim} /></mesh><mesh position={[n * 0.185, 1.99, 0.025]} rotation={[0, 0, n * -0.16]}><coneGeometry args={[0.065, 0.19, 3]} /><meshStandardMaterial color={p.accent} /></mesh></group>)}
+      <Ball at={[0, 1.82, -0.025]} scale={[0.3, 0.12, 0.26]} color={p.trim} />
+      <Box at={[0, 1.765, 0.22]} size={[0.35, 0.038, 0.19]} color={p.trim} />
+      <Box at={[-0.025, 1.86, 0.221]} size={[0.075, 0.015, 0.017]} color="#9fcbd5" angle={0.1} />
+      <mesh name="sui-halo" position={[-0.06, 2.2, -0.045]} rotation={[Math.PI / 2 - 0.15, 0.1, 0.1]}><torusGeometry args={[0.33, 0.009, 4, 24]} /><meshStandardMaterial color="#c9b58a" metalness={0.6} /></mesh>
+    </group>
+)}
+    {part !== 'head' && (
+<group name="sui-lilac-jacket-wings">
+      <Box at={[0, 1.12, 0.255]} size={[0.29, 0.23, 0.028]} color={p.trim} />
+      {[-1, 1].map(n => <group key={n}><Box at={[n * 0.19, 1.13, 0.242]} size={[0.12, 0.47, 0.04]} color={p.accent} angle={n * -0.12} /><Box at={[n * 0.17, 1.13, 0.27]} size={[0.024, 0.43, 0.027]} color={p.trim} angle={n * -0.12} /><mesh name={`sui-wing-${n}`} position={[n * 0.28, 1.07, -0.25]} scale={[n, 1, 1]}><bufferGeometry><bufferAttribute attach="attributes-position" args={[WING_VERTICES, 3]} /><bufferAttribute attach="attributes-normal" args={[WING_NORMALS, 3]} /></bufferGeometry><meshStandardMaterial color="#514956" side={DoubleSide} /></mesh></group>)}
+      <mesh position={[0, 0.72, 0]}><cylinderGeometry args={[0.27, 0.31, 0.19, 12]} /><meshStandardMaterial color={p.trim} /></mesh>
+      <Box at={[0, 0.83, 0.245]} size={[0.14, 0.055, 0.028]} color="#a797b6" />
+      <Box at={[0, 1.08, -0.3]} size={[0.4, 0.48, 0.22]} color="#b5a38c" /><Box at={[0, 1.06, -0.42]} size={[0.22, 0.19, 0.04]} color="#665371" />
+    </group>
 )}
   </group>
 );

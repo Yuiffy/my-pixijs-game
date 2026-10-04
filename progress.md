@@ -631,3 +631,15 @@ Original prompt: 还是有点怪怪的；眼睛做成二次元角色的眼睛，
 独立检出 D:/workspace/releases/after-hours-v2-20261004 先整合远程 b13f393 游戏馆命名更新，21 项游戏／游戏馆规则、角色运行组件 ESLint、完整 pnpm run check 后顺序 pnpm run build 均通过，保留 Next 构建 ESLint。最终 Blender 正面与三分之四侧面、开发入口冒烟三张截图和生产专项 30 张 PNG／两张保存合照全部打开目检。静音安装版 Chrome 验证桌面／390px 对话、闭眼睁眼、两种配茶和约定、640×480 合照及刷新保留、异常近看与 320px 对话；像素、状态、DOM、画布一致，实际脸部版本为 4，页面／控制台错误为空。
 
 /demos 入口保留，预览替换为新眼型的实际标题画面。证据 tmp/sui-face-v4-art-final/、tmp/sui-face-v4-final-preview/、tmp/sui-face-v4-production/，门禁／浏览器日志 tmp/sui-face-v4-release-{rules,check,build,browser}.log，细节和复现见 docs/after-hours.md。开发服务器已停止，仅移除本任务临时 tsconfig 引用；生产预览 http://127.0.0.1:3973/game/after-hours。手机验收为 Chrome 窄屏模拟。
+
+## 2026-10-05 · 雨夜寻味：角色原型校正（已验收）
+
+Original prompt: 花礼为什么是粉色的，感觉不像呢。重新对比各个角色和角色原型，修复差异很大的角色。
+
+已逐张审阅 public/images/livers 的 11 份原型图。花礼改为黑灰长发、猫耳、蓝眼、深衣与白围巾；弥月改为米金卷双尾、黑白发结、异色瞳和黑制服；瑞娅、悠亚、礼墨与露缇按帽饰／眼镜／龙角／白花冠等标志和配色重做。岁己恢复猫帽原皮橙红眼、银卷双尾、紫外套、蝠翼和金环，栞栞补单侧辫。米汀、七海与阿梓保持相符轮廓，肤色、鞋袜统一。沐石及归灯庭居民无指定外部原型，保留原创身份。校对表与边界见 docs/night-rain-character-reference.md。
+
+角色配色统一供旅人、场景和图鉴使用，图鉴相机按场景相同尺寸完整显示帽饰和双脚；瑞娅的霜环保留原蓝色读招。没有改变战斗规则、首领 ID 或存档格式。所有自测使用静音安装版 Chrome、TTS stub 与虚拟指针锁定。
+
+修改前 14 张、开发版 31 张和场景补充 8 张已打开对比；生产角色专项 31 张、地下／装备回归 24 张、通用客户端 1 张均通过 sanity／状态／DOM／画布／错误核对并逐张打开目检。双副本入口发现提示、连续往返、途中读档、暂停和地图正常；装备／锻造桌面及 320px 菜单覆盖 12 件独立 SVG 与空护符槽、更换双苇短刃／风苇披风。规则 137/137、修改源文件 ESLint、完整 check 后顺序 build 通过，保留构建 ESLint。
+
+独立验收检出合入最新远程 master cd44e14 后，再次顺序通过 137 项规则、完整 check／build；从 /demos 点击进入、继续存档和花礼图鉴三张最终生产冒烟截图亦逐张目检通过，错误为空。证据在主工作区 tmp/night-character-{before,dev,dev-world,production,underground-production,shared,integrated-smoke}/，最终门禁在验收检出 tmp/night-character-integrated-{rules,check,build}.log。按既有授权提交 master，只纳入本轮 13 个路径；正式部署另以 Vercel API 核对。造型仍为风格化程序低模，手机为 Chrome 窄屏模拟。
