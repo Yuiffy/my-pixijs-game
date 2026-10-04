@@ -97,7 +97,7 @@ test("a projectile interrupts a pending throw and releases its victim without th
   const g = game({ opponent: "shiori" }); ticks(g, { throw: true });
   until(g, () => g.grabs.length === 1);
   const attacker = g.fighters[0]; const victim = g.fighters[1];
-  g.projectiles.push({ id: 99, side: 1, move: "signature", serial: 0, x: attacker.x + 3, y: FLOOR - 155, velocity: -100, radius: 35, ttl: 1 });
+  g.projectiles.push({ id: 99, side: 1, sourceSide: 1, sourceCharacter: 'shiori', reflections: 0, move: "signature", serial: 0, x: attacker.x + 3, y: FLOOR - 155, velocity: -100, radius: 35, ttl: 1 });
   ticks(g, {}, {}, 50);
   assert.equal(victim.hp, 300); assert.ok(attacker.hp < 300); assert.equal(g.grabs.length, 0); assert.notEqual(victim.state, "grabbed");
 });
@@ -159,7 +159,7 @@ test("a late projectile cannot confirm an unrelated move, and projectile guard-b
 });
 test("projectile juggles respect the existing limit and round end clears outstanding hits and grabs", () => {
   const g = game({ character: "shiori" }); const t = g.fighters[1]; t.state = "launch"; t.y -= 110; t.vy = 100; t.juggle = 2;
-  g.projectiles.push({ id: 1, side: 0, move: "signature", serial: 0, x: t.x, y: t.y - 90, velocity: 100, radius: 35, ttl: 1 });
+  g.projectiles.push({ id: 1, side: 0, sourceSide: 0, sourceCharacter: 'shiori', reflections: 0, move: "signature", serial: 0, x: t.x, y: t.y - 90, velocity: 100, radius: 35, ttl: 1 });
   ticks(g); assert.equal(t.juggle, 3); ticks(g, {}, {}, 120); assert.notEqual(t.state, "launch");
   const ko = game({ character: "shiori" }); ko.fighters[1].hp = 1;
   ticks(ko, { skill: true }, {}, 65); assert.equal(ko.phase, "roundEnd"); assert.equal(ko.projectiles.length, 0); assert.equal(ko.grabs.length, 0);

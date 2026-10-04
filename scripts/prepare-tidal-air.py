@@ -16,6 +16,7 @@ compiler_spec.loader.exec_module(compiler)
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", required=True)
+    parser.add_argument("--character", choices=list(compiler.LAYOUT["sources"]))
     args = parser.parse_args()
     source = Path(args.source).resolve()
     size = SPEC["frameSize"]
@@ -24,6 +25,8 @@ def main():
         raise ValueError("Air and ground sprites must share the game frame layout")
     report = []
     for desc in SPEC["sources"]:
+        if args.character and not desc["name"].startswith(args.character + "-"):
+            continue
         raw = compiler.slots(source, {"file": desc["file"], "rows": [0, 1, 2, 3, 4]})
         if len(raw) != 16 or len(desc["roots"]) != 16:
             raise ValueError("Each aerial sheet requires 16 complete figures and reviewed roots")
@@ -63,7 +66,10 @@ def main():
                        "frameBounds": bounds, "bodyHeight": SPEC["bodyHeight"], "scale": scale,
                        "alpha": "binary", "source": desc["file"], "normalization": "shared body scale and pelvis; bent legs do not change the root"})
         print(name, packed.size, "16 frames, shared scale", round(scale, 4))
-    (OUT / "compiled-air.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    report_path = OUT / "compiled-air.json"
+    existing = json.loads(report_path.read_text(encoding="utf-8")) if args.character and report_path.exists() else []
+    written = {item["file"] for item in report}
+    report_path.write_text(json.dumps([item for item in existing if item["file"] not in written] + report, indent=2) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":

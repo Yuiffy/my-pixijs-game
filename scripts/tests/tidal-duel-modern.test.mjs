@@ -50,8 +50,9 @@ test("holding back blocks grounded strikes for both players and after switching 
 
 test("down-back blocks low sweeps and ground mids; standing back loses to lows and down alone cannot guard", () => {
   for (const side of [0, 1]) {
-    for (const attack of [{ crouch: true, medium: true }, { medium: true }]) {
+    for (const attack of [{ crouch: true, medium: true }, { crouch: true, ability: true }]) {
       const g = game();
+      g.fighters[side].meter = 25;
       sideTicks(g, side, attack, 50, {
         crouch: true,
         [away(g, 1 - side)]: true,
@@ -65,9 +66,34 @@ test("down-back blocks low sweeps and ground mids; standing back loses to lows a
     });
     assert.ok(low.fighters[1 - side].hp < 300);
     const crouch = game();
-    sideTicks(crouch, side, { medium: true }, 50, { crouch: true });
+    crouch.fighters[side].meter = 25;
+    sideTicks(crouch, side, { crouch: true, ability: true }, 50, { crouch: true });
     assert.ok(crouch.fighters[1 - side].hp < 300);
   }
+});
+
+test("crouching evades Shiori's high horizontal kick, while lower Sui and Mizuki kicks require down-back", () => {
+  for (const side of [0, 1])
+    for (const character of ["sui", "shiori", "mizuki"])
+      for (const back of [false, true]) {
+        const g = game({
+          character: side === 0 ? character : "sui",
+          opponent: side === 1 ? character : "sui",
+        });
+        const defense = { crouch: true, ...(back ? { [away(g, 1 - side)]: true } : {}) };
+        sideTicks(g, side, { medium: true }, 50, defense);
+        const defender = g.fighters[1 - side];
+        if (character === "shiori") {
+          assert.equal(defender.hp, 300);
+          assert.ok(!g.events.some((e) => e.type === "block" || e.type === "hit"));
+          assert.equal(g.fighters[side].contact, "none");
+        } else if (back) {
+          assert.equal(defender.hp, 300);
+          assert.ok(g.events.some((e) => e.type === "block"));
+        } else {
+          assert.ok(defender.hp < 300);
+        }
+      }
 });
 
 test("standing back defends downward jump-ins while crouch-back loses, and attacking is not automatic guard", () => {

@@ -63,7 +63,9 @@
     "shiori": {
       "original": {
         "seed": "exec-76f63362-dc1f-47a3-8a1a-c531956997e7.png",
-        "motionCorrections": { "1": 1.077 },
+        "motionCorrections": {
+          "1": 1.077
+        },
         "motion": {
           "file": "exec-80cf1758-4b71-4cda-9dbd-610cdf808b83.png",
           "rows": [
@@ -119,6 +121,36 @@
             1287,
             1536
           ]
+        }
+      }
+    },
+    "mizuki": {
+      "original": {
+        "seed": "sources/mizuki-seed.png",
+        "motionSharedBodyReference": 0,
+        "motion": {
+          "file": "sources/mizuki-motion.png",
+          "rows": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "combat": {
+          "file": "sources/mizuki-combat.png",
+          "rows": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "reactionReference": 3,
+          "sharedBodyReference": 0
         }
       }
     }

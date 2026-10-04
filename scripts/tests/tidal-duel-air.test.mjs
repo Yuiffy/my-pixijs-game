@@ -160,13 +160,14 @@ test("blocked or whiffed air attacks cannot cancel or restart before landing", (
   }
 });
 
-test("a crouched target can evade horizontal air attacks while a descending heavy reaches it", () => {
+test("crouching evades elevated horizontal air attacks; descending and very low kicks follow the body contour", () => {
   for (const side of [0, 1])
-    for (const button of ["light", "medium", "heavy"]) {
+    for (const button of ["light", "medium", "heavy"]) for (const height of [130, 70]) {
       const g = game("sui", 109);
-      airborne(g, side, { y: FLOOR - 70, vy: 0 });
+      airborne(g, side, { y: FLOOR - height, vy: 0 });
       sideTicks(g, side, { [button]: true }, 40, { crouch: true });
-      assert.equal(g.fighters[1 - side].hp < 300, button === "heavy");
+      assert.equal(g.fighters[1 - side].hp < 300,
+        button === "heavy" || (button === "medium" && height === 70), `${side}/${button}/${height}`);
     }
 });
 
@@ -178,7 +179,9 @@ test("both aerial signatures dive once with character identity and no ground rev
       ticks(g, { ability: true, crouch });
       assert.equal(f.move, "airSignature");
       assert.equal(f.meter, 0);
-      assert.ok(f.vx > 300 && f.vy > 400);
+      assert.ok(f.vx > 300 && f.vy < 0, 'startup retains the jump; diving begins with the active pose');
+      until(g, () => f.moveTime >= getFighter(character).moves.airSignature.startup);
+      assert.ok(f.vy > 400);
       assert.match(
         getFighter(character).moves[f.move].name,
         character === "sui" ? /猫袭/ : /落潮/,

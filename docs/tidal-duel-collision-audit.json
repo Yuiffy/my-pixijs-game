@@ -1,0 +1,228 @@
+{
+  "frames": 168,
+  "canonicalCostumes": "original",
+  "maxHurtRectangles": 30,
+  "bytes": 54373,
+  "sha256": "0f7fc696ce77edc0a8287514c9c2085076de5c70b9eb86ea1a5078d9240f2a52",
+  "regions": {
+    "sui": {
+      "combat": [
+        [
+          270,
+          288,
+          328,
+          316
+        ],
+        [
+          268,
+          292,
+          348,
+          344
+        ],
+        [
+          265,
+          380,
+          411,
+          434
+        ],
+        [
+          280,
+          270,
+          352,
+          310
+        ],
+        [
+          235,
+          174,
+          276,
+          272
+        ]
+      ],
+      "air": [
+        [
+          256,
+          260,
+          342,
+          310
+        ],
+        [
+          251,
+          312,
+          361,
+          342
+        ],
+        [
+          240,
+          344,
+          350,
+          432
+        ],
+        [
+          262,
+          312,
+          343,
+          366
+        ]
+      ]
+    },
+    "shiori": {
+      "combat": [
+        [
+          270,
+          288,
+          340,
+          317
+        ],
+        [
+          265,
+          285,
+          371,
+          337
+        ],
+        [
+          264,
+          379,
+          402,
+          431
+        ],
+        [
+          250,
+          254,
+          343,
+          302
+        ],
+        [
+          249,
+          158,
+          277,
+          274
+        ]
+      ],
+      "air": [
+        [
+          254,
+          259,
+          337,
+          310
+        ],
+        [
+          248,
+          310,
+          344,
+          344
+        ],
+        [
+          239,
+          344,
+          354,
+          424
+        ],
+        [
+          249,
+          334,
+          350,
+          400
+        ]
+      ]
+    },
+    "mizuki": {
+      "combat": [
+        [
+          260,
+          288,
+          316,
+          312
+        ],
+        [
+          263,
+          297,
+          346,
+          349
+        ],
+        [
+          263,
+          387,
+          424,
+          440
+        ],
+        [
+          265,
+          220,
+          351,
+          334
+        ],
+        [
+          237,
+          189,
+          328,
+          304
+        ]
+      ],
+      "air": [
+        [
+          253,
+          268,
+          338,
+          312
+        ],
+        [
+          250,
+          289,
+          364,
+          337
+        ],
+        [
+          236,
+          344,
+          354,
+          424
+        ],
+        [
+          249,
+          342,
+          345,
+          424
+        ]
+      ]
+    }
+  },
+  "excluded": "Hair, hats, detached debris, distal active tip",
+  "sourceHashes": [
+    {
+      "file": "sui-original-motion.webp",
+      "sha256": "98b6d15d55ce172514e1997acb4c5f42c5764e557a35ab733caac5319a2093bc"
+    },
+    {
+      "file": "sui-original-combat.webp",
+      "sha256": "fab6cccf8493a7303f0839ca6a06902575c19b495be10df15802fd02d9bc5eac"
+    },
+    {
+      "file": "sui-original-air.webp",
+      "sha256": "7d8ce31f08153cf5c4d965e15ee513dd79b3fc4f2bd98e212f1515327a814542"
+    },
+    {
+      "file": "shiori-original-motion.webp",
+      "sha256": "19773f8ea8102c31d36d09304b3e6de7939cf68d27f9827cd48274aa71fd0733"
+    },
+    {
+      "file": "shiori-original-combat.webp",
+      "sha256": "b9ad9138d957c0890cb605e9d095fe79fdf067e4167ee21c01ee9a603176b526"
+    },
+    {
+      "file": "shiori-original-air.webp",
+      "sha256": "ad71a8d738665de1d9f6f658c6af0b9d15650b975e03d3d070a9b2d87a864a12"
+    },
+    {
+      "file": "mizuki-original-motion.webp",
+      "sha256": "1ace3d052b33cc19c6c64a65c9e4c02549061cb52168a5bf096c3a9abf208caf"
+    },
+    {
+      "file": "mizuki-original-combat.webp",
+      "sha256": "1ce942e88e235919df402072d6a7165339f293844626d24e5607f320842e6326"
+    },
+    {
+      "file": "mizuki-original-air.webp",
+      "sha256": "5b2c8078d4775b02828a5f4df13e2d90a25cd91d9f88937d4daef10da07d9033"
+    }
+  ]
+}

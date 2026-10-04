@@ -1,7 +1,7 @@
 export const gameShareContent: Record<string, { title: string; description: string }> = {
   '/game/tidal-duel': {
-    title: '晴海对决 · 岁己 vs 栞栞',
-    description: '拳脚、投技与反击，读懂对手的下一招，在晴海擂台一决胜负。',
+    title: '潮夜格斗 · 三人像素对战',
+    description: '选择岁己、栞栞或黑丝原皮弥月，用空中追击与反击过招，原皮超杀命中触发专属动画。',
   },
   '/game/sui-fitness': {
     title: '岁己：今天也要动',

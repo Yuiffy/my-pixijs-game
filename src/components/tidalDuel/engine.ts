@@ -3,6 +3,9 @@ import type { HitHeight, MoveDefinition } from "./roster";
 import { modernCommand } from "./controls";
 import type { AttackStrength } from "./controls";
 import { AIR_PHYSICS, airMoveForAction } from "./airCombat";
+import { fighterBoxes, intersects, pushBox, circleIntersects } from "./collision";
+
+export { fighterBoxes, intersects } from "./collision";
 
 export type Character = string;
 export type Side = 0 | 1;
@@ -47,7 +50,8 @@ export type FighterState =
   | "sidestep"
   | "victory"
   | "defeat"
-  | "grabbed";
+  | "grabbed"
+  | "clash";
 export interface Options {
   mode: Mode;
   character: Character;
@@ -64,6 +68,11 @@ export const FLOOR = 610;
 export const STEP = 1 / 120;
 export const MAX_HP = 300;
 export const MAX_METER = 100;
+// Our forgiving windows are explicit game rules, not claimed SF6 patch data.
+export const PERFECT_GUARD_WINDOW = 3 / 60;
+export const PERFECT_GUARD_REARM = 20 / 60;
+export const REFLECT_WINDOW = 4 / 60;
+export const HOLD_WINDOW = 0.225;
 export const ACTIONS: readonly Action[] = [
   "left",
   "right",
@@ -142,6 +151,8 @@ export interface Fighter {
   airAttacks: number;
   airRank: number;
   airLanding: number;
+  perfectGuard: number;
+  perfectCooldown: number;
 }
 export type EventType =
   | "hit"
@@ -159,7 +170,10 @@ export type EventType =
   | "burst"
   | "cancel"
   | "guardBreak"
-  | "projectile";
+  | "projectile"
+  | "perfectGuard"
+  | "clash"
+  | "reflect";
 export interface Box {
   x: number;
   y: number;
@@ -176,6 +190,9 @@ export interface Projectile {
   velocity: number;
   radius: number;
   ttl: number;
+  sourceCharacter: Character;
+  sourceSide: Side;
+  reflections: number;
 }
 interface Grab {
   side: Side;
@@ -194,6 +211,8 @@ export interface GameEvent {
   text: string;
   ttl: number;
   strength: number;
+  move?: string;
+  moveKind?: MoveDefinition["kind"];
 }
 export type Effect = GameEvent;
 export interface Game {
@@ -310,6 +329,8 @@ function fighter(character: Character, side: Side): Fighter {
     airAttacks: 0,
     airRank: 0,
     airLanding: 0,
+    perfectGuard: 0,
+    perfectCooldown: 0,
   };
 }
 function normalizedOptions(options: Partial<Options>): Options {
@@ -380,6 +401,7 @@ function emit(
   side: Side,
   text: string,
   strength = 1,
+  move?: MoveDefinition,
 ) {
   const target = game.fighters[other(side)];
   const event: GameEvent = {
@@ -393,10 +415,12 @@ function emit(
     text,
     ttl: type === "round" || type === "ko" ? 2.4 : 0.82,
     strength,
+    ...(move ? { move: move.id, moveKind: move.kind } : {}),
   };
   game.events.push(event);
   if (game.events.length > 18) game.events.shift();
   game.event = text;
+  return event;
 }
 function resetRound(game: Game) {
   const old = game.fighters;
@@ -528,6 +552,14 @@ function endRound(game: Game) {
 function captureInput(game: Game, f: Fighter, input: Input) {
   const modern = modernCommand(input, f.previous);
   const horizontal = (Number(input.right) - Number(input.left)) * f.facing;
+  const freshBack = horizontal === -1 && (
+    (input.left && !f.previous.left) || (input.right && !f.previous.right)
+  );
+  if (freshBack && grounded(f) && neutral(f) && f.stun <= 0 && f.perfectCooldown <= 0) {
+    f.perfectGuard = PERFECT_GUARD_WINDOW + STEP;
+    f.perfectCooldown = PERFECT_GUARD_REARM;
+  }
+  if (horizontal !== -1) f.perfectGuard = 0;
   const vertical = input.crouch ? -1 : input.jump ? 1 : 0;
   const direction =
     vertical < 0
@@ -692,7 +724,6 @@ function beginMove(game: Game, f: Fighter, id: string) {
     f.airRank = move.air.rank;
     f.airLanding = move.air.landingMiss;
     if (move.air.velocity) f.vx = f.facing * move.air.velocity;
-    if (move.air.descent) f.vy = Math.max(f.vy, move.air.descent);
   } else {
     f.vx = 0;
     f.facing = game.fighters[other(f.side)].x >= f.x ? 1 : -1;
@@ -955,6 +986,9 @@ function moveFighter(game: Game, f: Fighter, input: Input, dt: number) {
   f.invincible = Math.max(0, f.invincible - dt);
   f.throwTech = Math.max(0, f.throwTech - dt);
   f.guardDelay = Math.max(0, f.guardDelay - dt);
+  // Hitstop does not consume a freshly entered defense window.
+  f.perfectGuard = Math.max(0, f.perfectGuard - dt);
+  f.perfectCooldown = Math.max(0, f.perfectCooldown - dt);
   if (f.guardDelay <= 0 && f.state !== "guard") f.guardGauge = Math.min(100, f.guardGauge + dt * 18);
   f.stun = Math.max(0, f.stun - dt);
   f.critical = Math.max(0, f.critical - dt);
@@ -970,7 +1004,13 @@ function moveFighter(game: Game, f: Fighter, input: Input, dt: number) {
 
   if (f.state === "attack" && f.move) {
     const move = getFighter(f.character).moves[f.move];
+    const previousMoveTime = f.moveTime;
     f.moveTime += dt;
+    // Let the startup retain jump momentum. An immediate descent could land
+    // before the first active frame even after a valid, normal-height input.
+    if (move.air?.descent && previousMoveTime < move.startup && f.moveTime >= move.startup) {
+      f.vy = Math.max(f.vy, move.air.descent);
+    }
     if (move.projectile && !f.moveHit && f.moveTime >= move.startup) {
       f.moveHit = true;
       game.projectiles.push({
@@ -983,6 +1023,9 @@ function moveFighter(game: Game, f: Fighter, input: Input, dt: number) {
         velocity: f.facing * move.projectile.speed,
         radius: move.projectile.radius,
         ttl: move.projectile.lifetime,
+        sourceCharacter: f.character,
+        sourceSide: f.side,
+        reflections: 0,
       });
       emit(game, "projectile", f.side, move.name, 0.8);
     }
@@ -993,6 +1036,9 @@ function moveFighter(game: Game, f: Fighter, input: Input, dt: number) {
     }
   } else if (f.state === "landing" && f.stateTime >= f.stateDuration) {
     setState(f, "idle");
+  } else if (f.state === "clash" && f.stateTime >= f.stateDuration) {
+    f.move = null;
+    setState(f, grounded(f) ? "idle" : "jump");
   } else if ((f.state === "hit" || f.state === "critical") && f.stun <= 0) {
     setState(f, grounded(f) ? "idle" : "jump");
   } else if (f.state === "hold" && f.stateTime >= f.stateDuration) setState(f, "idle");
@@ -1063,6 +1109,7 @@ function applyDamage(
   baseDamage: number,
   move: MoveDefinition,
   counter = false,
+  sourcePower = getFighter(attacker.character).power,
 ) {
   const continuing =
     target.stun > 0 || target.state === "launch" || target.critical > 0;
@@ -1072,7 +1119,7 @@ function applyDamage(
   const scale = Math.max(0.45, 1 - (attacker.combo - 1) * 0.13);
   const damage = Math.round(
     baseDamage *
-      getFighter(attacker.character).power *
+      sourcePower *
       scale *
       (counter ? 1.2 : 1),
   );
@@ -1106,53 +1153,6 @@ function knockdown(target: Fighter, duration = 0.7) {
     setState(target, "down", duration);
     target.invincible = duration;
   }
-}
-export const intersects = (a: Box, b: Box) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
-export function fighterBoxes(f: Fighter): {
-  hurt: Box[];
-  attack: Box | null;
-  push: Box;
-} {
-  const crouching = f.state === "crouch" || (f.previous.crouch && grounded(f));
-  const height = crouching ? 160 : 310;
-  const hurt: Box[] = [{ x: f.x - 35, y: f.y - height, w: 70, h: height - 12 }];
-  const move =
-    f.state === "attack" && f.move
-      ? getFighter(f.character).moves[f.move]
-      : null;
-  let attack: Box | null = null;
-  if (
-    move &&
-    !move.projectile &&
-    f.moveTime >= move.startup &&
-    f.moveTime < move.startup + move.active
-  ) {
-    const top = move.air?.box[0] ?? (
-      move.animation === "rise"
-        ? -420
-        : move.kind === "throw"
-          ? -245
-          : move.height === "high"
-            ? -265
-            : move.height === "low"
-              ? -75
-              : -220);
-    const bottom = move.air?.box[1] ?? (
-      move.kind === "throw"
-        ? -35
-        : move.height === "high"
-          ? -155
-          : move.height === "low"
-            ? -12
-            : -75);
-    attack = {
-      x: f.facing > 0 ? f.x + 26 : f.x - move.reach,
-      y: f.y + top,
-      w: move.reach - 26,
-      h: bottom - top,
-    };
-  }
-  return { hurt, attack, push: { x: f.x - 49.5, y: f.y - 150, w: 99, h: 150 } };
 }
 function contactInfo(
   game: Game,
@@ -1190,16 +1190,12 @@ function canReach(attacker: Fighter, target: Fighter, move: MoveDefinition) {
     target.hp <= 0
   ) return false;
   if ((target.x - attacker.x) * attacker.facing < -42) return false;
-  if (Math.abs(target.x - attacker.x) > move.reach) return false;
+  if (move.kind === "throw" && Math.abs(target.x - attacker.x) > move.reach) return false;
   if (!move.tracking && Math.abs(target.z - attacker.z) > 0.38) return false;
   const targetAir = FLOOR - target.y;
   const attackerAir = FLOOR - attacker.y;
   if (move.kind === "throw" && (targetAir > 12 || attackerAir > 12)) return false;
   if (move.height === "low" && targetAir > 34) return false;
-  if (
-    !move.air && Math.abs(targetAir - attackerAir) >
-    (move.animation === "rise" ? 330 : move.height === "low" ? 74 : 190)
-  ) return false;
   const crouching =
     target.state === "crouch" ||
     (target.previous.crouch &&
@@ -1209,20 +1205,34 @@ function canReach(attacker: Fighter, target: Fighter, move: MoveDefinition) {
           target.move &&
           getFighter(target.character).moves[target.move].height === "low")));
   if (move.height === "high" && crouching) return false;
-  const { attack } = fighterBoxes(attacker);
-  if (
-    attack &&
-    !fighterBoxes(target).hurt.some((box) => intersects(attack, box))
-  ) return false;
+  const { strikes } = fighterBoxes(attacker);
+  const { hurt } = fighterBoxes(target);
+  return strikes.some(attack => hurt.some(box => intersects(attack, box)));
+}
+
+function perfectBlock(game: Game, target: Fighter, pose: Fighter): boolean {
+  if (pose.perfectGuard <= 1e-8 || !holdingBack(pose)) return false;
+  target.perfectGuard = 0;
+  target.stun = 6 / 60;
+  target.vx = -pose.facing * 18;
+  target.meter = clamp(target.meter + 4, 0, MAX_METER);
+  setState(target, "guard");
+  game.freeze = Math.max(game.freeze, 0.08);
+  const event = emit(game, "perfectGuard", target.side, "PERFECT GUARD · 精确防御", 1.2);
+  event.x = target.x;
+  event.y = target.y - 235;
   return true;
 }
+
 function resolveMove(
   game: Game,
   attacker: Fighter,
   target: Fighter,
   move: MoveDefinition,
+  attackerPose = attacker,
+  targetPose = target,
 ) {
-  if (!canReach(attacker, target, move)) return;
+  if (!canReach(attackerPose, targetPose, move)) return;
   attacker.moveHit = true;
   if (move.kind === "throw") {
     if (target.throwTech > 0) {
@@ -1258,8 +1268,8 @@ function resolveMove(
     setState(target, "grabbed", 0.14);
     return;
   }
-  const holding = target.state === "hold" && target.stateTime <= 0.225;
-  if (move.kind !== "super" && holding && target.holdHeight === move.height) {
+  const holding = targetPose.state === "hold" && targetPose.stateTime <= HOLD_WINDOW;
+  if (move.kind !== "super" && holding && targetPose.holdHeight === move.height) {
     target.contact = "hit";
     const damage = applyDamage(game, target, attacker, 31, move);
     attacker.move = null;
@@ -1272,11 +1282,15 @@ function resolveMove(
     emit(game, "hold", target.side, `精准反击 · ${damage}`, 1.4);
     return;
   }
-  const blocking = canBlock(target, move);
+  const blocking = canBlock(targetPose, move);
   if (blocking) {
     if (move.air) attacker.airLanding = move.air.landing + 2 / 60;
-    setState(target, "guard");
     attacker.contact = "block";
+    if (perfectBlock(game, target, targetPose)) {
+      contactInfo(game, attacker, move, "精确防御", 0, target.stun);
+      return;
+    }
+    setState(target, "guard");
     const chip = move.kind === "super" ? 8 : 0;
     target.hp = Math.max(1, target.hp - chip);
     target.stun = move.blockStun ?? (move.kind === "super" ? 0.36 : 0.13);
@@ -1308,9 +1322,9 @@ function resolveMove(
     return;
   }
   const counter =
-    target.state === "attack" || (target.state === "hold" && !holding);
-  const launched = target.state === "launch" || !grounded(target);
-  const wasCritical = target.critical > 0;
+    targetPose.state === "attack" || (targetPose.state === "hold" && !holding);
+  const launched = targetPose.state === "launch" || !grounded(targetPose);
+  const wasCritical = targetPose.critical > 0;
   const damage = applyDamage(
     game,
     attacker,
@@ -1368,6 +1382,7 @@ function resolveMove(
     attacker.side,
     `${counter ? "COUNTER · " : ""}${damage}`,
     move.kind === "super" ? 1.8 : 1,
+    move,
   );
 }
 function activeMove(f: Fighter) {
@@ -1443,10 +1458,13 @@ function resolveProjectiles(game: Game) {
         a.side !== b.side &&
         a.ttl > 0 &&
         b.ttl > 0 &&
-        Math.abs(a.x - b.x) < a.radius + b.radius
+        Math.hypot(a.x - b.x, a.y - b.y) < a.radius + b.radius
       ) {
         a.ttl = 0;
         b.ttl = 0;
+        const event = emit(game, "clash", a.side, "WAVE CLASH · 对波抵消", 1);
+        event.x = (a.x + b.x) / 2;
+        event.y = (a.y + b.y) / 2;
       }
     }
   for (const p of game.projectiles) {
@@ -1458,15 +1476,11 @@ function resolveProjectiles(game: Game) {
       ["down", "wake", "defeat", "grabbed"].includes(target.state) ||
       Math.abs(target.z) > 0.38
     ) continue;
-    const box = {
-      x: p.x - p.radius,
-      y: p.y - p.radius,
-      w: p.radius * 2,
-      h: p.radius * 2,
-    };
-    if (!fighterBoxes(target).hurt.some((hurt) => intersects(box, hurt))) continue;
-    const move = getFighter(source.character).moves[p.move];
+    if (!fighterBoxes(target).hurt.some(hurt => circleIntersects(p, hurt))) continue;
+    const original = getFighter(p.sourceCharacter);
+    const move = original.moves[p.move];
     const sameMove =
+      p.reflections === 0 && source.side === p.sourceSide &&
       source.state === "attack" &&
       source.move === p.move &&
       source.moveSerial === p.serial;
@@ -1477,15 +1491,36 @@ function resolveProjectiles(game: Game) {
     if (
       target.state === "hold" &&
       target.holdHeight === move.height &&
-      target.stateTime <= 0.225
+      target.stateTime <= HOLD_WINDOW
     ) {
+      const earlyReflect = target.stateTime <= REFLECT_WINDOW + 1e-8 && p.reflections < 1;
       target.meter = clamp(target.meter + 12, 0, MAX_METER);
       setState(target, "idle");
+      target.holdCooldown = 0.34;
+      if (earlyReflect) {
+        // Preserve origin/profile, speed and remaining lifetime. A reflected
+        // wave cannot confirm a different move currently used by its new owner.
+        p.side = target.side;
+        p.velocity = -p.velocity;
+        p.x = target.x + target.facing * (p.radius + 70);
+        p.reflections++;
+        const event = emit(game, "reflect", target.side, "REFLECT · 潮波返还", 1.3);
+        event.x = p.x;
+        event.y = p.y;
+        game.freeze = Math.max(game.freeze, 0.075);
+        contactInfo(game, source, move, "潮波返还", 0, 0, remaining);
+        continue;
+      }
       emit(game, "hold", target.side, "潮波化解", 1.2);
       contactInfo(game, source, move, "潮波化解", 0, 0, remaining);
     } else if (canBlock(target, move)) {
-      setState(target, "guard");
       if (sameMove) source.contact = "block";
+      if (perfectBlock(game, target, target)) {
+        contactInfo(game, source, move, "精确防御", 0, target.stun, remaining);
+        p.ttl = 0;
+        continue;
+      }
+      setState(target, "guard");
       target.stun = move.blockStun ?? 0.22;
       target.guardGauge = Math.max(
         0,
@@ -1523,6 +1558,7 @@ function resolveProjectiles(game: Game) {
         move.damage,
         move,
         counter,
+        original.power,
       );
       target.move = null;
       target.buffer = [];
@@ -1557,17 +1593,47 @@ function resolveProjectiles(game: Game) {
   );
 }
 function resolveAttacks(game: Game) {
-  const moves = game.fighters.map(activeMove);
-  // Resolve strikes before throws, independent of player slot. Equal strikes can trade.
-  const attacks = game.fighters
-    .map((f, n) => ({ fighter: f, move: moves[n] }))
+  // Freeze both poses, defense flags and active windows before either hit can
+  // change them. A knockout, counter-hit or launch cannot erase the other intent.
+  const poses = game.fighters.map(f => ({ ...f, previous: { ...f.previous } }));
+  const moves = poses.map(activeMove);
+  const [a, b] = poses;
+  const [ma, mb] = moves;
+  const ba = fighterBoxes(a);
+  const bb = fighterBoxes(b);
+  if (ma && mb && ba.geometry === "contour" && bb.geometry === "contour" &&
+      a.invincible <= 0 && b.invincible <= 0 && Math.abs(a.z - b.z) < 0.38 &&
+      !canReach(a, b, ma) && !canReach(b, a, mb)) {
+    const pair = ba.strikes.flatMap(x => bb.strikes.filter(y => intersects(x, y)).map(y => [x, y]));
+    if (pair.length) {
+      game.fighters.forEach(f => {
+        f.moveHit = true;
+        f.contact = "none";
+        f.buffer = [];
+        f.vx = -f.facing * 90;
+        setState(f, "clash", 10 / 60);
+      });
+      game.freeze = Math.max(game.freeze, 0.075);
+      const [x, y] = pair[0];
+      const event = emit(game, "clash", 0, "CLASH · 拼招", 1.3);
+      event.x = (Math.max(x.x, y.x) + Math.min(x.x + x.w, y.x + y.w)) / 2;
+      event.y = (Math.max(x.y, y.y) + Math.min(x.y + x.h, y.y + y.h)) / 2;
+      event.z = (a.z + b.z) / 2;
+      if (game.options.mode === "training") game.training.lastContact = {
+        move: `${ma.name} / ${mb.name}`, result: "拼招", advantage: 0, damage: 0,
+      };
+      return;
+    }
+  }
+  // A committed strike still beats a grab, in either player slot.
+  const attacks = game.fighters.map((f, n) => ({ fighter: f, move: moves[n], pose: poses[n] }))
     .filter((item) => item.move !== null);
   attacks.sort(
-    (a, b) => Number(a.move?.kind === "throw") - Number(b.move?.kind === "throw"),
+    (first, second) => Number(first.move?.kind === "throw") - Number(second.move?.kind === "throw"),
   );
-  attacks.forEach(({ fighter: attacker, move }) => {
+  attacks.forEach(({ fighter: attacker, move, pose }) => {
     if (!move || (move.kind === "throw" && attacker.state !== "attack")) return;
-    resolveMove(game, attacker, game.fighters[other(attacker.side)], move);
+    resolveMove(game, attacker, game.fighters[other(attacker.side)], move, pose, poses[other(attacker.side)]);
   });
 }
 export function aiInput(game: Game, side: Side, dt = STEP): Input {
@@ -1748,11 +1814,9 @@ function tick(game: Game, supplied: [Input, Input]) {
   game.fighters.forEach((f, side) => moveFighter(game, f, inputs[side], STEP));
   resolveGrabs(game);
   const [a, b] = game.fighters;
-  const distance = Math.abs(b.x - a.x);
   if (
-    distance < 99 &&
     Math.abs(a.z - b.z) < 0.38 &&
-    Math.abs(a.y - b.y) < 175
+    intersects(pushBox(a), pushBox(b))
   ) {
     const direction = b.x >= a.x ? 1 : -1;
     // Clamp the shared centre so pressure against an edge cannot collapse body spacing.
@@ -1787,7 +1851,7 @@ export function stepGame(game: Game, inputs: [Input, Input], dt = STEP) {
 export function describeGame(game: Game) {
   const number = (n: number) => Math.round(n * 100) / 100;
   return {
-    title: "潮夜格斗 · 岁己 vs 栞栞",
+    title: "潮夜格斗 · 三人像素对战",
     coordinates: "1280×720; x向右，y向下；脚底y=610为地面，z∈[-1,1]为侧移深度",
     phase: game.phase,
     paused: game.paused,
@@ -1826,15 +1890,19 @@ export function describeGame(game: Game) {
       guardGauge: number(f.guardGauge),
       burstReady: f.burstReady,
       contact: f.contact,
+      perfectGuardFrames: number(f.perfectGuard * 60),
+      perfectCooldownFrames: number(f.perfectCooldown * 60),
       inputs: f.history.map((item) => item.command),
       boxes: game.training.showBoxes ? fighterBoxes(f) : undefined,
     })),
     freeze: number(game.freeze),
     event: game.event,
     events: game.events.map((event) => ({
+      id: event.id,
       type: event.type,
       side: event.side,
       text: event.text,
+      ...(event.move ? { move: event.move, moveKind: event.moveKind } : {}),
     })),
     training: { ...game.training },
     roster: FIGHTERS.map((f) => ({ id: f.id, name: f.name })),
@@ -1843,6 +1911,10 @@ export function describeGame(game: Game) {
       x: number(p.x),
       y: number(p.y),
       ttl: number(p.ttl),
+      reflections: p.reflections,
+      sourceCharacter: p.sourceCharacter,
+      sourceSide: p.sourceSide,
+      velocity: number(p.velocity),
     })),
     grabs: game.grabs.map((grab) => ({ ...grab })),
   };

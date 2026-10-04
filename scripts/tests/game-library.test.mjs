@@ -29,6 +29,7 @@ test('every local game route has exactly one catalog entry, usable artwork and v
 test('multiword search matches name, description, category and gameplay, ignoring width and case', () => {
   assert.deepEqual(results({ query: '  ｒｅｓｅｔ  ' }).map(game => game.href), ['/game/reset-rush']);
   assert.deepEqual(results({ query: '排球 栞栞' }).map(game => game.href), ['/game/beach-volley']);
+  assert.deepEqual(results({ query: '弥月 黑丝 格斗' }).map(game => game.href), ['/game/tidal-duel']);
   assert.ok(results({ query: '在线多人' }).some(game => game.href === '/game/autochess'));
   assert.equal(results({ query: '不存在的游戏名' }).length, 0);
   assert.equal(results({ query: '   ' }).length, all.length);

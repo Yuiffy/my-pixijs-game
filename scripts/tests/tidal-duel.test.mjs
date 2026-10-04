@@ -19,8 +19,8 @@ const close = options => {
   return game;
 };
 
-test("roster registers both identities, unique complete moves, and safely validates unknown choices", () => {
-  assert.deepEqual(FIGHTERS.map(f => f.id), ["sui", "shiori"]);
+test("roster registers three identities, unique complete moves, and safely validates unknown choices", () => {
+  assert.deepEqual(FIGHTERS.map(f => f.id), ["sui", "shiori", "mizuki"]);
   for (const f of FIGHTERS) {
     assert.equal(f.frames.length, 8);
     for (const action of ["punch", "kick", "lowPunch", "lowKick", "throw", "super", "launcher"]) assert.ok(f.moves[action]);
@@ -70,7 +70,7 @@ test("a third registered fighter plays using configured speed, a new followup an
   } finally {
     FIGHTERS.splice(FIGHTERS.indexOf(entry), 1);
   }
-  assert.deepEqual(FIGHTERS.map(f => f.id), ["sui", "shiori"], "test registration does not alter the shipped roster");
+  assert.deepEqual(FIGHTERS.map(f => f.id), ["sui", "shiori", "mizuki"], "test registration does not alter the shipped roster");
 });
 
 test("fixed simulation is identical at 30, 60 and 120Hz", () => {
@@ -237,7 +237,7 @@ test("limited airborne juggles give guaranteed knockdown and protected wakeup", 
 
 test("supers require full meter, spend once, have character identity, can be guarded", () => {
   const none = close(); tick(none, { special: true }, {}, 60); assert.equal(none.fighters[1].hp, 300); assert.equal(none.fighters[0].move, null);
-  for (const character of ["sui", "shiori"]) {
+  for (const character of FIGHTERS.map(f => f.id)) {
     const game = close({ character, opponent: character === "sui" ? "shiori" : "sui" }); game.fighters[0].meter = 100;
     tick(game, { special: true }, {}, 90);
     assert.ok(game.fighters[1].hp <= 236);
@@ -305,6 +305,6 @@ test("public description captures combat state and registered expansion identiti
   const game = close(); tick(game, { kick: true }, {}, 24); const state = describeGame(game);
   assert.equal(state.fighters.length, 2); assert.equal(state.fighters[1].hp, game.fighters[1].hp);
   assert.equal(state.timeRemaining, Math.round(game.roundTimer * 100) / 100);
-  assert.equal(state.roster.length, 2); assert.ok(state.coordinates.includes("610"));
+  assert.equal(state.roster.length, 3); assert.ok(state.coordinates.includes("610"));
   assert.ok(state.events.some(e => e.type === "hit"));
 });

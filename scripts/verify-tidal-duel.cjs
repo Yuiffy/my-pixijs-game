@@ -34,6 +34,7 @@ async function quietContext(browser, options = {}) {
   await context.route(/\/api\/record(?:\?|$)/, route => route.fulfill({ contentType: 'application/json', body: '{"success":true,"skipped":true}' }));
   await context.route(/https:\/\/(pagead2\.googlesyndication\.com|hm\.baidu\.com)\//, route => route.fulfill({ contentType: 'application/javascript', body: '' }));
   await context.addInitScript(() => {
+    localStorage.setItem('tidal-duel-cinematics', 'off');
     if (window.speechSynthesis) window.speechSynthesis.speak = () => {};
   });
   return context;
@@ -230,7 +231,7 @@ async function libraryNavigation(page, report) {
   const file = path.join(output, '08-production-hall.png');
   const pixels = inspectPng(await page.screenshot({ path: file, fullPage: true, animations: 'disabled' }));
   report.screenshots.push({ name: '08-production-hall', file, pixels, entries: await entries.evaluateAll(elements => elements.map(el => ({ href: el.dataset.game, text: el.textContent }))), poster });
-  await fighting.getByRole('link', { name: '打开 潮夜格斗 · 岁己 vs 栞栞', exact: true }).click();
+  await fighting.getByRole('link', { name: '打开 潮夜格斗 · 三人像素对战', exact: true }).click();
   await page.waitForURL('**/game/tidal-duel');
   await page.waitForFunction(() => window.render_game_to_text && JSON.parse(window.render_game_to_text()).assetsReady);
   assert.equal((await state(page)).phase, 'menu', 'hall fighter link opens character selection');

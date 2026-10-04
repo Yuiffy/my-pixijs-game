@@ -52,7 +52,13 @@ export default class DuelAudio {
         this.tone(event.type === "throw" ? 100 : 180, 0.13, 0.13);
         this.tone(750, 0.06, 0.022, 0, "square");
       } else if (event.type === "block") this.tone(340, 0.075, 0.045);
-      else if (event.type === "hold") {
+      else if (event.type === "perfectGuard" || event.type === "reflect") {
+        this.tone(event.type === "perfectGuard" ? 1200 : 880, 0.15, 0.045, 0, "sine");
+        this.tone(660, 0.12, 0.035, 0.05, "triangle");
+      } else if (event.type === "clash") {
+        this.tone(450, 0.1, 0.055, 0, "square");
+        this.tone(150, 0.12, 0.08);
+      } else if (event.type === "hold") {
         this.tone(600, 0.18, 0.09);
         this.tone(220, 0.15, 0.1, 0.09);
       } else if (event.type === "super") [220, 330, 440, 660].forEach((note, i) => this.tone(note, 0.3, 0.04, i * 0.06),);

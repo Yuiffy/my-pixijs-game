@@ -1,7 +1,11 @@
 import { FLOOR, HEIGHT, WIDTH, fighterBoxes, clamp } from "./engine";
 import type { Fighter, Game } from "./engine";
 import { FIGHTERS, getFighter, getSkin } from "./roster";
-import layout from "../../../public/games/tidal-duel/pixel/source-layout.json";
+import type { CharacterDefinition } from "./roster";
+import { SPRITE_LAYOUT, pixelFrame } from "./animation";
+
+export { SPRITE_LAYOUT, pixelFrame } from "./animation";
+export type { PixelFrame } from "./animation";
 
 interface SkinAssets {
   seed: HTMLImageElement;
@@ -13,15 +17,6 @@ export interface Assets {
   stage: HTMLImageElement;
   characters: Record<string, Record<string, SkinAssets>>;
 }
-export interface PixelFrame {
-  sheet: "motion" | "combat" | "air";
-  index: number;
-}
-export const SPRITE_LAYOUT = {
-  tile: layout.frameSize,
-  anchor: layout.anchor,
-  bodyHeight: layout.bodyHeight,
-};
 const TILE = SPRITE_LAYOUT.tile;
 const r = (n: number) => Math.round(n / 2) * 2;
 function loadImage(path: string): Promise<HTMLImageElement> {
@@ -62,67 +57,7 @@ function skinAssets(assets: Assets, f: Fighter) {
   const info = getFighter(f.character);
   return assets.characters[info.id][getSkin(info, f.skin)?.id ?? "original"];
 }
-/** Startup, active and recovery use the move clock; hitstop freezes the pose. */
-export function pixelFrame(f: Fighter, reduced = false): PixelFrame {
-  const motion = (index: number): PixelFrame => ({ sheet: "motion", index });
-  const combat = (index: number): PixelFrame => ({ sheet: "combat", index });
-  if (f.state === "attack" && f.move) {
-    const m = getFighter(f.character).moves[f.move];
-    if (m.air) {
-      const phase = f.moveTime < m.startup ? 0 :
-        f.moveTime < m.startup + m.active ? 1 :
-        f.moveTime < m.startup + m.active + m.recovery * 0.6 ? 2 : 3;
-      return { sheet: "air", index: m.air.row * 4 + phase };
-    }
-    const animation =
-      m.animation ??
-      (m.height === "low"
-        ? "low"
-        : f.move.toLowerCase().includes("kick")
-          ? "kick"
-          : m.launcher
-            ? "rise"
-            : m.kind === "super" || m.kind === "throw"
-              ? "skill"
-              : "punch");
-    const rows: Record<string, number> = {
-      punch: 0,
-      kick: 4,
-      low: 8,
-      skill: 12,
-      rise: 16,
-    };
-    const row = rows[animation] ?? 0;
-    const phase =
-      f.moveTime < m.startup
-        ? 0
-        : f.moveTime < m.startup + m.active
-          ? 1
-          : f.moveTime < m.startup + m.active + m.recovery * 0.6
-            ? 2
-            : 3;
-    return combat(row + phase);
-  }
-  if (f.state === "walk") return motion(4 + (Math.floor(f.stateTime * 10) % 4));
-  if (f.state === "jump") return motion(
-      f.stateTime < 0.065 ? 12 : f.vy < -140 ? 13 : f.vy < 230 ? 14 : 15,
-    );
-  if (f.state === "crouch") return motion(f.stateTime < 0.065 ? 8 : 9);
-  if (f.state === "landing") return motion(f.stateTime < 2 / 60 ? 8 : 9);
-  if (f.state === "guard") return motion(
-      f.previous.crouch ? 9 : 10 + (Math.floor(f.stateTime * 6) % 2),
-    );
-  if (f.state === "hold") return motion(f.holdHeight === "low" ? 8 : 11);
-  if (["hit", "critical", "grabbed", "launch"].includes(f.state)) return combat(
-      f.state === "critical" || f.state === "launch" || f.stateTime > 0.08
-        ? 21
-        : 20,
-    );
-  if (["down", "defeat"].includes(f.state)) return combat(22);
-  if (f.state === "wake") return f.stateTime < 0.12 ? combat(22) : motion(8);
-  if (f.state === "victory") return combat(23);
-  return motion(reduced ? 0 : Math.floor(f.stateTime * 5) % 4);
-}
+
 function text(
   ctx: CanvasRenderingContext2D,
   value: string,
@@ -212,6 +147,54 @@ function drawStage(
 function screen(f: Fighter, center: number) {
   return { x: r(WIDTH / 2 + f.x - center), y: r(f.y + f.z * 18) };
 }
+function specialMotif(
+  ctx: CanvasRenderingContext2D,
+  info: CharacterDefinition,
+  x: number,
+  y: number,
+  size: number,
+  progress: number,
+  facing: number,
+  reduced: boolean,
+) {
+  if (!info.specialEffect) return;
+  ctx.save();
+  ctx.translate(r(x), r(y));
+  ctx.scale(facing, 1);
+  const drift = reduced ? 0 : progress * 0.35;
+  ctx.lineCap = "square";
+  for (let i = 0; i < 3; i++) {
+    ctx.strokeStyle = i === 1 ? "#fff0d4" : info.color;
+    ctx.lineWidth = Math.max(3, size / 19 - i);
+    ctx.globalAlpha *= 0.86;
+    ctx.beginPath();
+    if (info.specialEffect === "cat") {
+      const offset = (i - 1) * size * 0.25;
+      ctx.moveTo(-size * 0.7 + offset, size * 0.6);
+      ctx.lineTo(-size * 0.15 + offset, size * 0.05);
+      ctx.lineTo(size * 0.4 + offset, -size * (0.65 + drift));
+    } else if (info.specialEffect === "wave") {
+      const offset = (i - 1) * size * 0.2;
+      ctx.moveTo(-size * 0.9, size * 0.45 + offset);
+      ctx.bezierCurveTo(-size * 0.25, size * 0.6 + offset, size * (0.6 + drift), -size * 0.85 + offset, size * 0.3, -size * 0.5 + offset);
+      ctx.bezierCurveTo(-size * 0.15, -size * 0.35 + offset, size * 0.45, size * 0.45 + offset, size * 0.95, size * 0.2 + offset);
+    } else {
+      const radius = size * (0.55 + i * 0.14);
+      ctx.arc(0, 0, radius, -Math.PI * (0.75 - drift), Math.PI * (0.65 + drift));
+    }
+    ctx.stroke();
+  }
+  if (info.specialEffect === "moon") {
+    for (let i = 0; i < (reduced ? 3 : 7); i++) {
+      const angle = i * 1.3 + drift * 2;
+      const px = Math.cos(angle) * size * 0.85;
+      const py = Math.sin(angle) * size * 0.85;
+      rect(ctx, px - 2, py - 6, 4, 12, info.secondary);
+      rect(ctx, px - 6, py - 2, 12, 4, info.secondary);
+    }
+  }
+  ctx.restore();
+}
 function drawFighter(
   ctx: CanvasRenderingContext2D,
   assets: Assets,
@@ -250,6 +233,13 @@ function drawFighter(
   if (f.invincible > 0 && Math.floor(game.time * 15) % 2) ctx.globalAlpha = 0.68;
   sprite(ctx, assets, f, p.x, p.y, 2, reduced, frame);
   ctx.globalAlpha = 1;
+  if (move && f.state === "attack" && (move.kind === "skill" || move.kind === "super")) {
+    const progress = clamp((f.moveTime - move.startup) / (move.active + 0.12), 0, 1);
+    ctx.save();
+    ctx.globalAlpha = f.moveTime < move.startup ? 0.28 : Math.max(0, 0.7 * (1 - progress * 0.75));
+    specialMotif(ctx, info, p.x + f.facing * Math.min(move.reach * 0.65, 138), p.y - (move.air ? 175 : 205), move.kind === "super" ? 155 : 90, progress, f.facing, reduced);
+    ctx.restore();
+  }
   if (f.state === "sidestep" || f.state === "hold") {
     rect(ctx, p.x - 42, FLOOR + f.z * 18 + 10, 84, 2, info.color);
     if (f.state === "hold") text(
@@ -273,7 +263,7 @@ function drawFighter(
     const box = fighterBoxes(f).attack;
     if (box) for (let i = 0; i < 4; i++) rect(
           ctx,
-          p.x + f.facing * (move.reach - 20 - i * 24),
+          box.x - center + WIDTH / 2 + (f.facing > 0 ? box.w : 0) - f.facing * (20 + i * 24),
           box.y + box.h / 2 + f.z * 18 + i * 4,
           20 - i * 2,
           2,
@@ -292,6 +282,7 @@ function effects(
     const y = r(p.y);
     const dir = Math.sign(p.velocity);
     const pulse = reduced ? 0 : Math.floor(game.time * 12) % 3;
+    const color = p.reflections ? "#ffd58f" : "#7de5e3";
     for (let i = 6; i >= 0; i--) {
       const size = 10 + (6 - i) * 4;
       rect(
@@ -300,7 +291,7 @@ function effects(
         y - size / 2 + (i % 2 ? pulse * 2 : 0),
         size,
         size,
-        i > 3 ? "#7de5e350" : i ? "#7de5e3b0" : "#fff8db",
+        i > 3 ? `${color}50` : i ? `${color}b0` : "#fff8db",
       );
     }
   }
@@ -313,12 +304,43 @@ function effects(
     const age = clamp((0.82 - e.ttl) / 0.32, 0, 1);
     if (age >= 1) continue;
     const info = getFighter(game.fighters[e.side].character);
-    const burst = ["burst", "cancel", "tech", "guardBreak"].includes(e.type);
-    const blocked = e.type === "block" || e.type === "hold";
+    const burst = ["burst", "cancel", "tech", "guardBreak", "clash"].includes(e.type);
+    const blocked = ["block", "hold", "perfectGuard", "reflect"].includes(e.type);
     const x = r(e.x - center + WIDTH / 2);
-    const y = r(e.y + e.z * 18 - 30);
+    const precise = ["clash", "perfectGuard", "reflect"].includes(e.type);
+    const y = r(e.y + e.z * 18 - (precise ? 0 : 30));
     ctx.save();
     ctx.globalAlpha = 1 - age;
+    if (e.type === "perfectGuard" || e.type === "reflect") {
+      ctx.strokeStyle = e.type === "reflect" ? "#ffd58f" : "#b8fff0";
+      ctx.lineWidth = 4;
+      for (let i = 0; i < 2; i++) {
+        ctx.beginPath();
+        ctx.arc(x, y, 26 + i * 14 + age * 55, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      if (e.type === "reflect") {
+        const dir = game.fighters[e.side].facing;
+        ctx.beginPath();
+        ctx.moveTo(x - dir * 34, y);
+        ctx.lineTo(x + dir * 34, y);
+        ctx.lineTo(x + dir * 16, y - 16);
+        ctx.moveTo(x + dir * 34, y);
+        ctx.lineTo(x + dir * 16, y + 16);
+        ctx.stroke();
+      }
+    }
+    if (e.moveKind === "skill" || e.moveKind === "super") {
+      const size = (e.moveKind === "super" ? 154 : 86) * (0.8 + age * 0.7);
+      specialMotif(ctx, info, x, y, size, age, game.fighters[e.side].facing, reduced);
+      if (e.moveKind === "super") {
+        ctx.strokeStyle = info.secondary;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(x, y, size * 0.88, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
     const radius = (burst ? 80 : blocked ? 32 : 44) + age * 62;
     const count = reduced ? 4 : 10;
     for (let i = 0; i < count; i++) {
@@ -524,7 +546,7 @@ function boxes(ctx: CanvasRenderingContext2D, game: Game, center: number) {
     for (const [list, color] of [
       [b.hurt, "#74e5a5"],
       [[b.push], "#fff3b6"],
-      [b.attack ? [b.attack] : [], "#ff7587"],
+      [b.strikes, "#ff7587"],
     ] as const) for (const box of list) {
         ctx.fillStyle = `${color}30`;
         ctx.strokeStyle = color;
@@ -552,6 +574,10 @@ function superCut(
   rect(ctx, 0, 238, WIDTH, 244, "#291e46f5");
   rect(ctx, 0, 238, WIDTH, 4, info.color);
   rect(ctx, 0, 478, WIDTH, 4, info.color);
+  ctx.save();
+  ctx.globalAlpha *= 0.25;
+  specialMotif(ctx, info, 1030, 360, 190, elapsed, f.facing, reduced);
+  ctx.restore();
   ctx.save();
   ctx.beginPath();
   ctx.rect(0, 242, 580, 236);

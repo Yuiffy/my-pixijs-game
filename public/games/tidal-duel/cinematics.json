@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "clips": [
+    {
+      "character": "sui",
+      "skin": "original",
+      "title": "月下猫步",
+      "src": "/games/tidal-duel/cinematics/sui-original.mp4",
+      "poster": "/games/tidal-duel/cinematics/sui-original.webp",
+      "duration": 5.2,
+      "bytes": 1016332
+    },
+    {
+      "character": "shiori",
+      "skin": "original",
+      "title": "白昼潮汐",
+      "src": "/games/tidal-duel/cinematics/shiori-original.mp4",
+      "poster": "/games/tidal-duel/cinematics/shiori-original.webp",
+      "duration": 5.2,
+      "bytes": 872838
+    },
+    {
+      "character": "mizuki",
+      "skin": "original",
+      "title": "满月回旋",
+      "src": "/games/tidal-duel/cinematics/mizuki-original.mp4",
+      "poster": "/games/tidal-duel/cinematics/mizuki-original.webp",
+      "duration": 5.2,
+      "bytes": 939301
+    }
+  ]
+}

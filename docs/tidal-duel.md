@@ -1,16 +1,20 @@
-# 潮夜格斗 · 岁己 vs 栞栞
+# 潮夜格斗 · 三人像素对战
 
 Original prompt: 制作岁己 vs 栞栞的精致格斗游戏，支持后续加入角色；后续要求调研并重制成有角色魅力、特色招式和交互的像素格斗。最新要求默认不用泳装，可以使用小猫帽原皮岁己，也支持换肤。
 
-最新要求：补足空中攻击模组，改善跳攻惯性、空中衔接与落地接招。此前已完成名称区分、现代操作、按后防御和动作比例修正。
+最新要求：增加弥月的黑丝原皮，并加强三人的必杀，使用 Dreamina 动画制作命中演出；用户允许积分，使用 Seedance 2.0 Mini 或 Fast VIP。此前已完成空中攻击模组、跳攻惯性、空中衔接与落地接招，以及现代操作、按后防御和动作比例修正。
 
-入口：`/demos` 的「潮夜格斗」，英文 TIDE FIGHTERS；游戏路径 `/game/tidal-duel` 保持兼容。大厅搜索「格斗」可找到入口，与「晴海双打」区分。海报、分享、标题、选人、画布与公开状态同步新名称。
+最新判定扩展：原皮 alpha 与人工身体/肢体区域离线烘焙 168 姿态分段框；衣装共用规则，攻击与受击同步画面。远端肢体相碰可拼招，近身相打按同帧快照同时结算；新按后 3F 可精确防御，轻+重中段防反起手 4F 可返还潮波一次。研究来源、精确规则、近似范围与特殊弧形判定见 [接触设计](tidal-duel-contact-design.md)。
+
+入口：`/demos` 的「潮夜格斗 · 三人像素对战」，英文 TIDE FIGHTERS；游戏路径 `/game/tidal-duel` 保持兼容。大厅搜索「格斗」或「弥月 黑丝」可找到入口。海报、分享、标题、选人、画布与公开状态同步三人阵容。
 
 ## 角色与服装
 
 岁己默认「小猫帽 · 原皮」，栞栞默认「月色 · 旅装」。各自另有可选「晴海 · 轻装」，1P / 2P 独立选择，支持同角色不同衣装的镜像对局。衣装只改变像素素材，不改变速度、伤害或招式。
 
-四套服装共十二张动作图集、224 帧；每套有 16 帧移动/防御、24 帧战斗/反应与新增的 16 帧空中攻击。姿态随起手、有效、收招时钟切换，命中停顿冻结动作。舞台原生 640×360，角色帧 448×448，脚底锚点 `[224,440]`，标准站立身形参考 184 像素；Canvas 2D 使用最近邻放大与整数坐标。透明容器扩大，不扩大标准身高。
+弥月只有「黑丝 · 原皮」，以仓库完整参考 `public/images/livers/mizuki.png` 为依据：浅金卷曲双马尾、黑白蝴蝶结、黑短外套与金链、黑百褶裙、黑丝袜与扣带、蓝灰靴口。拥有独立待机、移动、防御、地面/空中攻击、受击、倒地和胜利素材，可选为 1P、2P、CPU 或镜像对手。切换到弥月时会校正此前选中的其他衣装。
+
+三人五套服装共十五张动作图集、280 帧；每套有 16 帧移动/防御、24 帧战斗/反应与 16 帧空中攻击。姿态随起手、有效、收招时钟切换，命中停顿冻结动作。舞台原生 640×360，角色帧 448×448，脚底锚点 `[224,440]`，标准站立身形参考 184 像素；Canvas 2D 使用最近邻放大与整数坐标。透明容器扩大，不扩大标准身高。
 
 旧编译器为容纳最宽的扫腿/倒地而缩小整个动作条带，另有生成条带的原始比例差异。现在待机、行走、防御分别按统一身形校准；蹲跳沿用直立防御的比例，受击/倒地沿用明确的直立反应参考，不按折叠姿态的包围盒高度拉伸。越界直接报错，不能悄悄缩小人物；编译器和渲染器读取同一个 `source-layout.json`。
 
@@ -21,7 +25,8 @@ Original prompt: 制作岁己 vs 栞栞的精致格斗游戏，支持后续加�
 - 按住辅助并重复轻/中/重攻击分别执行连掌、踢掌接必杀、浮空接超杀三条路线。后续必须真实命中确认，落空或被防御不接招；重路线仅在满 100 潮能时用超杀收尾。
 - 拳脚压投、投破防反、三向反击截对应上/中/下段。侧闪避直线拳，追踪腿法能抓侧闪；蹲防应对下段、跳跃越过扫腿和潮波。
 - 岁己「猫步连掌」向前突进，接触后可再接两次角色技；落空不能跳过恢复，终段恢复更长。栞栞「流心潮波」是实际移动、可碰撞的飞行道具，可防、反、跳、侧闪或用对方波抵消。
-- 两人升击消耗 25 潮能，起手短暂无敌，判定能对空；被防后可惩罚。普通招命中可取消进角色技/升击；命中后侧闪消耗 50 取消收招，超杀不参与此取消。
+- 弥月「月弧踢」进身，接触后再按必杀接「回月追踢」击倒；落空不能接第二段。首段 12/5/24 F、伤害 25，终段 11/4/30 F、伤害 28；追踪可抓侧闪，但终段被防容易受罚。超杀为「满月回旋」，基础伤害 66，消耗 100 潮能。
+- 三人升击消耗 25 潮能，起手短暂无敌，判定能对空；被防后可惩罚。普通招命中可取消进角色技/升击；命中后侧闪消耗 50 取消收招，超杀不参与此取消。
 - 被抓后 0.14 秒内按投拆投；过期无效，拆投不排队追加投技。攻击者被第三方命中时释放被抓者。
 - 受击、暴击、浮空或防御硬直中可花 50 脱身，每回合一次。普通站防、倒地和抓取中不能脱身；防御条耗尽会破防，停止防御并经过延迟后恢复。
 - 连段衰减、空中追击上限、起身保护与回合结束清除投/波，限制无限压制。训练显示真实攻击/受击/推挤框、输入记录及最近接触的帧优势；帧优势以双方剩余硬直和收招计算。
@@ -49,18 +54,30 @@ Original prompt: 制作岁己 vs 栞栞的精致格斗游戏，支持后续加�
 
 暂停、说明、失焦和返回选人会清除输入、方向历史及连段缓存；此前按住的键/手柄按钮需释放后重新按下。正常游玩音效由原创合成短音组成，无 TTS；静音偏好与最佳连击存在浏览器，存储不可用仍可游玩。
 
+## 超杀命中演出
+
+三人的普通必杀和超杀增加猫爪、潮浪、月弧与命中光环。原皮满 100 潮能的超杀真实命中后，播放约 5.2 秒角色动画：岁己「月下猫步」、栞栞「白昼潮汐」、弥月「满月回旋」。伤害由规则引擎结算一次，演出期间冻结双方位置、生命、回合和时钟；自然结束或跳过后清除输入再恢复对局。K.O. 也先完成演出再转入下一回合，Enter 不能提前推进。
+
+原皮匹配动画衣装；其他衣装、格挡、落空和普通 U 继续使用擂台特效。玩法说明可关闭动画，减少动态效果时自动省略。视频跟随总静音、暂停、说明和失焦；解码/加载失败或停滞会在 2.5 秒内释放对局。只预取当前两名角色的原皮视频，镜像只下载一份，Blob 缓存上限 12 MiB，切换角色/关闭时中止旧请求并回收；省流量模式只在真实命中时下载。
+
+使用 Dreamina Canvas CLI、`seedance_2.0_mini`、m2v、720p、16:9、5 秒，每个角色引用已有原皮 seed，各只提交一次。三项报价上限合计 90 积分，不代表最终净账单。三项 operation 均成功、产物已下载，原皮来源节点、上游连线和正文 reference part 已回读核验。画布入口、完整提示词、ID 与源文件 SHA256 在 [cinematics-job.json](tidal-duel-cinematics-job.json)，公开参数与交付哈希在 [cinematics-delivery.json](tidal-duel-cinematics-delivery.json)。
+
+`python scripts/prepare-tidal-cinematics.py --source tmp/tidal-cinema/sources` 转为 H.264/AAC、960×540、30 fps、faststart，音效统一响度；三个 MP4 共 2,828,471 bytes。原生音轨是破风与冲击音，无对白；提供可选音效字幕，六帧电影条已打开检查。分发文件与实际时长见 `public/games/tidal-duel/cinematics.json`。
+
 ## 空中攻击
 
 跳与轻/中/重可一起按，先按攻击、50ms 内补跳也能转成对应跳攻。出招不清零横向速度，松开方向继续漂移；空中改变方向逐渐转向，不瞬间刹停。起跳时锁定面向，越过对手不会自动转身。
 
 | 空中招式 | 用途 | 起手 / 有效 / 收招 |
 | --- | --- | --- |
-| 轻掌 | 快速空对空，低空命中站姿 | 5 / 7 / 10 F |
-| 横踢（栞栞：流心飞踢） | 水平控距与空对空，晚按可跳入接地面招 | 8 / 10 / 13 F |
-| 下劈（栞栞：潮汐下劈） | 向下攻击，跳入压制蹲姿 | 11 / 12 / 18 F |
-| 岁己：猫袭落掌 / 栞栞：流心落潮踢 | 斜向前下突袭，加速下降，落地有明显收招 | 10 / 14 / 20 F；栞栞起手 9 F |
+| 轻掌（弥月：逐影空拳） | 快速空对空，低空命中站姿 | 5 / 7 / 10 F |
+| 横踢（栞栞：流心飞踢；弥月：月弧飞踢） | 水平控距与空对空，晚按可跳入接地面招 | 8 / 10 / 13 F |
+| 下劈（栞栞：潮汐下劈；弥月：月影下劈） | 向下攻击，跳入压制蹲姿 | 11 / 12 / 18 F |
+| 岁己：猫袭落掌 / 栞栞：流心落潮踢 / 弥月：蚀月落踢 | 斜向前下突袭，加速下降，落地有明显收招 | 10 / 14 / 20 F；栞栞起手 9 F，弥月 11 F |
 
 实际命中后可升序接轻→中→重或空中角色技，每次跳跃最多三招；被防或落空不能取消，也不能反复重开空中普攻。辅助+攻击在空中仍选择相应跳攻，不启动地面辅助路线。横向轻掌/横踢可以被蹲姿物理躲过，下劈可击中蹲姿；能接触的跳攻须站防，空中没有格挡。
+
+空中角色技的俯冲从有效期开始，起手保留跳跃惯性，避免正常跳跃后按必杀却在起手结束前落地。横向空攻较高时可蹲躲，低空横踢也可能触及蹲姿，按实际分段轮廓判断。
 
 落地立即结束空中判定。空跳恢复 3 F，普攻命中后的落地恢复 3 / 4 / 5 F，落空为 6 / 7 / 9 F；空中角色技命中后 12 F、落空 16 F，被防再加 2 F。落地时新按地面攻击可缓存并接真实连击，空中遗留的普攻、必杀、超杀输入不会落地误放。空中角色技须离地至少 65px，下+必杀仍为同一空中技，不收地面升击的 25 潮能。空对空命中进入有限浮空追击，随后倒地并获得起身保护。
 
@@ -78,13 +95,24 @@ Original prompt: 制作岁己 vs 栞栞的精致格斗游戏，支持后续加�
 
 原创 ImageGen 原 PNG 保留在本机生成目录，提示词、历史及来源见 [pixel/assets.json](../public/games/tidal-duel/pixel/assets.json)，规格和逐帧边界见 `source-layout.json` / `compiled.json`。`scripts/prepare-tidal-pixels.py --source <原图目录>` 用 Pillow、NumPy、SciPy 提取完整 alpha 轮廓，按身形参考校准条带；横向锚点取底部 5.5% 支撑轮廓，缩放后重新裁空 alpha 再对齐脚底。栞栞原皮待机第 1 帧有实测 1.077 比例修正。`scripts/capture-tidal-poster.cjs` 从当前原皮选人画面导出「潮夜格斗」海报，无额外生图。
 
+弥月通过内置 ImageGen 生成 seed，再分别整张生成 motion、combat、air；每张沿用共享身形比例，空中按实测骨盆对齐。四张原 PNG 已保存到仓库 `public/games/tidal-duel/pixel/sources/mizuki-*.png`，完整提示词、参考、生成模式和来源见 [mizuki-assets.json](../public/games/tidal-duel/pixel/mizuki-assets.json)。编译器支持按角色更新并保留其他角色与舞台的审计记录：
+
+```powershell
+python scripts/prepare-tidal-pixels.py --source public/games/tidal-duel/pixel --character mizuki
+python scripts/prepare-tidal-air.py --source public/games/tidal-duel/pixel --character mizuki
+```
+
 ## 验证与复跑
+
+2026-10-04 最终三人版本已完成验收：98 项规则、6 项大厅、600 场 CPU、修改源码 ESLint，以及独立检出的完整 check → build 顺序通过。生产公开操作验证三人拼招/相打、双侧精防/回波、弥月完整对局、三段电影/缓存/失败降级、空中俯冲/落地接招和大厅入口；最终验收集 100 张截图及九张轮廓图集均逐张打开目检。减少动态效果采用该媒体偏好下重新加载页面验证，不依赖 Chrome 测试中未派发的动态事件。证据表和完整生产复跑命令见 [浏览器 QA](tidal-duel-qa.md)。当前生产试玩为 `http://127.0.0.1:4048/game/tidal-duel`，使用最终 `.next`；发布基于 master `6dbb653`，保留主工作区其他开发。
 
 空中专项入口为 `pnpm run duel:verify:air`。开发验收覆盖两侧键盘三种跳攻顺序、四套实际动作、惯性、空中三段上限、站防/蹲姿、落地真连、暂停缓存清理、双手柄 API 轮询和 320/390/844 原生三指跳攻。加 `TIDAL_DUEL_PUBLIC_MATCH=1` 可验证生产版本，只用公开键盘、DOM、`render_game_to_text()` 和 `advanceTime()`，测试内冻结 RAF，不提供可修改游戏状态的开发钩子。
 
-本次空中模组的 67 项规则、6 项大厅、208 场 CPU 对局、开发专项/完整流程与生产专项/完整对局全部通过。48 张截图和八张原图标注/编译预览均已打开目检；实际浏览器解码全部 64 个新帧，页面/控制台错误为空。证据 `tmp/tidal-air/{focused-dev,base-dev,shared,production-air,production-base}/`，日志 `tmp/tidal-air/{eslint,rules,library,simulation,check,build}.log`。独立检出整合 master `cc9b71a` 后完整 check → build 顺序通过，当前生产试玩 `http://localhost:4043/game/tidal-duel` 使用 `.next-tidal-air-build`。下文的现代操作验收记录保留为上一轮历史。
+上一轮空中模组的 67 项规则、6 项大厅、208 场 CPU 对局、开发专项/完整流程与生产专项/完整对局全部通过。48 张截图和八张原图标注/编译预览均已打开目检；实际浏览器解码全部 64 个新帧，页面/控制台错误为空。历史证据 `tmp/tidal-air/{focused-dev,base-dev,shared,production-air,production-base}/`，日志 `tmp/tidal-air/{eslint,rules,library,simulation,check,build}.log`。独立检出整合 master `cc9b71a` 后完整 check → build 顺序通过，历史生产试玩 `http://localhost:4043/game/tidal-duel` 使用 `.next-tidal-air-build`。下文的现代操作验收记录同样保留为历史。
 
-`pnpm run duel:test`：67 项规则测试，含 14 项空中与 14 项现代操作测试；`pnpm run library:test`：6 项大厅回归。`pnpm run duel:simulate`：三级难度各 32 种子×换侧，再加 16 场衣装镜像，共 208 场完整比赛，检查资源范围和卡局。
+`pnpm run duel:test`：98 项规则/缓存/素材测试，含 14 项接触判定、9 项弥月、7 项演出、14 项空中与 15 项现代操作测试；`pnpm run library:test`：6 项大厅回归。`pnpm run duel:simulate`：三级难度各 32 种子×六组有序对手，再加 24 场衣装镜像，共 600 场完整比赛，检查资源范围和卡局。
+
+弥月专项入口为 `pnpm run duel:verify:mizuki`。开发路径检查两侧五种地面/四种空中动作、两段踢击、反应与胜利动作、56 个真实解码帧、单人 CPU、两侧完整 K.O. 对局、镜像和 320/390/844 原生双指跳攻；生产路径加 `TIDAL_DUEL_PUBLIC_MATCH=1`，只使用公开键盘、DOM、固定步长时钟和文本状态，另检查训练重置、升击/超杀费用、辅助连招和飞行暂停。完整旧流程与现代操作回归仍可独立复跑。
 
 浏览器使用安装版 Chrome、静音参数和语音 stub，截图进行非黑/非透明检查并与公开状态、DOM、Canvas 尺寸和错误交叉验证。修改源码先 ESLint；提交前完整 `pnpm run check` → `pnpm run build` 顺序执行，构建 ESLint 保持启用。
 
@@ -98,14 +126,17 @@ $env:TIDAL_DUEL_OUTPUT='tmp/tidal-modern/focused-dev'
 pnpm run duel:verify:modern
 $env:TIDAL_DUEL_OUTPUT='tmp/tidal-air/focused-dev'
 pnpm run duel:verify:air
+$env:TIDAL_DUEL_URL='http://127.0.0.1:4044/game/tidal-duel'
+$env:TIDAL_DUEL_OUTPUT='tmp/tidal-mizuki/focused-dev'
+pnpm run duel:verify:mizuki
 ```
 
 生产验收用 `TIDAL_DUEL_PUBLIC_MATCH=1` 和 `SMOKE_ONLY=1` 运行 `duel:verify`，验证公开输入完成两次真实 K.O.、自然回合与重赛，原皮/可选服装/镜像、波与升击、大厅搜索和海报解码。`render_game_to_text()` 和 `advanceTime(ms)` 使用公开状态和同一规则引擎；生产不提供可修改游戏的 `window.tidalDuel` 开发钩子。
 
-本轮开发完整流程 12 组、像素专项 4 组、现代操作专项 5 组和静音通用客户端通过，共 40 张游戏截图；现代专项从浏览器实际解码全部 160 帧，检查 alpha、无裁切、脚底和站姿身形，按键验证双侧换边格挡、三条真实辅助连招、45ms 两种顺序组合键，以及 320/390/844 原生双指超杀。证据在 `tmp/tidal-modern/{base-dev,pixel-dev,focused-dev,shared}/`。
+此前现代操作开发完整流程 12 组、像素专项 4 组、现代操作专项 5 组和静音通用客户端通过，共 40 张游戏截图；现代专项从浏览器实际解码全部 160 帧，检查 alpha、无裁切、脚底和站姿身形，按键验证双侧换边格挡、三条真实辅助连招、45ms 两种顺序组合键，以及 320/390/844 原生双指超杀。证据在 `tmp/tidal-modern/{base-dev,pixel-dev,focused-dev,shared}/`。
 
 生产公开操作 4 组通过：实际键盘完成两次真实 K.O.、自然回合、结算和重赛，确认无可修改状态的开发钩子；原皮、可选服装和镜像、U 潮波与下+U 消耗 25 潮能升击、练习/暂停、320/390/844 布局、大厅搜索「格斗」和新海报解码均通过。52 张游戏截图（40 张开发/通用、12 张生产）、八张图集预览及新海报已逐张打开目检，与公开状态、DOM、Canvas 尺寸交叉核对，无页面/控制台错误。生产证据 `tmp/tidal-modern/production/report.json`。
 
-已有独立发布检出整合 master `1ce002f` 后，修改源码 ESLint、完整 `pnpm run check` → `pnpm run build` 顺序通过，保留构建 ESLint，日志 `tmp/tidal-modern/{eslint,check,build}.log`。规则和大厅最终日志 `tmp/tidal-modern/{final-rules,final-library}.log`，CPU 报告 `tmp/tidal-pixel-balance/report.json`。当前生产试玩 `http://localhost:4041/game/tidal-duel` 使用 `.next-tidal-modern-build`，发布目标为 `origin/master`；主工作区的其他开发继续保留，临时类型路径不纳入提交。
+已有独立发布检出整合 master `1ce002f` 后，修改源码 ESLint、完整 `pnpm run check` → `pnpm run build` 顺序通过，保留构建 ESLint，日志 `tmp/tidal-modern/{eslint,check,build}.log`。规则和大厅最终日志 `tmp/tidal-modern/{final-rules,final-library}.log`，CPU 报告 `tmp/tidal-pixel-balance/report.json`。历史生产试玩 `http://localhost:4041/game/tidal-duel` 使用 `.next-tidal-modern-build`，发布目标为 `origin/master`；主工作区的其他开发继续保留，临时类型路径不纳入提交。
 
 调研依据、招式取舍和 CPU 对战统计见 [tidal-duel-v2-design.md](tidal-duel-v2-design.md)。当前为原创 Canvas 2D 浏览器像素格斗；未引入第三方 MUGEN 引擎/角色素材，未实现联网对战。手柄验证为浏览器实际轮询的 API 模拟，未做实体手柄硬件兼容测试；CPU 胜率也不能证明真人对战平衡。

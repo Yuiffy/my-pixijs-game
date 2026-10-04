@@ -1,0 +1,182 @@
+{
+  "jobKey": "tidal-duel-cinematics-20261004",
+  "region": "cn",
+  "profile": "default",
+  "canvasId": "2212780c-bafe-419e-8583-f55309f64fd3",
+  "model": "seedance_2.0_mini",
+  "mode": "m2v",
+  "ratio": "16:9",
+  "resolution": "720p",
+  "duration": 5,
+  "authorization": "用户明确允许使用积分，使用 Seedance 2.0 Mini 或 Fast VIP，制作三人的必杀命中动画。",
+  "references": {
+    "sui": {
+      "nodeId": "node_8f06df377b",
+      "updateId": "788e65b8-ff56-4fe3-a169-c77172da7922",
+      "submitId": "90c3f59f-ed43-4fa0-92b7-5ab2921b3026",
+      "resourceId": "32448d30-6839-4381-9c65-86acbd0e408b",
+      "file": "tmp/tidal-cinema/references/sui-original.png",
+      "source": "public/games/tidal-duel/pixel/sui-original-seed.webp",
+      "name": "岁己",
+      "mediaType": "image",
+      "uploaded": true,
+      "uploadRequestId": "20261004171246513F9D339B304F01C8DC",
+      "imported": true,
+      "importRequestId": "2026100417124707A570DDA6ABEEF63630"
+    },
+    "shiori": {
+      "nodeId": "node_ab0eb05846",
+      "updateId": "28e8fecc-c073-4603-82ca-d0a95aefaec1",
+      "submitId": "b314244f-0c0d-455b-886b-0bd728ed509f",
+      "resourceId": "1b5184c8-5366-4882-9997-a82cd27184fd",
+      "file": "tmp/tidal-cinema/references/shiori-original.png",
+      "source": "public/games/tidal-duel/pixel/shiori-original-seed.webp",
+      "name": "栞栞",
+      "mediaType": "image",
+      "uploaded": true,
+      "uploadRequestId": "20261004171248FA48F4BDDBE94BF5AE78",
+      "imported": true,
+      "importRequestId": "20261004171249D77A8B56DFAEA48E1F5F"
+    },
+    "mizuki": {
+      "nodeId": "node_c842ec59d8",
+      "updateId": "9fc02743-8237-401c-ba77-959981291575",
+      "submitId": "d849f966-70ce-4ae6-b0a7-3379b7f3d0e0",
+      "resourceId": "139b9145-ca59-4424-9f4b-5628ee408f1d",
+      "file": "tmp/tidal-cinema/references/mizuki-original.png",
+      "source": "public/games/tidal-duel/pixel/mizuki-original-seed.webp",
+      "name": "弥月",
+      "mediaType": "image",
+      "uploaded": true,
+      "uploadRequestId": "20261004171251EADE275998EEF23B757C",
+      "imported": true,
+      "importRequestId": "20261004171251577BF3A98CAB0DB62975"
+    }
+  },
+  "items": {
+    "sui": {
+      "nodeId": "node_eebaf96563",
+      "updateId": "8def1bc6-55d2-4508-85d1-b5208be9358f",
+      "submitId": "b101929f-b155-4492-a137-ecdea395fdd6",
+      "actor": "sui",
+      "skin": "original",
+      "title": "月下猫步",
+      "prompt": "用于原创像素格斗《潮夜格斗》的5秒超杀命中演出。以高质量日式赛璐璐动画呈现，保留引用角色的发色、面容、帽子、服装及鞋袜，成年女性格斗角色，动作有力、帅气、非性化。16:9横屏，夕阳海边木栈台，紫橙天空。主角始终是唯一可辨认的人物，受击方只用无脸暗色训练影靶，不引入其他角色。镜头以全身与脸部特写交替，腿脚完整，肢体数量正确，角色动作清晰；不使用臀部或胸部特写。没有字幕、文字、标志、UI、水印、台词和旁白。音轨只用动作破风与有力度的格斗冲击音，结尾自然收音；没有背景音乐。起势迅速，最后0.5秒留可读的收势。主角是{{node:node_8f06df377b}}中的岁己，保持银白长发，黑灰小猫帽、紫色短外套、黑色上衣、紫黑格纹短裤与腰链、网纹袜和黑靴。0至0.6秒镜头推近眼神，小猫帽和银白发丝清晰；0.6至2.8秒角色以猫步高速进身，连续三记掌击，紫色猫爪光痕和月光残影逐次炸开；2.8至4.2秒旋身终掌将能量化作巨大的紫金猫爪冲击，影靶后滑；4.2至5秒站定回眸，帽耳轻晃，月光粒子落下。",
+      "state": "succeeded",
+      "saveRequestId": "20261004171252590AC41F1ADB46A57CDD",
+      "authorizedCreditCeiling": 30,
+      "operationRef": "b101929f-b155-4492-a137-ecdea395fdd6",
+      "runRequestId": "20261004171634CF8149F710EF97F467D2",
+      "resourceId": "22bcda65-82c6-40b8-a0fd-646ca646d89a",
+      "statusRequestId": "2026100417315966C42EF76D7CB3345EAE",
+      "sourcePath": "tmp/tidal-cinema/sources/sui.mp4",
+      "sourceBytes": 8273775,
+      "sourceSha256": "2c61194a1fc096bb42c499ef84aaa1b57e9e8b4b118dfa94b4f6c711d3574458",
+      "downloadVerified": true,
+      "downloadRequestId": "2026100417333295D1E7F7E3FA1C2A8AD5"
+    },
+    "shiori": {
+      "nodeId": "node_2d716f770e",
+      "updateId": "76e47414-2027-43a8-85d9-7f47982b757a",
+      "submitId": "3b0d91f2-6089-497e-832b-aaad8ffafa61",
+      "actor": "shiori",
+      "skin": "original",
+      "title": "白昼潮汐",
+      "prompt": "用于原创像素格斗《潮夜格斗》的5秒超杀命中演出。以高质量日式赛璐璐动画呈现，保留引用角色的发色、面容、帽子、服装及鞋袜，成年女性格斗角色，动作有力、帅气、非性化。16:9横屏，夕阳海边木栈台，紫橙天空。主角始终是唯一可辨认的人物，受击方只用无脸暗色训练影靶，不引入其他角色。镜头以全身与脸部特写交替，腿脚完整，肢体数量正确，角色动作清晰；不使用臀部或胸部特写。没有字幕、文字、标志、UI、水印、台词和旁白。音轨只用动作破风与有力度的格斗冲击音，结尾自然收音；没有背景音乐。起势迅速，最后0.5秒留可读的收势。主角是{{node:node_ab0eb05846}}中的栞栞，保持浅金长发，棕色贝雷帽、白色短袖领衫、深色领带、棕色高腰短裤、白色过膝袜和棕金靴。0至0.6秒镜头掠过贝雷帽与坚定眼神；0.6至2.2秒角色抬腿旋踢，青蓝潮环沿靴尖升起；2.2至4.2秒一道透明白昼巨浪伴随全身侧踢冲向影靶，水晶飞沫与金色阳光交织，镜头随浪向前；4.2至5秒巨浪散为水光，角色稳稳落地，海风吹动头发。",
+      "state": "succeeded",
+      "saveRequestId": "202610041712533049C682C03F2A31AACE",
+      "authorizedCreditCeiling": 30,
+      "operationRef": "3b0d91f2-6089-497e-832b-aaad8ffafa61",
+      "runRequestId": "20261004171634CF8149F710EF97F467D2",
+      "resourceId": "6a00cc6e-ced3-4c9b-96af-db5211b2f0da",
+      "statusRequestId": "2026100417315948E8CD9F3725E2F3EF16",
+      "sourcePath": "tmp/tidal-cinema/sources/shiori.mp4",
+      "sourceBytes": 6762652,
+      "sourceSha256": "c656c796bac05fa18d6afc5774bc3932d884ed3f5a4c1d4afbefec8a57971360",
+      "downloadVerified": true,
+      "downloadRequestId": "20261004173334340AAEA7F1D2E871E499"
+    },
+    "mizuki": {
+      "nodeId": "node_a6de7fb113",
+      "updateId": "def7d42e-fd4b-4753-9907-e709dbe37700",
+      "submitId": "e5eb5a34-bc01-4b90-833c-facd00eee563",
+      "actor": "mizuki",
+      "skin": "original",
+      "title": "满月回旋",
+      "prompt": "用于原创像素格斗《潮夜格斗》的5秒超杀命中演出。以高质量日式赛璐璐动画呈现，保留引用角色的发色、面容、帽子、服装及鞋袜，成年女性格斗角色，动作有力、帅气、非性化。16:9横屏，夕阳海边木栈台，紫橙天空。主角始终是唯一可辨认的人物，受击方只用无脸暗色训练影靶，不引入其他角色。镜头以全身与脸部特写交替，腿脚完整，肢体数量正确，角色动作清晰；不使用臀部或胸部特写。没有字幕、文字、标志、UI、水印、台词和旁白。音轨只用动作破风与有力度的格斗冲击音，结尾自然收音；没有背景音乐。起势迅速，最后0.5秒留可读的收势。主角是{{node:node_c842ec59d8}}中的弥月，保持浅金卷曲双马尾，黑白蝴蝶结，黑领衫和短外套、金链、黑百褶裙、黑丝袜与扣带、黑靴及蓝灰靴口。0至0.6秒镜头推近紫色眼睛与黑白蝴蝶结；0.6至2秒月弧高踢留下明亮紫金弯月光轨；2至4.2秒全身腾空回旋追踢，双马尾随转身摆动，三道宽阔新月光刃汇合成满月光环击中影靶，最后以凌厉侧踢打碎光环；4.2至5秒角色落地站稳，黑裙和金链轻摆，月尘飘散。",
+      "state": "succeeded",
+      "saveRequestId": "202610041712542892C1D7E2F2E64140E8",
+      "authorizedCreditCeiling": 30,
+      "operationRef": "e5eb5a34-bc01-4b90-833c-facd00eee563",
+      "runRequestId": "20261004171634CF8149F710EF97F467D2",
+      "resourceId": "428c415a-b373-4c3b-a1e9-9b985ec11a36",
+      "statusRequestId": "202610041731592F1C94655DC4A5336372",
+      "sourcePath": "tmp/tidal-cinema/sources/mizuki.mp4",
+      "sourceBytes": 7073057,
+      "sourceSha256": "7157f0c1f19231156bd1dd1b2c8ee6e3eee34685eef396d997611031e105b959",
+      "downloadVerified": true,
+      "downloadRequestId": "20261004173336322F0D80DCC3D634F5DC"
+    }
+  },
+  "webUrl": "https://jimeng.jianying.com/ai-tool/ai-canvas/2212780c-bafe-419e-8583-f55309f64fd3",
+  "createRequestId": "20261004171142768E6D6359C8588A3BDF",
+  "quote": {
+    "items": [
+      {
+        "nodeId": "node_eebaf96563",
+        "maxCredits": 30
+      },
+      {
+        "nodeId": "node_2d716f770e",
+        "maxCredits": 30
+      },
+      {
+        "nodeId": "node_a6de7fb113",
+        "maxCredits": 30
+      }
+    ],
+    "totalMaxCredits": 90,
+    "draftVersion": 6,
+    "confirmable": true,
+    "confirmationRequired": true
+  },
+  "quoteRequestId": "20261004171255E07CB02B62DC9345C3D6",
+  "authorizedCreditCeiling": 90,
+  "confirmationRequestId": "2026100417163339821DCC563B9B2E8BE7",
+  "referenceValidation": {
+    "requestId": "2026100417523697E6D1D5850DA6690790",
+    "method": "node show: FOUND nodes; node references, upstream edges and prompt reference part independently verified",
+    "nodes": [
+      {
+        "nodeId": "node_eebaf96563",
+        "sourceNodeId": "node_8f06df377b",
+        "sourceKind": "node",
+        "upstreamNodeIds": [
+          "node_8f06df377b"
+        ],
+        "promptReferenceIndex": 0,
+        "promptPlaceholderPreserved": true
+      },
+      {
+        "nodeId": "node_2d716f770e",
+        "sourceNodeId": "node_ab0eb05846",
+        "sourceKind": "node",
+        "upstreamNodeIds": [
+          "node_ab0eb05846"
+        ],
+        "promptReferenceIndex": 0,
+        "promptPlaceholderPreserved": true
+      },
+      {
+        "nodeId": "node_a6de7fb113",
+        "sourceNodeId": "node_c842ec59d8",
+        "sourceKind": "node",
+        "upstreamNodeIds": [
+          "node_c842ec59d8"
+        ],
+        "promptReferenceIndex": 0,
+        "promptPlaceholderPreserved": true
+      }
+    ]
+  }
+}

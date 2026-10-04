@@ -65,7 +65,7 @@ async function run(headless = true) {
     assert.equal((await fetch(url, { signal: AbortSignal.timeout(20000) })).status, 200);
     browser = await chromium.launch({ channel: 'chrome', headless, args: ['--mute-audio', '--disable-speech-api'] });
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, hasTouch: true });
-    await context.addInitScript(() => { if (window.speechSynthesis) window.speechSynthesis.speak = () => {}; });
+    await context.addInitScript(() => { localStorage.setItem('tidal-duel-cinematics', 'off'); if (window.speechSynthesis) window.speechSynthesis.speak = () => {}; });
     const page = await context.newPage();
     page.on('pageerror', e => report.errors.push(e.message));
     page.on('console', m => { if (m.type() === 'error') report.errors.push(m.text()); });

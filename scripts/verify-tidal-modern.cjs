@@ -48,7 +48,7 @@ async function capture(page, report, name) {
     canvas: [...document.querySelectorAll('canvas')].map(c => ({ width: c.width, height: c.height, rect: c.getBoundingClientRect().toJSON() })),
     controls: [...document.querySelectorAll('[data-control]')].map(c => ({ action: c.dataset.control, rect: c.getBoundingClientRect().toJSON() })) }));
   assert.ok(pixels.colors > 8 && pixels.transparentRatio < 0.98 && pixels.nearBlackRatio < 0.96);
-  assert.equal(s.assetsReady, true); assert.equal(s.title, '潮夜格斗 · 岁己 vs 栞栞');
+  assert.equal(s.assetsReady, true); assert.equal(s.title, '潮夜格斗 · 三人像素对战');
   assert.ok(dom.width <= dom.viewport + 1); assert.equal(dom.canvas.length, 1);
   assert.equal(dom.canvas[0].width, 1280); assert.equal(dom.canvas[0].height, 720); assert.ok(dom.canvas[0].rect.width > 0);
   report.screenshots.push({ name, file, pixels, state: s, dom });
@@ -57,7 +57,7 @@ async function decodedFrames(page, report) {
   report.atlases = await page.evaluate(async () => {
     const spec = await (await fetch('/games/tidal-duel/pixel/source-layout.json')).json();
     const result = [];
-    for (const character of ['sui', 'shiori']) for (const skin of ['original', 'resort']) for (const sheet of ['motion', 'combat']) {
+    for (const [character, skins] of Object.entries(spec.sources)) for (const skin of Object.keys(skins)) for (const sheet of ['motion', 'combat']) {
       const image = new Image(); image.src = `/games/tidal-duel/pixel/${character}-${skin}-${sheet}.webp`; await image.decode();
       const canvas = document.createElement('canvas'); canvas.width = canvas.height = spec.frameSize;
       const ctx = canvas.getContext('2d', { willReadFrequently: true }); const frames = [];
@@ -84,12 +84,13 @@ async function decodedFrames(page, report) {
       total++; assert.ok(f.opaque > 1000 && f.opaque < 448 * 448 * 0.5); assert.equal(f.partial, 0);
       assert.ok(f.bounds[0] > 0 && f.bounds[1] > 0 && f.bounds[2] < 448); assert.equal(f.bounds[3], 440, 'common foot baseline, with transparent padding');
       if ((a.sheet === 'motion' && [...Array(8).keys(), 10, 11].includes(f.index)) || (a.sheet === 'combat' && f.index < 4)) {
-        assert.ok(Math.abs(f.height / 184 - 1) < 0.04, `${a.character}/${a.skin}/${a.sheet}/${f.index}: standing body remains within 4%`);
+        const tolerance = a.character === 'mizuki' && a.sheet === 'motion' && f.index >= 10 ? 0.06 : 0.04;
+        assert.ok(Math.abs(f.height / 184 - 1) < tolerance, `${a.character}/${a.skin}/${a.sheet}/${f.index}: shared body scale; braced knees retain their natural height`);
       }
     }
   }
-  assert.equal(total, 160);
-  report.checks.push('All 160 actual browser-decoded frames have binary alpha, padding and common feet; idle/walk/guard/punch body references remain within 4% of 184px');
+  assert.equal(total, 200);
+  report.checks.push('All 200 actual browser-decoded ground frames have binary alpha, padding and common feet; standing references remain within 4% of 184px (Mizuki bent-knee brace within 6% at the same sheet scale)');
 }
 async function run(headless = true) {
   fs.mkdirSync(output, { recursive: true });
@@ -99,7 +100,7 @@ async function run(headless = true) {
     assert.equal((await fetch(url, { signal: AbortSignal.timeout(20000) })).status, 200);
     browser = await chromium.launch({ channel: 'chrome', headless, args: ['--mute-audio', '--disable-speech-api'] });
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, hasTouch: true });
-    await context.addInitScript(() => { if (window.speechSynthesis) window.speechSynthesis.speak = () => {}; });
+    await context.addInitScript(() => { localStorage.setItem('tidal-duel-cinematics', 'off'); if (window.speechSynthesis) window.speechSynthesis.speak = () => {}; });
     const page = await context.newPage();
     page.on('pageerror', e => report.errors.push(e.message)); page.on('console', m => { if (m.type() === 'error') report.errors.push(m.text()); });
     await page.goto(url); await page.waitForFunction(() => window.tidalDuel && JSON.parse(window.render_game_to_text()).assetsReady);

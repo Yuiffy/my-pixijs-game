@@ -71,7 +71,7 @@ async function capture(page, report, name) {
     canvas: [...document.querySelectorAll('canvas')].map(c => ({ width: c.width, height: c.height, rect: c.getBoundingClientRect().toJSON() })),
     controls: [...document.querySelectorAll('[data-control]')].map(c => ({ action: c.dataset.control, rect: c.getBoundingClientRect().toJSON() })) }));
   assert.ok(pixels.colors > 8 && pixels.transparentRatio < 0.98 && pixels.nearBlackRatio < 0.96);
-  assert.equal(s.assetsReady, true); assert.equal(s.title, '潮夜格斗 · 岁己 vs 栞栞');
+  assert.equal(s.assetsReady, true); assert.equal(s.title, '潮夜格斗 · 三人像素对战');
   assert.ok(dom.width <= dom.viewport + 1); assert.equal(dom.canvas.length, 1);
   assert.equal(dom.canvas[0].width, 1280); assert.equal(dom.canvas[0].height, 720); assert.ok(dom.canvas[0].rect.width > 0);
   report.screenshots.push({ name, file, pixels, state: s, dom });
@@ -100,7 +100,7 @@ async function atlases(page, report) {
     }
     return result;
   });
-  assert.equal(report.atlases.length, 4);
+  assert.equal(report.atlases.length, 5);
   for (const a of report.atlases) {
     assert.equal(a.width, 1792); assert.equal(a.height, 1792);
     assert.deepEqual(a.metadata.anchor, [224, 440]);
@@ -111,7 +111,7 @@ async function atlases(page, report) {
       assert.deepEqual(a.metadata.frameRoots[f.index], [224, 340]);
     }
   }
-  report.checks.push('All 64 shipped aerial WebP frames decode with binary alpha, clear padding, recorded bounds and a stable pelvis anchor');
+  report.checks.push('All 80 shipped aerial WebP frames decode with binary alpha, clear padding, recorded bounds and a stable pelvis anchor');
 }
 async function development(page, report) {
   await start(page);
@@ -238,6 +238,9 @@ async function production(page, report) {
   }
   for (const skin of ['original', 'resort']) {
     await menu(page); await page.locator('#duel-skin').selectOption(skin); await page.locator('#duel-opponent-skin').selectOption(skin); await start(page);
+    await page.keyboard.down('KeyA'); await page.keyboard.down('ArrowRight');
+    await until(page, s => s.fighters[1].x - s.fighters[0].x >= 780);
+    await page.keyboard.up('ArrowRight'); await page.keyboard.up('KeyA'); await advance(page, 0);
     await keys(page, ['KeyW', 'ArrowUp'], 300); await keys(page, ['KeyL', 'Digit3'], 192);
     assert.ok((await state(page)).animation.every(a => a.sheet === 'air' && a.index === 9));
     await capture(page, report, `01-${skin}-public-heavy`); await advance(page, 1500);
@@ -274,6 +277,7 @@ async function run(headless) {
     await context.route(/\/api\/record(?:\?|$)/, route => route.fulfill({ contentType: 'application/json', body: '{"success":true,"skipped":true}' }));
     await context.route(/https:\/\/(pagead2\.googlesyndication\.com|hm\.baidu\.com)\//, route => route.fulfill({ contentType: 'application/javascript', body: '' }));
     await context.addInitScript(() => {
+      localStorage.setItem('tidal-duel-cinematics', 'off');
       if (window.speechSynthesis) window.speechSynthesis.speak = () => {};
       // Freeze only the test environment's RAF. Public advanceTime still calls the real engine and renderer.
       let id = 0, now = performance.now(); const frames = new Map();

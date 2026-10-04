@@ -138,11 +138,14 @@ def preview(sheet, name):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", required=True)
+    parser.add_argument("--character", choices=list(LAYOUT["sources"]))
     args = parser.parse_args()
     source = Path(args.source).resolve()
     spec = LAYOUT
     audit = []
     for character, skins in spec["sources"].items():
+        if args.character and character != args.character:
+            continue
         for skin, desc in skins.items():
             seed = clean(Image.open(source / desc["seed"]))
             seed_frame = normalize([seed])[0]
@@ -154,17 +157,23 @@ def main():
             # Each generated action strip can have a different body scale.
             # Crouch and jump use an upright body's scale, not bent pose height.
             guard_height = median(f.height for f in raw_motion[10:12])
-            motion = (normalize(raw_motion[:4]) + normalize(raw_motion[4:8])
-                      + normalize(raw_motion[8:10], reference=guard_height)
-                      + normalize(raw_motion[10:12], reference=guard_height)
-                      + normalize(raw_motion[12:16], reference=guard_height))
+            if "motionSharedBodyReference" in desc:
+                motion = normalize(raw_motion, reference=raw_motion[desc["motionSharedBodyReference"]].height)
+            else:
+                motion = (normalize(raw_motion[:4]) + normalize(raw_motion[4:8])
+                          + normalize(raw_motion[8:10], reference=guard_height)
+                          + normalize(raw_motion[10:12], reference=guard_height)
+                          + normalize(raw_motion[12:16], reference=guard_height))
             combat_desc = desc["combat"]
             raw_combat = slots(source, combat_desc)
             # The reaction row uses its configured upright pose as a body reference,
             # preserving the proportions of leaning and lying poses.
             reaction = raw_combat[-4:]
             reaction_height = reaction[desc["combat"].get("reactionReference", 1)].height
-            combat = normalize(raw_combat[:-4]) + normalize(reaction, reference=reaction_height)
+            if "sharedBodyReference" in combat_desc:
+                combat = normalize(raw_combat, reference=raw_combat[combat_desc["sharedBodyReference"]].height)
+            else:
+                combat = normalize(raw_combat[:-4]) + normalize(reaction, reference=reaction_height)
             if "insertLow" in combat_desc:
                 low = normalize(slots(source, combat_desc["insertLow"]), body_height=110)
                 combat[8:8] = low
@@ -177,10 +186,14 @@ def main():
                 audit.append({"file": name, "frames": len(frames), "size": packed.size,
                               "frameSize": SIZE, "alpha": "binary", "anchor": [SIZE // 2, FOOT], "bodyHeight": BODY_HEIGHT,
                               "frameBounds": [list(f.getbbox()) for f in frames],
-                              "normalization": "action-strip body references; never shrink to fit an extended limb"})
-    stage = Image.open(source / spec["stage"]).convert("RGB").resize((640, 360), Image.Resampling.NEAREST)
-    stage.save(OUT / "boardwalk.webp", "WEBP", lossless=True)
-    (OUT / "compiled.json").write_text(json.dumps(audit, indent=2) + "\n", encoding="utf-8")
+                              "normalization": "shared sheet body reference" if "motionSharedBodyReference" in desc else "action-strip body references; never shrink to fit an extended limb"})
+    if not args.character:
+        stage = Image.open(source / spec["stage"]).convert("RGB").resize((640, 360), Image.Resampling.NEAREST)
+        stage.save(OUT / "boardwalk.webp", "WEBP", lossless=True)
+    report_path = OUT / "compiled.json"
+    existing = json.loads(report_path.read_text(encoding="utf-8")) if args.character and report_path.exists() else []
+    written = {item["file"] for item in audit}
+    report_path.write_text(json.dumps([item for item in existing if item["file"] not in written] + audit, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"atlases": len(audit), "frames": sum(a["frames"] for a in audit), "output": str(OUT)}))
 
 

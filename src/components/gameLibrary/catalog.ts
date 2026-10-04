@@ -70,12 +70,13 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
         releaseDate: '2026-07-18',
       },
       {
-        title: '潮夜格斗 · 岁己 vs 栞栞',
+        title: '潮夜格斗 · 三人像素对战',
         href: '/game/tidal-duel',
-        description: '岁己与栞栞的像素格斗。按后防御、单键必杀、辅助连招，五个动作键轻松过招。',
+        description: '小猫帽岁己、旅装栞栞、黑丝原皮弥月。地面与空中招式、辅助连招，原皮超杀命中触发专属动画。',
         image: '/games/tidal-duel/poster.webp',
         meta: '像素格斗 · 现代简易操作 · 单人 / 同机双人',
         releaseDate: '2026-10-03',
+        updateDate: '2026-10-04',
       },
       {
         title: '岁己：零点之后',

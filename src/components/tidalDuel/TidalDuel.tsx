@@ -27,6 +27,8 @@ import { FIGHTERS, getFighter } from "./roster";
 import { loadAssets, renderGame, pixelFrame } from "./renderer";
 import type { Assets } from "./renderer";
 import DuelAudio from "./audio";
+import { DuelMovieCache, matchMovies, movieForHit } from "./cinematics";
+import type { DuelMovie } from "./cinematics";
 import {
   MODERN_KEYS as KEYS,
   MODERN_CONTROLS as CONTROLS,
@@ -53,6 +55,14 @@ const INITIAL: Options = {
   skin: "original",
   opponentSkin: "original",
 };
+interface HitCinema {
+  id: number;
+  eventId: number;
+  side: Side;
+  clip: DuelMovie;
+  src: string | null;
+  phase: "loading" | "playing";
+}
 const snapshot = (g: Game): Game => ({
   ...g,
   fighters: [{ ...g.fighters[0] }, { ...g.fighters[1] }],
@@ -72,6 +82,13 @@ export default function TidalDuel() {
   const blockedSourcesRef = useRef(new Set<string>());
   const audioRef = useRef<DuelAudio | null>(null);
   const overlayRef = useRef<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const movieCacheRef = useRef<DuelMovieCache | null>(null);
+  const cinemaRef = useRef<HitCinema | null>(null);
+  const cinemaSerialRef = useRef(0);
+  const cinemaEventRef = useRef(0);
+  const cinemaEnabledRef = useRef(true);
+  const lastCinemaRef = useRef<{ character: string; reason: string } | null>(null);
   const [options, setOptions] = useState<Options>(INITIAL);
   const [view, setView] = useState(() => snapshot(gameRef.current));
   const [ready, setReady] = useState(false);
@@ -80,6 +97,13 @@ export default function TidalDuel() {
   const [preferencesReady, setPreferencesReady] = useState(false);
   const [overlay, setOverlay] = useState<"help" | "exit" | null>(null);
   const [bestCombo, setBestCombo] = useState(0);
+  const [cinema, setCinema] = useState<HitCinema | null>(null);
+  const [cinemaEnabled, setCinemaEnabled] = useState(true);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const attachVideo = useCallback((node: HTMLVideoElement | null) => {
+    if (!node) videoRef.current?.pause();
+    videoRef.current = node;
+  }, []);
   const sync = useCallback(() => setView(snapshot(gameRef.current)), []);
   const clearInputs = useCallback(() => {
     sourcesRef.current.forEach((_, source) => blockedSourcesRef.current.add(source),);
@@ -92,14 +116,26 @@ export default function TidalDuel() {
       fighter.aiTimer = 0;
       fighter.directions = [];
       fighter.throwTech = 0;
+      fighter.perfectGuard = 0;
       fighter.assisted = null;
     });
   }, []);
+  const finishCinema = useCallback((id?: number, reason = "ended") => {
+    const { current } = cinemaRef;
+    if (!current || (id !== undefined && current.id !== id)) return;
+    videoRef.current?.pause();
+    if (reason === "unavailable") movieCacheRef.current?.invalidate(current.clip.src);
+    lastCinemaRef.current = { character: current.clip.character, reason };
+    cinemaRef.current = null;
+    setCinema(null);
+    clearInputs();
+    sync();
+  }, [clearInputs, sync]);
   const input = useCallback(
     (source: string, side: Side, action: Action, down: boolean) => {
       if (
         down &&
-        (overlayRef.current ||
+        (overlayRef.current || cinemaRef.current ||
           gameRef.current.paused ||
           gameRef.current.phase !== "fight")
       ) {
@@ -147,12 +183,17 @@ export default function TidalDuel() {
     sync();
   }, [sync]);
   const choose = (next: Partial<Options>) => {
-    const merged = { ...options, ...next };
-    setOptions(merged);
-    gameRef.current = createGame(merged);
+    finishCinema(undefined, "reset");
+    cinemaEventRef.current = 0;
+    const game = createGame({ ...options, ...next });
+    setOptions(game.options);
+    gameRef.current = game;
     sync();
   };
   const begin = () => {
+    finishCinema(undefined, "reset");
+    cinemaEventRef.current = 0;
+    lastCinemaRef.current = null;
     clearInputs();
     audioRef.current?.reset();
     audioRef.current?.unlock();
@@ -161,6 +202,8 @@ export default function TidalDuel() {
     sync();
   };
   const menu = () => {
+    finishCinema(undefined, "reset");
+    cinemaEventRef.current = 0;
     clearInputs();
     closeOverlay();
     gameRef.current = createGame(options);
@@ -176,7 +219,12 @@ export default function TidalDuel() {
     let manual = false;
     const audio = new DuelAudio();
     audioRef.current = audio;
+    const cache = new DuelMovieCache();
+    movieCacheRef.current = cache;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReducedMotion(reduced.matches);
+    const motionChanged = () => setReducedMotion(reduced.matches);
+    reduced.addEventListener("change", motionChanged);
     const target = window as DuelWindow;
     const draw = () => {
       const ctx = canvasRef.current?.getContext("2d");
@@ -189,14 +237,41 @@ export default function TidalDuel() {
         );
     };
     const tick = () => {
+      if (cinemaRef.current) return;
       stepGame(gameRef.current, inputsRef.current, STEP);
       audio.events(gameRef.current.events);
+      const game = gameRef.current;
+      const fresh = game.events.filter((event) => event.id > cinemaEventRef.current);
+      cinemaEventRef.current = game.eventId;
+      if (cinemaEnabledRef.current && !reduced.matches) {
+        for (const event of fresh) {
+          const clip = movieForHit(game, event);
+          if (!clip) continue;
+          const next: HitCinema = { id: ++cinemaSerialRef.current, eventId: event.id, side: event.side, clip, src: null, phase: "loading" };
+          cinemaRef.current = next;
+          setCinema(next);
+          clearInputs();
+          break;
+        }
+      }
     };
     target.render_game_to_text = () => JSON.stringify({
         ...describeGame(gameRef.current),
         assetsReady: !!assetsRef.current,
         overlay: overlayRef.current,
         art: "tidal-pixel-v2",
+        cinemaEnabled: cinemaEnabledRef.current,
+        cinema: cinemaRef.current ? {
+          character: cinemaRef.current.clip.character,
+          skin: cinemaRef.current.clip.skin,
+          side: cinemaRef.current.side,
+          title: cinemaRef.current.clip.title,
+          phase: gameRef.current.paused || overlayRef.current ? "paused" : cinemaRef.current.phase,
+          currentTime: videoRef.current?.currentTime ?? 0,
+          duration: cinemaRef.current.clip.duration,
+        } : null,
+        lastCinema: lastCinemaRef.current,
+        cinemaCache: cache.snapshot(),
         animation: gameRef.current.fighters.map((f) => pixelFrame(f, reduced.matches),),
       });
     target.advanceTime = (ms) => {
@@ -235,6 +310,9 @@ export default function TidalDuel() {
       const quiet = localStorage.getItem("tidal-duel-muted") === "true";
       audio.setEnabled(!quiet);
       setMuted(quiet);
+      const enabled = localStorage.getItem("tidal-duel-cinematics") !== "off";
+      cinemaEnabledRef.current = enabled;
+      setCinemaEnabled(enabled);
     } catch {
       /* Records are optional when storage is unavailable. */
     }
@@ -289,6 +367,10 @@ export default function TidalDuel() {
       }
       const g = gameRef.current;
       if (g.phase === "menu" || g.phase === "result") return;
+      if (cinemaRef.current && event.code === "Enter" && !(event.target instanceof HTMLButtonElement)) {
+        event.preventDefault();
+        return;
+      }
       if (
         event.code === "Enter" &&
         !(event.target instanceof HTMLButtonElement)
@@ -339,6 +421,9 @@ export default function TidalDuel() {
       alive = false;
       cancelAnimationFrame(frame);
       audio.dispose();
+      cache.dispose();
+      cinemaRef.current = null;
+      reduced.removeEventListener("change", motionChanged);
       window.removeEventListener("keydown", keyDown);
       window.removeEventListener("keyup", keyUp);
       window.removeEventListener("blur", blur);
@@ -348,6 +433,46 @@ export default function TidalDuel() {
       delete target.tidalDuel;
     };
   }, [clearInputs, closeOverlay, fullscreen, input, pause, sync]);
+
+  useEffect(() => {
+    if (!preferencesReady) return;
+    cinemaEnabledRef.current = cinemaEnabled;
+    if (!cinemaEnabled || reducedMotion) finishCinema(undefined, "disabled");
+    const { connection } = navigator as Navigator & { connection?: { saveData?: boolean } };
+    movieCacheRef.current?.prepare(cinemaEnabled && !reducedMotion && !connection?.saveData ? matchMovies(gameRef.current) : []);
+    try { localStorage.setItem("tidal-duel-cinematics", cinemaEnabled ? "on" : "off"); } catch { /* Optional preference. */ }
+  }, [cinemaEnabled, reducedMotion, preferencesReady, options.character, options.opponent, options.skin, options.opponentSkin, finishCinema]);
+
+  const cinemaId = cinema?.id;
+  useEffect(() => {
+    const { current: plan } = cinemaRef;
+    if (!plan || plan.id !== cinemaId) return;
+    let alive = true;
+    movieCacheRef.current?.load(plan.clip).then((src) => {
+      if (!alive || cinemaRef.current?.id !== plan.id) return;
+      if (!src) { finishCinema(plan.id, "unavailable"); return; }
+      const next = { ...cinemaRef.current, src };
+      cinemaRef.current = next;
+      setCinema(next);
+    });
+    return () => { alive = false; };
+  }, [cinemaId, finishCinema]);
+
+  useEffect(() => {
+    if (!cinema || view.paused || overlay) { videoRef.current?.pause(); return; }
+    const video = videoRef.current;
+    const { id } = cinema;
+    if (cinema.src && video) {
+      video.play().catch(() => {
+        if (cinemaRef.current?.id !== id) return;
+        video.muted = true;
+        video.play().catch(() => finishCinema(id, "unavailable"));
+      });
+    }
+    // A missing, stalled or undecodable movie must release the fight, including cold loads.
+    const timeout = window.setTimeout(() => finishCinema(id, "unavailable"), cinema.phase === "playing" ? Math.max(0, cinema.clip.duration - (video?.currentTime ?? 0)) * 1000 + 2500 : 2500);
+    return () => window.clearTimeout(timeout);
+  }, [cinema, view.paused, overlay, finishCinema]);
 
   useEffect(() => {
     if (!preferencesReady) return;
@@ -430,7 +555,7 @@ export default function TidalDuel() {
               ? !!view.fighters[side].previous.assist
               : undefined
           }
-          disabled={view.paused || !!overlay || view.phase !== "fight"}
+          disabled={view.paused || !!overlay || !!cinema || view.phase !== "fight"}
           onPointerDown={(event) => {
             if (event.button !== 0) return;
             event.preventDefault();
@@ -573,10 +698,44 @@ export default function TidalDuel() {
             ref={canvasRef}
             width={WIDTH}
             height={HEIGHT}
-            aria-label="潮夜格斗：岁己与栞栞的像素格斗擂台"
+            aria-label="潮夜格斗：岁己、栞栞与弥月的像素格斗擂台"
           >
             请使用支持 Canvas 的浏览器。
           </canvas>
+          {cinema && (
+            <section className={styles.cinema} aria-label="超杀命中演出" data-character={cinema.clip.character}>
+              <video
+                key={cinema.id}
+                ref={attachVideo}
+                src={cinema.src ?? undefined}
+                poster={cinema.clip.poster}
+                playsInline
+                preload="auto"
+                muted={muted}
+                aria-label={`${getFighter(cinema.clip.character).name} · ${cinema.clip.title} 超杀演出`}
+                onPlaying={() => {
+                  if (cinemaRef.current?.id !== cinema.id || cinemaRef.current.phase === "playing") return;
+                  const next: HitCinema = { ...cinemaRef.current, phase: "playing" };
+                  cinemaRef.current = next;
+                  setCinema(next);
+                }}
+                onWaiting={() => {
+                  if (cinemaRef.current?.id !== cinema.id || gameRef.current.paused || cinemaRef.current.phase === "loading") return;
+                  const next: HitCinema = { ...cinemaRef.current, phase: "loading" };
+                  cinemaRef.current = next;
+                  setCinema(next);
+                }}
+                onEnded={() => finishCinema(cinema.id)}
+                onError={() => finishCinema(cinema.id, "unavailable")}
+              >
+                <track kind="captions" src="/games/tidal-duel/cinematics/battle.vtt" srcLang="zh" label="战斗音效" />
+              </video>
+              <div className={styles.cinemaCaption}>
+                <div><small>SUPER · HIT CONFIRMED</small><strong>{getFighter(cinema.clip.character).name} · {cinema.clip.title}</strong></div>
+                <button type="button" onClick={() => finishCinema(cinema.id, "skip")}>跳过演出 ↗</button>
+              </div>
+            </section>
+          )}
           {!ready && (
             <div className={styles.loading}>
               <span />
@@ -591,11 +750,11 @@ export default function TidalDuel() {
           {ready && isMenu && (
             <section className={styles.menu} aria-label="角色与对战设置">
               <div className={styles.eyebrow}>
-                SUI × SHIORI / AFTER THE TIDE
+                SUI / SHIORI / MIZUKI
               </div>
               <h1>
                 潮夜<span>格斗</span>
-                <small>TIDE FIGHTERS · 岁己 × 栞栞</small>
+                <small>TIDE FIGHTERS · 三人像素对战</small>
               </h1>
               <p className={styles.tagline}>
                 轻中重出招，按后防御。日落之后，放手过招。
@@ -753,7 +912,7 @@ export default function TidalDuel() {
                 ，{view.event}
               </div>
               {(view.phase === "intro" || view.phase === "roundEnd") &&
-                !view.paused && (
+                !view.paused && !cinema && (
                   <button
                     type="button"
                     className={styles.skip}
@@ -821,6 +980,7 @@ export default function TidalDuel() {
                 <button
                   type="button"
                   aria-pressed={!!view.training.showBoxes}
+                  disabled={!!cinema}
                   onClick={() => {
                     gameRef.current.training.showBoxes =
                       !gameRef.current.training.showBoxes;
@@ -829,8 +989,10 @@ export default function TidalDuel() {
                 >
                   判定框 {view.training.showBoxes ? "开" : "关"}
                 </button>
+                {view.training.showBoxes && <small>绿：受击 · 红：攻击 · 黄：推挤</small>}
                 <button
                   type="button"
+                  disabled={!!cinema}
                   onClick={() => {
                     resetTraining(gameRef.current);
                     clearInputs();
@@ -932,6 +1094,16 @@ export default function TidalDuel() {
                   + 后防扫腿，站防应对跳入攻击。光按下只会蹲，不会防御。
                 </p>
                 <p>
+                  <b>精确防御：</b>命中前 3 帧内新按后方向，按正确高度防御，
+                  成功时不削血、不耗护盾，防御硬直更短。
+                  持续按后是普通防御；连续点按有 20 帧间隔。
+                </p>
+                <p>
+                  <b>相打与拼招：</b>同帧打中身体会双方受击。
+                  只有拳脚末端互碰、都未打中身体时才拼招，短暂停顿后双方退开；
+                  重攻击不会自动压过轻攻击。
+                </p>
+                <p>
                   <b>辅助连招：</b>按住 I，连按 J 是三段连掌，连按 K
                   是踢掌接角色必杀，连按 L
                   是浮空连招，满潮能时以超杀收尾。后续招只在命中后接出，不会在落空或被防御时自动消耗超杀能量。
@@ -942,14 +1114,29 @@ export default function TidalDuel() {
                 </p>
                 <p>
                   <b>空中攻击：</b>跳起后 J 轻掌、K 横踢、L 下劈，U
-                  释放岁己的猫袭落掌或栞栞的落潮踢，需跳起一定高度。
+                  释放角色专用落技，需跳起一定高度。
                   跳与轻/中/重可以一起按，出招保留跳跃惯性。
                   命中后可按轻→中→重衔接，最多三招；落空或被防不能续招。
                   跳入攻击要站防，临近落地命中后可接地面招，空中必杀落地收招较长。
                 </p>
                 <p>
+                  <b>超杀演出：</b>原皮的满能量超杀命中后播放角色动画，期间暂停对局。
+                  可以跳过；减少动态效果时保留擂台招式。
+                  <button type="button" className={styles.cinemaPreference} aria-pressed={cinemaEnabled} onClick={() => setCinemaEnabled(!cinemaEnabled)}>
+                    {cinemaEnabled ? "关闭超杀演出" : "开启超杀演出"}
+                  </button>
+                </p>
+                <p>
                   <b>栞栞 · 流心潮波：</b>U
-                  发出潮波，按后、防反、跳跃或侧闪均可应对。两人都可用下 + U
+                  发出潮波，按后、防反、跳跃或侧闪均可应对。
+                  临近潮波时按轻 + 重，中段防反起手 4 帧内能将波打回，
+                  之后的有效窗口只化解。每颗波最多返还一次，普通拳脚不会回波。
+                </p>
+                <p>
+                  <b>弥月 · 月弧踢：</b>U 向前进身踢击，接触后再按 U
+                  用回月追踢收尾；落空不能接第二段。空中 U
+                  用蚀月落踢斜向切入，终段和落踢被防后容易受罚。
+                  三人都可用下 + U
                   升击，消耗 25 潮能，起手短暂无敌，被防后容易受罚。
                 </p>
                 <p>
