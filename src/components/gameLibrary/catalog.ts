@@ -26,21 +26,21 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
     title: '动作与探索',
     games: [
       {
-        title: '岁己 · 雨夜寻味',
+        title: '岁己 · 旅居之魂',
         href: '/game/night-rain',
         description:
-          '穿过雨中的旧城，打开近路、挑战铁伞，和饼干岁一起找一顿热饭。',
+          '在雨灯旁休整，穿过旧城打开近路，用闪避与格挡挑战首领，和饼干岁一起找一顿热饭。',
         image: '/games/night-rain/preview.png',
-        meta: '3D 动作探索 · 扮演岁己 · 箱庭冒险',
+        meta: '魂游 · 3D 动作探索 · 箱庭冒险',
         releaseDate: '2026-09-26',
         updateDate: '2026-09-26',
       },
       {
-        title: '岁己：今天也要动',
+        title: '肥岁健身 · 48减8',
         href: '/game/sui-fitness',
-        description: '从 48.00 kg 向 40.00 kg 前进，训练减脂保肌。选开局天赋，混搭四种武器，靠行动升级。',
+        description: '从 48 kg 练到 40 kg，躲开美食的围攻，混搭四种武器、边练边升级，减脂也保住肌肉。',
         image: '/games/sui-fitness/preview.svg',
-        meta: '美食肉鸽 · 三种天赋 · 四种攻击 / 触屏',
+        meta: '类土豆兄弟 · 美食肉鸽 · 三种天赋 · 四种攻击 / 触屏',
         releaseDate: '2026-10-03',
       },
       {
