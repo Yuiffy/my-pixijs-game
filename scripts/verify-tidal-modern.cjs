@@ -33,7 +33,7 @@ async function rig(page, options = {}) {
         state: 'idle', stateTime: 0, stateDuration: 0, hp: 300, meter: 100, move: null, moveTime: 0, moveHit: false, moveSerial: 0,
         stun: 0, critical: 0, invincible: 0, juggle: 0, combo: 0, comboTime: 0, comboDamage: 0, guardGauge: 100, guardDelay: 0,
         contact: 'none', burstReady: true, throwTech: 0, holdCooldown: 0, stepCooldown: 0,
-        assisted: null, buffer: [], directions: [], history: [], previous: Object.fromEntries(actions.map(a => [a, false])) });
+        assisted: null, airAttacks: 0, airRank: 0, airLanding: 0, buffer: [], directions: [], history: [], previous: Object.fromEntries(actions.map(a => [a, false])) });
     });
   }, { actions, options });
   await advance(page, 0);

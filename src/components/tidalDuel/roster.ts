@@ -1,3 +1,6 @@
+import { AIR_MOVES } from "./airCombat";
+import type { AirAttack } from "./airCombat";
+
 export type HitHeight = "high" | "mid" | "low";
 export type MoveKind = "strike" | "throw" | "super" | "skill";
 export type Animation =
@@ -20,6 +23,7 @@ export interface SkinDefinition {
   seed: string;
   motion: string;
   combat: string;
+  air?: string;
 }
 export interface MoveDefinition {
   id: string;
@@ -46,6 +50,7 @@ export interface MoveDefinition {
   invulnerability?: number;
   projectile?: { speed: number; radius: number; lifetime: number };
   overhead?: boolean;
+  air?: AirAttack;
 }
 export interface CharacterDefinition {
   id: string;
@@ -73,6 +78,7 @@ export interface CharacterDefinition {
 
 // Frame data is expressed in seconds and game-world pixels, independent of the renderer.
 const COMMON: Record<string, MoveDefinition> = {
+  ...AIR_MOVES,
   punch: {
     id: "punch",
     name: "直拳",
@@ -204,35 +210,6 @@ const COMMON: Record<string, MoveDefinition> = {
     stun: 0.34,
     push: 45,
     tracking: true,
-    knockdown: true,
-  },
-  airPunch: {
-    id: "airPunch",
-    name: "飞掌",
-    kind: "strike",
-    height: "mid",
-    startup: 0.1083,
-    active: 0.1,
-    recovery: 0.275,
-    damage: 18,
-    reach: 163,
-    stun: 0.29,
-    push: 26,
-    overhead: true,
-  },
-  airKick: {
-    id: "airKick",
-    name: "飞踢",
-    kind: "strike",
-    height: "mid",
-    startup: 0.1667,
-    active: 0.125,
-    recovery: 0.35,
-    damage: 27,
-    reach: 198,
-    stun: 0.34,
-    push: 47,
-    overhead: true,
     knockdown: true,
   },
   launcher: {
@@ -402,6 +379,7 @@ export const FIGHTERS: readonly CharacterDefinition[] = [
         seed: "/games/tidal-duel/pixel/sui-original-seed.webp",
         motion: "/games/tidal-duel/pixel/sui-original-motion.webp",
         combat: "/games/tidal-duel/pixel/sui-original-combat.webp",
+        air: "/games/tidal-duel/pixel/sui-original-air.webp",
       },
       {
         id: "resort",
@@ -409,6 +387,7 @@ export const FIGHTERS: readonly CharacterDefinition[] = [
         seed: "/games/tidal-duel/pixel/sui-seed.webp",
         motion: "/games/tidal-duel/pixel/sui-resort-motion.webp",
         combat: "/games/tidal-duel/pixel/sui-resort-combat.webp",
+        air: "/games/tidal-duel/pixel/sui-resort-air.webp",
       },
     ],
     moves: moves({
@@ -451,6 +430,7 @@ export const FIGHTERS: readonly CharacterDefinition[] = [
         seed: "/games/tidal-duel/pixel/shiori-original-seed.webp",
         motion: "/games/tidal-duel/pixel/shiori-original-motion.webp",
         combat: "/games/tidal-duel/pixel/shiori-original-combat.webp",
+        air: "/games/tidal-duel/pixel/shiori-original-air.webp",
       },
       {
         id: "resort",
@@ -458,10 +438,20 @@ export const FIGHTERS: readonly CharacterDefinition[] = [
         seed: "/games/tidal-duel/pixel/shiori-seed.webp",
         motion: "/games/tidal-duel/pixel/shiori-resort-motion.webp",
         combat: "/games/tidal-duel/pixel/shiori-resort-combat.webp",
+        air: "/games/tidal-duel/pixel/shiori-resort-air.webp",
       },
     ],
     moves: moves({
       kick: { name: "潮汐旋踢", reach: 215 },
+      airKick: { name: "流心飞踢", reach: 215 },
+      airHeavy: { name: "潮汐下劈", reach: 220 },
+      airSignature: {
+        name: "流心落潮踢",
+        reach: 194,
+        damage: 28,
+        startup: 9 / 60,
+        air: { ...AIR_MOVES.airSignature.air!, velocity: 355, descent: 520 },
+      },
       kick2: { name: "流心回旋", reach: 225 },
       super: { name: "白昼潮汐", damage: 67, reach: 237 },
       throw: { name: "流心摔", damage: 37 },

@@ -2,6 +2,7 @@ import { FIGHTERS, getFighter, getSkin } from "./roster";
 import type { HitHeight, MoveDefinition } from "./roster";
 import { modernCommand } from "./controls";
 import type { AttackStrength } from "./controls";
+import { AIR_PHYSICS, airMoveForAction } from "./airCombat";
 
 export type Character = string;
 export type Side = 0 | 1;
@@ -35,6 +36,7 @@ export type FighterState =
   | "crouch"
   | "jump"
   | "guard"
+  | "landing"
   | "hold"
   | "attack"
   | "hit"
@@ -92,6 +94,7 @@ export interface BufferedAction {
   assisted?: AttackStrength;
   modern?: boolean;
   chord?: boolean;
+  airborne?: boolean;
 }
 export interface Fighter {
   side: Side;
@@ -136,6 +139,9 @@ export interface Fighter {
   directions: { value: number; time: number }[];
   history: { command: string; time: number }[];
   assisted: { strength: AttackStrength; index: number; serial: number } | null;
+  airAttacks: number;
+  airRank: number;
+  airLanding: number;
 }
 export type EventType =
   | "hit"
@@ -301,6 +307,9 @@ function fighter(character: Character, side: Side): Fighter {
     directions: [],
     history: [],
     assisted: null,
+    airAttacks: 0,
+    airRank: 0,
+    airLanding: 0,
   };
 }
 function normalizedOptions(options: Partial<Options>): Options {
@@ -553,6 +562,17 @@ function captureInput(game: Game, f: Fighter, input: Input) {
     "jump",
   ];
   let queued = false;
+  const simultaneousAttack = modern?.action ?? order.find(
+    (action) => input[action] && !f.previous[action] && airMoveForAction(action),
+  );
+  const jumpAttack = input.jump && !f.previous.jump && !input.hold &&
+    !modern?.chord && simultaneousAttack && airMoveForAction(simultaneousAttack) &&
+    grounded(f) && neutral(f) && f.stun <= 0;
+  if (jumpAttack) {
+    // A jump and attack pressed together must launch before choosing the air move.
+    f.buffer.unshift({ action: "jump", ttl: 0.16, crouch: false, jump: true });
+  }
+  const airborne = !grounded(f) || f.vy < 0 || !!jumpAttack;
   if (modern) {
     if (modern.chord) f.buffer = f.buffer.filter((item) => !item.modern);
     const motion =
@@ -563,6 +583,7 @@ function captureInput(game: Game, f: Fighter, input: Input) {
     f.buffer.push({
       ...modern,
       modern: true,
+      airborne,
       ttl: 0.16,
       crouch: input.crouch,
       jump: input.jump,
@@ -600,6 +621,7 @@ function captureInput(game: Game, f: Fighter, input: Input) {
         ttl: 0.16,
         crouch: input.crouch,
         jump: input.jump,
+        airborne: action !== "jump" && airborne,
         move:
           action === "punch" || action === "kick"
             ? recognizeMotion(f, action)
@@ -665,8 +687,16 @@ function beginMove(game: Game, f: Fighter, id: string) {
   f.moveHit = false;
   f.contact = "none";
   if (move.invulnerability) f.invincible = Math.max(f.invincible, move.invulnerability);
-  f.vx = 0;
-  f.facing = game.fighters[other(f.side)].x >= f.x ? 1 : -1;
+  if (move.air) {
+    f.airAttacks++;
+    f.airRank = move.air.rank;
+    f.airLanding = move.air.landingMiss;
+    if (move.air.velocity) f.vx = f.facing * move.air.velocity;
+    if (move.air.descent) f.vy = Math.max(f.vy, move.air.descent);
+  } else {
+    f.vx = 0;
+    f.facing = game.fighters[other(f.side)].x >= f.x ? 1 : -1;
+  }
   return true;
 }
 
@@ -706,11 +736,17 @@ function consumeBuffer(game: Game, f: Fighter) {
   for (let n = 0; n < f.buffer.length; n++) {
     const item = f.buffer[n];
     let used = false;
+    if (item.airborne && grounded(f) && f.vy >= 0) {
+      // An expired aerial input must not turn into a ground normal or paid super.
+      f.buffer.splice(n--, 1);
+      continue;
+    }
     // A human chord can arrive a few ticks apart. Replace only an untouched
     // startup, refunding its cost before charging the intended command once.
     if (
       item.chord &&
       current &&
+      !current.air && grounded(f) && f.vy >= 0 &&
       f.state === "attack" &&
       f.contact === "none" &&
       !f.moveHit &&
@@ -764,7 +800,18 @@ function consumeBuffer(game: Game, f: Fighter) {
       game.projectiles = game.projectiles.filter((p) => p.side === f.side);
       emit(game, "burst", f.side, "BREAK · 脱身", 1.6);
       used = true;
-    } else if (item.assisted && grounded(f)) {
+    } else if (airMoveForAction(item.action) && (!grounded(f) || f.vy < 0)) {
+      const id = airMoveForAction(item.action)!;
+      const air = getFighter(f.character).moves[id]?.air;
+      const first = neutral(f) && f.stun <= 0 && f.airAttacks === 0;
+      const confirmedChain = f.state === "attack" && current?.air &&
+        f.contact === "hit" && f.moveTime >= current.startup &&
+        f.moveTime < f.stateDuration - 2 / 60 &&
+        air && air.rank > f.airRank && f.airAttacks < AIR_PHYSICS.maxAttacks;
+      if (air && FLOOR - f.y >= (air.minHeight ?? 0) && (first || confirmedChain)) {
+        used = beginMove(game, f, id);
+      }
+    } else if (item.assisted && grounded(f) && f.vy >= 0) {
       if (neutral(f) && f.stun <= 0) {
         used = beginAssisted(game, f, item.assisted, 0);
       } else if (
@@ -781,6 +828,7 @@ function consumeBuffer(game: Game, f: Fighter) {
     } else if (
       item.action === "sidestep" &&
       current &&
+      grounded(f) && !current.air &&
       f.state === "attack" &&
       f.contact === "hit" &&
       f.meter >= 50 &&
@@ -836,6 +884,25 @@ function consumeBuffer(game: Game, f: Fighter) {
       f.moveTime < f.stateDuration - 0.033
     ) {
       used = beginMove(game, f, current.followups[item.action] as string);
+    } else if (
+      item.action === "jump" && grounded(f) && f.stun <= 0 &&
+      (neutral(f) || (f.state === "attack" && current?.kind === "strike" &&
+        !current.air && f.moveTime <= 0.05 && !f.moveHit && f.contact === "none"))
+    ) {
+      if (current && f.state === "attack") {
+        const action = current.id === "kick2" ? "heavy" :
+          current.id.toLowerCase().includes("kick") ? "kick" : "punch";
+        f.buffer.push({ action, ttl: 0.16, crouch: false, jump: true, airborne: true });
+      }
+      const direction = Number(f.previous.right) - Number(f.previous.left);
+      f.move = null;
+      f.vx = direction * getFighter(f.character).speed * AIR_PHYSICS.drift;
+      f.vy = -AIR_PHYSICS.takeoff;
+      f.airAttacks = 0;
+      f.airRank = 0;
+      f.airLanding = 0;
+      setState(f, "jump");
+      used = true;
     } else if (neutral(f) && f.stun <= 0) {
       if (
         item.action === "punch" ||
@@ -844,11 +911,7 @@ function consumeBuffer(game: Game, f: Fighter) {
       ) {
         const id =
           (grounded(f) ? item.move : undefined) ??
-          (!grounded(f)
-            ? item.action === "punch"
-              ? "airPunch"
-              : "airKick"
-            : item.crouch
+          (item.crouch
               ? item.action === "punch"
                 ? "lowPunch"
                 : "lowKick"
@@ -866,11 +929,7 @@ function consumeBuffer(game: Game, f: Fighter) {
           item.action === "skill" ? "signature" : "reversal",
         );
       else if (item.action === "special" && grounded(f)) used = beginMove(game, f, "super");
-      else if (item.action === "jump" && grounded(f)) {
-        f.vy = -780;
-        setState(f, "jump");
-        used = true;
-      } else if (
+      else if (
         item.action === "sidestep" &&
         grounded(f) &&
         f.stepCooldown <= 0
@@ -932,6 +991,8 @@ function moveFighter(game: Game, f: Fighter, input: Input, dt: number) {
       f.move = null;
       setState(f, grounded(f) ? "idle" : "jump");
     }
+  } else if (f.state === "landing" && f.stateTime >= f.stateDuration) {
+    setState(f, "idle");
   } else if ((f.state === "hit" || f.state === "critical") && f.stun <= 0) {
     setState(f, grounded(f) ? "idle" : "jump");
   } else if (f.state === "hold" && f.stateTime >= f.stateDuration) setState(f, "idle");
@@ -947,14 +1008,12 @@ function moveFighter(game: Game, f: Fighter, input: Input, dt: number) {
 
   consumeBuffer(game, f);
   if (neutral(f) && f.stun <= 0) {
-    f.facing = game.fighters[other(f.side)].x >= f.x ? 1 : -1;
+    if (grounded(f) && f.vy >= 0) f.facing = game.fighters[other(f.side)].x >= f.x ? 1 : -1;
     const direction = Number(input.right) - Number(input.left);
     const { speed } = getFighter(f.character);
-    f.vx =
-      input.guard || input.crouch
-        ? 0
-        : direction * speed * (direction === -f.facing ? 0.78 : 1);
     if (grounded(f) && f.vy >= 0) {
+      f.vx = input.guard || input.crouch ? 0 :
+        direction * speed * (direction === -f.facing ? 0.78 : 1);
       const next = input.guard
         ? "guard"
         : input.crouch
@@ -963,15 +1022,20 @@ function moveFighter(game: Game, f: Fighter, input: Input, dt: number) {
             ? "walk"
             : "idle";
       if (next !== f.state) setState(f, next);
-    } else if (f.state !== "jump") {
-      setState(f, "jump");
+    } else {
+      if (direction) {
+        const target = direction * speed * AIR_PHYSICS.drift;
+        f.vx += clamp(target - f.vx, -AIR_PHYSICS.steering * dt, AIR_PHYSICS.steering * dt);
+      }
+      if (f.state !== "jump") setState(f, "jump");
     }
   }
   f.x += f.vx * dt;
-  if (!neutral(f) && f.state !== "sidestep") f.vx *= Math.exp(-dt * 10);
+  const airMove = f.state === "attack" && f.move && getFighter(f.character).moves[f.move].air;
+  if (!neutral(f) && f.state !== "sidestep" && !airMove) f.vx *= Math.exp(-dt * 10);
   if (f.state !== "sidestep") f.z *= Math.exp(-dt * 7);
   if (!grounded(f) || f.vy < 0) {
-    f.vy += 1680 * dt;
+    f.vy += AIR_PHYSICS.gravity * dt;
     f.y += f.vy * dt;
     if (f.y >= FLOOR) {
       f.y = FLOOR;
@@ -979,7 +1043,15 @@ function moveFighter(game: Game, f: Fighter, input: Input, dt: number) {
       if (f.state === "launch") {
         setState(f, "down", 0.72);
         f.invincible = 0.73;
-      } else if (f.state === "jump") setState(f, "idle");
+      } else if (f.state === "jump" || airMove) {
+        f.move = null;
+        f.moveHit = true;
+        f.vx = 0;
+        setState(f, "landing", Math.max(AIR_PHYSICS.emptyLanding, f.airLanding));
+      }
+      f.airAttacks = 0;
+      f.airRank = 0;
+      f.airLanding = 0;
     }
   }
   f.x = clamp(f.x, 88, WIDTH - 88);
@@ -1055,7 +1127,7 @@ export function fighterBoxes(f: Fighter): {
     f.moveTime >= move.startup &&
     f.moveTime < move.startup + move.active
   ) {
-    const top =
+    const top = move.air?.box[0] ?? (
       move.animation === "rise"
         ? -420
         : move.kind === "throw"
@@ -1064,15 +1136,15 @@ export function fighterBoxes(f: Fighter): {
             ? -265
             : move.height === "low"
               ? -75
-              : -220;
-    const bottom =
+              : -220);
+    const bottom = move.air?.box[1] ?? (
       move.kind === "throw"
         ? -35
         : move.height === "high"
           ? -155
           : move.height === "low"
             ? -12
-            : -75;
+            : -75);
     attack = {
       x: f.facing > 0 ? f.x + 26 : f.x - move.reach,
       y: f.y + top,
@@ -1101,7 +1173,10 @@ function contactInfo(
         (recovery ??
           Math.max(
             0,
-            move.startup + move.active + move.recovery - f.moveTime,
+            move.air
+              ? (Math.sqrt(f.vy * f.vy + 2 * AIR_PHYSICS.gravity * Math.max(0, FLOOR - f.y)) - f.vy) /
+                AIR_PHYSICS.gravity + f.airLanding
+              : move.startup + move.active + move.recovery - f.moveTime,
           ))) *
         60,
     ),
@@ -1122,7 +1197,7 @@ function canReach(attacker: Fighter, target: Fighter, move: MoveDefinition) {
   if (move.kind === "throw" && (targetAir > 12 || attackerAir > 12)) return false;
   if (move.height === "low" && targetAir > 34) return false;
   if (
-    Math.abs(targetAir - attackerAir) >
+    !move.air && Math.abs(targetAir - attackerAir) >
     (move.animation === "rise" ? 330 : move.height === "low" ? 74 : 190)
   ) return false;
   const crouching =
@@ -1199,6 +1274,7 @@ function resolveMove(
   }
   const blocking = canBlock(target, move);
   if (blocking) {
+    if (move.air) attacker.airLanding = move.air.landing + 2 / 60;
     setState(target, "guard");
     attacker.contact = "block";
     const chip = move.kind === "super" ? 8 : 0;
@@ -1233,7 +1309,7 @@ function resolveMove(
   }
   const counter =
     target.state === "attack" || (target.state === "hold" && !holding);
-  const launched = target.state === "launch";
+  const launched = target.state === "launch" || !grounded(target);
   const wasCritical = target.critical > 0;
   const damage = applyDamage(
     game,
@@ -1244,6 +1320,7 @@ function resolveMove(
     counter,
   );
   attacker.contact = "hit";
+  if (move.air) attacker.airLanding = move.air.landing;
   target.move = null;
   target.buffer = [];
   target.vx = attacker.facing * move.push * 5;
@@ -1541,14 +1618,22 @@ export function aiInput(game: Game, side: Side, dt = STEP): Input {
     f.hp < 210 &&
     choice < (level === "hard" ? 0.65 : level === "normal" ? 0.35 : 0.12)
   ) fire("burst");
-  else if (
+  else if (!grounded(f) && neutral(f)) {
+    if (gap < info.moves.airKick.reach + 80) {
+      if (level !== "easy" && choice < 0.25 && FLOOR - f.y > 80) fire("skill");
+      else fire(f.vy > -120 ? "heavy" : "kick");
+    }
+  } else if (
     current &&
     f.state === "attack" &&
     f.contact !== "none" &&
     f.moveTime >= current.startup + current.active - 0.06 &&
     level !== "easy"
   ) {
-    if (current.followups?.skill) fire("skill");
+    if (current.air && f.contact === "hit" && f.airAttacks < AIR_PHYSICS.maxAttacks) {
+      if (current.air.rank < 2) fire("kick");
+      else if (current.air.rank < 3) fire("heavy");
+    } else if (current.followups?.skill) fire("skill");
     else if (f.contact === "hit" && current.kind === "strike" && choice < 0.5) fire("skill");
     else if (current.followups?.punch || current.followups?.kick) fire(choice < 0.6 && current.followups.punch ? "punch" : "kick");
   } else if (wave && neutral(f)) {
@@ -1718,6 +1803,10 @@ export function describeGame(game: Game) {
       name: getFighter(f.character).name,
       x: number(f.x),
       y: number(f.y),
+      vx: number(f.vx),
+      vy: number(f.vy),
+      airborne: !grounded(f) || f.vy < 0,
+      airAttacks: f.airAttacks,
       z: number(f.z),
       facing: f.facing,
       hp: f.hp,

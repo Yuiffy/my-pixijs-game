@@ -7,13 +7,14 @@ interface SkinAssets {
   seed: HTMLImageElement;
   motion: HTMLImageElement;
   combat: HTMLImageElement;
+  air?: HTMLImageElement;
 }
 export interface Assets {
   stage: HTMLImageElement;
   characters: Record<string, Record<string, SkinAssets>>;
 }
 export interface PixelFrame {
-  sheet: "motion" | "combat";
+  sheet: "motion" | "combat" | "air";
   index: number;
 }
 export const SPRITE_LAYOUT = {
@@ -41,12 +42,13 @@ export async function loadAssets(): Promise<Assets> {
             Object.fromEntries(
               await Promise.all(
                 (f.skins ?? []).map(async (skin) => {
-                  const [seed, motion, combat] = await Promise.all([
+                  const [seed, motion, combat, air] = await Promise.all([
                     loadImage(skin.seed),
                     loadImage(skin.motion),
                     loadImage(skin.combat),
+                    skin.air ? loadImage(skin.air) : undefined,
                   ]);
-                  return [skin.id, { seed, motion, combat }] as const;
+                  return [skin.id, { seed, motion, combat, air }] as const;
                 }),
               ),
             ),
@@ -66,6 +68,12 @@ export function pixelFrame(f: Fighter, reduced = false): PixelFrame {
   const combat = (index: number): PixelFrame => ({ sheet: "combat", index });
   if (f.state === "attack" && f.move) {
     const m = getFighter(f.character).moves[f.move];
+    if (m.air) {
+      const phase = f.moveTime < m.startup ? 0 :
+        f.moveTime < m.startup + m.active ? 1 :
+        f.moveTime < m.startup + m.active + m.recovery * 0.6 ? 2 : 3;
+      return { sheet: "air", index: m.air.row * 4 + phase };
+    }
     const animation =
       m.animation ??
       (m.height === "low"
@@ -100,6 +108,7 @@ export function pixelFrame(f: Fighter, reduced = false): PixelFrame {
       f.stateTime < 0.065 ? 12 : f.vy < -140 ? 13 : f.vy < 230 ? 14 : 15,
     );
   if (f.state === "crouch") return motion(f.stateTime < 0.065 ? 8 : 9);
+  if (f.state === "landing") return motion(f.stateTime < 2 / 60 ? 8 : 9);
   if (f.state === "guard") return motion(
       f.previous.crouch ? 9 : 10 + (Math.floor(f.stateTime * 6) % 2),
     );
@@ -151,7 +160,8 @@ function sprite(
   reduced = false,
   frame = pixelFrame(f, reduced),
 ) {
-  const image = skinAssets(assets, f)[frame.sheet];
+  const skin = skinAssets(assets, f);
+  const image = skin[frame.sheet] ?? skin.combat;
   ctx.save();
   ctx.translate(r(x), r(y));
   ctx.scale(f.facing, 1);
@@ -219,7 +229,7 @@ function drawFighter(
   if (
     !reduced &&
     (f.state === "sidestep" ||
-      (f.state === "attack" && (move?.advance || move?.kind === "super")))
+      (f.state === "attack" && (move?.advance || move?.air?.velocity || move?.kind === "super")))
   ) {
     for (let i = 3; i > 0; i--) {
       ctx.save();

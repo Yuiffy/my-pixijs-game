@@ -643,6 +643,7 @@ async function rig(page, options = {}) {
         holdCooldown: 0, stepCooldown: 0, buffer: [], previous: { ...clear },
         aiTimer: 0, aiPlan: { ...clear }, lastDamage: 0,
         contact: 'none', guardGauge: 100, guardDelay: 0, burstReady: true, throwTech: 0, directions: [], history: [], assisted: null,
+        airAttacks: 0, airRank: 0, airLanding: 0,
       });
       if (options.characters) g.fighters[side].character = options.characters[side];
     }

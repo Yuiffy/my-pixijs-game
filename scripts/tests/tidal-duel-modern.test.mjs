@@ -70,11 +70,11 @@ test("down-back blocks low sweeps and ground mids; standing back loses to lows a
   }
 });
 
-test("standing back defends jump-in attacks while crouch-back loses, and attacking is not automatic guard", () => {
+test("standing back defends downward jump-ins while crouch-back loses, and attacking is not automatic guard", () => {
   for (const crouching of [false, true]) {
     const g = game();
     Object.assign(g.fighters[0], { y: FLOOR - 70, vy: 0, state: "jump" });
-    ticks(g, { medium: true }, { right: true, crouch: crouching }, 40);
+    ticks(g, { heavy: true }, { right: true, crouch: crouching }, 40);
     assert.equal(g.fighters[1].hp < 300, crouching);
     if (!crouching) assert.ok(g.events.some((e) => e.type === "block"));
   }

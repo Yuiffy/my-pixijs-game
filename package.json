@@ -16,6 +16,7 @@
     "duel:verify": "node scripts/verify-tidal-duel.cjs",
     "duel:verify:pixel": "node scripts/verify-tidal-pixel.cjs",
     "duel:verify:modern": "node scripts/verify-tidal-modern.cjs",
+    "duel:verify:air": "node scripts/verify-tidal-air.cjs",
     "duel:simulate": "node scripts/simulate-tidal-duel.mjs",
     "fab:finance:test": "node --test scripts/tests/fab-finance.test.mjs scripts/tests/mini-games.test.mjs",
     "fab:finance:verify": "node scripts/verify-fab-finance.cjs",

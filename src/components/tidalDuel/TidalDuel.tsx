@@ -844,7 +844,7 @@ export default function TidalDuel() {
             {controls(0)}
             {options.mode === "local" && controls(1)}
             <div className={styles.controlFoot}>
-              <span>按后防御 · 轻+中投技 · 重+必杀超杀 · 按住辅助连打</span>
+              <span>按后防御 · 跳+轻/中/重空中攻击 · 按住辅助连打</span>
               <button type="button" onClick={() => openOverlay("exit")}>
                 返回选人
               </button>
@@ -941,6 +941,13 @@ export default function TidalDuel() {
                   两次。最后一段收招长，落空要小心。
                 </p>
                 <p>
+                  <b>空中攻击：</b>跳起后 J 轻掌、K 横踢、L 下劈，U
+                  释放岁己的猫袭落掌或栞栞的落潮踢，需跳起一定高度。
+                  跳与轻/中/重可以一起按，出招保留跳跃惯性。
+                  命中后可按轻→中→重衔接，最多三招；落空或被防不能续招。
+                  跳入攻击要站防，临近落地命中后可接地面招，空中必杀落地收招较长。
+                </p>
+                <p>
                   <b>栞栞 · 流心潮波：</b>U
                   发出潮波，按后、防反、跳跃或侧闪均可应对。两人都可用下 + U
                   升击，消耗 25 潮能，起手短暂无敌，被防后容易受罚。
@@ -966,7 +973,10 @@ export default function TidalDuel() {
                       </tr>
                     </thead>
                     <tbody>
-                      {["punch", "kick", "signature", "reversal", "super"].map(
+                      {[
+                        "punch", "kick", "signature", "reversal", "super",
+                        "airPunch", "airKick", "airHeavy", "airSignature",
+                      ].map(
                         (id) => {
                           const m = selected.moves[id];
                           return (
