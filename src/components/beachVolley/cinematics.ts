@@ -10,7 +10,7 @@ export interface MediaClip {
   poster: string;
   duration: number;
   lite?: { src: string; bytes: number };
-  dialogue?: { text: string; source: "native" };
+  dialogue?: { text: string; source: "native" | "recording" };
 }
 export type MediaPool = MediaClip | MediaClip[];
 export const mediaVariants = (pool?: MediaPool): MediaClip[] => (pool ? (Array.isArray(pool) ? pool : [pool]) : []);

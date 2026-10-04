@@ -65,7 +65,7 @@ async function naturalMovie(p, expectedKind, name) {
     await capture(p, name);
   } else if (expectedKind === 'special') {
     await p.waitForFunction(() => JSON.parse(window.render_game_to_text()).audio.voicePlaying);
-    assert.ok((await state(p)).audio.voice.src.includes('/audio-v2/'));
+    assert.match((await state(p)).audio.voice.src, /\/audio-v[23]\//);
   }
   report.movies.push({ movie, voice: (await state(p)).audio.voice });
   const frozen = JSON.stringify({ score: s.score, ball: s.ball, players: s.players });
@@ -91,20 +91,20 @@ async function main() {
       let previous = null;
       for (let round = 0; round < 2; round++) {
         await special(p); const selected = (await state(p)).cinematic.src; assert.notEqual(selected, previous); previous = selected;
-        await naturalMovie(p, 'special', `${actor}-special-native`);
+        await naturalMovie(p, 'special', `${actor}-special-embedded-${round}`);
         assert.equal((await state(p)).specialWindup.remaining, 0.8);
         const prior = (await state(p)).audio.effortPlayed; await advance(p, 790); assert.equal((await state(p)).audio.effortPlayed, prior);
         await advance(p, 18); assert.equal((await state(p)).audio.effortPlayed, prior + 1);
       }
       for (let round = 0; round < 2; round++) {
-        await point(p); await naturalMovie(p, 'point', `${actor}-point-win-native`); await naturalMovie(p, 'point', `${actor}-point-lose-native`);
+        await point(p); await naturalMovie(p, 'point', `${actor}-point-win-embedded-${round}`); await naturalMovie(p, 'point', `${actor}-point-lose-embedded-${round}`);
         await advance(p, 2400);
       }
       for (let round = 0; round < 2; round++) {
         await point(p, true);
         assert.equal((await state(p)).phase, 'result');
         assert.equal((await state(p)).cinematic.kind, 'result');
-        await naturalMovie(p, 'result', `${actor}-result-win-native`); await naturalMovie(p, 'result', `${actor}-result-lose-native`);
+        await naturalMovie(p, 'result', `${actor}-result-win-embedded-${round}`); await naturalMovie(p, 'result', `${actor}-result-lose-embedded-${round}`);
         if (round === 0) { await p.getByRole('button', { name: '再来一场' }).click(); await p.keyboard.press('Enter'); }
       }
       report.probes.push({ actor, probe: await p.evaluate(() => window.audioProbe()) });

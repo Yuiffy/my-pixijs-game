@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "characters": {
     "sui": {
       "intro": {
@@ -22,16 +22,16 @@
           }
         },
         {
-          "src": "/games/beach-volley/variety-v5/video-sui-special-2.mp4",
+          "src": "/games/beach-volley/dubbed-v6/sui-special-recording.mp4",
           "poster": "/games/beach-volley/special-sui-v2.webp",
           "duration": 4.096009,
           "lite": {
-            "src": "/games/beach-volley/lite-v5/video-sui-special-2.mp4",
-            "bytes": 137060
+            "src": "/games/beach-volley/lite-v6/sui-special-recording.mp4",
+            "bytes": 107089
           },
           "dialogue": {
-            "source": "native",
-            "text": "这一球，飞到晴空去！"
+            "source": "recording",
+            "text": "看我的操作吧你就！"
           }
         }
       ],
@@ -47,16 +47,16 @@
             }
           },
           {
-            "src": "/games/beach-volley/variety-v5/video-sui-pointWin-2.mp4",
+            "src": "/games/beach-volley/dubbed-v6/sui-pointWin-recording.mp4",
             "poster": "/games/beach-volley/special-sui-v2.webp",
             "duration": 4.096009,
             "lite": {
-              "src": "/games/beach-volley/lite-v5/video-sui-pointWin-2.mp4",
-              "bytes": 204698
+              "src": "/games/beach-volley/lite-v6/sui-pointWin-recording.mp4",
+              "bytes": 174859
             },
             "dialogue": {
-              "source": "native",
-              "text": "嘿嘿，这球漂亮！"
+              "source": "recording",
+              "text": "我厉害吗？我厉害吗？"
             }
           }
         ],
@@ -71,16 +71,16 @@
             }
           },
           {
-            "src": "/games/beach-volley/variety-v5/video-sui-pointLose-2.mp4",
+            "src": "/games/beach-volley/dubbed-v6/sui-pointLose-recording.mp4",
             "poster": "/games/beach-volley/special-sui-v2.webp",
             "duration": 4.096009,
             "lite": {
-              "src": "/games/beach-volley/lite-v5/video-sui-pointLose-2.mp4",
-              "bytes": 220893
+              "src": "/games/beach-volley/lite-v6/sui-pointLose-recording.mp4",
+              "bytes": 186563
             },
             "dialogue": {
-              "source": "native",
-              "text": "哎呀，再来一球！"
+              "source": "recording",
+              "text": "哎呀，完了！"
             }
           }
         ]
@@ -97,16 +97,16 @@
             }
           },
           {
-            "src": "/games/beach-volley/variety-v5/video-sui-victory-2.mp4",
+            "src": "/games/beach-volley/dubbed-v6/sui-victory-recording.mp4",
             "poster": "/games/beach-volley/special-sui-v2.webp",
             "duration": 6.08,
             "lite": {
-              "src": "/games/beach-volley/lite-v5/video-sui-victory-2.mp4",
-              "bytes": 264480
+              "src": "/games/beach-volley/lite-v6/sui-victory-recording.mp4",
+              "bytes": 223035
             },
             "dialogue": {
-              "source": "native",
-              "text": "今天的冠军是我！再来一起玩吧！"
+              "source": "recording",
+              "text": "呵呵，我厉害吗？我厉害吗？"
             }
           }
         ],
@@ -121,16 +121,16 @@
             }
           },
           {
-            "src": "/games/beach-volley/variety-v5/video-sui-defeat-2.mp4",
+            "src": "/games/beach-volley/dubbed-v6/sui-defeat-recording.mp4",
             "poster": "/games/beach-volley/special-sui-v2.webp",
             "duration": 6.08,
             "lite": {
-              "src": "/games/beach-volley/lite-v5/video-sui-defeat-2.mp4",
-              "bytes": 262149
+              "src": "/games/beach-volley/lite-v6/sui-defeat-recording.mp4",
+              "bytes": 244507
             },
             "dialogue": {
-              "source": "native",
-              "text": "你真厉害！下次可要小心啦！"
+              "source": "recording",
+              "text": "哎呀，完了！"
             }
           }
         ]
@@ -157,16 +157,16 @@
           }
         },
         {
-          "src": "/games/beach-volley/variety-v5/video-shiori-special-2.mp4",
+          "src": "/games/beach-volley/dubbed-v6/shiori-special-recording.mp4",
           "poster": "/games/beach-volley/special-shiori-v2.webp",
           "duration": 4.096009,
           "lite": {
-            "src": "/games/beach-volley/lite-v5/video-shiori-special-2.mp4",
-            "bytes": 266901
+            "src": "/games/beach-volley/lite-v6/shiori-special-recording.mp4",
+            "bytes": 220718
           },
           "dialogue": {
-            "source": "native",
-            "text": "潮汐回旋，接好了。"
+            "source": "recording",
+            "text": "加油啊，加油！"
           }
         }
       ],
@@ -182,16 +182,16 @@
             }
           },
           {
-            "src": "/games/beach-volley/variety-v5/video-shiori-pointWin-2.mp4",
+            "src": "/games/beach-volley/dubbed-v6/shiori-pointWin-recording.mp4",
             "poster": "/games/beach-volley/special-shiori-v2.webp",
             "duration": 4.096009,
             "lite": {
-              "src": "/games/beach-volley/lite-v5/video-shiori-pointWin-2.mp4",
-              "bytes": 195070
+              "src": "/games/beach-volley/lite-v6/shiori-pointWin-recording.mp4",
+              "bytes": 160547
             },
             "dialogue": {
-              "source": "native",
-              "text": "就是这个节奏。"
+              "source": "recording",
+              "text": "耶耶耶！"
             }
           }
         ],
@@ -206,16 +206,16 @@
             }
           },
           {
-            "src": "/games/beach-volley/variety-v5/video-shiori-pointLose-2.mp4",
+            "src": "/games/beach-volley/dubbed-v6/shiori-pointLose-recording.mp4",
             "poster": "/games/beach-volley/special-shiori-v2.webp",
             "duration": 4.096009,
             "lite": {
-              "src": "/games/beach-volley/lite-v5/video-shiori-pointLose-2.mp4",
-              "bytes": 216550
+              "src": "/games/beach-volley/lite-v6/shiori-pointLose-recording.mp4",
+              "bytes": 169408
             },
             "dialogue": {
-              "source": "native",
-              "text": "别着急，我准备好了。"
+              "source": "recording",
+              "text": "没事了！"
             }
           }
         ]
@@ -232,16 +232,16 @@
             }
           },
           {
-            "src": "/games/beach-volley/variety-v5/video-shiori-victory-2.mp4",
+            "src": "/games/beach-volley/dubbed-v6/shiori-victory-recording.mp4",
             "poster": "/games/beach-volley/special-shiori-v2.webp",
             "duration": 6.08,
             "lite": {
-              "src": "/games/beach-volley/lite-v5/video-shiori-victory-2.mp4",
-              "bytes": 256157
+              "src": "/games/beach-volley/lite-v6/shiori-victory-recording.mp4",
+              "bytes": 219803
             },
             "dialogue": {
-              "source": "native",
-              "text": "海浪也在为我们鼓掌。下次再见。"
+              "source": "recording",
+              "text": "哈哈哈，耶～！"
             }
           }
         ],
@@ -256,16 +256,16 @@
             }
           },
           {
-            "src": "/games/beach-volley/variety-v5/video-shiori-defeat-2.mp4",
+            "src": "/games/beach-volley/dubbed-v6/shiori-defeat-recording.mp4",
             "poster": "/games/beach-volley/special-shiori-v2.webp",
             "duration": 6.08,
             "lite": {
-              "src": "/games/beach-volley/lite-v5/video-shiori-defeat-2.mp4",
-              "bytes": 213648
+              "src": "/games/beach-volley/lite-v6/shiori-defeat-recording.mp4",
+              "bytes": 190434
             },
             "dialogue": {
-              "source": "native",
-              "text": "输赢都是风景。下一场，再见。"
+              "source": "recording",
+              "text": "没事了。"
             }
           }
         ]

@@ -1,0 +1,241 @@
+{
+  "method": "Original image streams; replace the entire synthesized soundtrack with authenticated performer speech, no second voice",
+  "items": {
+    "sui-special": {
+      "actor": "sui",
+      "scene": "special",
+      "src": "/games/beach-volley/dubbed-v6/sui-special-recording.mp4",
+      "bytes": 563053,
+      "sha256": "baa3a7927eb9d66fbb2913c04034a44e67bdc2a2cdc3f5c0181e2559f0f9ac54",
+      "duration": 4.096009,
+      "voiceSrc": "/games/beach-volley/audio-v3/sui-special-2.mp3",
+      "voiceSha256": "bd22d77dae6f2a7e0655cb2317c7461c6d9227cda728d7953d0af5f4bea222db",
+      "voiceStart": 0.1,
+      "voiceEnd": 2.5300000000000002,
+      "originalSrc": "/games/beach-volley/variety-v5/video-sui-special-2.mp4",
+      "originalSha256": "b222c3e2ff0bb1bc09ed91f20dd62d154860a058b018d16b0fe0be859f42301c",
+      "imageStreamCopied": true,
+      "originalSoundtrackRemoved": true,
+      "rmsDb": -21.22,
+      "peak": 0.7862,
+      "lite": {
+        "src": "/games/beach-volley/lite-v6/sui-special-recording.mp4",
+        "bytes": 107089,
+        "sha256": "882a94817127070bc7dfcc3eba24bcc4e1e9cd0a18a44f57573a9a0800fa9831"
+      }
+    },
+    "sui-pointWin": {
+      "actor": "sui",
+      "scene": "pointWin",
+      "src": "/games/beach-volley/dubbed-v6/sui-pointWin-recording.mp4",
+      "bytes": 843929,
+      "sha256": "52b6a8cc8da62ab19bb15248e36aee4f7f18b26700f13a10f2032841ed070efc",
+      "duration": 4.096009,
+      "voiceSrc": "/games/beach-volley/audio-v3/sui-pointWin-2.mp3",
+      "voiceSha256": "9301d11d8e92065a62acecc6e26db2f280b2c96ee009e3d2b2c890d5da489511",
+      "voiceStart": 0.1,
+      "voiceEnd": 1.8,
+      "originalSrc": "/games/beach-volley/variety-v5/video-sui-pointWin-2.mp4",
+      "originalSha256": "caf40a08293303af13808a04e19718f01ec4d65ad307411d312f0968e2afb6cd",
+      "imageStreamCopied": true,
+      "originalSoundtrackRemoved": true,
+      "rmsDb": -24.33,
+      "peak": 0.5068,
+      "lite": {
+        "src": "/games/beach-volley/lite-v6/sui-pointWin-recording.mp4",
+        "bytes": 174859,
+        "sha256": "fe80385874e097c67b855f0fe354522228316e3cd011f21f058526c02cf49323"
+      }
+    },
+    "sui-pointLose": {
+      "actor": "sui",
+      "scene": "pointLose",
+      "src": "/games/beach-volley/dubbed-v6/sui-pointLose-recording.mp4",
+      "bytes": 963879,
+      "sha256": "1f10bd11b47037fe73a5c370813846ef8db7fc4824425ab015d2065910f3dd6d",
+      "duration": 4.096009,
+      "voiceSrc": "/games/beach-volley/audio-v3/sui-pointLose-2.mp3",
+      "voiceSha256": "50b4d3c2855c9c25214f304a9bf9191d387ce58016d1a36a2b132b34b9f8162c",
+      "voiceStart": 0.1,
+      "voiceEnd": 1.1400000000000001,
+      "originalSrc": "/games/beach-volley/variety-v5/video-sui-pointLose-2.mp4",
+      "originalSha256": "d75eb630065d35fe4c2b5618c7754f2a25d51ae9476359db8a5ed8334f672be1",
+      "imageStreamCopied": true,
+      "originalSoundtrackRemoved": true,
+      "rmsDb": -28.61,
+      "peak": 0.5212,
+      "lite": {
+        "src": "/games/beach-volley/lite-v6/sui-pointLose-recording.mp4",
+        "bytes": 186563,
+        "sha256": "fc15eb31ecaf78be89d29f894267b30f537b283ae254c802ebd31309f3880a36"
+      }
+    },
+    "sui-victory": {
+      "actor": "sui",
+      "scene": "victory",
+      "src": "/games/beach-volley/dubbed-v6/sui-victory-recording.mp4",
+      "bytes": 1141579,
+      "sha256": "4c55e1f59a857d2fab1ab51158ebf1206c2d5c3af7b47fceb0916412cb32045e",
+      "duration": 6.08,
+      "voiceSrc": "/games/beach-volley/audio-v3/sui-victory-1.mp3",
+      "voiceSha256": "5bc1d8185add1e08ab635c9099b4c64ce13bbb78764584f78e114534ad46d77a",
+      "voiceStart": 0.1,
+      "voiceEnd": 2.8200000000000003,
+      "originalSrc": "/games/beach-volley/variety-v5/video-sui-victory-2.mp4",
+      "originalSha256": "0396a72f777fa82de23f6155cc99067cb1ca0cc65853f8a03a5bde9e88979b05",
+      "imageStreamCopied": true,
+      "originalSoundtrackRemoved": true,
+      "rmsDb": -25.95,
+      "peak": 0.5062,
+      "lite": {
+        "src": "/games/beach-volley/lite-v6/sui-victory-recording.mp4",
+        "bytes": 223035,
+        "sha256": "1728dbe56e6410213883a9f808abf680244b8ce8bf8a2ba9e71fbe3087100179"
+      }
+    },
+    "sui-defeat": {
+      "actor": "sui",
+      "scene": "defeat",
+      "src": "/games/beach-volley/dubbed-v6/sui-defeat-recording.mp4",
+      "bytes": 1030605,
+      "sha256": "7b86bb6856bae4616e8373a92ff477554432a8e1756ceb697b7df1d06a372b76",
+      "duration": 6.08,
+      "voiceSrc": "/games/beach-volley/audio-v3/sui-defeat-2.mp3",
+      "voiceSha256": "50b4d3c2855c9c25214f304a9bf9191d387ce58016d1a36a2b132b34b9f8162c",
+      "voiceStart": 0.1,
+      "voiceEnd": 1.1400000000000001,
+      "originalSrc": "/games/beach-volley/variety-v5/video-sui-defeat-2.mp4",
+      "originalSha256": "fcdaa713e65689a5f98ec7dd1625bb348e2f97e716082589c43602b1a3e0a6cc",
+      "imageStreamCopied": true,
+      "originalSoundtrackRemoved": true,
+      "rmsDb": -30.36,
+      "peak": 0.5212,
+      "lite": {
+        "src": "/games/beach-volley/lite-v6/sui-defeat-recording.mp4",
+        "bytes": 244507,
+        "sha256": "c1b2c3dea2fa2d5ce011d16bf5d257a5199d5d28be1f7dabc9499ef8d2f2ccce"
+      }
+    },
+    "shiori-special": {
+      "actor": "shiori",
+      "scene": "special",
+      "src": "/games/beach-volley/dubbed-v6/shiori-special-recording.mp4",
+      "bytes": 1135803,
+      "sha256": "7d938562145d415aa4cd2d87f990ac858336f10e507f1ec09715df8fb9a67b57",
+      "duration": 4.096009,
+      "voiceSrc": "/games/beach-volley/audio-v3/shiori-special-2.mp3",
+      "voiceSha256": "e89205cfea8b7c10b242651d8e4fa24333f0f7b8e568bd4daf08fe6690802839",
+      "voiceStart": 0.1,
+      "voiceEnd": 1.24,
+      "originalSrc": "/games/beach-volley/variety-v5/video-shiori-special-2.mp4",
+      "originalSha256": "9820e9e0e466bbc4844971299c9e980bff3aa40d5d5f465fb107bc4fd6569b3a",
+      "imageStreamCopied": true,
+      "originalSoundtrackRemoved": true,
+      "rmsDb": -26.15,
+      "peak": 0.8576,
+      "lite": {
+        "src": "/games/beach-volley/lite-v6/shiori-special-recording.mp4",
+        "bytes": 220718,
+        "sha256": "d5694fa8abd3a25ea75b02bdf44fe03a73709e0fd4dce5623c9b61b0fdbf1e98"
+      }
+    },
+    "shiori-pointWin": {
+      "actor": "shiori",
+      "scene": "pointWin",
+      "src": "/games/beach-volley/dubbed-v6/shiori-pointWin-recording.mp4",
+      "bytes": 808933,
+      "sha256": "e146db4e0742fa75197b4692990e5fe889aada24dbc58cc5b34d43e4d6cd2f54",
+      "duration": 4.096009,
+      "voiceSrc": "/games/beach-volley/audio-v3/shiori-pointWin-2.mp3",
+      "voiceSha256": "7dd3c71e01b8b26a70b5b2169571e1202cfcee253352b42c29b483fcb3c4ef2f",
+      "voiceStart": 0.1,
+      "voiceEnd": 2.01,
+      "originalSrc": "/games/beach-volley/variety-v5/video-shiori-pointWin-2.mp4",
+      "originalSha256": "0ecad8229b5c7fafc1907cdc7bfebde1e1a868b74ac16ed6aec5f7d48d323dc9",
+      "imageStreamCopied": true,
+      "originalSoundtrackRemoved": true,
+      "rmsDb": -21.98,
+      "peak": 0.6407,
+      "lite": {
+        "src": "/games/beach-volley/lite-v6/shiori-pointWin-recording.mp4",
+        "bytes": 160547,
+        "sha256": "b18b15723493b5e6c86f9f610cf78a757f418bb3dee4afd4126916abfd44d062"
+      }
+    },
+    "shiori-pointLose": {
+      "actor": "shiori",
+      "scene": "pointLose",
+      "src": "/games/beach-volley/dubbed-v6/shiori-pointLose-recording.mp4",
+      "bytes": 887523,
+      "sha256": "4de252d8df603e4c5ceabbfa434621ee56f801f28618f876be45613b5439d69b",
+      "duration": 4.096009,
+      "voiceSrc": "/games/beach-volley/audio-v3/shiori-pointLose-2.mp3",
+      "voiceSha256": "a63edea97828f90b4f122144b80147d73c8e5cc43a897d6d43becc60c498b946",
+      "voiceStart": 0.1,
+      "voiceEnd": 1.12,
+      "originalSrc": "/games/beach-volley/variety-v5/video-shiori-pointLose-2.mp4",
+      "originalSha256": "1681b8d107bc503e37ca6ca274306f0b8aeee08f7ac236c1129d3bef0303ce05",
+      "imageStreamCopied": true,
+      "originalSoundtrackRemoved": true,
+      "rmsDb": -24.58,
+      "peak": 0.8043,
+      "lite": {
+        "src": "/games/beach-volley/lite-v6/shiori-pointLose-recording.mp4",
+        "bytes": 169408,
+        "sha256": "2f1e49381fdf1bc34543b26c7df2b5ff98b2fb2d91839b15f1d95b92f9e0ca5d"
+      }
+    },
+    "shiori-victory": {
+      "actor": "shiori",
+      "scene": "victory",
+      "src": "/games/beach-volley/dubbed-v6/shiori-victory-recording.mp4",
+      "bytes": 1084053,
+      "sha256": "9a63498cf0ec137a1bdbebd67c521a36664211f024d5a178b57191fbe39d8c81",
+      "duration": 6.08,
+      "voiceSrc": "/games/beach-volley/audio-v3/shiori-victory-1.mp3",
+      "voiceSha256": "7902fc889e9516ddf934d38906bbd608204edbfc9f42df7252c03d66fa893c74",
+      "voiceStart": 0.1,
+      "voiceEnd": 4.242999999999999,
+      "originalSrc": "/games/beach-volley/variety-v5/video-shiori-victory-2.mp4",
+      "originalSha256": "d8077e756043e18afe52fa4fb1e13fb8dbeec3dca01f847d558ece0f9a818866",
+      "imageStreamCopied": true,
+      "originalSoundtrackRemoved": true,
+      "rmsDb": -20.47,
+      "peak": 0.73,
+      "lite": {
+        "src": "/games/beach-volley/lite-v6/shiori-victory-recording.mp4",
+        "bytes": 219803,
+        "sha256": "32d1fd634e30e01bc71fe47cfd73aa417a1ef596fd8934508bac619a1bb20697"
+      }
+    },
+    "shiori-defeat": {
+      "actor": "shiori",
+      "scene": "defeat",
+      "src": "/games/beach-volley/dubbed-v6/shiori-defeat-recording.mp4",
+      "bytes": 877993,
+      "sha256": "fdd03a84d9b369e5e69525fec242159cfc6ac9f49bf5fa4a002b0fd62fdee02f",
+      "duration": 6.08,
+      "voiceSrc": "/games/beach-volley/audio-v3/shiori-defeat-2.mp3",
+      "voiceSha256": "a63edea97828f90b4f122144b80147d73c8e5cc43a897d6d43becc60c498b946",
+      "voiceStart": 0.1,
+      "voiceEnd": 1.12,
+      "originalSrc": "/games/beach-volley/variety-v5/video-shiori-defeat-2.mp4",
+      "originalSha256": "e0a1c2cfceed52a549bca03e446e9161f68887431669aca5bf4d3b18b0674145",
+      "imageStreamCopied": true,
+      "originalSoundtrackRemoved": true,
+      "rmsDb": -26.33,
+      "peak": 0.8043,
+      "lite": {
+        "src": "/games/beach-volley/lite-v6/shiori-defeat-recording.mp4",
+        "bytes": 190434,
+        "sha256": "4972e03f25ce7a4f06efc223cbd5757ce2030571c6dd341970b19006a95bd403"
+      }
+    }
+  },
+  "validationNotes": {
+    "video": "Original H.264 image stream copied unchanged; all revoiced images were opened in browser captures.",
+    "audio": "Actual decoded soundtrack correlated with intended recording at 0.95885 to 0.99828 across standard and light versions; this verifies track replacement, not speaker similarity.",
+    "limits": "No lip-sync regeneration. Existing special ball handling remains incorrect pending separate rally-video credit approval.",
+    "evidence": "tmp/beach-rally-voices/dubbing-validation.json"
+  }
+}

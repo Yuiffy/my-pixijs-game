@@ -1,0 +1,989 @@
+{
+  "method": "Authentic performer recordings, no synthetic speech or voice conversion for Sui/Shiori",
+  "sourceSelection": "Sui buttons; Shiori livestream excerpts selected from speaker SRT and rechecked on actual decoded audio",
+  "processing": "HP2_all_vocals.pth vocal separation; contiguous crop; highpass 70 Hz, lowpass 10500 Hz, loudnorm I=-16 TP=-2 LRA=9; 8 ms edge fades; mono 24 kHz MP3 64 kbit/s; no pitch shifting or time stretching",
+  "unchangedActor": "nagisa",
+  "items": {
+    "sui-intro-1": {
+      "src": "/games/beach-volley/audio-v3/sui-intro-1.mp3",
+      "bytes": 21164,
+      "duration": 2.5592,
+      "text": "来吧，来吧，宝宝宝宝！",
+      "actor": "sui",
+      "scene": "intro",
+      "conversion": "authentic-recording",
+      "sha256": "7f976fac0c9cb2ac6e96b36d2dfb8ee8b1c134ec489a023c7b2fb33abd374592",
+      "samples": 61420,
+      "rmsDb": -16.52,
+      "peak": 0.5981,
+      "sourcePath": "D:\\workspace\\myrepo\\suiji-sui-button\\public\\voices\\来吧来吧宝宝.MP3",
+      "sourceKind": "authentic-button",
+      "sourceSha256": "5e9c8923b573677c5aadb72b7d3b2340d19acab0508bd5f28857991c1391f17a",
+      "rawSha256": "165b3797bc4deadbeb32a0989cf50c06f09a11cef58eb5a9b43e934dc1179c94",
+      "cleanSha256": "144324ffe6f41cf0329285f0f5857901e5eee059679e4e63f3b9bb771c85e5f7",
+      "contiguousCrop": [
+        0,
+        2.62
+      ],
+      "label": "来吧来吧宝宝",
+      "peakSafetyGain": 1,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "来吧来吧宝宝宝宝",
+        "expected": "来吧，来吧，宝宝宝宝！",
+        "similarity": 1.0,
+        "sha256": "7f976fac0c9cb2ac6e96b36d2dfb8ee8b1c134ec489a023c7b2fb33abd374592"
+      }
+    },
+    "sui-intro-2": {
+      "src": "/games/beach-volley/audio-v3/sui-intro-2.mp3",
+      "bytes": 30380,
+      "duration": 3.698,
+      "text": "别急，你别急，我是游戏高手！",
+      "actor": "sui",
+      "scene": "intro",
+      "conversion": "authentic-recording",
+      "sha256": "ccc2de41425f1d0bfd86a7f4630f28820793f0a6f30110b316d0f2cc2ea48b25",
+      "samples": 88751,
+      "rmsDb": -18.39,
+      "peak": 0.7973,
+      "sourcePath": "D:\\workspace\\myrepo\\suiji-sui-button\\public\\voices\\别急我是游戏高手.MP3",
+      "sourceKind": "authentic-button",
+      "sourceSha256": "c30e5ab88ab2d1519534e97ffb280a16b195abd1bf391e7ab5634f3b79e0ad13",
+      "rawSha256": "3789edbfdcd12c4346f7af713416c5cafc29fa1b500b99239cfc977a4d729581",
+      "cleanSha256": "d7f9bed1a3a17dc0f379f7fcd964c8410245c6c26c30bc6a0abda46cb6c4c5a3",
+      "contiguousCrop": [
+        0,
+        3.7
+      ],
+      "label": "别急我是游戏高手",
+      "peakSafetyGain": 0.76899,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "别急你别急我是游戏高手",
+        "expected": "别急，你别急，我是游戏高手！",
+        "similarity": 1.0,
+        "sha256": "ccc2de41425f1d0bfd86a7f4630f28820793f0a6f30110b316d0f2cc2ea48b25"
+      }
+    },
+    "sui-special-1": {
+      "src": "/games/beach-volley/audio-v3/sui-special-1.mp3",
+      "bytes": 12332,
+      "duration": 1.46,
+      "text": "你最好给我准备好了！",
+      "actor": "sui",
+      "scene": "special",
+      "conversion": "authentic-recording",
+      "sha256": "fb1493f6a6c94bcdf86e894bf63cf8a37b3c8a7d14e2ccd620476048b6ebf546",
+      "samples": 35040,
+      "rmsDb": -18.43,
+      "peak": 0.7932,
+      "sourcePath": "D:\\workspace\\myrepo\\suiji-sui-button\\public\\voices\\你最好给我准备好了.MP3",
+      "sourceKind": "authentic-button",
+      "sourceSha256": "135359717f49faeb6461ada93b9562395415252cfbd21b034565367a2bdc47e6",
+      "rawSha256": "3c1fa5e539483854ebc4a256c8f9a05273f73c27c01561f858413e16919acb08",
+      "cleanSha256": "f08cc9f49ef2759943158437a7c255048c14bb78989a8e742d524bf921f7ca75",
+      "contiguousCrop": [
+        0,
+        1.46
+      ],
+      "label": "你最好给我准备好了",
+      "peakSafetyGain": 0.785537,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "你最好给我准备好了",
+        "expected": "你最好给我准备好了！",
+        "similarity": 1.0,
+        "sha256": "fb1493f6a6c94bcdf86e894bf63cf8a37b3c8a7d14e2ccd620476048b6ebf546"
+      }
+    },
+    "sui-special-2": {
+      "src": "/games/beach-volley/audio-v3/sui-special-2.mp3",
+      "bytes": 20204,
+      "duration": 2.43,
+      "text": "看我的操作吧你就！",
+      "actor": "sui",
+      "scene": "special",
+      "conversion": "authentic-recording",
+      "sha256": "bd22d77dae6f2a7e0655cb2317c7461c6d9227cda728d7953d0af5f4bea222db",
+      "samples": 58320,
+      "rmsDb": -18.96,
+      "peak": 0.8025,
+      "sourcePath": "D:\\workspace\\myrepo\\suiji-sui-button\\public\\voices\\看我的操作吧你就.MP3",
+      "sourceKind": "authentic-button",
+      "sourceSha256": "d9b907d5c59e47e72c190b837d30645787065ff7e67e2939c406ed86c9f02ed7",
+      "rawSha256": "9e282194d12bb0416b9d8f6f9f481c45ec43d8fbcc31b72cd72fbdaf082acfbe",
+      "cleanSha256": "834d9675e5a8c2c0b616323490255a5f55e1ba26a139722cf1c747faaa449d79",
+      "contiguousCrop": [
+        0.91,
+        3.34
+      ],
+      "label": "看我的操作吧你就",
+      "peakSafetyGain": 0.814106,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "看我的操作吧你就",
+        "expected": "看我的操作吧你就！",
+        "similarity": 1.0,
+        "sha256": "bd22d77dae6f2a7e0655cb2317c7461c6d9227cda728d7953d0af5f4bea222db"
+      }
+    },
+    "sui-pointWin-1": {
+      "src": "/games/beach-volley/audio-v3/sui-pointWin-1.mp3",
+      "bytes": 9644,
+      "duration": 1.11,
+      "text": "耶～！",
+      "actor": "sui",
+      "scene": "pointWin",
+      "conversion": "authentic-recording",
+      "sha256": "ff42dbcd8b04e25a659e1c7d54f6d5d12ce3a08f5775be82d1e3e4a87f4242d9",
+      "samples": 26640,
+      "rmsDb": -18.95,
+      "peak": 0.5233,
+      "sourcePath": "D:\\workspace\\myrepo\\suiji-sui-button\\public\\voices\\耶~.MP3",
+      "sourceKind": "authentic-button",
+      "sourceSha256": "5e0ca41e3845ec7d0b6bfc8945b4532fad873d39211d8be7e536fe7007b0034b",
+      "rawSha256": "01eccdfa22ce8e6d06e176b902efcab6d59140d98a5707780fb79a25b0f079a5",
+      "cleanSha256": "b4934b00c3037d3589ec8d973ae6eb153403dc95c8aa61c17c278df03d3d684e",
+      "contiguousCrop": [
+        0,
+        1.11
+      ],
+      "label": "耶~",
+      "peakSafetyGain": 1,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "耶",
+        "expected": "耶～！",
+        "similarity": 1.0,
+        "sha256": "ff42dbcd8b04e25a659e1c7d54f6d5d12ce3a08f5775be82d1e3e4a87f4242d9"
+      }
+    },
+    "sui-pointWin-2": {
+      "src": "/games/beach-volley/audio-v3/sui-pointWin-2.mp3",
+      "bytes": 14252,
+      "duration": 1.7,
+      "text": "我厉害吗？我厉害吗？",
+      "actor": "sui",
+      "scene": "pointWin",
+      "conversion": "authentic-recording",
+      "sha256": "9301d11d8e92065a62acecc6e26db2f280b2c96ee009e3d2b2c890d5da489511",
+      "samples": 40800,
+      "rmsDb": -20.52,
+      "peak": 0.5107,
+      "sourcePath": "D:\\workspace\\myrepo\\suiji-sui-button\\public\\voices\\科科我厉害吗.MP3",
+      "sourceKind": "authentic-button",
+      "sourceSha256": "79e102b0002314bd2704b89fa4d2feb3baada9043f3361fd67dd14cbdd81631b",
+      "rawSha256": "b2ac489fd793b62e90845bf476fc95d00f29d2619c2e692559ea05347cc47b11",
+      "cleanSha256": "51f21b9cd0b2eb56eeff3ab0792eaa04a60b4e6d3dfc1acec8600e74cd89401e",
+      "contiguousCrop": [
+        1.02,
+        2.72
+      ],
+      "label": "科科我厉害吗",
+      "peakSafetyGain": 1,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "我厉害吗我厉害吗",
+        "expected": "我厉害吗？我厉害吗？",
+        "similarity": 1.0,
+        "sha256": "9301d11d8e92065a62acecc6e26db2f280b2c96ee009e3d2b2c890d5da489511"
+      }
+    },
+    "sui-pointLose-1": {
+      "src": "/games/beach-volley/audio-v3/sui-pointLose-1.mp3",
+      "bytes": 10796,
+      "duration": 1.25,
+      "text": "哎呀，差一点啊！",
+      "actor": "sui",
+      "scene": "pointLose",
+      "conversion": "authentic-recording",
+      "sha256": "34bc9498af2578630133f84df1543cdd293af427fe18a6ffd09df70e7c62760c",
+      "samples": 30000,
+      "rmsDb": -20.62,
+      "peak": 0.5867,
+      "sourcePath": "D:\\workspace\\myrepo\\suiji-sui-button\\public\\voices\\哎呀差一点啊.MP3",
+      "sourceKind": "authentic-button",
+      "sourceSha256": "fc08a17ad8485b4b6ca5e1fd0ab13609f29b04d48c040c44e710323e26006450",
+      "rawSha256": "73f7390ccc291e1308729fd7892b52ed62ae7859f9ccbd1b5de3e9586a157427",
+      "cleanSha256": "9b6cd1a31adfcee22ed15fbdf74d2c76cd40fb38fc0a4c9d86d3783e7a9cde0c",
+      "contiguousCrop": [
+        0,
+        1.25
+      ],
+      "label": "哎呀差一点啊",
+      "peakSafetyGain": 1,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "哎呀差一点啊",
+        "expected": "哎呀，差一点啊！",
+        "similarity": 1.0,
+        "sha256": "34bc9498af2578630133f84df1543cdd293af427fe18a6ffd09df70e7c62760c"
+      }
+    },
+    "sui-pointLose-2": {
+      "src": "/games/beach-volley/audio-v3/sui-pointLose-2.mp3",
+      "bytes": 9068,
+      "duration": 1.04,
+      "text": "哎呀，完了！",
+      "actor": "sui",
+      "scene": "pointLose",
+      "conversion": "authentic-recording",
+      "sha256": "50b4d3c2855c9c25214f304a9bf9191d387ce58016d1a36a2b132b34b9f8162c",
+      "samples": 24960,
+      "rmsDb": -22.63,
+      "peak": 0.5178,
+      "sourcePath": "D:\\workspace\\myrepo\\suiji-sui-button\\public\\voices\\哎呀完了.MP3",
+      "sourceKind": "authentic-button",
+      "sourceSha256": "8d12f7cdc6d3f826cad72d9ebcca25837b6195bd41d6e4003787a9a405117ce0",
+      "rawSha256": "12167e8acf9dfeafb479594f316c00eb328486dd2a38d992266d63af6d5b7c47",
+      "cleanSha256": "c7b2c35d568a8f0a69806b29426112b2a98c156379ac0e49581f087378a22921",
+      "contiguousCrop": [
+        0,
+        1.04
+      ],
+      "label": "哎呀完了",
+      "peakSafetyGain": 1,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "哎呀刚刚都完了",
+        "expected": "哎呀，完了！",
+        "similarity": 0.727,
+        "sha256": "50b4d3c2855c9c25214f304a9bf9191d387ce58016d1a36a2b132b34b9f8162c"
+      }
+    },
+    "sui-victory-1": {
+      "src": "/games/beach-volley/audio-v3/sui-victory-1.mp3",
+      "bytes": 22508,
+      "duration": 2.72,
+      "text": "呵呵，我厉害吗？我厉害吗？",
+      "actor": "sui",
+      "scene": "victory",
+      "conversion": "authentic-recording",
+      "sha256": "5bc1d8185add1e08ab635c9099b4c64ce13bbb78764584f78e114534ad46d77a",
+      "samples": 65280,
+      "rmsDb": -22.43,
+      "peak": 0.5122,
+      "sourcePath": "D:\\workspace\\myrepo\\suiji-sui-button\\public\\voices\\科科我厉害吗.MP3",
+      "sourceKind": "authentic-button",
+      "sourceSha256": "79e102b0002314bd2704b89fa4d2feb3baada9043f3361fd67dd14cbdd81631b",
+      "rawSha256": "b2ac489fd793b62e90845bf476fc95d00f29d2619c2e692559ea05347cc47b11",
+      "cleanSha256": "51f21b9cd0b2eb56eeff3ab0792eaa04a60b4e6d3dfc1acec8600e74cd89401e",
+      "contiguousCrop": [
+        0,
+        2.72
+      ],
+      "label": "科科我厉害吗",
+      "peakSafetyGain": 1,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "呵呵 我厉害嘛 我厉害嘛",
+        "expected": "呵呵，我厉害吗？我厉害吗？",
+        "similarity": 0.8,
+        "sha256": "5bc1d8185add1e08ab635c9099b4c64ce13bbb78764584f78e114534ad46d77a"
+      }
+    },
+    "sui-victory-2": {
+      "src": "/games/beach-volley/audio-v3/sui-victory-2.mp3",
+      "bytes": 8300,
+      "duration": 0.95,
+      "text": "耶～！",
+      "actor": "sui",
+      "scene": "victory",
+      "conversion": "authentic-recording",
+      "sha256": "964e85422fd90130553646cd8d82617419997a5ebac25fdd0ecd417b40ed0ad2",
+      "samples": 22800,
+      "rmsDb": -19.42,
+      "peak": 0.806,
+      "sourcePath": "D:\\workspace\\myrepo\\suiji-sui-button\\public\\voices\\耶~（弹簧）.MP3",
+      "sourceKind": "authentic-button",
+      "sourceSha256": "65a3b24f187e83d62a0aa72e5fb5cb2a4db968c0468ce1ef1341e9e705624eef",
+      "rawSha256": "433cf5089093a26b638d8fe5fdab888cd6e6faad09493cea82d8312300d0a0fe",
+      "cleanSha256": "c374b2c7a0ebdb7815b45ba49ac7653c1d78d31667b259d4f47f2dd9de5b179b",
+      "contiguousCrop": [
+        0,
+        0.95
+      ],
+      "label": "耶~（弹簧）",
+      "peakSafetyGain": 1,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "耶",
+        "expected": "耶～！",
+        "similarity": 1.0,
+        "sha256": "964e85422fd90130553646cd8d82617419997a5ebac25fdd0ecd417b40ed0ad2"
+      }
+    },
+    "sui-defeat-1": {
+      "src": "/games/beach-volley/audio-v3/sui-defeat-1.mp3",
+      "bytes": 10796,
+      "duration": 1.25,
+      "text": "哎呀，差一点啊！",
+      "actor": "sui",
+      "scene": "defeat",
+      "conversion": "authentic-recording",
+      "sha256": "34bc9498af2578630133f84df1543cdd293af427fe18a6ffd09df70e7c62760c",
+      "samples": 30000,
+      "rmsDb": -20.62,
+      "peak": 0.5867,
+      "sourcePath": "D:\\workspace\\myrepo\\suiji-sui-button\\public\\voices\\哎呀差一点啊.MP3",
+      "sourceKind": "authentic-button",
+      "sourceSha256": "fc08a17ad8485b4b6ca5e1fd0ab13609f29b04d48c040c44e710323e26006450",
+      "rawSha256": "73f7390ccc291e1308729fd7892b52ed62ae7859f9ccbd1b5de3e9586a157427",
+      "cleanSha256": "9b6cd1a31adfcee22ed15fbdf74d2c76cd40fb38fc0a4c9d86d3783e7a9cde0c",
+      "contiguousCrop": [
+        0,
+        1.25
+      ],
+      "label": "哎呀差一点啊",
+      "peakSafetyGain": 1,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "哎呀差一点啊",
+        "expected": "哎呀，差一点啊！",
+        "similarity": 1.0,
+        "sha256": "34bc9498af2578630133f84df1543cdd293af427fe18a6ffd09df70e7c62760c"
+      }
+    },
+    "sui-defeat-2": {
+      "src": "/games/beach-volley/audio-v3/sui-defeat-2.mp3",
+      "bytes": 9068,
+      "duration": 1.04,
+      "text": "哎呀，完了！",
+      "actor": "sui",
+      "scene": "defeat",
+      "conversion": "authentic-recording",
+      "sha256": "50b4d3c2855c9c25214f304a9bf9191d387ce58016d1a36a2b132b34b9f8162c",
+      "samples": 24960,
+      "rmsDb": -22.63,
+      "peak": 0.5178,
+      "sourcePath": "D:\\workspace\\myrepo\\suiji-sui-button\\public\\voices\\哎呀完了.MP3",
+      "sourceKind": "authentic-button",
+      "sourceSha256": "8d12f7cdc6d3f826cad72d9ebcca25837b6195bd41d6e4003787a9a405117ce0",
+      "rawSha256": "12167e8acf9dfeafb479594f316c00eb328486dd2a38d992266d63af6d5b7c47",
+      "cleanSha256": "c7b2c35d568a8f0a69806b29426112b2a98c156379ac0e49581f087378a22921",
+      "contiguousCrop": [
+        0,
+        1.04
+      ],
+      "label": "哎呀完了",
+      "peakSafetyGain": 1,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "哎呀刚刚都完了",
+        "expected": "哎呀，完了！",
+        "similarity": 0.727,
+        "sha256": "50b4d3c2855c9c25214f304a9bf9191d387ce58016d1a36a2b132b34b9f8162c"
+      }
+    },
+    "sui-effort-1": {
+      "src": "/games/beach-volley/audio-v3/sui-effort-1.mp3",
+      "bytes": 4652,
+      "duration": 0.49,
+      "text": "喝！",
+      "actor": "sui",
+      "scene": "effort",
+      "conversion": "authentic-recording",
+      "sha256": "b0d314c471c6fe273ee1edd58f9d26a18747b28ffcb289683f52ad37fba85803",
+      "samples": 11760,
+      "rmsDb": -21.36,
+      "peak": 0.5648,
+      "sourcePath": "D:\\workspace\\myrepo\\suiji-sui-button\\public\\voices\\喝！（中气十足）.MP3",
+      "sourceKind": "authentic-button",
+      "sourceSha256": "bff3d8e628b2dabb7155f67d6dbdf6bf11edf8b14857dac515ba9aa7b30b9282",
+      "rawSha256": "711606147e2e5099ff8c97a56be582518bffaf22554b304fe0e89c960fa0c8e5",
+      "cleanSha256": "7d1f15ee8148e67ce9733364dea1f1b671115773a83fc0c9697db286eeed131c",
+      "contiguousCrop": [
+        0,
+        0.49
+      ],
+      "label": "喝！（中气十足）",
+      "peakSafetyGain": 1,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "哈",
+        "expected": "喝！",
+        "similarity": 0.0,
+        "sha256": "b0d314c471c6fe273ee1edd58f9d26a18747b28ffcb289683f52ad37fba85803",
+        "reliableForText": false,
+        "limitation": "Unreliable ASR on a short exclamation; the source recording, not this transcript, supports the caption."
+      }
+    },
+    "sui-effort-2": {
+      "src": "/games/beach-volley/audio-v3/sui-effort-2.mp3",
+      "bytes": 4076,
+      "duration": 0.43,
+      "text": "哈！",
+      "actor": "sui",
+      "scene": "effort",
+      "conversion": "authentic-recording",
+      "sha256": "1aa4682173d52d6b663404839a2283f79a3cd8d80a759b7f62f2249fc1e0b703",
+      "samples": 10320,
+      "rmsDb": -17.32,
+      "peak": 0.7753,
+      "sourcePath": "D:\\workspace\\myrepo\\suiji-sui-button\\public\\voices\\哈！哈！哈！（三连击）.MP3",
+      "sourceKind": "authentic-button",
+      "sourceSha256": "acc15bd5f66eb822156cafc5ee6edbd5dc49fc0e16b0f25bac6d81af657f15ec",
+      "rawSha256": "ab7a2deb40dd0e22366946cb955dae55fe41bbaf7702552caca9d91a2db6268e",
+      "cleanSha256": "762928ddd1e3c81f059c07732e436943dce7b995c1baea452660e0beba40d785",
+      "contiguousCrop": [
+        0.45,
+        0.88
+      ],
+      "label": "哈！哈！哈！（三连击）",
+      "peakSafetyGain": 0.79272,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "哈",
+        "expected": "哈！",
+        "similarity": 1.0,
+        "sha256": "1aa4682173d52d6b663404839a2283f79a3cd8d80a759b7f62f2249fc1e0b703"
+      }
+    },
+    "shiori-intro-1": {
+      "src": "/games/beach-volley/audio-v3/shiori-intro-1.mp3",
+      "bytes": 9836,
+      "duration": 1.14,
+      "text": "加油啊，加油！",
+      "actor": "shiori",
+      "scene": "intro",
+      "conversion": "authentic-recording",
+      "sha256": "e89205cfea8b7c10b242651d8e4fa24333f0f7b8e568bd4daf08fe6690802839",
+      "samples": 27360,
+      "rmsDb": -20.57,
+      "peak": 0.8626,
+      "sourcePath": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_10_01\\录制-26966466-20261001-215713-963-国庆快乐嘿嘿！！.flv",
+      "sourceKind": "authentic-livestream",
+      "sourceSha256": "1955b9510e9a0368daf2357323c3811ad27e8693211cff0d98ada10eb3fc048c",
+      "rawSha256": "98c0c8fa972ffb316757d5d061bfc1a845a440689a68524a8272446f9cbdf20d",
+      "cleanSha256": "d756a7a1d4cc4cb4ce68d512b44f5bd416a495b6d8dbf658cf5a5e5e7f4b5787",
+      "contiguousCrop": [
+        0,
+        1.14
+      ],
+      "label": "加油啊加油",
+      "subtitle": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_10_01\\录制-26966466-20261001-215713-963-国庆快乐嘿嘿！！.speaker.srt",
+      "subtitleId": "308",
+      "speakerConfidence": 0.67,
+      "recordingRange": [
+        1278.53,
+        1279.67
+      ],
+      "peakSafetyGain": 0.769695,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "加油啊 加油",
+        "expected": "加油啊，加油！",
+        "similarity": 1.0,
+        "sha256": "e89205cfea8b7c10b242651d8e4fa24333f0f7b8e568bd4daf08fe6690802839"
+      }
+    },
+    "shiori-intro-2": {
+      "src": "/games/beach-volley/audio-v3/shiori-intro-2.mp3",
+      "bytes": 5420,
+      "duration": 0.58,
+      "text": "好了好了！",
+      "actor": "shiori",
+      "scene": "intro",
+      "conversion": "authentic-recording",
+      "sha256": "3e43c903227bf47ac0a6b9d6d3e55c849213ef64abb3c0416aa09e92ccfdccc9",
+      "samples": 13920,
+      "rmsDb": -16.3,
+      "peak": 0.8318,
+      "sourcePath": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_09_29\\录制-26966466-20260929-100415-393-早安獭獭栞！.opus",
+      "sourceKind": "authentic-livestream",
+      "sourceSha256": "b18ef07a429d7f6ed00f22a97893e2ae58b0369eb913a3a46a2f5e9a96308ffa",
+      "rawSha256": "9601874b4857325ebb87f9b1f37548b5d413479619499a555eecc3e7c153372f",
+      "cleanSha256": "ebfbc7934ad3d88e298f95283d263ff4e84880ccf6967233ba358ebc26bd9f15",
+      "contiguousCrop": [
+        0.06,
+        0.64
+      ],
+      "label": "好的好的",
+      "subtitle": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_09_29\\录制-26966466-20260929-100415-393-早安獭獭栞！.speaker.srt",
+      "subtitleId": "312",
+      "speakerConfidence": 0.71,
+      "recordingRange": [
+        1046.689,
+        1047.269
+      ],
+      "peakSafetyGain": 0.806869,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "好了好了",
+        "expected": "好了好了！",
+        "similarity": 1.0,
+        "sha256": "3e43c903227bf47ac0a6b9d6d3e55c849213ef64abb3c0416aa09e92ccfdccc9"
+      }
+    },
+    "shiori-special-1": {
+      "src": "/games/beach-volley/audio-v3/shiori-special-1.mp3",
+      "bytes": 10220,
+      "duration": 1.2,
+      "text": "让我露一手！",
+      "actor": "shiori",
+      "scene": "special",
+      "conversion": "authentic-recording",
+      "sha256": "6633414fb828bc9273d5f8a7f1bc7bf39ab160222eb5423c0c681fed21acd52e",
+      "samples": 28800,
+      "rmsDb": -17.48,
+      "peak": 0.5852,
+      "sourcePath": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_10_01\\录制-26966466-20261001-215713-963-国庆快乐嘿嘿！！.flv",
+      "sourceKind": "authentic-livestream",
+      "sourceSha256": "1955b9510e9a0368daf2357323c3811ad27e8693211cff0d98ada10eb3fc048c",
+      "rawSha256": "c6a1f84e7dab94a91857ede564c728ea4d603b703ad92a487676514d30cf6191",
+      "cleanSha256": "70c555f3ccf8fa32e1541974e7384503ceb30a6a5954f6bb7a7b7c9be6c1a168",
+      "contiguousCrop": [
+        3.02,
+        4.22
+      ],
+      "label": "哎呀哎呀什么时候让我露一手",
+      "subtitle": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_10_01\\录制-26966466-20261001-215713-963-国庆快乐嘿嘿！！.speaker.srt",
+      "subtitleId": "97",
+      "speakerConfidence": 0.68,
+      "recordingRange": [
+        394.74,
+        395.94
+      ],
+      "peakSafetyGain": 1,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "让我露一首",
+        "expected": "让我露一手！",
+        "similarity": 0.8,
+        "sha256": "6633414fb828bc9273d5f8a7f1bc7bf39ab160222eb5423c0c681fed21acd52e"
+      }
+    },
+    "shiori-special-2": {
+      "src": "/games/beach-volley/audio-v3/shiori-special-2.mp3",
+      "bytes": 9836,
+      "duration": 1.14,
+      "text": "加油啊，加油！",
+      "actor": "shiori",
+      "scene": "special",
+      "conversion": "authentic-recording",
+      "sha256": "e89205cfea8b7c10b242651d8e4fa24333f0f7b8e568bd4daf08fe6690802839",
+      "samples": 27360,
+      "rmsDb": -20.57,
+      "peak": 0.8626,
+      "sourcePath": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_10_01\\录制-26966466-20261001-215713-963-国庆快乐嘿嘿！！.flv",
+      "sourceKind": "authentic-livestream",
+      "sourceSha256": "1955b9510e9a0368daf2357323c3811ad27e8693211cff0d98ada10eb3fc048c",
+      "rawSha256": "98c0c8fa972ffb316757d5d061bfc1a845a440689a68524a8272446f9cbdf20d",
+      "cleanSha256": "d756a7a1d4cc4cb4ce68d512b44f5bd416a495b6d8dbf658cf5a5e5e7f4b5787",
+      "contiguousCrop": [
+        0,
+        1.14
+      ],
+      "label": "加油啊加油",
+      "subtitle": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_10_01\\录制-26966466-20261001-215713-963-国庆快乐嘿嘿！！.speaker.srt",
+      "subtitleId": "308",
+      "speakerConfidence": 0.67,
+      "recordingRange": [
+        1278.53,
+        1279.67
+      ],
+      "peakSafetyGain": 0.769695,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "加油啊 加油",
+        "expected": "加油啊，加油！",
+        "similarity": 1.0,
+        "sha256": "e89205cfea8b7c10b242651d8e4fa24333f0f7b8e568bd4daf08fe6690802839"
+      }
+    },
+    "shiori-pointWin-1": {
+      "src": "/games/beach-volley/audio-v3/shiori-pointWin-1.mp3",
+      "bytes": 5228,
+      "duration": 0.56,
+      "text": "好耶！",
+      "actor": "shiori",
+      "scene": "pointWin",
+      "conversion": "authentic-recording",
+      "sha256": "7a6f68c231b9258631a6b8447ec8871c7084e44a265972691a9257cdb1510d45",
+      "samples": 13440,
+      "rmsDb": -17.92,
+      "peak": 0.6795,
+      "sourcePath": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_09_26\\录制-26966466-20260926-221101-725-小栞冲击10w粉！.opus",
+      "sourceKind": "authentic-livestream",
+      "sourceSha256": "7008ba1e500d86f4ced089c91e8a1ef26a27f818ef373fc80cf031df9a0591c1",
+      "rawSha256": "74008e96b3af06602cdc99e4475f911443bd7e8f64fbf9ee7423161b9e68f236",
+      "cleanSha256": "6783d53b5bb83c96326c89170e6caa7b0620ce873b9d7e93a5b3b4d5501779bf",
+      "contiguousCrop": [
+        0.16,
+        0.72
+      ],
+      "label": "好耶",
+      "subtitle": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_09_26\\录制-26966466-20260926-221101-725-小栞冲击10w粉！.speaker.srt",
+      "subtitleId": "1998",
+      "speakerConfidence": 0.66,
+      "recordingRange": [
+        7038.46,
+        7039.02
+      ],
+      "peakSafetyGain": 1,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "好耶",
+        "expected": "好耶！",
+        "similarity": 1.0,
+        "sha256": "7a6f68c231b9258631a6b8447ec8871c7084e44a265972691a9257cdb1510d45"
+      }
+    },
+    "shiori-pointWin-2": {
+      "src": "/games/beach-volley/audio-v3/shiori-pointWin-2.mp3",
+      "bytes": 15980,
+      "duration": 1.91,
+      "text": "耶耶耶！",
+      "actor": "shiori",
+      "scene": "pointWin",
+      "conversion": "authentic-recording",
+      "sha256": "7dd3c71e01b8b26a70b5b2169571e1202cfcee253352b42c29b483fcb3c4ef2f",
+      "samples": 45840,
+      "rmsDb": -18.61,
+      "peak": 0.6399,
+      "sourcePath": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_09_10\\录制-26966466-20260910-212650-911-小栞来咯！！_merged.opus",
+      "sourceKind": "authentic-livestream",
+      "sourceSha256": "4e7210797be5f93d2eac279770d826b42de2a4674a74b426e164deb3520aa38e",
+      "rawSha256": "79a7ade4976724bc44b4b286b4b10c63fc4a3faf5e0d9630e2c93eb34bd912d6",
+      "cleanSha256": "33f46e064ec04abe01d97a817f97655bb0b1ccc9a0a0d309a24a49b0bce98760",
+      "contiguousCrop": [
+        2.36,
+        4.27
+      ],
+      "label": "耶耶耶",
+      "subtitle": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_09_10\\录制-26966466-20260910-212650-911-小栞来咯！！_merged.speaker.srt",
+      "subtitleId": "1213",
+      "speakerConfidence": 0.78,
+      "recordingRange": [
+        5173.823,
+        5175.733
+      ],
+      "peakSafetyGain": 1,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "耶耶耶耶",
+        "expected": "耶耶耶！",
+        "similarity": 1.0,
+        "sha256": "7dd3c71e01b8b26a70b5b2169571e1202cfcee253352b42c29b483fcb3c4ef2f"
+      }
+    },
+    "shiori-pointLose-1": {
+      "src": "/games/beach-volley/audio-v3/shiori-pointLose-1.mp3",
+      "bytes": 5996,
+      "duration": 0.66,
+      "text": "哎呀！",
+      "actor": "shiori",
+      "scene": "pointLose",
+      "conversion": "authentic-recording",
+      "sha256": "28192a4316d827f14359347d2a52cdb1167b4850db02931b234c8aac7ade18eb",
+      "samples": 15840,
+      "rmsDb": -15.97,
+      "peak": 0.541,
+      "sourcePath": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_09_30\\录制-26966466-20260930-220851-623-新衣活动最后一天！耶国庆来啦！.opus",
+      "sourceKind": "authentic-livestream",
+      "sourceSha256": "1cf2416c12d43f56349a82ff0af07dafaae58150533571247d3f957f6376edb0",
+      "rawSha256": "004ace7bb307175f47e3c426ba81ecfcaf41a50cb4dc0d2f1a2ea9f730501e4b",
+      "cleanSha256": "c98d3507f568213a3c315e043bd293ea516dc336a006a4059a2daf59ec73612c",
+      "contiguousCrop": [
+        0,
+        0.66
+      ],
+      "label": "哎呀",
+      "subtitle": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_09_30\\录制-26966466-20260930-220851-623-新衣活动最后一天！耶国庆来啦！.speaker.srt",
+      "subtitleId": "517",
+      "speakerConfidence": 0.84,
+      "recordingRange": [
+        2161.589,
+        2162.249
+      ],
+      "peakSafetyGain": 1,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "I am",
+        "expected": "哎呀！",
+        "similarity": 0.0,
+        "sha256": "28192a4316d827f14359347d2a52cdb1167b4850db02931b234c8aac7ade18eb",
+        "reliableForText": false,
+        "limitation": "Unreliable ASR on a short exclamation; the source recording, not this transcript, supports the caption."
+      }
+    },
+    "shiori-pointLose-2": {
+      "src": "/games/beach-volley/audio-v3/shiori-pointLose-2.mp3",
+      "bytes": 8876,
+      "duration": 1.02,
+      "text": "没事了！",
+      "actor": "shiori",
+      "scene": "pointLose",
+      "conversion": "authentic-recording",
+      "sha256": "a63edea97828f90b4f122144b80147d73c8e5cc43a897d6d43becc60c498b946",
+      "samples": 24480,
+      "rmsDb": -18.53,
+      "peak": 0.8048,
+      "sourcePath": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_09_22\\录制-26966466-20260922-110435-343-小栞来！.opus",
+      "sourceKind": "authentic-livestream",
+      "sourceSha256": "ee56bcdf114b9ba2651bcafb207ecb357224a9fcca4e8ff402ffa7b048987154",
+      "rawSha256": "d05d2efcdc14b66388416709c4d6e5eb900c7fc73a6cd2d2ba847843cb99a8a0",
+      "cleanSha256": "591832bf83c47743e8ff8c7f7e8b901f057961d917391a234d0cf64a379f1516",
+      "contiguousCrop": [
+        0,
+        1.02
+      ],
+      "label": "没事儿了",
+      "subtitle": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_09_22\\录制-26966466-20260922-110435-343-小栞来！.speaker.srt",
+      "subtitleId": "58",
+      "speakerConfidence": 0.65,
+      "recordingRange": [
+        125.42,
+        126.44
+      ],
+      "peakSafetyGain": 0.891766,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "没事了",
+        "expected": "没事了！",
+        "similarity": 1.0,
+        "sha256": "a63edea97828f90b4f122144b80147d73c8e5cc43a897d6d43becc60c498b946"
+      }
+    },
+    "shiori-victory-1": {
+      "src": "/games/beach-volley/audio-v3/shiori-victory-1.mp3",
+      "bytes": 33836,
+      "duration": 4.143,
+      "text": "哈哈哈，耶～！",
+      "actor": "shiori",
+      "scene": "victory",
+      "conversion": "authentic-recording",
+      "sha256": "7902fc889e9516ddf934d38906bbd608204edbfc9f42df7252c03d66fa893c74",
+      "samples": 99432,
+      "rmsDb": -18.72,
+      "peak": 0.7975,
+      "sourcePath": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_09_10\\录制-26966466-20260910-212650-911-小栞来咯！！_merged.opus",
+      "sourceKind": "authentic-livestream",
+      "sourceSha256": "4e7210797be5f93d2eac279770d826b42de2a4674a74b426e164deb3520aa38e",
+      "rawSha256": "79a7ade4976724bc44b4b286b4b10c63fc4a3faf5e0d9630e2c93eb34bd912d6",
+      "cleanSha256": "33f46e064ec04abe01d97a817f97655bb0b1ccc9a0a0d309a24a49b0bce98760",
+      "contiguousCrop": [
+        0,
+        4.24
+      ],
+      "label": "耶耶耶",
+      "subtitle": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_09_10\\录制-26966466-20260910-212650-911-小栞来咯！！_merged.speaker.srt",
+      "subtitleId": "1213",
+      "speakerConfidence": 0.78,
+      "recordingRange": [
+        5171.463,
+        5175.703
+      ],
+      "peakSafetyGain": 0.843922,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "哈哈哈耶",
+        "expected": "哈哈哈，耶～！",
+        "similarity": 1.0,
+        "sha256": "7902fc889e9516ddf934d38906bbd608204edbfc9f42df7252c03d66fa893c74"
+      }
+    },
+    "shiori-victory-2": {
+      "src": "/games/beach-volley/audio-v3/shiori-victory-2.mp3",
+      "bytes": 5228,
+      "duration": 0.56,
+      "text": "好耶！",
+      "actor": "shiori",
+      "scene": "victory",
+      "conversion": "authentic-recording",
+      "sha256": "7a6f68c231b9258631a6b8447ec8871c7084e44a265972691a9257cdb1510d45",
+      "samples": 13440,
+      "rmsDb": -17.92,
+      "peak": 0.6795,
+      "sourcePath": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_09_26\\录制-26966466-20260926-221101-725-小栞冲击10w粉！.opus",
+      "sourceKind": "authentic-livestream",
+      "sourceSha256": "7008ba1e500d86f4ced089c91e8a1ef26a27f818ef373fc80cf031df9a0591c1",
+      "rawSha256": "74008e96b3af06602cdc99e4475f911443bd7e8f64fbf9ee7423161b9e68f236",
+      "cleanSha256": "6783d53b5bb83c96326c89170e6caa7b0620ce873b9d7e93a5b3b4d5501779bf",
+      "contiguousCrop": [
+        0.16,
+        0.72
+      ],
+      "label": "好耶",
+      "subtitle": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_09_26\\录制-26966466-20260926-221101-725-小栞冲击10w粉！.speaker.srt",
+      "subtitleId": "1998",
+      "speakerConfidence": 0.66,
+      "recordingRange": [
+        7038.46,
+        7039.02
+      ],
+      "peakSafetyGain": 1,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "好耶",
+        "expected": "好耶！",
+        "similarity": 1.0,
+        "sha256": "7a6f68c231b9258631a6b8447ec8871c7084e44a265972691a9257cdb1510d45"
+      }
+    },
+    "shiori-defeat-1": {
+      "src": "/games/beach-volley/audio-v3/shiori-defeat-1.mp3",
+      "bytes": 10796,
+      "duration": 1.26,
+      "text": "没事，怎么会呢。",
+      "actor": "shiori",
+      "scene": "defeat",
+      "conversion": "authentic-recording",
+      "sha256": "48521c9b746d224c9e781d1676857afd44fe796a8c929f70f5f7ddd3c7262897",
+      "samples": 30240,
+      "rmsDb": -17.26,
+      "peak": 0.7254,
+      "sourcePath": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_10_01\\录制-26966466-20261001-100428-416-国庆快乐嘿嘿！！_merged.opus",
+      "sourceKind": "authentic-livestream",
+      "sourceSha256": "d13186d4188bf26a35af0c10a0d7c53440c6d47bb557a6cc3406ceeb3bdfb78b",
+      "rawSha256": "0bf210f1d9081497bdb9ee33da910d3d9e5d15fe25189397b0175b0c7402d34d",
+      "cleanSha256": "e635d0456883dff0c433fd7b88b9fdfee3ce25bbd77e8c50af7d191aaf45b12b",
+      "contiguousCrop": [
+        0.15,
+        1.41
+      ],
+      "label": "没事儿怎么会呢",
+      "subtitle": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_10_01\\录制-26966466-20261001-100428-416-国庆快乐嘿嘿！！_merged.speaker.srt",
+      "subtitleId": "647",
+      "speakerConfidence": 0.64,
+      "recordingRange": [
+        2239.439,
+        2240.699
+      ],
+      "peakSafetyGain": 1,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "没事怎么会呢",
+        "expected": "没事，怎么会呢。",
+        "similarity": 1.0,
+        "sha256": "48521c9b746d224c9e781d1676857afd44fe796a8c929f70f5f7ddd3c7262897"
+      }
+    },
+    "shiori-defeat-2": {
+      "src": "/games/beach-volley/audio-v3/shiori-defeat-2.mp3",
+      "bytes": 8876,
+      "duration": 1.02,
+      "text": "没事了。",
+      "actor": "shiori",
+      "scene": "defeat",
+      "conversion": "authentic-recording",
+      "sha256": "a63edea97828f90b4f122144b80147d73c8e5cc43a897d6d43becc60c498b946",
+      "samples": 24480,
+      "rmsDb": -18.53,
+      "peak": 0.8048,
+      "sourcePath": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_09_22\\录制-26966466-20260922-110435-343-小栞来！.opus",
+      "sourceKind": "authentic-livestream",
+      "sourceSha256": "ee56bcdf114b9ba2651bcafb207ecb357224a9fcca4e8ff402ffa7b048987154",
+      "rawSha256": "d05d2efcdc14b66388416709c4d6e5eb900c7fc73a6cd2d2ba847843cb99a8a0",
+      "cleanSha256": "591832bf83c47743e8ff8c7f7e8b901f057961d917391a234d0cf64a379f1516",
+      "contiguousCrop": [
+        0,
+        1.02
+      ],
+      "label": "没事儿了",
+      "subtitle": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_09_22\\录制-26966466-20260922-110435-343-小栞来！.speaker.srt",
+      "subtitleId": "58",
+      "speakerConfidence": 0.65,
+      "recordingRange": [
+        125.42,
+        126.44
+      ],
+      "peakSafetyGain": 0.891766,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "没事了",
+        "expected": "没事了。",
+        "similarity": 1.0,
+        "sha256": "a63edea97828f90b4f122144b80147d73c8e5cc43a897d6d43becc60c498b946"
+      }
+    },
+    "shiori-effort-1": {
+      "src": "/games/beach-volley/audio-v3/shiori-effort-1.mp3",
+      "bytes": 4460,
+      "duration": 0.47,
+      "text": "呀！",
+      "actor": "shiori",
+      "scene": "effort",
+      "conversion": "authentic-recording",
+      "sha256": "779b3bfda1a7640c37dbd3248f83a9f7939732d452ece9e920976654528f4455",
+      "samples": 11280,
+      "rmsDb": -17.17,
+      "peak": 0.4123,
+      "sourcePath": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_10_01\\录制-26966466-20261001-215713-963-国庆快乐嘿嘿！！.flv",
+      "sourceKind": "authentic-livestream",
+      "sourceSha256": "1955b9510e9a0368daf2357323c3811ad27e8693211cff0d98ada10eb3fc048c",
+      "rawSha256": "c6a1f84e7dab94a91857ede564c728ea4d603b703ad92a487676514d30cf6191",
+      "cleanSha256": "70c555f3ccf8fa32e1541974e7384503ceb30a6a5954f6bb7a7b7c9be6c1a168",
+      "contiguousCrop": [
+        0.35,
+        0.82
+      ],
+      "label": "哎呀哎呀什么时候让我露一手",
+      "subtitle": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_10_01\\录制-26966466-20261001-215713-963-国庆快乐嘿嘿！！.speaker.srt",
+      "subtitleId": "97",
+      "speakerConfidence": 0.68,
+      "recordingRange": [
+        392.07,
+        392.54
+      ],
+      "peakSafetyGain": 1,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "by bwd6",
+        "expected": "呀！",
+        "similarity": 0.0,
+        "sha256": "779b3bfda1a7640c37dbd3248f83a9f7939732d452ece9e920976654528f4455",
+        "reliableForText": false,
+        "limitation": "Unreliable ASR on a short exclamation; the source recording, not this transcript, supports the caption."
+      }
+    },
+    "shiori-effort-2": {
+      "src": "/games/beach-volley/audio-v3/shiori-effort-2.mp3",
+      "bytes": 4268,
+      "duration": 0.443,
+      "text": "哈！",
+      "actor": "shiori",
+      "scene": "effort",
+      "conversion": "authentic-recording",
+      "sha256": "89e5c7d4471ba03efba828e70694a2f7a55e9f89bc4aad1b9d04b54dd5d79824",
+      "samples": 10632,
+      "rmsDb": -22.17,
+      "peak": 0.4157,
+      "sourcePath": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_09_10\\录制-26966466-20260910-212650-911-小栞来咯！！_merged.opus",
+      "sourceKind": "authentic-livestream",
+      "sourceSha256": "4e7210797be5f93d2eac279770d826b42de2a4674a74b426e164deb3520aa38e",
+      "rawSha256": "79a7ade4976724bc44b4b286b4b10c63fc4a3faf5e0d9630e2c93eb34bd912d6",
+      "cleanSha256": "33f46e064ec04abe01d97a817f97655bb0b1ccc9a0a0d309a24a49b0bce98760",
+      "contiguousCrop": [
+        1.72,
+        2.18
+      ],
+      "label": "耶耶耶",
+      "subtitle": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_09_10\\录制-26966466-20260910-212650-911-小栞来咯！！_merged.speaker.srt",
+      "subtitleId": "1213",
+      "speakerConfidence": 0.78,
+      "recordingRange": [
+        5173.183,
+        5173.643
+      ],
+      "peakSafetyGain": 1,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "优优独播剧场——YoYo Television Series Exclusive",
+        "expected": "哈！",
+        "similarity": 0.0,
+        "sha256": "89e5c7d4471ba03efba828e70694a2f7a55e9f89bc4aad1b9d04b54dd5d79824",
+        "reliableForText": false,
+        "limitation": "Unreliable ASR on a short exclamation; the source recording, not this transcript, supports the caption."
+      }
+    }
+  },
+  "totalBytes": 326096,
+  "validationNotes": {
+    "identity": "Authentic local recording provenance; no independently measured speaker-similarity score.",
+    "shortSounds": "ASR is unreliable on subsecond exclamations and effort sounds. Longer source excerpts were checked; short final transcript strings alone are not acceptance evidence.",
+    "peakSafety": "Final MP3 decoded peaks verified; assets with encoding overshoot were re-encoded with per-asset peakSafetyGain.",
+    "listening": "User subjective listening remains the acceptance criterion."
+  }
+}

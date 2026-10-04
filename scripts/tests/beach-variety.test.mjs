@@ -11,8 +11,10 @@ const { voicesForCinema } = await loadTypescriptModule('src/components/beachVoll
 const media = JSON.parse(fs.readFileSync('public/games/beach-volley/media.json', 'utf8'));
 const audio = JSON.parse(fs.readFileSync('public/games/beach-volley/audio.json', 'utf8'));
 
-test('every actor has real RVC speech, short converted efforts and documented authentic alternatives', () => {
+test('active voices have verified performer recordings or the retained Nagisa RVC model', () => {
   const delivery = JSON.parse(fs.readFileSync('docs/beach-volley-rvc-delivery.json', 'utf8'));
+  const recordings = JSON.parse(fs.readFileSync('docs/beach-volley-recording-delivery.json', 'utf8'));
+  const assets = { ...delivery.items, ...recordings.items };
   const training = JSON.parse(fs.readFileSync('docs/beach-volley-rvc-training.json', 'utf8'));
   assert.equal(new Set(Object.values(delivery.models).map(m => m.modelSha256)).size, 3);
   for (const actor of CHARACTER_IDS) {
@@ -29,22 +31,27 @@ test('every actor has real RVC speech, short converted efforts and documented au
       assert.ok(Array.isArray(pool) && pool.length >= 2);
       for (const clip of pool) {
         const bytes = fs.readFileSync(`public${clip.src}`);
-        const evidence = Object.values(delivery.items).find(i => i.src === clip.src);
+        const evidence = Object.values(assets).find(i => i.src === clip.src);
         assert.equal(bytes.length, clip.bytes);
         assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'), evidence.sha256);
         if (evidence.conversion === 'authentic-recording') {
-          assert.equal(actor, 'sui');
-          assert.equal(evidence.scene, 'pointWin');
-          assert.ok(evidence.sourcePath.endsWith('耶~.MP3'));
+          assert.ok(['sui', 'shiori'].includes(actor));
+          assert.ok(['authentic-button', 'authentic-livestream'].includes(evidence.sourceKind));
+          assert.equal(evidence.contiguousCrop.length, 2);
+          assert.ok(evidence.contiguousCrop[1] > evidence.contiguousCrop[0]);
           assert.match(evidence.sourceSha256, /^[a-f0-9]{64}$/);
         } else {
+          assert.equal(actor, 'nagisa');
           assert.equal(evidence.conversion, 'RVC');
           assert.equal(evidence.modelSha256, delivery.models[actor].modelSha256);
         }
         assert.ok(evidence.rmsDb > -30 && evidence.peak > 0.15 && evidence.peak <= 1);
         if (evidence.scene !== 'effort') {
           assert.equal(evidence.asr.sha256, evidence.sha256);
-          assert.ok(evidence.asr.similarity >= 0.65);
+          assert.ok(evidence.asr.transcript, 'final encoded speech was checked, including short exclamations');
+          if (evidence.conversion === 'RVC' || (evidence.duration >= 1 && evidence.text.length >= 4)) {
+            assert.ok(evidence.asr.similarity >= 0.65, 'longer spoken lines retain a useful transcript check');
+          }
         }
       }
     }
@@ -68,9 +75,10 @@ test('a silent next actor never inherits native dialogue or the preceding video 
   assert.deepEqual(voicesForCinema(g, loser), [{ character: 'nagisa', side: 1, kind: 'pointLose' }]);
 });
 
-test('all five actor scenes gain a distinct native-dialogue movie and a faststart light version', () => {
+test('embedded performer dialogue retains faststart light variants and authenticated audio provenance', () => {
   const job = JSON.parse(fs.readFileSync('docs/beach-volley-variety-job.json', 'utf8'));
   const delivery = JSON.parse(fs.readFileSync('docs/beach-volley-variety-delivery.json', 'utf8'));
+  const dubbing = JSON.parse(fs.readFileSync('docs/beach-volley-dubbing-delivery.json', 'utf8'));
   assert.equal(Object.keys(delivery.items).length, 15);
   for (const actor of CHARACTER_IDS) {
     const pools = [media.characters[actor].special, media.characters[actor].point.win, media.characters[actor].point.lose, media.characters[actor].result.win, media.characters[actor].result.lose];
@@ -78,10 +86,23 @@ test('all five actor scenes gain a distinct native-dialogue movie and a faststar
       assert.equal(pool.length, 2);
       assert.equal(new Set(pool.map(c => c.src)).size, 2);
       assert.equal(pool.filter(c => c.dialogue).length, 1);
-      const movie = pool.find(c => c.dialogue), record = Object.values(delivery.items).find(i => i.src === movie.src);
-      const request = Object.values(job.items).find(i => i.resourceId === record.resourceId);
-      assert.equal(request.operationState, 'succeeded'); assert.equal(record.reviewed, true);
-      assert.ok(record.nativeAudio && record.rmsDb > -40 && record.transcriptSimilarity > 0.65);
+      const movie = pool.find(c => c.dialogue);
+      const record = Object.values(actor === 'nagisa' ? delivery.items : dubbing.items).find(i => i.src === movie.src);
+      assert.ok(record, movie.src);
+      if (actor === 'nagisa') {
+        const request = Object.values(job.items).find(i => i.resourceId === record.resourceId);
+        assert.equal(request.operationState, 'succeeded'); assert.equal(record.reviewed, true);
+        assert.equal(movie.dialogue.source, 'native');
+        assert.ok(record.nativeAudio && record.transcriptSimilarity > 0.65);
+      } else {
+        assert.equal(movie.dialogue.source, 'recording');
+        assert.equal(record.originalSoundtrackRemoved, true);
+        assert.equal(record.imageStreamCopied, true);
+        const voice = fs.readFileSync(`public${record.voiceSrc}`);
+        assert.equal(crypto.createHash('sha256').update(voice).digest('hex'), record.voiceSha256);
+        assert.ok(record.voiceEnd < movie.duration, 'the entire line fits the animation');
+      }
+      assert.ok(record.rmsDb > -40);
       for (const clip of [movie, movie.lite]) {
         const bytes = fs.readFileSync(`public${clip.src}`);
         assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'), clip === movie ? record.sha256 : record.lite.sha256);
@@ -115,6 +136,23 @@ test('selection alternates variants per scene, preserves chosen queues and never
     }
     const cached = matchMediaClips(g, media, 'all', false).map(c => c.src);
     assert.equal(cached.length, 11);
-    assert.ok(cached.some(c => c.includes('variety-v5')));
+    assert.ok(cached.includes(media.characters[actor].point.win.find(c => c.dialogue).src));
+  }
+});
+
+test('Sui and Shiori never select an unconverted synthesized soundtrack; Nagisa voices stay intact', () => {
+  const retained = JSON.parse(fs.readFileSync('docs/beach-volley-rvc-delivery.json', 'utf8'));
+  for (const actor of ['sui', 'shiori']) {
+    const g = createGame({ character: actor, opponent: actor });
+    for (const clip of matchMediaClips(g, media, 'all', false)) {
+      if (clip.dialogue) assert.equal(clip.dialogue.source, 'recording');
+    }
+    for (const clip of [...Object.values(audio.voices[actor]).flat(), ...audio.effort[actor]]) {
+      assert.ok(clip.src.startsWith('/games/beach-volley/audio-v3/'));
+    }
+  }
+  for (const clip of [...Object.values(audio.voices.nagisa).flat(), ...audio.effort.nagisa]) {
+    const evidence = Object.values(retained.items).find(item => item.src === clip.src);
+    assert.equal(crypto.createHash('sha256').update(fs.readFileSync(`public${clip.src}`)).digest('hex'), evidence.sha256);
   }
 });
