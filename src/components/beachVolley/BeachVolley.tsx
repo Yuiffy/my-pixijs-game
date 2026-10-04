@@ -223,15 +223,10 @@ export default function BeachVolley() {
       if (plan.kind === "special") finishSpecialCinematic(g);
       else if (plan.kind !== "result") skipTransition(g);
       g.paused = document.hidden || helpRef.current || returnPausedRef.current;
-      if (plan.kind === "point" && g.event?.type === "win") {
-        seenEventRef.current = g.event.id;
-        audioRef.current?.event(g.event);
-        if (!showCinema("result", g.event.side, g.paused)) audioRef.current?.queueVoices(voicesForEvent(g, g.event), `event:${g.event.id}`);
-      }
       syncAudio();
       sync();
     },
-    [resetInput, showCinema, sync, syncAudio],
+    [resetInput, sync, syncAudio],
   );
   const endClip = useCallback(
     (expectedId: string) => {
@@ -920,14 +915,14 @@ export default function BeachVolley() {
                 </small>
               </div>
               <div className={styles.score}>
-                <b>{view.score[0]}</b>
+                <b data-match-point={view.matchPoints[0] || undefined}>{view.score[0]}</b>
                 <span>
                   {options.mode === "practice"
                     ? "自由练习"
                     : `${options.target} 分制`}
                   <i>:</i>
                 </span>
-                <b>{view.score[1]}</b>
+                <b data-match-point={view.matchPoints[1] || undefined}>{view.score[1]}</b>
               </div>
               <div className={`${styles.team} ${styles.teamRight}`}>
                 <span>
@@ -943,6 +938,19 @@ export default function BeachVolley() {
                     : `${CHARACTERS[view.players[1].character].energyName}能量 ${view.players[1].energy}%`}
                 </small>
               </div>
+              {(view.matchPoints[0] || view.matchPoints[1]) && (
+                <div
+                  className={styles.matchPoint}
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"
+                  data-match-point-side={view.matchPoints[0] && view.matchPoints[1] ? "both" : view.matchPoints[0] ? "0" : "1"}
+                >
+                  {view.matchPoints[0] && view.matchPoints[1]
+                    ? "双方赛点 · 下一球决胜"
+                    : `${CHARACTERS[view.players[view.matchPoints[0] ? 0 : 1].character].name}赛点 · 再得 1 分获胜`}
+                </div>
+              )}
             </div>
             <div className={styles.rally} data-special-windup={view.specialWindup?.side}>
               {view.specialWindup

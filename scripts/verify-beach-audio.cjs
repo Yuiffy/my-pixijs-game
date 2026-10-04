@@ -187,8 +187,9 @@ if (require.main === module) (async () => {
         await rig(p, winner); await reachActor(p, actor); await voice(p, actor, winner ? 'pointLose' : 'pointWin'); await finishKind(p, 'point');
       }
       for (const winner of [0, 1]) {
-        await rig(p, winner, true); await finishKind(p, 'point');
+        await rig(p, winner, true);
         assert.equal((await state(p)).phase, 'result');
+        assert.equal((await state(p)).cinematic.kind, 'result', 'match victory voices start without a point reaction');
         await reachActor(p, actor); await voice(p, actor, winner ? 'defeat' : 'victory');
         // Local play celebrates the champion regardless of side.
         assert.equal((await state(p)).audio.scene, 'victory');

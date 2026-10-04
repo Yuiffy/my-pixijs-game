@@ -385,7 +385,7 @@ export function prepareServe(g: Game) {
 }
 export function skipTransition(g: Game) {
   if (g.phase === "intro") prepareServe(g);
-  else if (g.phase === "point") finishPoint(g);
+  else if (g.phase === "point") prepareServe(g);
 }
 // Media completion only ends the presentation; the full playable windup follows.
 export function finishSpecialCinematic(g: Game) {
@@ -418,13 +418,24 @@ function particles(
   }
   if (g.effects.length > 160) g.effects.splice(0, g.effects.length - 160);
 }
+function winsMatch(g: Game, side: Side, score = g.score[side]) {
+  return g.options.mode !== "practice" &&
+    score >= g.options.target &&
+    (score - g.score[other(side)] >= 2 || score >= g.options.target + 4);
+}
+function matchPoints(g: Game): [boolean, boolean] {
+  if (g.phase === "menu" || g.phase === "result") return [false, false];
+  return [winsMatch(g, 0, g.score[0] + 1), winsMatch(g, 1, g.score[1] + 1)];
+}
 function point(g: Game, side: Side) {
-  g.phase = "point";
   g.phaseTime = 0;
   g.pointWinner = side;
   g.server = side;
   g.specialWindup = null;
   g.score[side] += 1;
+  const finished = winsMatch(g, side);
+  g.phase = finished ? "result" : "point";
+  g.winner = finished ? side : null;
   g.bestRally = Math.max(g.bestRally, g.rally);
   g.players.forEach((p) => {
     p.energy = Math.min(100, p.energy + 12);
@@ -434,24 +445,10 @@ function point(g: Game, side: Side) {
   g.ball.vx = 0;
   g.ball.vy = 0;
   g.ball.y = FLOOR - BALL_RADIUS;
-  g.message = `${CHARACTERS[g.players[side].character].name} · 好球！`;
+  const { name } = CHARACTERS[g.players[side].character];
+  g.message = finished ? `${name}获胜` : `${name} · 好球！`;
   particles(g, g.ball.x, FLOOR, "#f4d29a", 26, 230);
-  emit(g, "point", side);
-}
-function finishPoint(g: Game) {
-  const side = g.pointWinner ?? 0;
-  const goal = g.options.target;
-  if (
-    g.options.mode !== "practice" &&
-    g.score[side] >= goal &&
-    (g.score[side] - g.score[other(side)] >= 2 || g.score[side] >= goal + 4)
-  ) {
-    g.phase = "result";
-    g.phaseTime = 0;
-    g.winner = side;
-    g.message = `${CHARACTERS[g.players[side].character].name}获胜`;
-    emit(g, "win", side);
-  } else prepareServe(g);
+  emit(g, finished ? "win" : "point", side);
 }
 export function predictLanding(ball: Ball, atY = FLOOR - BALL_RADIUS): number {
   const t = Math.max(
@@ -749,7 +746,7 @@ export function stepGame(g: Game, inputs: [Input, Input], dt = STEP) {
       p.pose = i === g.pointWinner ? 6 : 7;
       p.y += (FLOOR - p.y) * Math.min(1, dt * 10);
     });
-    if (g.phaseTime > 2.3) finishPoint(g);
+    if (g.phaseTime > 2.3) prepareServe(g);
     return;
   }
   const activeInputs: [Input, Input] = [
@@ -815,6 +812,7 @@ export function describeGame(g: Game) {
     difficulty: g.options.difficulty,
     score: g.score,
     target: g.options.target,
+    matchPoints: matchPoints(g),
     server: g.server,
     winner: g.winner,
     rally: g.rally,

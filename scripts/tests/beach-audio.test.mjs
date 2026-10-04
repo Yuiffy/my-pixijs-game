@@ -5,13 +5,35 @@ import crypto from 'node:crypto';
 import { loadTypescriptModule } from './helpers/load-typescript-module.mjs';
 
 const { default: BeachAudio, AUDIO, DEFAULT_AUDIO_SETTINGS } = await loadTypescriptModule('src/components/beachVolley/audio.ts');
-const { createGame, CHARACTER_IDS } = await loadTypescriptModule('src/components/beachVolley/engine.ts');
+const { createGame, stepGame, emptyInput, FLOOR, BALL_RADIUS, CHARACTER_IDS } = await loadTypescriptModule('src/components/beachVolley/engine.ts');
 const { selectCinematic, nextCinematic } = await loadTypescriptModule('src/components/beachVolley/cinematics.ts');
 const { musicForGame, voicesForCinema, voicesForEvent, introVoices } = await loadTypescriptModule('src/components/beachVolley/audioCues.ts');
 const media = JSON.parse(fs.readFileSync('public/games/beach-volley/media.json', 'utf8'));
 const silentMedia = JSON.parse(JSON.stringify(media, (key, value) => key === 'dialogue' ? undefined : value));
 const voiceAsset = (actor, kind) => Array.isArray(AUDIO.voices[actor][kind]) ? AUDIO.voices[actor][kind][0] : AUDIO.voices[actor][kind];
 const flush = () => new Promise(resolve => setImmediate(resolve));
+
+test('a deciding ground point routes straight to match victory/defeat voices and music', () => {
+  for (const mode of ['solo', 'local']) for (const side of [0, 1]) {
+    const g = createGame({ character: 'sui', opponent: 'nagisa', mode });
+    g.phase = 'rally'; g.score[side] = 6;
+    Object.assign(g.ball, { x: side === 0 ? 1245 : 35, y: FLOOR - BALL_RADIUS - 1, vx: 0, vy: 200 });
+    stepGame(g, [emptyInput(), emptyInput()]);
+    assert.equal(g.event.type, 'win');
+    const cues = voicesForEvent(g, g.event);
+    assert.deepEqual(cues.map(c => c.kind), ['victory', 'defeat']);
+    assert.deepEqual(cues.map(c => c.side), [side, 1 - side]);
+    assert.equal(musicForGame(g, null), mode === 'local' || side === 0 ? 'victory' : 'defeat');
+    let movie = selectCinematic(g, silentMedia, 'all', false, 'result', g.event.side);
+    const movieCues = [];
+    while (movie) {
+      assert.equal(movie.kind, 'result');
+      movieCues.push(...voicesForCinema(g, movie)); movie = nextCinematic(movie);
+    }
+    assert.deepEqual(movieCues.map(c => c.kind), ['victory', 'defeat']);
+    assert.deepEqual(movieCues.map(c => c.side), [side, 1 - side]);
+  }
+});
 
 test('22 successful pure audio generations ship compressed, non-silent, verified assets', () => {
   const job = JSON.parse(fs.readFileSync('docs/beach-volley-audio-job.json', 'utf8'));

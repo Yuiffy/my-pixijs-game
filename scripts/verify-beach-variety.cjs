@@ -101,7 +101,9 @@ async function main() {
         await advance(p, 2400);
       }
       for (let round = 0; round < 2; round++) {
-        await point(p, true); await p.keyboard.press('Enter'); await advance(p, 2400);
+        await point(p, true);
+        assert.equal((await state(p)).phase, 'result');
+        assert.equal((await state(p)).cinematic.kind, 'result');
         await naturalMovie(p, 'result', `${actor}-result-win-native`); await naturalMovie(p, 'result', `${actor}-result-lose-native`);
         if (round === 0) { await p.getByRole('button', { name: '再来一场' }).click(); await p.keyboard.press('Enter'); }
       }

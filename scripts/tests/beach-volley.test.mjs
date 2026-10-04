@@ -160,6 +160,78 @@ test('win by two, sudden death cap, and practice without a match end', () => {
   const cap = rally(); cap.score = [10, 10]; ground(cap, 0); skipTransition(cap); assert.equal(cap.winner, 1);
   const practice = rally({ mode: 'practice' }); practice.score = [20, 0]; ground(practice, 1); skipTransition(practice); assert.equal(practice.phase, 'serve');
 });
+
+test('match points follow the next-point outcome for both targets, deuce and the cap', () => {
+  for (const target of [7, 11]) {
+    const cases = [
+      [[target - 2, 0], [false, false]],
+      [[target - 1, 0], [true, false]],
+      [[target - 1, target - 2], [true, false]],
+      [[target - 2, target - 1], [false, true]],
+      [[target - 1, target - 1], [false, false]],
+      [[target, target - 1], [true, false]],
+      [[target - 1, target], [false, true]],
+      [[target + 2, target + 2], [false, false]],
+      [[target + 3, target + 2], [true, false]],
+      [[target + 2, target + 3], [false, true]],
+      [[target + 3, target + 3], [true, true]],
+    ];
+    for (const [score, expected] of cases) {
+      const g = rally({ target }); g.score = [...score];
+      assert.deepEqual(describeGame(g).matchPoints, expected, `${target}: ${score}`);
+      const practice = rally({ target, mode: 'practice' }); practice.score = [...score];
+      assert.deepEqual(describeGame(practice).matchPoints, [false, false]);
+    }
+  }
+});
+
+test('a saved match point clears at deuce and reappears for the new leader', () => {
+  const g = rally(); g.score = [6, 5];
+  assert.deepEqual(describeGame(g).matchPoints, [true, false]);
+  ground(g, 0);
+  assert.equal(g.event.type, 'point'); assert.equal(g.winner, null);
+  assert.deepEqual(describeGame(g).matchPoints, [false, false]);
+  skipTransition(g); ground(g, 0);
+  assert.equal(g.phase, 'point');
+  assert.deepEqual(describeGame(g).matchPoints, [false, true]);
+  advance(g, 2.4);
+  assert.equal(g.phase, 'serve');
+  assert.deepEqual(describeGame(g).matchPoints, [false, true]);
+});
+
+test('deciding points immediately emit only one match win and never return to a serve', () => {
+  for (const target of [7, 11]) for (const mode of ['solo', 'local']) for (const side of [0, 1]) {
+    const g = rally({ target, mode });
+    g.score[side] = target - 1; g.score[1 - side] = target - 2;
+    ground(g, 1 - side);
+    assert.equal(g.phase, 'result'); assert.equal(g.winner, side); assert.equal(g.pointWinner, side);
+    assert.equal(g.score[side], target); assert.equal(g.server, side);
+    assert.equal(g.event.type, 'win'); assert.equal(g.event.side, side);
+    assert.deepEqual(describeGame(g).matchPoints, [false, false]);
+    const event = { ...g.event }, score = [...g.score];
+    skipTransition(g); advance(g, 5); skipTransition(g);
+    assert.equal(g.phase, 'result');
+    assert.deepEqual(g.event, event); assert.deepEqual(g.score, score);
+  }
+  for (const side of [0, 1]) {
+    const g = rally(); g.score = [10, 10]; ground(g, 1 - side);
+    assert.equal(g.phase, 'result'); assert.equal(g.event.type, 'win'); assert.equal(g.winner, side);
+  }
+});
+
+test('ordinary points keep their reaction and practice and fresh matches never show a terminal cue', () => {
+  const g = rally(); g.score = [5, 2]; ground(g, 1);
+  assert.equal(g.phase, 'point'); assert.equal(g.event.type, 'point'); assert.equal(g.winner, null);
+  assert.deepEqual(describeGame(g).matchPoints, [true, false]);
+  advance(g, 2.4); assert.equal(g.phase, 'serve');
+  const practice = rally({ mode: 'practice' }); practice.score = [20, 0]; ground(practice, 1);
+  assert.equal(practice.phase, 'point'); assert.equal(practice.event.type, 'point'); assert.equal(practice.winner, null);
+  advance(practice, 2.4); assert.equal(practice.phase, 'serve');
+  const fresh = createGame(g.options); fresh.score = [6, 0];
+  assert.deepEqual(describeGame(fresh).matchPoints, [false, false], 'menu has no active match');
+  const rematch = createGame(g.options); startGame(rematch);
+  assert.deepEqual(rematch.score, [0, 0]); assert.deepEqual(describeGame(rematch).matchPoints, [false, false]);
+});
 test('special only spends energy on contact; both characters have different trajectories', () => {
   const shots = [];
   for (const character of ['sui', 'shiori']) {

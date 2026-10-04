@@ -86,7 +86,10 @@ async function rig(page, scenario) {
     await advance(page, 1600); assert.equal((await state(page)).cutin, null);
     assert.equal((await state(page)).specialWindup, null, 'static presentation and full windup finish before flight');
     await rig(page, 'win'); await advance(page, 150); assert.equal((await state(page)).score[0], 7);
-    await capture(page, '08-point-win'); await advance(page, 2400);
+    assert.equal((await state(page)).phase, 'result'); assert.equal((await state(page)).event.type, 'win');
+    const matchEvent = (await state(page)).event;
+    await capture(page, '08-direct-finale'); await advance(page, 2400);
+    assert.deepEqual((await state(page)).event, matchEvent, 'finale does not emit another point or win');
     assert.equal((await state(page)).winner, 0); await capture(page, '09-victory');
     await page.getByRole('button', { name: '再来一场' }).click(); await advance(page, 3500);
     assert.deepEqual((await state(page)).score, [0, 0], 'rematch resets scores');

@@ -143,8 +143,8 @@ async function controlBounds(p) {
     }
     for (const side of [0, 1]) {
       await rig(p, 'point', side, side ? [2, 6] : [6, 2]); await advance(p, 30);
-      assert.equal((await state(p)).cinematic.kind, 'point'); await p.keyboard.press('Escape');
-      await advance(p, 15);
+      assert.equal((await state(p)).phase, 'result');
+      assert.equal((await state(p)).cinematic.kind, 'result', 'deciding point starts the finale directly');
       await movie(p, 'result', side ? 'shiori' : 'sui', `07-result-video-${side}`);
       assert.equal((await state(p)).phase, 'result'); assert.equal((await state(p)).winner, side);
       assert.equal((await state(p)).score[side], 7); await advance(p, 1000); assert.equal((await state(p)).cinematic, null);
@@ -176,8 +176,7 @@ async function controlBounds(p) {
         await movie(p, 'point', loser, opponent === 'sui' && side ? '18-nagisa-point-lose' : null, true, 'lose');
         assert.equal((await state(p)).phase, 'serve'); assert.equal((await state(p)).server, side);
         await rig(p, 'point', side, side ? [2, 6] : [6, 2]); await advance(p, 30);
-        await p.keyboard.press('Escape');
-        assert.equal((await state(p)).cinematic.kind, 'result', 'skipping point sequence starts final sequence');
+        assert.equal((await state(p)).cinematic.kind, 'result', 'deciding point starts final sequence without a point clip');
         await movie(p, 'result', winner, opponent === 'sui' && !side ? '19-nagisa-result-win' : null, true, 'win');
         await movie(p, 'result', loser, opponent === 'sui' && side ? '20-nagisa-result-lose' : null, true, 'lose');
         assert.equal((await state(p)).phase, 'result'); assert.equal((await state(p)).winner, side);
