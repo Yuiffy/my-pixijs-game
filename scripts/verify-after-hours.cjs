@@ -123,7 +123,7 @@ async function evening(page, blend = 'honey', promise = 'tomorrow', prefix = '')
   await interact(page, 'sui');
   await capture(page, prefix + 'welcome-dialogue');
   if (process.env.FACE_QA === '1') {
-    assert.equal((await state(page)).renderer.character.faceRevision, 3, 'the new face is loaded from the shipped GLB');
+    assert.equal((await state(page)).renderer.character.faceRevision, 4, 'the round anime eyes are loaded from the shipped GLB');
     await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).renderer.character.blink > .72, { polling: 'raf', timeout: 12000 });
     await capture(page, prefix + 'face-blink', 0);
     await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).renderer.character.blink < .04);
@@ -311,7 +311,7 @@ async function main() {
       await page.getByRole('button', { name: '从下播那一刻开始', exact: true }).click();
       await page.setViewportSize({ width: 320, height: 844 });
       await interact(page, 'sui'); await capture(page, 'mobile-320-face');
-      assert.equal((await state(page)).renderer.character.faceRevision, 3);
+      assert.equal((await state(page)).renderer.character.faceRevision, 4);
       assert.deepEqual(errors, []); return;
     }
     await exerciseShell(page);

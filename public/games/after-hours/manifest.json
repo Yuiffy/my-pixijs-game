@@ -14,19 +14,19 @@
     },
     {
       "file": "sui.glb",
-      "bytes": 2287664,
+      "bytes": 2288456,
       "meshes": 46,
-      "triangles": 83576,
+      "triangles": 83832,
       "materials": 14,
       "source": "assets/after-hours/sui.blend",
       "revision": 2,
-      "face_revision": 3,
+      "face_revision": 4,
       "morphs": [
         "Smile",
         "Talk",
         "Worry"
       ],
-      "runtime_bytes": 1961108
+      "runtime_bytes": 1966196
     }
   ],
   "optimization": "glTF Transform 4.2.1 dedup, weld, prune; named pivots preserved; no geometry decoder required"

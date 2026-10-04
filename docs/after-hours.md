@@ -10,7 +10,13 @@ Next.js、React Three Fiber 与 Three.js；独立规则状态、同源碰撞数�
 
 欢迎、送茶、害羞与合照有对应姿势，眨眼和 Smile／Talk／Worry 嘴部形变配合呼吸、行走、头发与翅膀摆动。真实岁己投影，回放复制体不投影。前段对话与泡茶面板放在画面下部，保留同伴面部可见。
 
-### 面部第三版（2026-10-04）
+### 面部第四版：圆润动漫眼（2026-10-04）
+
+按「二次元角色眼睛，不要长扁」的反馈，将眼宽从 0.076 米缩到 0.062 米，开口从 0.030 米增至 0.044 米，宽高比从约 2.53 降到 1.41。轮廓采用饱满的椭圆弧，缩短眼角与外侧睫毛；虹膜和瞳孔改为竖向椭圆，保留红色渐变和克制的高光。上睫毛由逐点变径曲线形成，外侧略厚、两端收细；刘海抬高 0.006 米，让上眼缘可见。
+
+Blender 作者文件、重建脚本与优化 GLB 同步更新，角色版本仍为 2，实际加载的 `face_revision` 为 4。沿用柔和脸颊贴图、眼白／虹膜闭合隐藏与 Smile／Talk／Worry 嘴部形变。
+
+### 面部第三版历史记录（2026-10-04）
 
 面部参考实际的 [岁己四周年 3D 演出回放](https://www.bilibili.com/video/BV1XAt666E6M/) 约 10:08／10:16 的正面近景，采用独立制作的简化动漫脸。眼宽由 0.103 米收至 0.076 米，开口由 0.042 米收至 0.030 米；放松的上眼睑遮住部分红色虹膜，下眼缘只保留浅色局部轮廓，瞳孔和高光缩小。眼面靠近脸部，鼻深由 0.007 米减至 0.003 米，刘海下移、眉线收敛，减少眼部凸出与整圈黑边带来的惊悚感。
 
@@ -52,9 +58,9 @@ codex mcp get blender-local
 pwsh -NoLogo -NoProfile -NonInteractive -File scripts/blender/optimize-assets.ps1
 ```
 
-作者脚本 `scripts/blender/build_after_hours.py` 生成场景，并调用 `build_sui_v2.py` 生成新版角色，压缩保存 .blend，关闭自动备份版本。只重建角色时，可通过 Blender MCP 执行 `build_sui_v2.build_character(OUT)`，随后运行 `pwsh -NoLogo -NoProfile -NonInteractive -File scripts/blender/optimize-assets.ps1 -Assets sui`，避免改写公寓资产。优化脚本通过 glTF Transform 4.2.1 去重、焊接与清理，保留命名关节和形变，无额外几何解码器；同时更新 manifest 中的相对源路径和运行文件大小。公寓 GLB 约 3.48 MB，当前角色为 1,961,108 字节（约 1.96 MB），五张绘制贴图全部内嵌。
+作者脚本 `scripts/blender/build_after_hours.py` 生成场景，并调用 `build_sui_v2.py` 生成新版角色，压缩保存 .blend，关闭自动备份版本。只重建角色时，可通过 Blender MCP 执行 `build_sui_v2.build_character(OUT)`，随后运行 `pwsh -NoLogo -NoProfile -NonInteractive -File scripts/blender/optimize-assets.ps1 -Assets sui`，避免改写公寓资产。优化脚本通过 glTF Transform 4.2.1 去重、焊接与清理，保留命名关节和形变，无额外几何解码器；同时更新 manifest 中的相对源路径和运行文件大小。公寓 GLB 约 3.48 MB，当前角色为 1,966,196 字节（约 1.97 MB），五张绘制贴图全部内嵌。
 
-角色有 20 个命名关节支点、46 个网格、83,576 个三角形与 14 个材质，新增前臂、小腿、发束、翅膀和眼部支点，由 `SuiActor.tsx` 驱动。场景统一使用米制碰撞与交互数据，玩家、同伴和回声共用地面与 A* 障碍规则；终点段也检查碰撞，玩家不能穿过真实同伴。关键灯光跨章节保留，避免因灯光数量变化重新编译材质。启动前预编译，画面丢失时暂停，重载后保留游戏进度。
+角色有 20 个命名关节支点、46 个网格、83,832 个三角形与 14 个材质，新增前臂、小腿、发束、翅膀和眼部支点，由 `SuiActor.tsx` 驱动。场景统一使用米制碰撞与交互数据，玩家、同伴和回声共用地面与 A* 障碍规则；终点段也检查碰撞，玩家不能穿过真实同伴。关键灯光跨章节保留，避免因灯光数量变化重新编译材质。启动前预编译，画面丢失时暂停，重载后保留游戏进度。
 
 ## 晚安之约与回放线索
 
@@ -64,7 +70,23 @@ pwsh -NoLogo -NoProfile -NonInteractive -File scripts/blender/optimize-assets.ps
 
 存档版本为 v2，沿用 `sui-after-hours-v1` 键，保留照片、配茶和约定。首版 intro 存档迁入新序章；已经进入恐怖章节的首版进度继续保留，不要求重玩前段。
 
-## 面部第三版验收（2026-10-04）
+## 面部第四版验收（2026-10-04）
+
+发布候选在独立检出 `D:/workspace/releases/after-hours-v2-20261004` 中先整合远程 `master` 的 `b13f393` 游戏馆命名更新，再验证圆润眼型。角色运行组件 ESLint、21 项游戏／游戏馆规则与完整 `pnpm run check` 均通过，随后顺序执行 `pnpm run build` 成功，Next 构建 ESLint 保持启用。最终优化 GLB 的校验错误与警告均为零。
+
+最终 Blender 正面与三分之四侧面渲染已打开目检。开发预览从 `/demos` 搜索、点击进入游戏并开始游玩，三张截图全部目检，运行时脸部版本为 4；游戏馆预览采用其中的新眼型实际标题画面。最终生产包在 `http://127.0.0.1:3973` 通过 `FACE_QA=1` 专项验证，30 张 PNG 与两张实际保存的 JPEG 全部逐张打开目检，覆盖桌面和 390px 对话、闭眼／睁眼、蜂蜜／柠檬与两种约定、合照及刷新保留、异常照片近看和 320px 对话。截图像素、文本状态、DOM 和画布尺寸一致，实际脸部版本为 4，页面／控制台错误数组为空；两张合照为 640×480，亮像素约 90.3%，颜色数分别为 62,289／61,939。
+
+证据为 `tmp/sui-face-v4-art-final/`、`tmp/sui-face-v4-final-preview/` 和 `tmp/sui-face-v4-production/`；门禁与浏览器日志为 `tmp/sui-face-v4-release-{rules,check,build,browser}.log`，模型校验为 `tmp/sui-face-v4-final-gltf-validation.log`。开发服务器已停止，仅移除本任务加入的 `.next-after-hours-eyes-dev/types/**/*.ts` 引用。`/demos` 的入口继续指向 `/game/after-hours`，已使用最终生产包验证搜索与点击。
+
+```powershell
+$env:PLAYWRIGHT_MODULE='C:/Users/yuiffy/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright'
+$env:AFTER_HOURS_URL='http://127.0.0.1:3973'
+$env:AFTER_HOURS_QA='D:/workspace/myrepo/my-pixijs-game/tmp/sui-face-v4-production'
+$env:FACE_QA='1'
+node scripts/verify-after-hours.cjs
+```
+
+## 面部第三版验收历史记录（2026-10-04）
 
 基于远程 `master` 的 `8412fa3`，在独立检出 `D:/workspace/releases/after-hours-v2-20261004` 中完成修改源文件 ESLint、完整 `pnpm run check` 后顺序 `pnpm run build`，Next 构建 ESLint 保持启用。15 项游戏规则与 6 项游戏馆规则通过；最终优化角色经 glTF Transform 验证，零错误、零警告。`scripts/verify-after-hours.cjs` 的 `FACE_QA=1` 模式专门检查实际加载的脸部版本、闭眼／睁眼、两种配茶与约定、合照保存及刷新、异常照片和 320px 对话。
 

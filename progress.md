@@ -542,3 +542,14 @@ Original prompt: 身体不错，但两个大眼睛让脸有些惊悚；参考岁
 /demos 入口已验证搜索点击并进入 /game/after-hours，预览替换为目检过的新脸实际标题画面。证据 tmp/sui-face-v3-{dev,production}/，门禁／浏览器日志 tmp/sui-face-v3-release-{check,build,browser}.log；详细参考与复现见 docs/after-hours.md。开发服务器已停止，仅移除本任务临时 tsconfig 引用。仍为独立风格化模型，手机为 Chrome 触控模拟，未验收实体手机 GPU／Safari。
 
 推送前整合远程 master 的 7e51993 雨夜主角动作更新，保留双方进度记录；本次游戏源码和模型与完整验收版本一致。整合后再次通过 21 项规则、修改源文件 ESLint、顺序完整 check／build，以及从 /demos 搜索点击进入游戏并开始游玩的静音 Chrome 冒烟验证。三张新增生产截图已逐张目检，像素／状态／DOM／画布一致，脸部版本为 3，错误为空；证据 tmp/sui-face-v3-integrated-smoke/ 与 tmp/sui-face-v3-integrated-{rules,check,build,browser}.log。
+
+
+## 2026-10-04 · 岁己：零点之后圆润动漫眼（已验收）
+
+Original prompt: 还是有点怪怪的；眼睛做成二次元角色的眼睛，不要这么长、扁。沿用提交远程 master 和 demos 放入口的授权。
+
+通过 Blender MCP 重制眼部：眼宽 0.076→0.062 米、开口 0.030→0.044 米，宽高比约 2.53→1.41；饱满椭圆弧、短眼角、竖向红色虹膜／瞳孔、逐点变径上睫毛与短外侧睫毛，刘海抬高 0.006 米。face_revision 更新为 4，保留柔和脸颊贴图与 Smile／Talk／Worry 形变及闭眼隐藏。Blender 作者文件、重建脚本和运行 GLB 同步保存，优化角色 1,966,196 字节、46 网格、83,832 三角形、14 材质、20 命名关节、五张内嵌绘制贴图；glTF 校验零错误、零警告。
+
+独立检出 D:/workspace/releases/after-hours-v2-20261004 先整合远程 b13f393 游戏馆命名更新，21 项游戏／游戏馆规则、角色运行组件 ESLint、完整 pnpm run check 后顺序 pnpm run build 均通过，保留 Next 构建 ESLint。最终 Blender 正面与三分之四侧面、开发入口冒烟三张截图和生产专项 30 张 PNG／两张保存合照全部打开目检。静音安装版 Chrome 验证桌面／390px 对话、闭眼睁眼、两种配茶和约定、640×480 合照及刷新保留、异常近看与 320px 对话；像素、状态、DOM、画布一致，实际脸部版本为 4，页面／控制台错误为空。
+
+/demos 入口保留，预览替换为新眼型的实际标题画面。证据 tmp/sui-face-v4-art-final/、tmp/sui-face-v4-final-preview/、tmp/sui-face-v4-production/，门禁／浏览器日志 tmp/sui-face-v4-release-{rules,check,build,browser}.log，细节和复现见 docs/after-hours.md。开发服务器已停止，仅移除本任务临时 tsconfig 引用；生产预览 http://127.0.0.1:3973/game/after-hours。手机验收为 Chrome 窄屏模拟。
