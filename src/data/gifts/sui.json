@@ -9,11 +9,57 @@
   "months": [
     {
       "month": "2026-10",
-      "title": "资料待补",
-      "note": "截至 2026-10-02 未整理出足够可靠的礼单；不表示当月没有舰礼。",
-      "entries": [],
-      "sources": [],
-      "images": []
+      "title": "万圣节 · 小恶魔",
+      "note": "按 10 月 4 日岁己官方动态整理。配图为主题插画，非实物照片；公告未提及总督礼物。",
+      "entries": [
+        {
+          "tier": "captain",
+          "items": [
+            "摇摇乐立牌",
+            "开瓶器吧唧",
+            "行李牌"
+          ],
+          "sources": [
+            "dynamic-1255325782835724290"
+          ],
+          "condition": "",
+          "status": "official"
+        },
+        {
+          "tier": "admiral",
+          "items": [
+            "方形抱枕",
+            "手作万圣节糖果"
+          ],
+          "sources": [
+            "dynamic-1255325782835724290"
+          ],
+          "condition": "",
+          "status": "official"
+        }
+      ],
+      "sources": [
+        {
+          "id": "dynamic-1255325782835724290",
+          "kind": "official-dynamic",
+          "date": "2026-10-04",
+          "title": "岁己官方动态 · 十月舰礼公告",
+          "url": "https://www.bilibili.com/opus/1255325782835724290",
+          "excerpt": "sori来晚了..午睡睡过了醒来还以为是半夜[UPOWER_1954091502_分号分号]好可怕啊你明白吗 一种自己连时间都无法衡量的原始人之感\n我去收拾一下8:35来！\n唱聊然后我们今天看雷神3！\n\n⬇️本月舰长礼物 是摇摇乐立牌+开瓶器吧唧+行李牌\n提督礼物是方形抱枕+手作万圣节糖果",
+          "note": "发布于 2026-10-04 20:25（北京时间），正文明确写明“本月”舰长及提督礼物；未列领取门槛、追加条件或总督礼物。"
+        }
+      ],
+      "images": [
+        {
+          "src": "/images/sui-gifts/official-2026-10.webp",
+          "width": 3000,
+          "height": 3000,
+          "caption": "十月小恶魔主题插画 · 官方动态原图（非实物照片）",
+          "source": "dynamic-1255325782835724290",
+          "kind": "official",
+          "originalUrl": "https://i0.hdslb.com/bfs/new_dyn/2686c7e9b0cd86882f26041b5b4354811954091502.png"
+        }
+      ]
     },
     {
       "month": "2026-09",

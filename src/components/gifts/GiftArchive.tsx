@@ -42,6 +42,7 @@ function MonthRecord({ month, filters, onImage }: { month: GiftMonth; filters: F
                   <div>{tierEntries.map((entry, index) => (
                     <div className={entry.condition ? styles.conditional : styles.entry} key={`${tier}-${index}`}>
                       {entry.status === 'lead' && <span className={styles.lead}>待核实线索</span>}
+                      {entry.status === 'official' && <span className={styles.reference}>官方公告依据</span>}
                       {entry.condition && <strong className={styles.condition}>{entry.condition}</strong>}
                       <p>{entry.items.join(' · ')}</p>
                       <span className={styles.reference}>依据 {entry.sources.map(id => `[${month.sources.findIndex(source => source.id === id) + 1}]`).join(' ')}</span>
@@ -163,7 +164,7 @@ export default function GiftArchive() {
               <div className={styles.filterRow}>
                 <label htmlFor="gift-month">月份<select id="gift-month" aria-label="月份" value={filters.month} onChange={event => update({ month: event.target.value })}><option value="all">全部月份</option>{Array.from({ length: 12 }, (_, i) => <option key={i} value={String(i + 1).padStart(2, '0')}>{i + 1} 月</option>)}</select></label>
                 <label htmlFor="gift-tier">身份<select id="gift-tier" aria-label="身份" value={filters.tier} onChange={event => update({ tier: event.target.value as Filters['tier'] })}><option value="all">全部身份</option>{Object.entries(TIERS).map(([key, label]) => <option value={key} key={key}>{label}</option>)}</select></label>
-                <label htmlFor="gift-evidence">依据<select id="gift-evidence" aria-label="依据" value={filters.evidence} onChange={event => update({ evidence: event.target.value as Filters['evidence'] })}><option value="all">全部资料</option><option value="recorded">有录播字幕依据</option><option value="lead">待核实线索</option></select></label>
+                <label htmlFor="gift-evidence">依据<select id="gift-evidence" aria-label="依据" value={filters.evidence} onChange={event => update({ evidence: event.target.value as Filters['evidence'] })}><option value="all">全部资料</option><option value="official">有官方公告依据</option><option value="recorded">有录播字幕依据</option><option value="lead">待核实线索</option></select></label>
                 <button className={styles.reset} type="button" onClick={() => update(DEFAULT_FILTERS)}>重置筛选</button>
               </div>
               <label className={styles.checkbox} htmlFor="gift-missing"><input id="gift-missing" type="checkbox" checked={filters.missing} onChange={event => update({ missing: event.target.checked })} />也显示无资料月份</label>
