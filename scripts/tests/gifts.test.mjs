@@ -27,6 +27,9 @@ test('calendar is contiguous, portable, and every published claim and picture ha
       if (entry.status === 'recorded') {
         assert.ok(month.sources.some(source => entry.sources.includes(source.id) && source.kind === 'subtitle'), `${month.month} cannot promote a viewer/web clue`);
       }
+      if (entry.status === 'official') {
+        assert.ok(month.sources.some(source => entry.sources.includes(source.id) && source.kind === 'official-dynamic'), `${month.month} needs the original official announcement`);
+      }
     }
     for (const source of month.sources) {
       assert.ok(source.excerpt.length > 0);
@@ -72,6 +75,16 @@ test('year, month, tier and keywords combine without leaking another tier into m
   assert.deepEqual(result.map(m => m.month), ['2024-09']);
   assert.ok(visibleEntries(result[0], { ...DEFAULT_FILTERS, tier: 'admiral' }).every(entry => entry.tier === 'admiral'));
   assert.equal(filterMonths(months, { ...DEFAULT_FILTERS, year: '2025', month: '10', evidence: 'recorded' }).length, 0);
+});
+
+test('official announcements stay distinct from viewer clues and restore through shared queries', () => {
+  const filters = { ...DEFAULT_FILTERS, year: '2026', month: '10', tier: 'captain', evidence: 'official' };
+  const result = filterMonths(months, parseFilters(new URLSearchParams(serializeFilters(filters))));
+  assert.deepEqual(result.map(month => month.month), ['2026-10']);
+  assert.deepEqual(visibleEntries(result[0], filters).flatMap(entry => entry.items), ['摇摇乐立牌', '开瓶器吧唧', '行李牌']);
+  assert.ok(result[0].sources.every(source => source.kind === 'official-dynamic'));
+  assert.equal(filterMonths(months, { ...filters, evidence: 'lead' }).length, 0);
+  assert.equal(filterMonths(months, { ...filters, evidence: 'recorded' }).length, 0);
 });
 
 test('empty months are opt-in and are never described as no gifts', () => {

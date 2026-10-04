@@ -17,7 +17,7 @@ export type GiftEntry = {
   items: string[];
   sources: string[];
   condition: string;
-  status: 'recorded' | 'lead';
+  status: 'official' | 'recorded' | 'lead';
 };
 export type GiftImage = {
   src: string;
@@ -42,7 +42,7 @@ export type Filters = {
   year: string;
   month: string;
   tier: 'all' | Tier;
-  evidence: 'all' | 'recorded' | 'lead';
+  evidence: 'all' | 'official' | 'recorded' | 'lead';
   missing: boolean;
 };
 export const DEFAULT_FILTERS: Filters = { q: '', year: 'all', month: 'all', tier: 'all', evidence: 'all', missing: false };
@@ -58,7 +58,7 @@ export function parseFilters(params: URLSearchParams): Filters {
     year: /^202[2-6]$/.test(year) ? year : 'all',
     month: /^(0[1-9]|1[0-2])$/.test(month) ? month : 'all',
     tier: Object.hasOwn(TIERS, tier) ? tier as Tier : 'all',
-    evidence: evidence === 'recorded' || evidence === 'lead' ? evidence : 'all',
+    evidence: evidence === 'official' || evidence === 'recorded' || evidence === 'lead' ? evidence : 'all',
     missing: params.get('missing') === '1',
   };
 }
