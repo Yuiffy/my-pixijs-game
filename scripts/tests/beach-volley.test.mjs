@@ -27,6 +27,113 @@ test('dive travels farther and has a cooldown', () => {
   const cd = g.players[0].cooldown; input[0].dive = false; stepGame(g, input); input[0].dive = true; stepGame(g, input);
   assert.ok(g.players[0].cooldown < cd, 'repeat press cannot reset cooldown');
 });
+
+function advanceMovement(g, seconds, inputs = idle()) {
+  for (let i = 0; i < Math.round(seconds / STEP); i++) {
+    // Keep this movement exercise in a rally without an unrelated ground point.
+    Object.assign(g.ball, { y: 60, vy: 0, lock: 2 });
+    stepGame(g, inputs);
+  }
+}
+
+test('a dive locks its travel direction on both sides until slide and recovery finish', () => {
+  for (const side of [0, 1]) for (const direction of [-1, 1]) {
+    const g = rally(), p = g.players[side], input = idle();
+    p.x = side === 0 ? direction > 0 ? 120 : 520 : direction > 0 ? 740 : 1150;
+    const origin = p.x;
+    input[side][direction > 0 ? 'right' : 'left'] = true;
+    input[side].dive = true;
+    advanceMovement(g, 0.12, input);
+    assert.equal(describeGame(g).players[side].dive.phase, 'flight');
+    assert.ok((p.x - origin) * direction > 80);
+    assert.ok(describeGame(g).players[side].dive.lift > 20, 'visible airborne arc');
+    input[side] = { ...emptyInput(), [direction > 0 ? 'left' : 'right']: true, jump: true };
+    advanceMovement(g, 0.2, input);
+    assert.equal(describeGame(g).players[side].dive.phase, 'slide');
+    assert.equal(p.facing, direction); assert.equal(p.y, FLOOR);
+    const slideSpeed = Math.abs(p.vx), slideX = p.x;
+    assert.ok(slideSpeed > 300 && slideSpeed < 760);
+    advanceMovement(g, 0.16, input);
+    assert.equal(describeGame(g).players[side].dive.phase, 'recover');
+    assert.equal(p.facing, direction); assert.equal(p.y, FLOOR);
+    assert.ok((p.x - slideX) * direction > 0);
+    assert.ok(Math.abs(p.vx) < slideSpeed / 3);
+    advanceMovement(g, 0.2, input);
+    assert.equal(describeGame(g).players[side].dive, null);
+    assert.ok(p.vx * direction < 0, 'normal movement resumes after getting up');
+  }
+});
+
+test('neutral K aims toward the ball and simultaneous jump does not cancel a grounded dive', () => {
+  for (const side of [0, 1]) for (const direction of [-1, 1]) {
+    const g = rally(), p = g.players[side], input = idle();
+    p.x = side ? 960 : 320; g.ball.x = p.x + direction * 150;
+    input[side].dive = true; input[side].jump = true;
+    advanceMovement(g, 0.1, input);
+    assert.equal(p.facing, direction); assert.equal(p.y, FLOOR);
+    assert.ok(p.vx * direction > 700);
+    assert.equal(describeGame(g).players[side].dive.phase, 'flight');
+  }
+  const g = rally(), input = idle(); input[0].jump = true;
+  advanceMovement(g, 0.12, input); input[0].dive = true;
+  advanceMovement(g, 0.05, input);
+  assert.equal(g.players[0].dive, 0, 'K cannot start a ground dive in midair');
+  assert.ok(g.players[0].y < FLOOR - 80);
+});
+
+test('held K and repeated presses cannot bypass the one-second cooldown', () => {
+  const g = rally(), p = g.players[0], input = idle(); input[0].dive = true;
+  advanceMovement(g, 0.65, input);
+  assert.equal(p.dive, 0); assert.ok(p.cooldown > 0.3);
+  input[0].dive = false; stepGame(g, input); input[0].dive = true; stepGame(g, input);
+  assert.equal(p.dive, 0, 'fresh press during cooldown does not start another dive');
+  advanceMovement(g, 0.5, input); assert.equal(p.dive, 0, 'held K does not repeat after cooldown');
+  input[0].dive = false; stepGame(g, input); input[0].dive = true; stepGame(g, input);
+  assert.ok(p.dive > 0.5, 'a new press works once cooldown has ended');
+});
+
+test('forward low balls can be saved by diving while standing cannot reach them', () => {
+  for (const side of [0, 1]) for (const direction of [-1, 1]) {
+    for (const diving of [false, true]) {
+      const g = rally(), p = g.players[side], input = idle(); p.x = side ? 960 : 320;
+      g.ball = { x: p.x + direction * 90, y: FLOOR - 30, vx: 0, vy: 200, spin: 0, lastHit: 1 - side, lock: 0, power: null };
+      if (diving) input[side] = { ...emptyInput(), dive: true, [direction > 0 ? 'right' : 'left']: true };
+      stepGame(g, input);
+      assert.equal(g.hits[side], diving ? 1 : 0, `${side}/${direction}/${diving}`);
+      if (diving) {
+        assert.equal(g.phase, 'rally'); assert.ok(g.ball.vy < -600);
+        assert.equal(g.ball.lastHit, side); assert.deepEqual(g.score, [0, 0]);
+      }
+    }
+  }
+});
+
+test('a horizontal dive does not keep standing head-height or extra rear reach', () => {
+  for (const side of [0, 1]) for (const direction of [-1, 1]) for (const location of ['high', 'behind']) {
+    const g = rally(), p = g.players[side], input = idle(); p.x = side ? 960 : 320;
+    g.ball = { x: p.x + direction * (location === 'high' ? 20 : -100), y: FLOOR - (location === 'high' ? 170 : 48),
+      vx: 0, vy: 100, spin: 0, lastHit: 1 - side, lock: 0, power: null };
+    input[side] = { ...emptyInput(), dive: true, [direction > 0 ? 'right' : 'left']: true };
+    stepGame(g, input); assert.equal(g.hits[side], 0, `${side}/${direction}/${location}`);
+  }
+});
+
+test('a dive respects court bounds, pauses in place and clears on the next serve', () => {
+  for (const side of [0, 1]) for (const direction of [-1, 1]) {
+    const g = rally(), p = g.players[side], input = idle();
+    p.x = side ? direction > 0 ? 1220 : 702 : direction > 0 ? 578 : 60;
+    input[side] = { ...emptyInput(), dive: true, [direction > 0 ? 'right' : 'left']: true };
+    advanceMovement(g, 0.15, input);
+    const bound = side ? direction > 0 ? 1225 : NET_X + 57 : direction > 0 ? NET_X - 57 : 55;
+    assert.equal(p.x, bound);
+    g.paused = true; const snapshot = JSON.stringify(g); advance(g, 2, input);
+    assert.equal(JSON.stringify(g), snapshot);
+    g.paused = false; advanceMovement(g, 0.35, input);
+    assert.equal(describeGame(g).players[side].dive.phase, 'recover');
+    prepareServe(g); assert.equal(p.dive, 0); assert.equal(p.cooldown, 0);
+    assert.equal(p.vx, 0); assert.equal(p.y, FLOOR);
+  }
+});
 test('ordinary receiving returns the ball across the net and generates energy', () => {
   const g = rally(); g.players[0].x = 400; g.ball.x = 407; g.ball.y = 471; g.ball.vy = 100;
   stepGame(g, idle()); assert.equal(g.ball.lastHit, 0); assert.equal(g.hits[0], 1); assert.ok(g.players[0].energy > 36);

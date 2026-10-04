@@ -205,3 +205,20 @@ Enter 不能结束必杀，视频中的 Esc / P 只暂停或继续；开场和�
 修改源文件 ESLint、56 项晴海测试通过；独立检出整合 master `76bd23d` 后，最终完整 `pnpm run check` 与随后顺序执行的 `pnpm run build` 再次通过，构建 ESLint 保持启用。日志为 `tmp/beach-variety-final-{eslint,tests}.log`、`tmp/beach-variety-submit-{check,build}.log`。最终构建的公开操作必杀和原生对白回归也通过。开发、网络、通用客户端及生产共 50 张截图全部通过像素 sanity，与公开文字状态、DOM、Canvas 尺寸和页面／控制台错误交叉核对，并逐张打开目检；页面与控制台错误为空。证据在 `tmp/beach-variety-{dev,media-final-dev,shared,production-standard,production-lite,production-results,submit-production}/`（通用客户端为 `state-0.json`，其余为 `report.json`）。
 
 当前生产试玩 **`http://localhost:4018/game/beach-volley`**，启动时设置 `NEXT_DIST_DIR=.next-beach-variety-submit-build`；此前端口为历史验收记录。最终公开操作回归入口为本机保留的 `tmp/beach-variety-production.cjs`，设置 `BEACH_VOLLEY_URL`、`BEACH_MEDIA_QUALITY=standard|lite`、`BEACH_AUDIO_PRODUCTION_OUTPUT` 指定地址、清晰度和证据目录。开发服务已停止，临时构建类型路径不纳入提交；模型、录播和原始生成资源仍保留在本机外部或 ignored 目录。
+
+## K 键飞扑（2026-10-04）
+
+K／2P 的小键盘 2 或 `.` 改为真正的横向伸臂飞扑：0.24 秒腾空、0.18 秒落地滑行、0.18 秒撑起恢复。按方向起扑，无方向朝球；起扑后方向锁定，滑行逐渐减速，恢复结束才允许转向和起跳。一秒冷却从起扑计时，按住不会连续触发，同时按跳跃和 K 优先地面飞扑，空中不能再次起扑。低球碰球范围朝起扑方向前移并随腾空调整，撑起时范围收窄，不保留站姿的高球或身后大范围接球。
+
+岁己／栞栞／米汀各有完整三姿态独立透明图集，使用内置 ImageGen 和已交付的角色参考整条生成。按 alpha 连通域分离生成结果中的不等距身体，共享比例、384×384 方格和 [192,380] 地面锚点；源图不会简单按三等分裁断。交付为 `public/games/beach-volley/dive/{sui,shiori,nagisa}.webp`，合计 159,112 bytes，菜单加载时即准备好。岁己飞扑使用黑紫运动上衣，米汀使用米白／黑运动服，衣装与站姿有区别；身份／发型／帽子／配色保留。来源、成功提示词、参考和输出哈希、归一化规格及验收记录见 `docs/beach-volley-dive-assets.json`，可用 `scripts/prepare-beach-dive.py` 重新封装本机原始条带。
+
+62 项规则／控制／媒体／声音测试通过，含双边方向锁定、各动作阶段、冷却和按住、同时跳跃、实际低球救回、高球／身后不误接、暂停和场地边界。完整必杀与结束后 0.8 秒防守窗继续通过。静音系统 Chrome 开发专项 16 张、通用客户端 1 张、生产专项 8 张截图全部通过像素 sanity、公开状态／DOM／画布／错误核对并打开目检；没有页面或控制台错误。生产仅使用公开按键、真实四指双人触控和 `advanceTime`，测试环境冻结 RAF 以精确截取阶段，未暴露可修改状态的开发钩子。320／390／844 三种布局通过；未测实体手机或 Safari。
+
+修改源码 ESLint、独立检出完整 `pnpm run check` → `pnpm run build` 顺序通过，构建 ESLint 保持开启；最终日志 `tmp/beach-dive/{eslint,final-check,final-build}.log`。复跑入口如下，设置 `BEACH_VOLLEY_URL` 和 `BEACH_DIVE_OUTPUT` 可指定服务与证据目录：
+
+```powershell
+node scripts/verify-beach-dive.cjs
+node scripts/verify-beach-dive-production.cjs
+```
+
+当前生产试玩 **`http://localhost:4020/game/beach-volley`**，启动设置 `NEXT_DIST_DIR=.next-beach-dive-build`。本轮开发服务已停止，只提交晴海飞扑相关文件，沿用提交 master 的授权，保留其他任务的共享工作区开发。

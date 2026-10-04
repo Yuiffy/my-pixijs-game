@@ -1149,7 +1149,7 @@ export default function BeachVolley() {
                 </div>
                 <div>
                   <dt>K</dt>
-                  <dd>朝移动方向扑救</dd>
+                  <dd>朝移动方向飞扑；落地后撑起恢复</dd>
                 </div>
                 <div>
                   <dt>L</dt>
@@ -1168,10 +1168,10 @@ export default function BeachVolley() {
               </p>
               <p className={styles.helpTip}>
                 同机 2P：方向键移动 / ↑ 跳，数字小键盘 1 / 2 / 3 或斜杠 /、句点
-                .、逗号 , 击球、扑救、必杀；↓ 下压，小键盘 8 高吊、5 下压。
+                .、逗号 , 击球、飞扑、必杀；↓ 下压，小键盘 8 高吊、5 下压。
                 手机可同时按方向与击球。Enter / Esc 可跳过开场与胜败视频；
                 必杀须完整播放，Esc / P 可暂停。特写后有 0.8 秒蓄力动作，
-                防守方可移动、跳跃或扑救；关闭演出也保留这段反应时间。
+                防守方可移动、跳跃或飞扑；关闭演出也保留这段反应时间。
                 完整演出含小分反应，精彩模式省略小分。
               </p>
               <button
@@ -1192,7 +1192,7 @@ export default function BeachVolley() {
         </span>
         {active ? (
           <span className={styles.keyboardHint}>
-            A D 移动 <i>·</i> 空格 跳跃 <i>·</i> J 扣杀 <i>·</i> K 扑救 <i>·</i>{" "}
+            A D 移动 <i>·</i> 空格 跳跃 <i>·</i> J 扣杀 <i>·</i> K 飞扑 <i>·</i>{" "}
             L 必杀 <i>·</i> 方向 + J 瞄准
           </span>
         ) : (
@@ -1209,7 +1209,7 @@ export default function BeachVolley() {
             {controlButton("aimDown", "下压")}
           </div>
           <div>
-            {controlButton("dive", "扑救")}
+            {controlButton("dive", "飞扑")}
             {controlButton("jump", "跳跃")}
             {controlButton("hit", "击球")}
             {controlButton("special", "必杀")}
@@ -1221,7 +1221,7 @@ export default function BeachVolley() {
               {controlButton("aimUp", "高", 1)}
               {controlButton("aimDown", "压", 1)}
               {controlButton("jump", "跳", 1)}
-              {controlButton("dive", "扑救", 1)}
+              {controlButton("dive", "飞扑", 1)}
               {controlButton("hit", "击", 1)}
               {controlButton("special", "必杀", 1)}
             </div>

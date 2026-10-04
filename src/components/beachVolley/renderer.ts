@@ -9,14 +9,17 @@ import {
   SPECIAL_WINDUP_TIME,
   WIDTH,
   clamp,
+  diveState,
   shotVector,
 } from "./engine";
 import type { Character, Game, Player } from "./engine";
 import { FRAMES } from "./frames";
+import diveManifest from "../../../public/games/beach-volley/dive/manifest.json";
 
 export interface Assets {
   beach: HTMLImageElement;
   atlases: Record<Character, HTMLImageElement>;
+  dives: Record<Character, HTMLImageElement>;
   victories: Partial<Record<Character, HTMLImageElement>>;
   heroes: Record<Character, HTMLImageElement>;
   specials: Record<Character, HTMLImageElement>;
@@ -33,13 +36,14 @@ export async function loadAssets(): Promise<Assets> {
     Promise.all(
       CHARACTER_IDS.map(async (id) => {
         const victory = CHARACTERS[id].victoryImage;
-        const [atlas, hero, special, celebration] = await Promise.all([
+        const [atlas, hero, special, celebration, dive] = await Promise.all([
           load(`${id}-atlas-v2.webp`),
           load(`${id}-hero-v2.webp`),
           load(`special-${id}-v2.webp`),
           victory ? load(victory) : null,
+          load(diveManifest.characters[id].file),
         ]);
-        return { id, atlas, hero, special, celebration };
+        return { id, atlas, hero, special, celebration, dive };
       }),
     ),
   ]);
@@ -48,6 +52,7 @@ export async function loadAssets(): Promise<Assets> {
     atlases: Object.fromEntries(
       characters.map((c) => [c.id, c.atlas]),
     ) as Record<Character, HTMLImageElement>,
+    dives: Object.fromEntries(characters.map((c) => [c.id, c.dive])) as Record<Character, HTMLImageElement>,
     heroes: Object.fromEntries(characters.map((c) => [c.id, c.hero])) as Record<
       Character,
       HTMLImageElement
@@ -84,6 +89,28 @@ export function drawCharacter(
   flip: boolean,
   time: number,
 ) {
+  const dive = scale < 1.2 ? diveState(p) : null;
+  if (dive) {
+    const spec = diveManifest.characters[p.character];
+    const frame = spec.frames[dive.frame];
+    const size = spec.scale * scale;
+    ctx.save();
+    ctx.translate(x, y - dive.lift * scale);
+    if (dive.direction < 0) ctx.scale(-1, 1);
+    ctx.drawImage(
+      assets.dives[p.character],
+      frame[0],
+      frame[1],
+      frame[2],
+      frame[3],
+      -spec.anchor[0] * size,
+      -spec.anchor[1] * size,
+      frame[2] * size,
+      frame[3] * size,
+    );
+    ctx.restore();
+    return;
+  }
   const victory = pose === 6 ? assets.victories[p.character] : null;
   const frame = victory
     ? [0, 0, victory.width, victory.height]
@@ -100,10 +127,6 @@ export function drawCharacter(
     ctx.scale(1, 1 + Math.sin(time * 2.1) * 0.008);
   }
   if (flip) ctx.scale(-1, 1);
-  if (p.dive > 0 && scale < 1.2) {
-    ctx.translate(0, -27);
-    ctx.rotate(0.53);
-  }
   ctx.drawImage(
     victory || assets.atlases[p.character],
     frame[0],
@@ -478,11 +501,12 @@ export function renderGame(
   g.players.forEach((p, i) => {
     if (g.phase === "intro" || g.phase === "point") return;
     const h = FLOOR - p.y;
+    const dive = diveState(p);
     ellipse(
       ctx,
       p.x + h * 0.07,
       FLOOR + 2,
-      40 - h * 0.045,
+      dive && dive.phase !== "recover" ? 115 : 40 - h * 0.045,
       8 - h * 0.008,
       `rgba(88,66,36,${clamp(0.25 - h * 0.0005, 0.1, 0.25)})`,
     );

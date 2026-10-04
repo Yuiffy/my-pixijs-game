@@ -29,6 +29,23 @@ export const NET_TOP = 366;
 export const BALL_RADIUS = 18;
 export const STEP = 1 / 120;
 export const SPECIAL_WINDUP_TIME = 0.8;
+export const DIVE_DURATION = 0.6;
+export const DIVE_FLIGHT_TIME = 0.24;
+export const DIVE_SLIDE_TIME = 0.18;
+export const DIVE_RECOVERY_TIME = DIVE_DURATION - DIVE_FLIGHT_TIME - DIVE_SLIDE_TIME;
+export function diveState(p: Pick<Player, "dive" | "facing">) {
+  if (p.dive <= 0) return null;
+  const elapsed = Math.max(0, DIVE_DURATION - p.dive);
+  const phase = elapsed < DIVE_FLIGHT_TIME ? "flight"
+    : elapsed < DIVE_FLIGHT_TIME + DIVE_SLIDE_TIME ? "slide" : "recover";
+  return {
+    phase,
+    frame: phase === "flight" ? 0 : phase === "slide" ? 1 : 2,
+    lift: phase === "flight" ? Math.sin((Math.PI * elapsed) / DIVE_FLIGHT_TIME) * 28 : 0,
+    progress: Math.min(1, elapsed / DIVE_DURATION),
+    direction: p.facing,
+  };
+}
 const GRAVITY = 1270;
 export const CHARACTERS = {
   sui: {
@@ -508,6 +525,7 @@ export function aiInput(g: Game, side: Side, dt: number): Input {
 }
 function movePlayer(g: Game, p: Player, side: Side, input: Input, dt: number) {
   p.swing = Math.max(0, p.swing - dt);
+  const previousDive = p.dive;
   p.dive = Math.max(0, p.dive - dt);
   p.cooldown = Math.max(0, p.cooldown - dt);
   p.special = Math.max(0, p.special - dt);
@@ -518,8 +536,24 @@ function movePlayer(g: Game, p: Player, side: Side, input: Input, dt: number) {
     side === 1 && g.options.mode !== "local"
       ? { easy: 288, normal: 345, hard: 386 }[g.options.difficulty]
       : 368;
-  if (p.dive <= 0) p.vx += (axis * speed - p.vx) * Math.min(1, dt * 24);
-  if (axis !== 0) p.facing = axis;
+  if (p.dive <= 0) {
+    p.vx += (axis * speed - p.vx) * Math.min(1, dt * 24);
+    if (axis !== 0) p.facing = axis;
+  } else if (p.dive <= DIVE_RECOVERY_TIME + DIVE_SLIDE_TIME) {
+    p.vx *= Math.exp(-(p.dive <= DIVE_RECOVERY_TIME ? 24 : 9) * dt);
+  }
+  if (previousDive > DIVE_RECOVERY_TIME + DIVE_SLIDE_TIME && p.dive <= DIVE_RECOVERY_TIME + DIVE_SLIDE_TIME) {
+    particles(g, p.x - p.facing * 35, FLOOR, "#e9c28c", 12, 100);
+  }
+  if (input.dive && !p.lastInput.dive && p.cooldown <= 0 && p.dive <= 0 && p.y >= FLOOR - 10) {
+    p.dive = DIVE_DURATION;
+    p.cooldown = 1.0;
+    p.facing = axis || (g.ball.x >= p.x ? 1 : -1);
+    p.vx = p.facing * 760;
+    p.y = FLOOR;
+    p.vy = 0;
+    particles(g, p.x - p.facing * 25, FLOOR, "#e9c28c", 9, 120);
+  }
   if (input.jump && !p.lastInput.jump && p.y >= FLOOR - 0.01 && p.dive <= 0) {
     p.vy = -760;
     particles(g, p.x, FLOOR, "#e9c28c", 9, 95);
@@ -533,12 +567,6 @@ function movePlayer(g: Game, p: Player, side: Side, input: Input, dt: number) {
     p.special = 1.0;
     p.swing = 0.4;
     p.shotAim = { ...p.aim };
-  }
-  if (input.dive && !p.lastInput.dive && p.cooldown <= 0 && p.y >= FLOOR - 10) {
-    p.dive = 0.42;
-    p.cooldown = 1.0;
-    p.vx = (axis || (g.ball.x >= p.x ? 1 : -1)) * 760;
-    particles(g, p.x, FLOOR, "#e9c28c", 15, 170);
   }
   p.x = clamp(
     p.x + p.vx * dt,
@@ -678,11 +706,14 @@ function updateBall(g: Game, dt: number) {
   g.players.forEach((p, i) => {
     const side = i as Side;
     if (b.lock > 0 || (side === 0 ? b.x > NET_X - 8 : b.x < NET_X + 8)) return;
-    const centerY = p.y - (p.dive > 0 ? 48 : 118);
-    const reachX = p.dive > 0 ? 104 : p.swing > 0 ? 79 : 66;
-    const reachY = p.dive > 0 ? 50 : p.swing > 0 ? 103 : 85;
+    const dive = diveState(p);
+    const recovering = dive?.phase === "recover";
+    const centerX = p.x + (dive && !recovering ? dive.direction * 34 : 0);
+    const centerY = p.y - (dive ? recovering ? 78 : 48 + dive.lift * 0.45 : 118);
+    const reachX = dive ? recovering ? 70 : 104 : p.swing > 0 ? 79 : 66;
+    const reachY = dive ? recovering ? 70 : 50 : p.swing > 0 ? 103 : 85;
     const distance =
-      ((b.x - p.x) / reachX) ** 2 + ((b.y - centerY) / reachY) ** 2;
+      ((b.x - centerX) / reachX) ** 2 + ((b.y - centerY) / reachY) ** 2;
     if (distance < 1 && (b.vy > -160 || p.swing > 0 || b.lastHit !== side)) hitBall(g, p, side);
   });
   if (g.specialWindup) return;
@@ -804,6 +835,8 @@ export function describeGame(g: Game) {
       energy: p.energy,
       pose: p.pose,
       diving: p.dive > 0,
+      dive: p.dive > 0 ? { ...diveState(p), remaining: Math.round(p.dive * 1000) / 1000 } : null,
+      diveCooldown: Math.round(p.cooldown * 1000) / 1000,
       specialArmed: p.special > 0,
       aim: p.aim,
       armedAim: p.shotAim,

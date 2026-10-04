@@ -1,0 +1,252 @@
+{
+  "createdAt": "2026-10-04",
+  "tool": "Built-in ImageGen image_gen.imagegen",
+  "workflow": "game-studio:sprite-pipeline; one full three-pose strip per actor",
+  "normalization": {
+    "script": "scripts/prepare-beach-dive.py",
+    "segmentation": "Three major connected alpha components (>8 alpha, >1000 pixels), sorted left-to-right; retain nearest component edge pixels within 2px. Does not split uneven generated canvas into thirds.",
+    "frameSize": [
+      384,
+      384
+    ],
+    "anchor": [
+      192,
+      380
+    ],
+    "resampling": "Lanczos, one shared scale across all three poses per actor",
+    "format": "WebP quality 91, lossless alpha",
+    "poses": [
+      "flight",
+      "slide",
+      "recover"
+    ]
+  },
+  "notes": [
+    "Generated source PNGs and seed edit canvases remain local under tmp/beach-dive; shipped assets are the three compressed atlases.",
+    "Sui's dive strip uses an opaque black/purple sports jersey and shorts. It preserves face/hair/cap/palette but differs from the standing top. Nagisa uses an ivory/black sports uniform. Exact wardrobe continuity is not claimed.",
+    "Three successful strip generations. Three earlier attempts were content-filter rejected and produced no delivered asset; rejected requests were not routed to another generator."
+  ],
+  "generations": [
+    {
+      "actor": "sui",
+      "source": "C:\\Users\\yuiffy\\.codex\\generated_images\\01a0fb98-08fc-7952-888e-5a6e346df76f\\exec-9ff79046-2e6c-4257-9864-62a70cfb571b.png",
+      "prompt": "Create a transparent three-frame volleyball animation sprite strip, three complete figures separated with generous padding, all facing right. Style: polished semi-realistic 3D anime matching the provided head and hair reference. The reference is for face, silver curly twin ponytails, orange eyes and black cat-ear cap only.\nSubject: an adult competitive volleyball athlete wearing a fully opaque black and purple short-sleeved sports jersey that covers the entire torso, paired with high-waisted black and purple volleyball shorts covering the upper thighs, bare feet. Functional athletic sportswear.\nOne complete consistent strip at once: frame 1 horizontal airborne forward dive with joined hands and both forearms reaching right, legs extended back left; frame 2 prone landing and slide, arms forward, chest low; frame 3 pushing up on hands and knees. Keep body proportions and limb lengths consistent, show the whole figure in every frame, ordinary side game-camera sports view. No ball, scenery, sand, labels, shadows or typography; genuinely transparent background.",
+      "references": [
+        {
+          "path": "tmp/beach-dive/seeds/sui-face.png",
+          "sha256": "b98662de5846f75567e114a48f802fbaee092e70f1e9b07ed8d4f00effff240d"
+        }
+      ]
+    },
+    {
+      "actor": "shiori",
+      "source": "C:\\Users\\yuiffy\\.codex\\generated_images\\01a0fb98-08fc-7952-888e-5a6e346df76f\\exec-d4b34131-6cbb-4f21-8b89-ebbddb06266e.png",
+      "prompt": "Use case: stylized-concept. Asset type: transparent animation sprite strip for a beach volleyball game.\nThe input is the shipped adult female character seed on an edit canvas; use it as the identity, outfit, colors, body proportions and semi-realistic 3D anime rendering reference. Create ONE COMPLETE 3-frame animation strip at once. Output a wide 1536x512 transparent PNG, exactly three equal 512x512 slots from left to right. No background, ball, sand, cast shadow, labels, borders or text. Do not keep the idle seed in the output.\nAll three frames face RIGHT in the same low side / three-quarter game camera, at the SAME anatomical scale. The face, headwear, hair and costume must match the reference. Keep fingers, hands, feet and hair entirely within each slot with clear transparent padding.\nFrame 1: a true forward volleyball flying dive, body almost completely HORIZONTAL, chest downward, both arms stretched forward to the right with joined hands and flat forearms for a dig. Legs extend behind to the left, bare toes trail backward; athletic action, determined readable face.\nFrame 2: landing and sliding prone, still horizontal with arms stretched right, chest and thighs low, legs trailing left, toes slightly raised; full body visible, no ground or sand drawn.\nFrame 3: pushing up to recover, hands on the implied ground to the right, knees tucked underneath, torso raised, head facing right, a clear low kneeling recovery pose. Maintain the same anatomy, hairstyle, costume and limb length.\nThis is a functional sports animation, with natural athletic posture, no glamour framing. Match the shipped character precisely; the flying and sliding frames must be horizontal rather than tilted standing sprites.\nCharacter identity: Shiori: brown beret with white ribbon, light blonde braid, blue eyes, white and teal sporty top and teal shorts with pale pink side accents, bare feet.",
+      "references": [
+        {
+          "path": "tmp/beach-dive/seeds/shiori-edit.png",
+          "sha256": "f3a938c792991ea26d23f7841d4a1e6dc2cd696ba96059efe80b9f8a8fea8258"
+        }
+      ]
+    },
+    {
+      "actor": "nagisa",
+      "source": "C:\\Users\\yuiffy\\.codex\\generated_images\\01a0fb98-08fc-7952-888e-5a6e346df76f\\exec-ceee1fbb-0931-490e-9557-a5f12d5ed56f.png",
+      "prompt": "Create a production sprite strip for a volleyball sports game: exactly three whole-body poses arranged left to right on a wide genuinely transparent canvas, no text, props, ball, scenery, ground or shadows. The first reference shows the character identity and color palette. The second reference shows the desired athletic dive poses and 3D anime rendering. One full strip at once, consistent anatomical scale and facing RIGHT throughout.\nUse a practical modest competitive sports uniform: an opaque high-neck sleeveless athletic top and matching high-waisted fitted volleyball shorts that fully cover the hips and upper thighs. Preserve the recognizable face, hairstyle, headwear and outfit color palette of reference 1. Healthy adult athlete, natural functional sports movement.\nPose 1: fully horizontal forward airborne dive with arms reaching right and hands joined for a forearm dig, chest toward ground, legs extended left.\nPose 2: horizontal prone landing and slide, forearms forward and chest low, feet trail left.\nPose 3: pushing up from hands and knees into a low recovery pose, facing right.\nEach complete figure has clear empty padding around it and does not touch any adjacent figure. Match reference 2's readable sports posture and consistent limb proportions.\nCharacter: Long silver-blue hair with the small braid, blue eyes, ivory beret with black ribbon ornaments; opaque ivory and black sports top and shorts.",
+      "references": [
+        {
+          "path": "tmp/beach-dive/seeds/nagisa-edit.png",
+          "sha256": "717da1f8293ce26d567a4503dd7f2b6faaef8ca9f417bb166335d27988e392dd"
+        },
+        {
+          "path": "tmp/beach-dive/raw/shiori.png",
+          "sha256": "049342a582e35a283a4fa9f268b96b5b50dd3f4373f4b9019c6e266c0bab8f7d"
+        }
+      ]
+    }
+  ],
+  "assets": {
+    "sui": {
+      "sourceSha256": "01d8760937ff6c2e131914c91450c8aa252e26614f7034dee445b74f8912ecff",
+      "sourceSize": [
+        2172,
+        724
+      ],
+      "sourceBounds": [
+        [
+          26,
+          140,
+          956,
+          547
+        ],
+        [
+          705,
+          357,
+          1624,
+          622
+        ],
+        [
+          1624,
+          161,
+          2159,
+          623
+        ]
+      ],
+      "sharedNormalizationScale": 0.3870967741935484,
+      "output": "public/games/beach-volley/dive/sui.webp",
+      "outputSha256": "4229a8cd7c406c5771c6033a8f8d19ab475e38f57bd73e94d0c6753d601922ae",
+      "outputBytes": 56836,
+      "contentBounds": [
+        [
+          12,
+          222,
+          372,
+          380
+        ],
+        [
+          14,
+          277,
+          370,
+          380
+        ],
+        [
+          89,
+          201,
+          295,
+          380
+        ]
+      ]
+    },
+    "shiori": {
+      "sourceSha256": "049342a582e35a283a4fa9f268b96b5b50dd3f4373f4b9019c6e266c0bab8f7d",
+      "sourceSize": [
+        2172,
+        724
+      ],
+      "sourceBounds": [
+        [
+          11,
+          204,
+          756,
+          472
+        ],
+        [
+          769,
+          284,
+          1539,
+          539
+        ],
+        [
+          1600,
+          157,
+          2162,
+          569
+        ]
+      ],
+      "sharedNormalizationScale": 0.4675324675324675,
+      "output": "public/games/beach-volley/dive/shiori.webp",
+      "outputSha256": "36d8eeebe6010f7c889cbc979429c890ee6067c65bcddf16f688a4b811d3e5ce",
+      "outputBytes": 53104,
+      "contentBounds": [
+        [
+          18,
+          255,
+          366,
+          380
+        ],
+        [
+          12,
+          261,
+          372,
+          380
+        ],
+        [
+          61,
+          187,
+          324,
+          380
+        ]
+      ]
+    },
+    "nagisa": {
+      "sourceSha256": "37538dc2db03ab18b5d422452f936daa587cbff52be305654d234cc6bda18f04",
+      "sourceSize": [
+        2172,
+        724
+      ],
+      "sourceBounds": [
+        [
+          30,
+          216,
+          816,
+          493
+        ],
+        [
+          819,
+          316,
+          1621,
+          566
+        ],
+        [
+          1671,
+          161,
+          2164,
+          582
+        ]
+      ],
+      "sharedNormalizationScale": 0.4488778054862843,
+      "output": "public/games/beach-volley/dive/nagisa.webp",
+      "outputSha256": "f5ba6fe6f8f845c4857156fb84ef9ef5268b3839bcf7cddff7be16e00775b07c",
+      "outputBytes": 49172,
+      "contentBounds": [
+        [
+          16,
+          256,
+          369,
+          380
+        ],
+        [
+          12,
+          268,
+          372,
+          380
+        ],
+        [
+          82,
+          191,
+          302,
+          380
+        ]
+      ]
+    }
+  },
+  "totalOutputBytes": 159112,
+  "validation": {
+    "unitTests": {
+      "command": "pnpm beach:test",
+      "passed": 62
+    },
+    "development": {
+      "script": "scripts/verify-beach-dive.cjs",
+      "report": "tmp/beach-dive/dev/report.json",
+      "screenshots": 16
+    },
+    "sharedClient": {
+      "adapter": "tmp/beach-dive/shared-adapter.cjs",
+      "evidence": "tmp/beach-dive/shared/evidence-0.json",
+      "screenshots": 1
+    },
+    "production": {
+      "script": "scripts/verify-beach-dive-production.cjs",
+      "report": "tmp/beach-dive/production/report.json",
+      "screenshots": 8,
+      "scheduler": "Test-only RAF freeze; public inputs and advanceTime, no game state modification hook."
+    },
+    "assets": "Three source strips and three decoded WebP preview sheets visually inspected. Shared scale, transparent padding and common ground anchors verified.",
+    "screenshots": "All 25 final captures passed PNG sanity, state/DOM/canvas/errors cross-check and were opened for visual inspection.",
+    "limitations": [
+      "No physical phone or Safari test.",
+      "Sui and Nagisa use the sports outfits documented in notes; exact standing-outfit continuity is not claimed."
+    ]
+  }
+}
