@@ -89,6 +89,7 @@
 /* World text is sparse; clear explanations belong to the companion. */
 .message { top: auto; bottom: 27%; left: 50%; right: auto; transform: translateX(-50%); width: min(680px, 86%); max-width: none; padding: 12px 22px; border: 0; background: linear-gradient(90deg, transparent, #12242ae8 20%, #12242ae8 80%, transparent); text-align: center; font-size: clamp(14px, 1.3vw, 18px); line-height: 1.8; text-shadow: 0 2px 5px #000; }
 .inscription { font-family: Georgia, "Noto Serif SC", serif; letter-spacing: .12em; color: #eeddbd; }
+@media (min-width: 701px) and (min-height: 521px) and (max-height: 800px) { .inscription { bottom: 245px; } }
 .discovery { bottom: 35%; font-size: 20px; letter-spacing: .2em; }
 .subtitle { left: 50%; right: auto; transform: translateX(-50%); bottom: 90px; width: min(660px, 88%); max-width: none; text-align: center; border: 0; background: linear-gradient(90deg, transparent, #132930ed 15%, #132930ed 85%, transparent); animation: none; }
 .subtitle p { font-size: 15px; line-height: 1.8; }

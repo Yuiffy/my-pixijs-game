@@ -71,9 +71,6 @@ function ChapterView() {
     <RoofTower x={-147} z={-245} y={42} scale={1.1} />
     <RoofTower x={-119} z={-245} y={42} scale={1.1} />
     <RoofTower x={-133} z={-274} y={32} scale={1.8} />
-    {/* Bell and frame: the open floor beneath remains fully accessible. */}
-    <mesh position={[-133, 29.2, -265]} castShadow><cylinderGeometry args={[0.45, 1.15, 1.8, 16, 1, true]} /><meshStandardMaterial color="#be9d55" metalness={0.7} roughness={0.42} side={2} /></mesh>
-    <mesh position={[-133, 28.1, -265]}><sphereGeometry args={[0.18, 12, 8]} /><meshStandardMaterial color="#d4b271" /></mesh>
     {/* A banyan and a small garden establish a memorable safe rest space. */}
     <mesh position={[-82.8, 3.5, -59.7]} castShadow><cylinderGeometry args={[0.35, 0.7, 7, 7]} /><meshStandardMaterial color="#716a4e" /></mesh>
     {[-1, 0, 1].map(i => <mesh key={i} position={[-82.8 + i * 1.9, 7 + Math.abs(i) * 0.5, -59.7]} castShadow><icosahedronGeometry args={[3.1, 1]} /><meshStandardMaterial color={i === 0 ? '#486850' : '#617b53'} /></mesh>)}

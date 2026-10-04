@@ -31,13 +31,10 @@ function Grove() {
 
 function RiverMechanisms({ stateRef }: { stateRef: MutableRefObject<GameState> }) {
   const wheel = useRef<THREE.Group>(null);
-  const west = useRef<THREE.Mesh>(null); const east = useRef<THREE.Mesh>(null);
   const lamps = useRef<THREE.Group>(null);
   useFrame(() => {
     const s = stateRef.current;
     if (wheel.current) wheel.current.rotation.x = s.time * (s.collected.includes('mill-sluice') ? 0.28 : 0.045);
-    if (west.current) (west.current.material as THREE.MeshBasicMaterial).color.set(s.collected.includes('mill-sluice') ? '#8cf3cb' : '#e29361');
-    if (east.current) (east.current.material as THREE.MeshBasicMaterial).color.set(s.collected.includes('monastery-sluice') ? '#8cf3cb' : '#e29361');
     if (lamps.current) { lamps.current.visible = s.valleyComplete; lamps.current.position.z = -(s.time % 30) * 0.25; }
   });
   return (
@@ -46,13 +43,6 @@ function RiverMechanisms({ stateRef }: { stateRef: MutableRefObject<GameState> }
       {[-0.65, 0.65].map(x => <mesh key={x} rotation={[0, Math.PI / 2, 0]} position={[x, 0, 0]}><torusGeometry args={[4, 0.16, 6, 24]} /><meshStandardMaterial color="#b08e64" /></mesh>)}
       {Array.from({ length: 12 }, (_, i) => <group key={i} rotation={[(i * Math.PI) / 6, 0, 0]}><mesh position={[0, 2, 0]}><boxGeometry args={[0.2, 4, 0.18]} /><meshStandardMaterial color="#826c51" /></mesh><mesh position={[0, 3.85, 0]}><boxGeometry args={[1.65, 0.35, 0.85]} /><meshStandardMaterial color="#998966" /></mesh></group>)}
     </group>
-    {([[-212, 2, -411], [-91, 18, -423]] as const).map(([x, y, z], i) => (
-<group key={x} position={[x, y, z - 0.8]}>
-      <mesh position={[0, 0.7, 0]}><boxGeometry args={[1.4, 1.4, 0.4]} /><meshStandardMaterial color="#8d9272" /></mesh>
-      <mesh position={[0, 1.1, 0.28]}><torusGeometry args={[0.65, 0.09, 8, 16]} /><meshStandardMaterial color="#d4b777" metalness={0.4} /></mesh>
-      <mesh ref={i === 0 ? west : east} position={[0, 2, 0]}><octahedronGeometry args={[0.22]} /><meshBasicMaterial color="#e29361" /></mesh>
-    </group>
-))}
     <group ref={lamps} visible={false}>{Array.from({ length: 24 }, (_, i) => <mesh key={i} position={[-150 + Math.sin(i * 3) * 7, -0.92, -543 - i * 1.9]}><boxGeometry args={[0.45, 0.15, 0.45]} /><meshBasicMaterial color={i % 2 ? '#ffda91' : '#a5edce'} /></mesh>)}</group>
   </group>
 );

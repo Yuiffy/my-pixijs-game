@@ -89,7 +89,7 @@ function HavenView({ stateRef }: { stateRef: StateRef }) {
   }, []);
   useFrame(() => {
     const s = stateRef.current; const { ending } = s.haven;
-    lights.current.forEach((m, i) => { if (m) (m.material as THREE.MeshStandardMaterial).emissive.set(i < 3 ? s.haven.echoes > i ? '#73dabf' : '#654327' : ending === 'release' ? '#7fdbc4' : '#e4a65c'); });
+    lights.current.forEach(m => { if (m) (m.material as THREE.MeshStandardMaterial).emissive.set(ending === 'release' ? '#7fdbc4' : '#e4a65c'); });
     if (names.current) names.current.visible = !!ending;
   });
   return (
@@ -98,14 +98,8 @@ function HavenView({ stateRef }: { stateRef: StateRef }) {
     <MooredBoat x={35.5} z={58} stateRef={stateRef} /><MooredBoat x={-291} z={-351} stateRef={stateRef} />
     <group position={[-20.4, 5.15, 41]}><mesh castShadow><cylinderGeometry args={[0.55, 0.43, 0.55, 12]} /><meshStandardMaterial color="#c2a878" metalness={0.35} roughness={0.6} /></mesh><mesh position={[0, -0.17, 0]} rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.48, 0.06, 6, 12]} /><meshStandardMaterial color="#efb55f" emissive="#c27133" emissiveIntensity={1.7} /></mesh></group>
     {HAVEN_LANDMARKS.filter(l => l.kind === 'npc' && l.id !== 'well-choice').map(l => <Resident key={l.id} id={l.id} stateRef={stateRef} />)}
-    {[-17, -5, 7].map((x, i) => (
-<group key={x} position={[x, 4, 60]}>
-      <mesh position={[0, 0.35, 0]}><cylinderGeometry args={[0.7, 0.85, 0.7, 10]} /><meshStandardMaterial color="#9f9275" /></mesh>
-      <mesh ref={m => { lights.current[i] = m; }} position={[0, 1.3, 0]}><octahedronGeometry args={[0.38]} /><meshStandardMaterial color="#d6c69a" emissive="#654327" emissiveIntensity={1.8} /></mesh>
-      <Plaque position={[0, 0.45, -0.76]} text={['钟', '水', '名'][i]} width={0.8} />
-    </group>
-))}
-    {Array.from({ length: 14 }, (_, i) => <mesh key={i} ref={m => { lights.current[i + 3] = m; }} position={[i % 2 ? -21 : 17, 7.1, 34 + Math.floor(i / 2) * 5]}><boxGeometry args={[0.38, 0.55, 0.38]} /><meshStandardMaterial color="#f2d3a2" emissive="#e4a65c" emissiveIntensity={1.4} /></mesh>)}
+    {[-17, -5, 7].map((x, i) => <Plaque key={x} position={[x, 4.5, 59.15]} text={['钟', '水', '名'][i]} width={0.6} />)}
+    {Array.from({ length: 14 }, (_, i) => <mesh key={i} ref={m => { lights.current[i] = m; }} position={[i % 2 ? -21 : 17, 7.1, 34 + Math.floor(i / 2) * 5]}><boxGeometry args={[0.38, 0.55, 0.38]} /><meshStandardMaterial color="#f2d3a2" emissive="#e4a65c" emissiveIntensity={1.4} /></mesh>)}
     <group ref={names} visible={false}>{Array.from({ length: 15 }, (_, i) => <mesh key={i} position={[-18 + i * 2.5, 8 + Math.sin(i) * 0.3, 63]}><boxGeometry args={[0.4, 1.2, 0.07]} /><meshStandardMaterial color="#f3ddad" emissive="#6d5940" /></mesh>)}</group>
     <mesh position={[-5, 4.02, 45]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[2.2, 2.38, 48]} /><meshStandardMaterial color="#ddba78" /></mesh>
     <pointLight position={[-5, 8, 45]} color="#ffcc85" intensity={45} distance={22} decay={1.7} />

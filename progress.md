@@ -643,3 +643,15 @@ Original prompt: 花礼为什么是粉色的，感觉不像呢。重新对比各
 修改前 14 张、开发版 31 张和场景补充 8 张已打开对比；生产角色专项 31 张、地下／装备回归 24 张、通用客户端 1 张均通过 sanity／状态／DOM／画布／错误核对并逐张打开目检。双副本入口发现提示、连续往返、途中读档、暂停和地图正常；装备／锻造桌面及 320px 菜单覆盖 12 件独立 SVG 与空护符槽、更换双苇短刃／风苇披风。规则 137/137、修改源文件 ESLint、完整 check 后顺序 build 通过，保留构建 ESLint。
 
 独立验收检出合入最新远程 master cd44e14 后，再次顺序通过 137 项规则、完整 check／build；从 /demos 点击进入、继续存档和花礼图鉴三张最终生产冒烟截图亦逐张目检通过，错误为空。证据在主工作区 tmp/night-character-{before,dev,dev-world,production,underground-production,shared,integrated-smoke}/，最终门禁在验收检出 tmp/night-character-integrated-{rules,check,build}.log。按既有授权提交 master，只纳入本轮 13 个路径；正式部署另以 Vercel API 核对。造型仍为风格化程序低模，手机为 Chrome 窄屏模拟。
+
+## 2026-10-05 · 雨夜寻味：渡船反馈与交互物辨识
+
+Original prompt: 检查沉灯船坞渡船节点无法传送；悠亚背后的纸条远处看不见且用途像开关，检查全游戏纸条，改善模型与交互辨识。沿用新内容上 master 的授权。
+
+复现船坞航线未开时交互被 havenAvailable 隐藏，地图与场景却只检查雾河系缆。六航线现在统一用 ferryStatus，未开通也能查看并在普通模式下显示缺少的拓片／系缆／邀请／庭灯步骤，已开航线显示青色实舟，未开为空舟。保留原开通剧情与战斗限制，往返不改变血量、药瓶、敌人与归灯点。
+
+全 33 个原 note 节点按用途配置模型：真实纸笺抬到支架，石碑／路牌／展开书册／悬挂拓片，机关使用水闸轮、系缆绞盘、铜钟、归水灯台、听水盆与名灯。悠亚背后的灯台在约 24 米外可发现；普通文本白光、任务线索紫光，机关完成青光，已读保留弱标记。纸笺与刻文双面纹路，摆渡遗签前移，船标避开落点角色；去掉旧纸片与重复钟／水闸。静态结构及光标实例化，不增加点光源；原 ID、存档、近处距离／视线判定保留。详见 docs/night-rain-landmark-readability.md。
+
+开发静音安装版 Chrome 已复现并验证桌面／390px 放灯远近、真实 E 键过场与回到旅途，三种船坞状态、双向、刷新和地图；所有采用的截图逐张目检并交叉核对状态／DOM／画布／像素，错误为空。修改源文件 ESLint 与 144/144 雨夜规则通过，含既有主线、两岸、庭院和副本普通输入流程。独立验收检出 D:/workspace/myrepo/my-pixijs-game-night-experience，只纳入本轮路径，保护主工作区其他线程修改。
+
+最终完整 pnpm run check 后顺序 pnpm run build 通过，Next 构建 ESLint 保持启用。生产版全 33 节点目录及放灯／船坞专项共 50 张截图逐张目检通过，页面／控制台错误为空。补测 720p 发现普通模式的航线要求被交互按钮遮挡，已调整短桌面窗口的刻文位置；重新顺序通过完整门禁，生产复跑三种船坞状态／往返／读档／地图，新增两张 720p 截图与静音通用客户端一张截图均目检通过，文字与按钮间距实测 18px，错误为空。最终采用生产证据共 53 张，在主工作区 tmp/night-landmarks-{production,production-final,shared-final}/；规则、ESLint、完整门禁与浏览器日志在验收检出 tmp/night-landmarks-*-release.log 和 tmp/night-landmarks-browser-{production,final}.log。手机验收为 Chrome 窄屏模拟，保留正常墙体遮挡与近处交互，造型仍为程序低模。按此前授权提交并发布 master，部署结果另以 GitHub 的 Vercel 状态核对。

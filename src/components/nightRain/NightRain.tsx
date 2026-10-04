@@ -27,6 +27,8 @@ import { inputHint, hintText, type HintAction } from './inputHints';
 import Interlude from './Interlude';
 import { lootTier } from './loot';
 import { PLAYER_SKINS } from './CharacterStyle';
+import { nearbyDiscoveries } from './landmarkPresentation';
+import { FERRY_ROUTES, ferryStatus } from './ferries';
 import styles from './nightRain.module.css';
 
 const WorldView = dynamic(() => import('./WorldView'), { ssr: false });
@@ -162,7 +164,7 @@ previousDiscoveries = s.discoveredDungeons.length;
     const sound = new NightAudio(root.current); audio.current = sound;
     const target = window as GameWindow;
     target.nightRain = { getState: () => JSON.parse(JSON.stringify(stateRef.current)), input: action => { external.current = { ...action }; }, resetCamera, save };
-    target.render_game_to_text = () => JSON.stringify({ ...stateRef.current, playerMotion: playerMotionPhase(stateRef.current), enemyTells: stateRef.current.enemies.filter(e => e.aggro && ['windup', 'attack', 'recover'].includes(e.action)).map(e => ({ id: e.id, ...enemyTell(e) })), presentation: noticeRef.current ? { kind: noticeRef.current.kind, label: noticeRef.current.label } : null, journey: { chapter: stateRef.current.chapterComplete ? 2 : 1, sluices: riverSeals(stateRef.current), ferry: stateRef.current.collected.includes('ferry-winch'), complete: stateRef.current.valleyComplete }, coordinateSystem: '+x east, +z south, +y up; metres', camera: camera.current, companion: companionRef.current, panel: panelRef.current, saveSlot: slot.current, audio: sound.snapshot(), pickups: LANDMARKS.filter(l => ['cache', 'charm', 'flask'].includes(l.kind) && !stateRef.current.collected.includes(l.id)).map(l => ({ id: l.id, tier: lootTier(l) })), encounters: stateRef.current.enemies.filter(e => e.hp > 0).map(e => ({ id: e.id, role: enemyRole(e), label: ROLE_NAMES[enemyRole(e)] })), controls: { source: devices.source, family: devices.family, pointerLocked: devices.locked, altHeld: devices.altHeld, gamepadConnected: devices.gamepadConnected, look: devices.lookSettings } });
+    target.render_game_to_text = () => JSON.stringify({ ...stateRef.current, discoveries: nearbyDiscoveries(stateRef.current, LANDMARKS), ferries: Object.keys(FERRY_ROUTES).map(id => ({ id, ...ferryStatus(stateRef.current, id) })), playerMotion: playerMotionPhase(stateRef.current), enemyTells: stateRef.current.enemies.filter(e => e.aggro && ['windup', 'attack', 'recover'].includes(e.action)).map(e => ({ id: e.id, ...enemyTell(e) })), presentation: noticeRef.current ? { kind: noticeRef.current.kind, label: noticeRef.current.label } : null, journey: { chapter: stateRef.current.chapterComplete ? 2 : 1, sluices: riverSeals(stateRef.current), ferry: stateRef.current.collected.includes('ferry-winch'), complete: stateRef.current.valleyComplete }, coordinateSystem: '+x east, +z south, +y up; metres', camera: camera.current, companion: companionRef.current, panel: panelRef.current, saveSlot: slot.current, audio: sound.snapshot(), pickups: LANDMARKS.filter(l => ['cache', 'charm', 'flask'].includes(l.kind) && !stateRef.current.collected.includes(l.id)).map(l => ({ id: l.id, tier: lootTier(l) })), encounters: stateRef.current.enemies.filter(e => e.hp > 0).map(e => ({ id: e.id, role: enemyRole(e), label: ROLE_NAMES[enemyRole(e)] })), controls: { source: devices.source, family: devices.family, pointerLocked: devices.locked, altHeld: devices.altHeld, gamepadConnected: devices.gamepadConnected, look: devices.lookSettings } });
     target.advanceTime = ms => {
       if (!Number.isFinite(ms) || ms < 0) return;
       manualUntil.current = performance.now() + 1200;
@@ -397,7 +399,7 @@ onClick={() => {
 ))}<small className={styles.mapLegend}>保留血量和药瓶；补给请与雨灯交互。</small></div>
 )}
           <button onClick={rescue}>脱离卡死 · 返回{g.checkpoint === 'room' ? '旅馆' : targetLabel(g.checkpoint)}</button>
-          <small className={styles.mapLegend}>白点 · 你 · 菱灯 · 休息处 · 红线 · 闭门 · 青舟 · 渡埠<br />归灯 · {g.checkpoint === 'room' ? '旅馆' : targetLabel(g.checkpoint)} · 近道 {Number(g.shortcut) + Number(g.templeGate) + Number(g.harborGate) + g.chapterGates.filter(id => id !== 'archive-door').length + g.valleyGates.filter(id => ['cliff-gate', 'reed-gate'].includes(id)).length + Number(g.collected.includes('ferry-winch')) + g.haven.gates.filter(id => id !== 'well-door').length + Number(g.haven.recruits.includes('boatwright'))} / 13</small>
+          <small className={styles.mapLegend}>白点 · 你 · 菱灯 · 休息处 · 红线 · 闭门 · 青色实舟 · 航线已开 · 灰色空舟 · 航线待开<br />归灯 · {g.checkpoint === 'room' ? '旅馆' : targetLabel(g.checkpoint)} · 近道 {Number(g.shortcut) + Number(g.templeGate) + Number(g.harborGate) + g.chapterGates.filter(id => id !== 'archive-door').length + g.valleyGates.filter(id => ['cliff-gate', 'reed-gate'].includes(id)).length + Number(g.collected.includes('ferry-winch')) + g.haven.gates.filter(id => id !== 'well-door').length + Number(g.haven.recruits.includes('boatwright'))} / 13</small>
         </>
 ) : panel === 'companion' ? (
 <>

@@ -5,10 +5,12 @@ import { DUNGEON_BOSSES, DUNGEON_ENEMIES, DUNGEON_PORTALS, DUNGEONS, giantScale,
 import { discoverDungeon, liftPosition, migrateUnderground, updateLift, validLift } from './dungeonTravel';
 import { ARMORS, validEquipment } from './equipment';
 import { bestiaryKey } from './bestiary';
-import { freshHaven, HAVEN_ENEMIES, HAVEN_FERRIES, HAVEN_GATES, HAVEN_LORE, havenAvailable } from './haven';
+import { freshHaven, HAVEN_ENEMIES, HAVEN_GATES, HAVEN_LORE, havenAvailable } from './haven';
+import { FERRY_ROUTES, ferryStatus } from './ferries';
+import { notePrompt } from './landmarkPresentation';
 import { applyConversation, validHaven } from './havenStory';
 import { CHAPTER_ENEMIES, CHAPTER_GATES, CHAPTER_LORE } from './chapter';
-import { FERRY_DESTINATIONS, riverSeals, VALLEY_BOSSES, VALLEY_ENEMIES, VALLEY_GATES, VALLEY_LORE } from './valley';
+import { riverSeals, VALLEY_BOSSES, VALLEY_ENEMIES, VALLEY_GATES, VALLEY_LORE } from './valley';
 
 import { enemyAttack, enemyTiming, ENEMY_STRIKE_TIME, ENEMY_CONTACT_TIME } from './enemyCombat';
 
@@ -549,10 +551,14 @@ function updatePrompt(s: GameState): void {
   if (s.bloodstain && distance(s.player, s.bloodstain) < 1.85 && Math.abs(s.player.y - s.bloodstain.y) < 0.8) { s.prompt = '取回遗落的夜市钱'; s.nearbyId = 'bloodstain'; return; }
   const broken = s.enemies.find(e => e.action === 'stagger' && inCone(s, s.player, e, 2.55, 1.65));
   if (broken) { s.prompt = '破架处决'; s.nearbyId = broken.id; return; }
-  const landmark = LANDMARKS.filter(l => havenAvailable(s, l.id) && (!s.collected.includes(l.id) || l.kind === 'note' || l.kind === 'npc'))
+  const landmark = LANDMARKS.filter(l => (l.kind === 'ferry' || havenAvailable(s, l.id)) && (!s.collected.includes(l.id) || l.kind === 'note' || l.kind === 'npc'))
     .filter(l => !(l.kind === 'shortcut' && (HAVEN_GATES.some(g => g.id === l.id) ? s.haven.gates.includes(l.id) : VALLEY_GATES.some(g => g.id === l.id) ? s.valleyGates.includes(l.id) : CHAPTER_GATES.some(g => g.id === l.id) ? s.chapterGates.includes(l.id) : l.id === 'harbor-gate' ? s.harborGate : l.id === 'temple-gate' ? s.templeGate : s.shortcut)) && nearLandmark(s, l))
     .sort((a, b) => distance(a, s.player) - distance(b, s.player))[0];
-  if (landmark) { s.nearbyId = landmark.id; s.prompt = landmark.kind === 'rest' ? (s.litLamps.includes(landmark.id) ? `${landmark.label} · 免费休息` : `点燃${landmark.label}`) : wrongDoorSide(s, landmark.id) ? '无法从这一侧打开' : landmark.label; }
+  if (landmark) {
+    s.nearbyId = landmark.id;
+    const ferry = ferryStatus(s, landmark.id);
+    s.prompt = landmark.kind === 'rest' ? (s.litLamps.includes(landmark.id) ? `${landmark.label} · 免费休息` : `点燃${landmark.label}`) : wrongDoorSide(s, landmark.id) ? '无法从这一侧打开' : ferry && !ferry.ready ? `查看渡船 · ${ferry.label}` : landmark.kind === 'note' ? notePrompt(s, landmark) : landmark.label;
+  }
 }
 
 export function stepGame(s: GameState, dtMs: number, input: GameInput = NEUTRAL): void {
@@ -644,9 +650,11 @@ export function interact(s: GameState): void {
     if (!s.valleyGates.includes(gate.id)) s.valleyGates.push(gate.id);
     effect(s, landmark, 'reward'); say(s, `${gate.name}已开`, 6, 'event', gate.id === 'valley-entry' ? '第二关 · 雾河回响。顺着钟后崖廊下山，渡村的雨灯在等你。随时可以沿原路返回王寺。' : '通路永久保留，休息或死亡不会关门。');
   } else if (landmark.kind === 'ferry') {
-    if (!Object.hasOwn(HAVEN_FERRIES, landmark.id) && !s.collected.includes('ferry-winch')) { say(s, '渡船系缆还未修复。', 6, 'lore', '从王寺后山进入雾河，击败西岸的花礼，在水车院东边渡埠修好系缆。'); return; }
+    const ferry = ferryStatus(s, landmark.id);
+    if (!ferry) return;
+    if (!ferry.ready) { say(s, ferry.message, 10, 'lore', ferry.hint); return; }
     if (!safeToRest(s)) { say(s, '先摆脱追兵，才能乘船。'); return; }
-    const destination = HAVEN_FERRIES[landmark.id] ?? FERRY_DESTINATIONS[landmark.id];
+    const destination = FERRY_ROUTES[landmark.id];
     if (!destination) return;
     const { hp, stamina, flasks, staminaDelay } = s.player;
     s.player = { ...makePlayer(destination.position), hp, stamina, flasks, staminaDelay };
@@ -659,7 +667,7 @@ export function interact(s: GameState): void {
     say(s, landmark.id === 'ferry-winch' ? '系缆重连 · 归城渡船已恢复' : `水闸转动 · 双流 ${riverSeals(s)} / 2`, 7, 'event', landmark.id === 'ferry-winch' ? '水车院、渡村和第一关摆渡庵现在可以乘船往返，不消耗夜市钱。' : riverSeals(s) === 2 ? '双闸都已开启。去上游汇灯台休息，再解除北边锁桥，挑战悠亚。' : '另一岸仍有水闸未开。可经上游引水桥去对岸，也可回渡村再出发。');
   } else if (landmark.id === 'river-heart') {
     if (!s.defeatedGuests.includes('river-serpent')) { say(s, '那伽仍守着未归的愿灯。', 5, 'lore', '先击败沉殿里的悠亚，再来放灯。'); return; }
-    if (s.valleyComplete) return;
+    if (s.valleyComplete) { say(s, '愿灯已归水，灯台仍记着送行的人。', 8, 'lore', '归灯庭的阿莲还在等你。可以回庭听听温叔与弥音的故事。'); return; }
     s.collected.push(landmark.id); s.valleyComplete = true; s.mode = 'interlude'; s.lockedId = null;
     say(s, '第二关 · 雾河回响。钟声翻过山，愿灯终于顺流回家。', 99, 'event');
   } else if (VALLEY_LORE[landmark.id]) {
@@ -688,7 +696,7 @@ export function interact(s: GameState): void {
   } else if (landmark.id === 'chapter-bell') {
     if (!s.defeatedGuests.includes('rain-regent')) { say(s, '弥月仍守长夜，钟声尚不能远行。', 5, 'lore', '先击败大殿里的弥月。'); return; }
     if (!s.collected.includes('food')) { say(s, '今晚还没有吃饭。先回夜市炉火，再来听钟。', 6, 'event', '雨灯旁可以在已经点亮的雨灯之间行旅。回中庭去夜市吃饭后，再返回王寺。'); return; }
-    if (s.chapterComplete) return;
+    if (s.chapterComplete) { say(s, '归夜钟已经响过，余音仍在城与山之间。', 8, 'lore', '钟台东侧的后山门通往雾河。旧城的支路与归灯庭也可以随时回访。'); return; }
     s.collected.push('chapter-bell'); s.chapterComplete = true; s.mode = 'interlude'; s.lockedId = null;
     say(s, '第一关 · 长夜归灯。饭还温着，整座城终于等到了钟声。', 99, 'event');
   } else if (CHAPTER_LORE[landmark.id]) {

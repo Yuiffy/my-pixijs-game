@@ -5,6 +5,7 @@ import type { GameState } from './types';
 import { LANDMARKS, OBSTACLES, SURFACES, gateOpen, regionAt } from './world';
 import styles from './nightRain.module.css';
 import { dungeonFoyer, dungeonPoint, undergroundId } from './dungeons';
+import { ferryStatus } from './ferries';
 
 const VIEWS = [
   { name: '全城', box: '-298 -551 430 720' },
@@ -56,7 +57,10 @@ export default function WorldMap({ state }: { state: GameState }) {
         {labels.map((l, i) => (i < 4 ? dungeonPoint(i < 2 ? 'crypt' : 'cave', { ...l, y: 0 }) : { ...l, y: 0 })).filter(onLayer).map(l => <text key={l.text} x={l.x} y={l.z} textAnchor="middle" fontSize={view >= 6 ? 3.2 : view >= 4 ? 6 : 3.6 * scale} fill="#eee0c2" stroke="#142c32" strokeWidth=".45" paintOrder="stroke">{l.text}</text>)}
         {OBSTACLES.filter(o => onLayer(o) && o.kind === 'gate').map((o, i) => <line key={i} x1={o.x - (o.w > o.d ? o.w / 2 : 0)} y1={o.z - (o.d > o.w ? o.d / 2 : 0)} x2={o.x + (o.w > o.d ? o.w / 2 : 0)} y2={o.z + (o.d > o.w ? o.d / 2 : 0)} stroke={gateOpen(o, state) ? '#85d7af' : '#ef8876'} strokeWidth={0.85 * scale} />)}
         {LANDMARKS.filter(l => onLayer(l) && l.kind === 'rest' && (state.litLamps.includes(l.id) || state.visited.includes(regionAt(l.x, l.z, l.y)))).map(l => <g key={l.id} transform={`translate(${l.x} ${l.z}) scale(${scale})`}><title>{l.label} · {state.litLamps.includes(l.id) ? '已点亮' : '未点亮'}</title><path d="M0 -1.4 1.1 0 0 1.4 -1.1 0Z" fill={state.litLamps.includes(l.id) ? state.checkpoint === l.id ? '#ffdd86' : '#d9b97f' : 'none'} stroke={state.litLamps.includes(l.id) ? '#10292e' : '#85c8dc'} strokeWidth={state.litLamps.includes(l.id) ? '.25' : '.5'} /></g>)}
-        {LANDMARKS.filter(l => onLayer(l) && l.kind === 'ferry' && !l.id.endsWith('entrance') && !l.id.endsWith('exit') && state.collected.includes('ferry-winch')).map(l => <g key={l.id} transform={`translate(${l.x} ${l.z}) scale(${scale})`}><title>{l.label}</title><path d="M-1.4 -.8H1.4L.8 .8H-.8Z" fill="#86dcdf" stroke="#10292e" strokeWidth=".25" /></g>)}
+        {LANDMARKS.filter(l => onLayer(l) && ferryStatus(state, l.id) && (ferryStatus(state, l.id)!.ready || state.visited.includes(regionAt(l.x, l.z, l.y)))).map(l => {
+          const ferry = ferryStatus(state, l.id)!;
+          return <g key={l.id} transform={`translate(${l.x} ${l.z}) scale(${scale})`}><title>{l.label} · {ferry.label}</title><path d="M-1.4 -.8H1.4L.8 .8H-.8Z" fill={ferry.ready ? '#86dcdf' : 'none'} stroke={ferry.ready ? '#10292e' : '#b0a18a'} strokeWidth={ferry.ready ? '.25' : '.4'} /></g>;
+        })}
         {state.bloodstain && onLayer(state.bloodstain) && <g transform={`translate(${state.bloodstain.x} ${state.bloodstain.z})`}><title>遗落的夜市钱</title><circle r={1.3 * scale} fill="#df877e" stroke="#341715" strokeWidth=".3" /></g>}
         {LANDMARKS.filter(l => onLayer(l) && l.id.endsWith('exit')).map(l => <g key={l.id} transform={`translate(${l.x} ${l.z})`}><title>升降台 · 返回地面</title><circle r="1.5" fill="#294448" stroke="#cab384" strokeWidth=".25" /><path d="m-.7 .5.7-1.1.7 1.1" fill="none" stroke="#efd7a2" strokeWidth=".3" /></g>)}
         {(onLayer(state.player) || atEntrance) && <g transform={`translate(${state.player.x} ${state.player.z}) rotate(${(-state.player.facing * 180) / Math.PI}) scale(${scale})`}><title>你在这里 · {state.region}{atEntrance ? ' · 地面入口' : ''}</title><path d="M0 2.1 -1.2 -1.4 0 -.7 1.2 -1.4Z" fill="white" stroke="#14282e" strokeWidth=".4" /></g>}

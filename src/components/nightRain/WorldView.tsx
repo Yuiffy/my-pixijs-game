@@ -31,7 +31,7 @@ import InterludeView from './InterludeView';
 import DungeonView from './DungeonView';
 import DiscoveryView from './DiscoveryView';
 import ProjectileView from './ProjectileView';
-import { DUNGEONS, DUNGEON_PORTALS, giantScale, undergroundId } from './dungeons';
+import { DUNGEONS, giantScale, undergroundId } from './dungeons';
 import { ARMORS } from './equipment';
 import { combatPose, rollPose, CHARGE_TIME } from './combat';
 import type { Companion } from './companion';
@@ -454,15 +454,9 @@ function TideDistrict() {
     <Sign text="苔灯夜曲" subtext="AZI · AN ENCORE IN THE RAIN" position={[56, 6.6, -53.8]} width={6} background="#465d37" />
     {[[24, 0, -28.5], [31, 0, -29], [39, 0, -35], [40.5, 1.5, -42], [45.5, 3.5, -47], [40.5, 5.5, -52], [32, 6, -55], [48, 6, -66], [31, 10, -78]].map(([x, y, z], i) => <Lantern key={i} position={[x, y, z]} />)}
     {[48, 53, 60].map(x => <Lantern key={x} position={[x, 3, -53.5]} blue />)}
-    {/* The tall copper bell is visible from the entrance; buttresses flank the arena. */}
+    {/* Buttresses flank the arena; DiscoveryView supplies the interactive copper bell. */}
     {[30.5, 49.5].map(x => <group key={x}><mesh position={[x, 12.6, -67]}><coneGeometry args={[1, 1.8, 6]} /><meshStandardMaterial color="#638b9b" /></mesh></group>)}
 
-    <group position={[36, 10, -81]}>
-      {[-2, 2].map(x => <Pole key={x} position={[x, 2, 0]} radius={0.22} height={4} color="#80765b" />)}
-      <Block position={[0, 4, 0]} size={[5, 0.35, 0.5]} color="#b19b69" />
-      <mesh position={[0, 2.8, 0]} castShadow><cylinderGeometry args={[0.65, 1.15, 1.7, 20]} /><meshStandardMaterial color="#c4a05b" metalness={0.65} roughness={0.4} /></mesh>
-      <Pole position={[0, 1.8, 0]} height={0.55} radius={0.1} color="#765a3d" />
-    </group>
     {/* A stage rather than another stone arena: curtains, frog lanterns and a crescent. */}
     <Block position={[56, 3.08, -53]} size={[12, 0.16, 1.4]} color="#91815a" />
     {[-1, 1].map(n => <group key={n}><Block position={[56 + n * 6, 5.2, -53.6]} size={[0.9, 4.4, 0.3]} color="#68698b" /><mesh position={[56 + n * 5.8, 7.5, -53.5]}><sphereGeometry args={[0.42, 12, 10]} /><meshStandardMaterial color="#c5d680" emissive="#668631" emissiveIntensity={0.4} /></mesh></group>)}
@@ -1083,17 +1077,6 @@ function Landmarks({ stateRef }: { stateRef: StateRef }) {
             {/* Keep the light in the render list: hiding it recompiles every lit material. */}
             <pointLight ref={el => { pickupLights.current[i] = el; }} position={[l.x, l.y + 0.6, l.z]} color={LOOT_STYLE[lootTier(l)].color} intensity={2} distance={3} />
           </group>
-          );
-        if (l.kind === 'ferry' && !Object.hasOwn(DUNGEON_PORTALS, l.id)) return <group key={l.id} position={[l.x, l.y, l.z]}><mesh position={[0, 1, -0.5]}><cylinderGeometry args={[0.045, 0.055, 2, 6]} /><meshStandardMaterial color="#9c8964" /></mesh><mesh position={[0, 2, -0.5]}><octahedronGeometry args={[0.2]} /><meshBasicMaterial color="#9adcd2" /></mesh></group>;
-        if (l.kind === "note") return (
-            <group key={l.id} position={[l.x, l.y + 0.04, l.z]}>
-              <Block
-                position={[0, 0, 0]}
-                size={[0.5, 0.04, 0.35]}
-                color="#e2ce9d"
-                rotation={[0, 0.3, 0]}
-              />
-            </group>
           );
         return null;
       })}
