@@ -31,7 +31,7 @@ function instrumentAudio() {
   const NativeContext = window.AudioContext;
   window.fetch = async (...args) => {
     const response = await nativeFetch(...args), src = new URL(String(args[0]), location.href).pathname;
-    if (src.includes('/games/beach-volley/audio-v1/')) {
+    if (/\/games\/beach-volley\/audio-v\d+\//.test(src)) {
       const read = response.arrayBuffer.bind(response);
       response.arrayBuffer = async () => { const bytes = await read(); bytesFrom.set(bytes, src); return bytes; };
     }
@@ -163,6 +163,7 @@ async function verifyPause(p) {
 
 module.exports = { instrumentAudio };
 if (require.main === module) (async () => {
+  if (manifest.version >= 2) { await require('./verify-beach-variety.cjs').main(); return; }
   const response = await fetch(url); assert.equal(response.status, 200, `Target server must respond at ${url}`);
   const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--mute-audio', '--disable-speech-api'] });
   try {

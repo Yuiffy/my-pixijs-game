@@ -123,7 +123,8 @@ test('cinematic selection follows actual characters and mode, safely bypassing m
     }
   }
   assert.ok(selectCinematic(g, media, 'all', false, 'point', 1).line.includes('3 : 5'));
-  assert.ok(media.characters.sui.result.win.duration > media.characters.sui.point.win.duration);
+  const primary = pool => Array.isArray(pool) ? pool[0] : pool;
+  assert.ok(primary(media.characters.sui.result.win).duration > primary(media.characters.sui.point.win).duration);
   assert.equal(selectCinematic(g, { ...media, characters: {} }, 'all', false, 'special'), null);
 });
 
@@ -135,12 +136,13 @@ test('new roster combinations sequence the actual winner and loser, while only S
       const plan = selectCinematic(g, media, 'all', false, kind, side);
       assert.equal(plan.character, g.players[side].character); assert.equal(plan.outcome, 'win');
       const paired = character !== opponent && character !== 'nagisa' && opponent !== 'nagisa';
-      assert.equal(plan.clips.length, paired ? 1 : 2);
-      if (paired) assert.equal(nextCinematic(plan), null);
+      assert.ok(!plan.paired || paired);
+      assert.equal(plan.clips.length, plan.paired ? 1 : 2);
+      if (plan.paired) assert.equal(nextCinematic(plan), null);
       else {
         const loser = nextCinematic(plan);
         assert.equal(loser.character, g.players[1-side].character); assert.equal(loser.outcome, 'lose');
-        assert.ok(loser.src.includes(loser.character) && loser.src.includes('lose'));
+        assert.ok(loser.src.includes(loser.character) && /lose|defeat/i.test(loser.src));
         assert.notEqual(loser.id, plan.id); assert.equal(nextCinematic(loser), null);
       }
     }

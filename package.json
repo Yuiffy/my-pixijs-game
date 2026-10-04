@@ -45,7 +45,7 @@
     "check": "pnpm lint && pnpm exec tsc --noEmit",
     "library:test": "node --test scripts/tests/game-library.test.mjs",
     "library:verify": "node scripts/verify-game-library.cjs",
-    "beach:test": "node --test scripts/tests/beach-volley.test.mjs scripts/tests/beach-controls.test.mjs scripts/tests/beach-direction.test.mjs scripts/tests/beach-media.test.mjs scripts/tests/beach-audio.test.mjs",
+    "beach:test": "node --test scripts/tests/beach-volley.test.mjs scripts/tests/beach-controls.test.mjs scripts/tests/beach-direction.test.mjs scripts/tests/beach-media.test.mjs scripts/tests/beach-audio.test.mjs scripts/tests/beach-variety.test.mjs",
     "beach:verify:v2": "node scripts/verify-beach-v2.cjs",
     "beach:verify:controls": "node scripts/verify-beach-controls.cjs",
     "beach:verify": "node scripts/verify-beach-volley.cjs",

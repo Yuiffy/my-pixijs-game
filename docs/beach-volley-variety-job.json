@@ -1,0 +1,1116 @@
+{
+  "jobKey": "beach-volley-variety-20261004",
+  "canvasId": "73fa43ff-0177-4d07-912f-ff8ac90b9654",
+  "webUrl": "https://jimeng.jianying.com/ai-tool/ai-canvas/73fa43ff-0177-4d07-912f-ff8ac90b9654",
+  "region": "cn",
+  "model": "seedance_2.0_fast_vip",
+  "references": {
+    "sui": "node_51s1prqpf3",
+    "shiori": "node_hspqketz33",
+    "nagisa": "node_x61a4jtypv"
+  },
+  "items": {
+    "voice-sui-intro-2": {
+      "nodeId": "node_4300b2ab77",
+      "updateId": "3233998e-fbd2-4ae9-b0d1-768cdf04ce29",
+      "submitId": "389a602c-66a0-447f-b815-1e8a42cf182d",
+      "actor": "sui",
+      "scene": "intro",
+      "type": "audio",
+      "voiceName": "明媚女声",
+      "text": "准备好了吗？来接我的球吧！",
+      "state": "succeeded",
+      "saveRequestId": "202610041347009939D2D3AF74A6FD433E",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_4300b2ab77",
+            "maxCredits": 1
+          }
+        ],
+        "totalMaxCredits": 1,
+        "draftVersion": 38,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "20261004135014BFBEFC61A65F08ED1B83",
+      "operationState": "succeeded",
+      "statusRequestId": "202610041354253CECCF6EE00D6D3B0560",
+      "resourceId": "e09dcf9a-f225-4deb-852c-8662fecb1a57",
+      "sourcePath": "tmp/beach-variety/sources/voice-sui-intro-2.source",
+      "sourceBytes": 95339,
+      "downloadVerified": true,
+      "downloadRequestId": "20261004135425ACEBF22897062753824A"
+    },
+    "voice-sui-special-2": {
+      "nodeId": "node_08f234e2b5",
+      "updateId": "bd1c37d5-cd9f-42e2-8d1d-358022c95c2b",
+      "submitId": "9b3ce588-d41f-41ca-9af3-b9fc207511ae",
+      "actor": "sui",
+      "scene": "special",
+      "type": "audio",
+      "voiceName": "明媚女声",
+      "text": "晴空加速，出发！",
+      "state": "succeeded",
+      "saveRequestId": "2026100413470237095EAB07FCA2EA0186",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_08f234e2b5",
+            "maxCredits": 1
+          }
+        ],
+        "totalMaxCredits": 1,
+        "draftVersion": 39,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "20261004135014BFBEFC61A65F08ED1B83",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004135426920F2A38F25DDB430980",
+      "resourceId": "d47768ce-f4af-4746-a12a-f80179bae507",
+      "sourcePath": "tmp/beach-variety/sources/voice-sui-special-2.source",
+      "sourceBytes": 73605,
+      "downloadVerified": true,
+      "downloadRequestId": "20261004135427966724F2D53E6DEE9A7D"
+    },
+    "voice-sui-pointWin-2": {
+      "nodeId": "node_975b538116",
+      "updateId": "87615aac-4d74-42d9-b9ee-fba318d1a3f3",
+      "submitId": "51807cef-e42c-4a1e-919f-01e8234060df",
+      "actor": "sui",
+      "scene": "pointWin",
+      "type": "audio",
+      "voiceName": "明媚女声",
+      "text": "嘿嘿，这球漂亮！",
+      "state": "succeeded",
+      "saveRequestId": "20261004134704BDD3979FCB6B9C3D7C26",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_975b538116",
+            "maxCredits": 1
+          }
+        ],
+        "totalMaxCredits": 1,
+        "draftVersion": 40,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "20261004135014BFBEFC61A65F08ED1B83",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004135428A9B4509FF8571F2079E9",
+      "resourceId": "87b54a4f-2212-42dc-a59f-a5300467e9c8",
+      "sourcePath": "tmp/beach-variety/sources/voice-sui-pointWin-2.source",
+      "sourceBytes": 74441,
+      "downloadVerified": true,
+      "downloadRequestId": "20261004135429D973C2B861C3352F4869"
+    },
+    "voice-sui-pointLose-2": {
+      "nodeId": "node_0da1e88b42",
+      "updateId": "0679e459-720c-4f36-ad6d-0d47c345c283",
+      "submitId": "83b4eedf-f049-4b21-8b93-cf8659439334",
+      "actor": "sui",
+      "scene": "pointLose",
+      "type": "audio",
+      "voiceName": "明媚女声",
+      "text": "哎呀，再来一球！",
+      "state": "succeeded",
+      "saveRequestId": "20261004134705822F54056E45C424171A",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_0da1e88b42",
+            "maxCredits": 1
+          }
+        ],
+        "totalMaxCredits": 1,
+        "draftVersion": 41,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "20261004135014BFBEFC61A65F08ED1B83",
+      "operationState": "succeeded",
+      "statusRequestId": "2026100413543026247F3AED08F438FB06",
+      "resourceId": "63d95d40-e319-4a3a-a612-aac4b98f42bd",
+      "sourcePath": "tmp/beach-variety/sources/voice-sui-pointLose-2.source",
+      "sourceBytes": 57723,
+      "downloadVerified": true,
+      "downloadRequestId": "20261004135430D9E5FA9341AA874FC80E"
+    },
+    "voice-sui-victory-2": {
+      "nodeId": "node_0abc7c7e12",
+      "updateId": "08568f42-4500-415e-9b09-f9bba3759c46",
+      "submitId": "e94abca9-f3b5-43ac-a412-5b744ce3a71e",
+      "actor": "sui",
+      "scene": "victory",
+      "type": "audio",
+      "voiceName": "明媚女声",
+      "text": "今天的冠军是我！再来一起玩吧！",
+      "state": "succeeded",
+      "saveRequestId": "2026100413470789CB5DB9D18C20F659DA",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_0abc7c7e12",
+            "maxCredits": 1
+          }
+        ],
+        "totalMaxCredits": 1,
+        "draftVersion": 42,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "20261004135014BFBEFC61A65F08ED1B83",
+      "operationState": "succeeded",
+      "statusRequestId": "202610041354315B9DFC474F343DD9B7EA",
+      "resourceId": "424ca0e0-9511-4ea3-bb13-7b9a45722e45",
+      "sourcePath": "tmp/beach-variety/sources/voice-sui-victory-2.source",
+      "sourceBytes": 102863,
+      "downloadVerified": true,
+      "downloadRequestId": "20261004135432A8B2F8F210259D3987BC"
+    },
+    "voice-sui-defeat-2": {
+      "nodeId": "node_db41fa5452",
+      "updateId": "0fa75326-1d34-443e-8e37-711d0108e586",
+      "submitId": "8cdfa7c5-c279-4c97-9201-3e740c011310",
+      "actor": "sui",
+      "scene": "defeat",
+      "type": "audio",
+      "voiceName": "明媚女声",
+      "text": "你真厉害！下次可要小心啦！",
+      "state": "succeeded",
+      "saveRequestId": "20261004134709637480916862F0317957",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_db41fa5452",
+            "maxCredits": 1
+          }
+        ],
+        "totalMaxCredits": 1,
+        "draftVersion": 43,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "20261004135014BFBEFC61A65F08ED1B83",
+      "operationState": "succeeded",
+      "statusRequestId": "2026100413543347C351F9079B39254C89",
+      "resourceId": "fcf36d41-915d-47d3-acad-86eed21ad24c",
+      "sourcePath": "tmp/beach-variety/sources/voice-sui-defeat-2.source",
+      "sourceBytes": 88652,
+      "downloadVerified": true,
+      "downloadRequestId": "20261004135434F47FD6A32919E9FBF468"
+    },
+    "voice-shiori-intro-2": {
+      "nodeId": "node_aeeceae813",
+      "updateId": "711e263f-1fed-49e3-94af-4f18ff5e86f7",
+      "submitId": "75cb6f6f-e2b5-4afa-b92b-47aaf48cb0b5",
+      "actor": "shiori",
+      "scene": "intro",
+      "type": "audio",
+      "voiceName": "清润女声",
+      "text": "跟着海风，慢慢找回节奏吧。",
+      "state": "succeeded",
+      "saveRequestId": "20261004134711ABDFB980760DD8AA7A84",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_aeeceae813",
+            "maxCredits": 1
+          }
+        ],
+        "totalMaxCredits": 1,
+        "draftVersion": 44,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "202610041350172601DCF6CBDBC6F068D3",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004135435D79B65228A06EA2DEA54",
+      "resourceId": "9d1a4d6e-e55d-4535-9646-8cd6cc3a6cf5",
+      "sourcePath": "tmp/beach-variety/sources/voice-shiori-intro-2.source",
+      "sourceBytes": 102027,
+      "downloadVerified": true,
+      "downloadRequestId": "2026100413543915D5BFB8FBBD282DE8D8"
+    },
+    "voice-shiori-special-2": {
+      "nodeId": "node_4589a57e0e",
+      "updateId": "8b46d093-85d2-4a84-8112-9177ae1ce07c",
+      "submitId": "859a53a0-7624-4e35-8d3f-e1dfa6f111c0",
+      "actor": "shiori",
+      "scene": "special",
+      "type": "audio",
+      "voiceName": "清润女声",
+      "text": "潮汐回旋，接好了。",
+      "state": "succeeded",
+      "saveRequestId": "2026100413481811EF5AE1697F26FDB597",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_4589a57e0e",
+            "maxCredits": 1
+          }
+        ],
+        "totalMaxCredits": 1,
+        "draftVersion": 45,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "202610041350172601DCF6CBDBC6F068D3",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004135440B4EACB5CE64CFC8D0AFC",
+      "resourceId": "0a119b57-1f81-48f5-aff2-6d2ea28eb489",
+      "sourcePath": "tmp/beach-variety/sources/voice-shiori-special-2.source",
+      "sourceBytes": 82800,
+      "downloadVerified": true,
+      "downloadRequestId": "202610041354419BD6FDB753910A06A862"
+    },
+    "voice-shiori-pointWin-2": {
+      "nodeId": "node_6552c76589",
+      "updateId": "12364e1a-7a63-408f-9a05-65300893ed4a",
+      "submitId": "965cf8b2-7a81-4d1a-88ee-c325eb4bf7d8",
+      "actor": "shiori",
+      "scene": "pointWin",
+      "type": "audio",
+      "voiceName": "清润女声",
+      "text": "就是这个节奏。",
+      "state": "succeeded",
+      "saveRequestId": "20261004134820E3FB3EFB5393E2DA2B5A",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_6552c76589",
+            "maxCredits": 1
+          }
+        ],
+        "totalMaxCredits": 1,
+        "draftVersion": 49,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "202610041350172601DCF6CBDBC6F068D3",
+      "operationState": "succeeded",
+      "statusRequestId": "2026100413544375F2C892DB7D94F367BB",
+      "resourceId": "54530c7b-62e5-49ed-8da7-235c1436ac52",
+      "sourcePath": "tmp/beach-variety/sources/voice-shiori-pointWin-2.source",
+      "sourceBytes": 48528,
+      "downloadVerified": true,
+      "downloadRequestId": "20261004135443BC13BA031F4D5C4942E3"
+    },
+    "voice-shiori-pointLose-2": {
+      "nodeId": "node_ff2b752f81",
+      "updateId": "06907e9c-41eb-43e8-a5ec-624712769188",
+      "submitId": "32824f0b-7b9c-4e4f-b2e6-66ed1a107ccf",
+      "actor": "shiori",
+      "scene": "pointLose",
+      "type": "audio",
+      "voiceName": "清润女声",
+      "text": "别着急，我准备好了。",
+      "state": "succeeded",
+      "saveRequestId": "20261004134959F7C3AA42C7921506D337",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_ff2b752f81",
+            "maxCredits": 1
+          }
+        ],
+        "totalMaxCredits": 1,
+        "draftVersion": 50,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "202610041350172601DCF6CBDBC6F068D3",
+      "operationState": "succeeded",
+      "statusRequestId": "2026100413544517AD6D7A749A0636A489",
+      "resourceId": "e63df9f7-c991-400f-bddd-c4f4bce57fcf",
+      "sourcePath": "tmp/beach-variety/sources/voice-shiori-pointLose-2.source",
+      "sourceBytes": 67754,
+      "downloadVerified": true,
+      "downloadRequestId": "202610041354464253FB668753A33FDA8B"
+    },
+    "voice-shiori-victory-2": {
+      "nodeId": "node_94182ed5ab",
+      "updateId": "03e4a208-c0fb-462d-b221-893b05e9ff7f",
+      "submitId": "39def5ac-0fd0-4bbb-8262-d6a4ddd81320",
+      "actor": "shiori",
+      "scene": "victory",
+      "type": "audio",
+      "voiceName": "清润女声",
+      "text": "海浪也在为我们鼓掌。下次再见。",
+      "state": "succeeded",
+      "saveRequestId": "202610041350010B78C549C3EA894753DC",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_94182ed5ab",
+            "maxCredits": 1
+          }
+        ],
+        "totalMaxCredits": 1,
+        "draftVersion": 51,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "202610041350172601DCF6CBDBC6F068D3",
+      "operationState": "succeeded",
+      "statusRequestId": "2026100413544710662DC83864A9676FE8",
+      "resourceId": "71dda56a-3b90-4007-a937-65773d5ddcae",
+      "sourcePath": "tmp/beach-variety/sources/voice-shiori-victory-2.source",
+      "sourceBytes": 114565,
+      "downloadVerified": true,
+      "downloadRequestId": "20261004135448B4EACB5CE64CFC8D0C3C"
+    },
+    "voice-shiori-defeat-2": {
+      "nodeId": "node_52d0180dff",
+      "updateId": "ac9de744-750c-4684-8adb-06f8bc3d62cb",
+      "submitId": "82bf8c36-6a29-4f3a-9f21-874201acb176",
+      "actor": "shiori",
+      "scene": "defeat",
+      "type": "audio",
+      "voiceName": "清润女声",
+      "text": "输赢都是风景。下一场，再见。",
+      "state": "succeeded",
+      "saveRequestId": "202610041350025CBC25DF1BB6A41FD59C",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_52d0180dff",
+            "maxCredits": 1
+          }
+        ],
+        "totalMaxCredits": 1,
+        "draftVersion": 52,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "202610041350172601DCF6CBDBC6F068D3",
+      "operationState": "succeeded",
+      "statusRequestId": "202610041354497678A0F9CE3DA1FC12E5",
+      "resourceId": "a97aca6c-bcb0-4f37-831b-ea2b3425fc89",
+      "sourcePath": "tmp/beach-variety/sources/voice-shiori-defeat-2.source",
+      "sourceBytes": 165556,
+      "downloadVerified": true,
+      "downloadRequestId": "20261004135453AA9B914C54080E4D18B4"
+    },
+    "voice-nagisa-intro-2": {
+      "nodeId": "node_3141e839ca",
+      "updateId": "737b8c71-4080-4970-947d-0ddf4f9a4a73",
+      "submitId": "2fce181b-7e98-448d-83ae-013c47abaf77",
+      "actor": "nagisa",
+      "scene": "intro",
+      "type": "audio",
+      "voiceName": "清冷女主",
+      "text": "新的球路，新的答案。准备好。",
+      "state": "succeeded",
+      "saveRequestId": "20261004135004768E6D6359C85882BAEA",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_3141e839ca",
+            "maxCredits": 1
+          }
+        ],
+        "totalMaxCredits": 1,
+        "draftVersion": 53,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "20261004135019684B4A847F75A776C706",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004135454080A85E0521F2A8847A1",
+      "resourceId": "b07b4af4-d2ad-4942-af92-43f1ad605fa1",
+      "sourcePath": "tmp/beach-variety/sources/voice-nagisa-intro-2.source",
+      "sourceBytes": 121253,
+      "downloadVerified": true,
+      "downloadRequestId": "20261004135455C49EE47BA81F805FF42D"
+    },
+    "voice-nagisa-special-2": {
+      "nodeId": "node_cf74f77037",
+      "updateId": "01eae1be-da13-4e2a-8b2b-1b66f51219c0",
+      "submitId": "3f1febb3-4677-485d-9637-593e52f0143b",
+      "actor": "nagisa",
+      "scene": "special",
+      "type": "audio",
+      "voiceName": "清冷女主",
+      "text": "星屑折光，改变路线。",
+      "state": "succeeded",
+      "saveRequestId": "20261004135005288B3499F7D93D3C8CB5",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_cf74f77037",
+            "maxCredits": 1
+          }
+        ],
+        "totalMaxCredits": 1,
+        "draftVersion": 54,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "20261004135019684B4A847F75A776C706",
+      "operationState": "succeeded",
+      "statusRequestId": "2026100413545683722D1E89941D3C8C68",
+      "resourceId": "f2392461-671d-4bfa-aae2-0b439daa32bc",
+      "sourcePath": "tmp/beach-variety/sources/voice-nagisa-special-2.source",
+      "sourceBytes": 82800,
+      "downloadVerified": true,
+      "downloadRequestId": "20261004135457206E4575B6B6462B3045"
+    },
+    "voice-nagisa-pointWin-2": {
+      "nodeId": "node_65c8b7250c",
+      "updateId": "6d48f03d-332e-43b8-bc11-2e428687876f",
+      "submitId": "82e41887-296a-492e-a09f-01ffa4d11be4",
+      "actor": "nagisa",
+      "scene": "pointWin",
+      "type": "audio",
+      "voiceName": "清冷女主",
+      "text": "看见了，这个空隙。",
+      "state": "succeeded",
+      "saveRequestId": "202610041350073CECCF6EE00D6D3AD21A",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_65c8b7250c",
+            "maxCredits": 1
+          }
+        ],
+        "totalMaxCredits": 1,
+        "draftVersion": 55,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "20261004135019684B4A847F75A776C706",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004135458DBC85042A20AF73ABC85",
+      "resourceId": "645db982-c71f-43c3-8a48-c40c20dbf71e",
+      "sourcePath": "tmp/beach-variety/sources/voice-nagisa-pointWin-2.source",
+      "sourceBytes": 70262,
+      "downloadVerified": true,
+      "downloadRequestId": "2026100413545925B55A7D2FE0DD341670"
+    },
+    "voice-nagisa-pointLose-2": {
+      "nodeId": "node_959c8f4b4a",
+      "updateId": "5dd79b55-fe8e-48ad-967b-cd05f8d090c9",
+      "submitId": "0f92eb15-3326-463d-b822-e989086a8ab1",
+      "actor": "nagisa",
+      "scene": "pointLose",
+      "type": "audio",
+      "voiceName": "清冷女主",
+      "text": "原来如此，再试一次。",
+      "state": "succeeded",
+      "saveRequestId": "2026100413500880BB64479562AF2B532A",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_959c8f4b4a",
+            "maxCredits": 1
+          }
+        ],
+        "totalMaxCredits": 1,
+        "draftVersion": 56,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "20261004135019684B4A847F75A776C706",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004135500F3532F76C5FD4FF9B91D",
+      "resourceId": "d07bb594-93ab-402f-9330-e8c1f01e45b1",
+      "sourcePath": "tmp/beach-variety/sources/voice-nagisa-pointLose-2.source",
+      "sourceBytes": 83636,
+      "downloadVerified": true,
+      "downloadRequestId": "202610041355013805D159D0D9B2F8675B"
+    },
+    "voice-nagisa-victory-2": {
+      "nodeId": "node_8a00b04658",
+      "updateId": "ed5a7975-bdb4-4beb-869f-9e51d9a81a60",
+      "submitId": "72885b37-208f-418c-b01f-1b28d5b01e1f",
+      "actor": "nagisa",
+      "scene": "victory",
+      "type": "audio",
+      "voiceName": "清冷女主",
+      "text": "这就是，我找到的答案。谢谢你。",
+      "state": "succeeded",
+      "saveRequestId": "202610041350104FEF179A165FA6F9A367",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_8a00b04658",
+            "maxCredits": 1
+          }
+        ],
+        "totalMaxCredits": 1,
+        "draftVersion": 57,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "20261004135019684B4A847F75A776C706",
+      "operationState": "succeeded",
+      "statusRequestId": "2026100413550221C9CB9FAA3697309042",
+      "resourceId": "a54bf513-6161-4a93-b95f-a3c4f0f67dc2",
+      "sourcePath": "tmp/beach-variety/sources/voice-nagisa-victory-2.source",
+      "sourceBytes": 133792,
+      "downloadVerified": true,
+      "downloadRequestId": "202610041355022DCA2206ED349735CB62"
+    },
+    "voice-nagisa-defeat-2": {
+      "nodeId": "node_a8b586cd16",
+      "updateId": "97f10dfa-ea67-4d4d-810f-3ece25c44142",
+      "submitId": "ac56d5bc-324b-41fb-87f0-ee1f8d8f1f11",
+      "actor": "nagisa",
+      "scene": "defeat",
+      "type": "audio",
+      "voiceName": "清冷女主",
+      "text": "还有新的可能。下次，我会更强。",
+      "state": "succeeded",
+      "saveRequestId": "202610041350128F9E8D5A914BDBF23DA1",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_a8b586cd16",
+            "maxCredits": 1
+          }
+        ],
+        "totalMaxCredits": 1,
+        "draftVersion": 58,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "20261004135019684B4A847F75A776C706",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004135504CAE4FABBBA087D3AD69A",
+      "resourceId": "5df8e96d-8025-40c4-b2d2-22b531e38384",
+      "sourcePath": "tmp/beach-variety/sources/voice-nagisa-defeat-2.source",
+      "sourceBytes": 137971,
+      "downloadVerified": true,
+      "downloadRequestId": "2026100413550432C85131C69C5D9164B3"
+    },
+    "video-sui-special-2": {
+      "nodeId": "node_deb7f0de50",
+      "updateId": "a73cc4a1-957b-4f89-8d8e-a7b478270887",
+      "submitId": "87148e0e-91f3-4b0a-89f4-64b8af71ecf8",
+      "actor": "sui",
+      "scene": "special",
+      "type": "video",
+      "duration": 4,
+      "text": "这一球，飞到晴空去！",
+      "state": "succeeded",
+      "prompt": "高品质写实3D动漫沙滩排球单人运动演出。{{node:node_51s1prqpf3}}中唯一的25岁成年女运动员岁己，保持脸、头饰、发型、不透明运动泳装一致。镜头从她坚定的脸部中景快速拉到完整全身，她踏沙跃起，单手将排球击向晴空，金色晴空光线跟随球飞出画面，落地站稳。只有一位角色，不出现对手，不出现文字或字幕。使用{{node:node_d163c45adb}}作为她的说话音色参考，不要复读参考音频，也不要唱歌；她在起跳前用这个相同的中文女声自信说出且只说一次：这一球，飞到晴空去！口型与对白同步，生成可听清的原生对白，海风和击球音效轻一点，无背景音乐。",
+      "saveRequestId": "202610041349014253FB668753A33FAA8F",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_deb7f0de50",
+            "maxCredits": 24
+          }
+        ],
+        "totalMaxCredits": 24,
+        "draftVersion": 48,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "2026100413495763BC810BD48F9C52F5F8",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004135505EDC6F7319F14DF05EA49",
+      "resourceId": "64a10d1a-4d43-40df-886d-b6483c81da60",
+      "sourcePath": "tmp/beach-variety/sources/video-sui-special-2.source",
+      "sourceBytes": 3979338,
+      "downloadVerified": true,
+      "downloadRequestId": "20261004135506637480916862F031BBAC"
+    },
+    "video-sui-pointWin-2": {
+      "nodeId": "node_b2d9d2f40c",
+      "updateId": "2e01c0ec-8e3b-437d-91f6-944cc7df0e48",
+      "submitId": "5be2701f-0e5c-43c3-a9c5-4a97fdb02368",
+      "actor": "sui",
+      "scene": "pointWin",
+      "type": "video",
+      "duration": 4,
+      "text": "嘿嘿，这球漂亮！",
+      "state": "succeeded",
+      "prompt": "高品质写实3D动漫沙滩排球单人演出。{{node:node_51s1prqpf3}}中的唯一25岁成年女运动员，保持脸、头饰、发型和不透明运动泳装完全一致，成年自然全身运动比例。明亮热带沙滩，阳光与海风。小分得分反应：运动员轻快侧步站直，对镜头握拳一次，露出得意微笑；腰上中景转到肩部脸部特写，最后抬手示意下一球。只有一位角色，不出现对手，不出现文字字幕。使用{{node:node_d163c45adb}}作为这一位角色的中文女声说话音色参考，不要复读参考音频，不唱歌。她面向镜头用相同音色自然清晰地且只说一次：「嘿嘿，这球漂亮！」；口型和对白同步，生成原生中文对白。背景海风与运动音效轻一点，无背景音乐。",
+      "saveRequestId": "202610041356473A049C6692757E344541",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_b2d9d2f40c",
+            "maxCredits": 24
+          }
+        ],
+        "totalMaxCredits": 24,
+        "draftVersion": 79,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "202610041358352720175CBF2D1C232BCC",
+      "operationState": "succeeded",
+      "statusRequestId": "2026100414035510CEF4F022DB4258DBBE",
+      "resourceId": "a6313c46-94e3-4236-b551-fd1e94e6b412",
+      "sourcePath": "tmp/beach-variety/sources/video-sui-pointWin-2.source",
+      "sourceBytes": 6259531,
+      "downloadVerified": true,
+      "downloadRequestId": "2026100414035627D23F30A5C20F407DDD"
+    },
+    "video-sui-pointLose-2": {
+      "nodeId": "node_58d838535a",
+      "updateId": "02395e6b-92ad-4484-b5af-4deba8ce4a97",
+      "submitId": "7fa7b717-9273-4f23-8369-3a6d01a8afc4",
+      "actor": "sui",
+      "scene": "pointLose",
+      "type": "video",
+      "duration": 4,
+      "text": "哎呀，再来一球！",
+      "state": "succeeded",
+      "prompt": "高品质写实3D动漫沙滩排球单人演出。{{node:node_51s1prqpf3}}中的唯一25岁成年女运动员，保持脸、头饰、发型和不透明运动泳装完全一致，成年自然全身运动比例。明亮热带沙滩，阳光与海风。小分失利反应：运动员短暂低头呼气，扶膝后挺直身子，手轻拍自己的脸颊鼓励自己；镜头从侧面中景推到坚定的脸部微笑。只有一位角色，不出现对手，不出现文字字幕。使用{{node:node_d163c45adb}}作为这一位角色的中文女声说话音色参考，不要复读参考音频，不唱歌。她面向镜头用相同音色自然清晰地且只说一次：「哎呀，再来一球！」；口型和对白同步，生成原生中文对白。背景海风与运动音效轻一点，无背景音乐。",
+      "saveRequestId": "20261004135649D22CE911BD8678F98947",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_58d838535a",
+            "maxCredits": 24
+          }
+        ],
+        "totalMaxCredits": 24,
+        "draftVersion": 80,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "202610041358352720175CBF2D1C232BCC",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004140358437F97299EB19605D379",
+      "resourceId": "0fe99171-5945-422b-ae68-1b526fb0b5d8",
+      "sourcePath": "tmp/beach-variety/sources/video-sui-pointLose-2.source",
+      "sourceBytes": 7610276,
+      "downloadVerified": true,
+      "downloadRequestId": "20261004140359E74B16305E8811369393"
+    },
+    "video-sui-victory-2": {
+      "nodeId": "node_9fb4943828",
+      "updateId": "95846ee3-b59a-4375-8430-388a6a28a772",
+      "submitId": "3161bcf8-ead8-4cfb-9dc1-92655afe7553",
+      "actor": "sui",
+      "scene": "victory",
+      "type": "video",
+      "duration": 6,
+      "text": "今天的冠军是我！再来一起玩吧！",
+      "state": "succeeded",
+      "prompt": "高品质写实3D动漫沙滩排球单人演出。{{node:node_51s1prqpf3}}中的唯一25岁成年女运动员，保持脸、头饰、发型和不透明运动泳装完全一致，成年自然全身运动比例。明亮热带沙滩，阳光与海风。最终胜利：运动员开心抱起排球，小幅转身仰头看蓝天，镜头从全身平稳环绕到肩部近景，微笑向镜头挥手，最后完整站姿展示体育精神。只有一位角色，不出现对手，不出现文字字幕。使用{{node:node_d163c45adb}}作为这一位角色的中文女声说话音色参考，不要复读参考音频，不唱歌。她面向镜头用相同音色自然清晰地且只说一次：「今天的冠军是我！再来一起玩吧！」；口型和对白同步，生成原生中文对白。背景海风与运动音效轻一点，无背景音乐。",
+      "saveRequestId": "202610041356502601DCF6CBDBC6F0AE89",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_9fb4943828",
+            "maxCredits": 36
+          }
+        ],
+        "totalMaxCredits": 36,
+        "draftVersion": 81,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "202610041358352720175CBF2D1C232BCC",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004140403F115AE8133D2032EEB91",
+      "resourceId": "d1034ee2-dd49-489f-857b-a80e4ded5836",
+      "sourcePath": "tmp/beach-variety/sources/video-sui-victory-2.source",
+      "sourceBytes": 9223600,
+      "downloadVerified": true,
+      "downloadRequestId": "20261004140404DC4E1CE5D1BAEFF8D976"
+    },
+    "video-sui-defeat-2": {
+      "nodeId": "node_df13e74a8d",
+      "updateId": "f5f6d88c-b310-48a8-a96c-9c8dff19cd44",
+      "submitId": "c894df17-9a7f-4891-a260-d18d18629363",
+      "actor": "sui",
+      "scene": "defeat",
+      "type": "video",
+      "duration": 6,
+      "text": "你真厉害！下次可要小心啦！",
+      "state": "succeeded",
+      "prompt": "高品质写实3D动漫沙滩排球单人演出。{{node:node_51s1prqpf3}}中的唯一25岁成年女运动员，保持脸、头饰、发型和不透明运动泳装完全一致，成年自然全身运动比例。明亮热带沙滩，阳光与海风。最终失利：运动员坐在球场边的长凳上轻叹一口气，整理头发，抱起排球站起身，镜头推到脸部，她向镜头温柔点头并露出期待下一场的微笑。只有一位角色，不出现对手，不出现文字字幕。使用{{node:node_d163c45adb}}作为这一位角色的中文女声说话音色参考，不要复读参考音频，不唱歌。她面向镜头用相同音色自然清晰地且只说一次：「你真厉害！下次可要小心啦！」；口型和对白同步，生成原生中文对白。背景海风与运动音效轻一点，无背景音乐。",
+      "saveRequestId": "20261004135652B3A5949231AFDA348A66",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_df13e74a8d",
+            "maxCredits": 36
+          }
+        ],
+        "totalMaxCredits": 36,
+        "draftVersion": 82,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "202610041358352720175CBF2D1C232BCC",
+      "operationState": "succeeded",
+      "statusRequestId": "2026100414040633EBC5B8A3223CF8346C",
+      "resourceId": "f2fe7a2e-1de0-43a2-8665-47caeeefd410",
+      "sourcePath": "tmp/beach-variety/sources/video-sui-defeat-2.source",
+      "sourceBytes": 10423298,
+      "downloadVerified": true,
+      "downloadRequestId": "20261004140407EB929B7EA570D24A8F52"
+    },
+    "video-shiori-special-2": {
+      "nodeId": "node_0b063e743c",
+      "updateId": "44efaedb-60ce-4325-a922-0be2f3e26b2a",
+      "submitId": "9b62fe69-239a-4ac5-af39-757588b40202",
+      "actor": "shiori",
+      "scene": "special",
+      "type": "video",
+      "duration": 4,
+      "text": "潮汐回旋，接好了。",
+      "state": "succeeded",
+      "prompt": "高品质写实3D动漫沙滩排球单人演出。{{node:node_hspqketz33}}中的唯一25岁成年女运动员，保持脸、头饰、发型和不透明运动泳装完全一致，成年自然全身运动比例。明亮热带沙滩，阳光与海风。低机位完整全身，运动员运球后踏沙跃起，伸臂扣杀，角色主题色光轨随排球飞出画面；切近景坚定微笑，落地站稳。只有一位角色，不出现对手，不出现文字字幕。使用{{node:node_c015e0fbc3}}作为这一位角色的中文女声说话音色参考，不要复读参考音频，不唱歌。她面向镜头用相同音色自然清晰地且只说一次：「潮汐回旋，接好了。」；口型和对白同步，生成原生中文对白。背景海风与运动音效轻一点，无背景音乐。",
+      "saveRequestId": "202610041356544DDD7C6B97F7A9856256",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_0b063e743c",
+            "maxCredits": 24
+          }
+        ],
+        "totalMaxCredits": 24,
+        "draftVersion": 83,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "202610041358352720175CBF2D1C232BCC",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004140410E752517C28BFEF2C4965",
+      "resourceId": "068606ff-f427-4c25-9cf6-88b9594174e1",
+      "sourcePath": "tmp/beach-variety/sources/video-shiori-special-2.source",
+      "sourceBytes": 7408162,
+      "downloadVerified": true,
+      "downloadRequestId": "2026100414041127E48E669340CC799A6A"
+    },
+    "video-shiori-pointWin-2": {
+      "nodeId": "node_f9645f4cf9",
+      "updateId": "cab9f60b-7352-4a51-8965-ca275eb0b00e",
+      "submitId": "a342c735-614b-4f57-b61f-f82153f3e604",
+      "actor": "shiori",
+      "scene": "pointWin",
+      "type": "video",
+      "duration": 4,
+      "text": "就是这个节奏。",
+      "state": "succeeded",
+      "prompt": "高品质写实3D动漫沙滩排球单人演出。{{node:node_hspqketz33}}中的唯一25岁成年女运动员，保持脸、头饰、发型和不透明运动泳装完全一致，成年自然全身运动比例。明亮热带沙滩，阳光与海风。小分得分反应：运动员轻快侧步站直，对镜头握拳一次，露出得意微笑；腰上中景转到肩部脸部特写，最后抬手示意下一球。只有一位角色，不出现对手，不出现文字字幕。使用{{node:node_c015e0fbc3}}作为这一位角色的中文女声说话音色参考，不要复读参考音频，不唱歌。她面向镜头用相同音色自然清晰地且只说一次：「就是这个节奏。」；口型和对白同步，生成原生中文对白。背景海风与运动音效轻一点，无背景音乐。",
+      "saveRequestId": "2026100413565675671F051BC460F8FCC8",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_f9645f4cf9",
+            "maxCredits": 24
+          }
+        ],
+        "totalMaxCredits": 24,
+        "draftVersion": 84,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "202610041358352720175CBF2D1C232BCC",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004140413F3532F76C5FD4FFA1BDE",
+      "resourceId": "6f2967ef-3bab-4d64-8a8b-807512e53c11",
+      "sourcePath": "tmp/beach-variety/sources/video-shiori-pointWin-2.source",
+      "sourceBytes": 6070316,
+      "downloadVerified": true,
+      "downloadRequestId": "20261004140414DD5F6AAD9FB33E26163C"
+    },
+    "video-shiori-pointLose-2": {
+      "nodeId": "node_513f9bdf1b",
+      "updateId": "b6bc7fa6-b6b5-4c66-a34f-faf66f67529e",
+      "submitId": "f0816457-d157-450d-8407-2778ef0cee83",
+      "actor": "shiori",
+      "scene": "pointLose",
+      "type": "video",
+      "duration": 4,
+      "text": "别着急，我准备好了。",
+      "state": "succeeded",
+      "prompt": "高品质写实3D动漫沙滩排球单人演出。{{node:node_hspqketz33}}中的唯一25岁成年女运动员，保持脸、头饰、发型和不透明运动泳装完全一致，成年自然全身运动比例。明亮热带沙滩，阳光与海风。小分失利反应：运动员短暂低头呼气，扶膝后挺直身子，手轻拍自己的脸颊鼓励自己；镜头从侧面中景推到坚定的脸部微笑。只有一位角色，不出现对手，不出现文字字幕。使用{{node:node_c015e0fbc3}}作为这一位角色的中文女声说话音色参考，不要复读参考音频，不唱歌。她面向镜头用相同音色自然清晰地且只说一次：「别着急，我准备好了。」；口型和对白同步，生成原生中文对白。背景海风与运动音效轻一点，无背景音乐。",
+      "saveRequestId": "20261004135657A1B70E7D3B338B1EC886",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_513f9bdf1b",
+            "maxCredits": 24
+          }
+        ],
+        "totalMaxCredits": 24,
+        "draftVersion": 85,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "20261004135839B3A5949231AFDA349982",
+      "operationState": "succeeded",
+      "statusRequestId": "2026100414041669C309FABEFB0B3B118E",
+      "resourceId": "373b3e91-e0ec-4c5e-adcc-3eb845f9cd9f",
+      "sourcePath": "tmp/beach-variety/sources/video-shiori-pointLose-2.source",
+      "sourceBytes": 6677472,
+      "downloadVerified": true,
+      "downloadRequestId": "202610041404162AAE1998646C2E6A36F6"
+    },
+    "video-shiori-victory-2": {
+      "nodeId": "node_edb8a4d8b3",
+      "updateId": "cecc605d-3762-4b29-938d-4a74d1330ffb",
+      "submitId": "b8a7e160-4ac8-4d50-8701-d021a5ae5f42",
+      "actor": "shiori",
+      "scene": "victory",
+      "type": "video",
+      "duration": 6,
+      "text": "海浪也在为我们鼓掌。下次再见。",
+      "state": "succeeded",
+      "prompt": "高品质写实3D动漫沙滩排球单人演出。{{node:node_hspqketz33}}中的唯一25岁成年女运动员，保持脸、头饰、发型和不透明运动泳装完全一致，成年自然全身运动比例。明亮热带沙滩，阳光与海风。最终胜利：运动员开心抱起排球，小幅转身仰头看蓝天，镜头从全身平稳环绕到肩部近景，微笑向镜头挥手，最后完整站姿展示体育精神。只有一位角色，不出现对手，不出现文字字幕。使用{{node:node_c015e0fbc3}}作为这一位角色的中文女声说话音色参考，不要复读参考音频，不唱歌。她面向镜头用相同音色自然清晰地且只说一次：「海浪也在为我们鼓掌。下次再见。」；口型和对白同步，生成原生中文对白。背景海风与运动音效轻一点，无背景音乐。",
+      "saveRequestId": "2026100413565944CA092C8DE7F1216372",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_edb8a4d8b3",
+            "maxCredits": 36
+          }
+        ],
+        "totalMaxCredits": 36,
+        "draftVersion": 86,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "20261004135839B3A5949231AFDA349982",
+      "operationState": "succeeded",
+      "statusRequestId": "202610041404202933DC9968ECC19FFF70",
+      "resourceId": "d2296ede-9814-4221-8291-df672bd5279e",
+      "sourcePath": "tmp/beach-variety/sources/video-shiori-victory-2.source",
+      "sourceBytes": 8125253,
+      "downloadVerified": true,
+      "downloadRequestId": "20261004140420AA9B914C54080E4D83B0"
+    },
+    "video-shiori-defeat-2": {
+      "nodeId": "node_de52364ba8",
+      "updateId": "a83361fa-50c9-4ac0-92c2-432d1873f69f",
+      "submitId": "6b8ea6b3-5470-4a02-8ab6-12a6ae405aa6",
+      "actor": "shiori",
+      "scene": "defeat",
+      "type": "video",
+      "duration": 6,
+      "text": "输赢都是风景。下一场，再见。",
+      "state": "succeeded",
+      "prompt": "高品质写实3D动漫沙滩排球单人演出。{{node:node_hspqketz33}}中的唯一25岁成年女运动员，保持脸、头饰、发型和不透明运动泳装完全一致，成年自然全身运动比例。明亮热带沙滩，阳光与海风。最终失利：运动员坐在球场边的长凳上轻叹一口气，整理头发，抱起排球站起身，镜头推到脸部，她向镜头温柔点头并露出期待下一场的微笑。只有一位角色，不出现对手，不出现文字字幕。使用{{node:node_c015e0fbc3}}作为这一位角色的中文女声说话音色参考，不要复读参考音频，不唱歌。她面向镜头用相同音色自然清晰地且只说一次：「输赢都是风景。下一场，再见。」；口型和对白同步，生成原生中文对白。背景海风与运动音效轻一点，无背景音乐。",
+      "saveRequestId": "202610041357019C18E05AFD64DB29EE6E",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_de52364ba8",
+            "maxCredits": 36
+          }
+        ],
+        "totalMaxCredits": 36,
+        "draftVersion": 87,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "20261004135839B3A5949231AFDA349982",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004140423AA9B914C54080E4D8460",
+      "resourceId": "155958bd-d123-42a3-9c8f-cd0ea28a9667",
+      "sourcePath": "tmp/beach-variety/sources/video-shiori-defeat-2.source",
+      "sourceBytes": 8221633,
+      "downloadVerified": true,
+      "downloadRequestId": "202610041404245CBC25DF1BB6A4205600"
+    },
+    "video-nagisa-special-2": {
+      "nodeId": "node_bb9d325ef9",
+      "updateId": "71fec08f-0b54-48f5-a5f4-cc7d90af08dc",
+      "submitId": "7023ccc4-675d-4f57-9399-01273f5f91cb",
+      "actor": "nagisa",
+      "scene": "special",
+      "type": "video",
+      "duration": 4,
+      "text": "星屑折光，改变路线。",
+      "state": "succeeded",
+      "prompt": "高品质写实3D动漫沙滩排球单人演出。{{node:node_x61a4jtypv}}中的唯一25岁成年女运动员，保持脸、头饰、发型和不透明运动泳装完全一致，成年自然全身运动比例。明亮热带沙滩，阳光与海风。低机位完整全身，运动员运球后踏沙跃起，伸臂扣杀，角色主题色光轨随排球飞出画面；切近景坚定微笑，落地站稳。只有一位角色，不出现对手，不出现文字字幕。使用{{node:node_51a96602fc}}作为这一位角色的中文女声说话音色参考，不要复读参考音频，不唱歌。她面向镜头用相同音色自然清晰地且只说一次：「星屑折光，改变路线。」；口型和对白同步，生成原生中文对白。背景海风与运动音效轻一点，无背景音乐。",
+      "saveRequestId": "20261004135703E667C03620100CF2B599",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_bb9d325ef9",
+            "maxCredits": 24
+          }
+        ],
+        "totalMaxCredits": 24,
+        "draftVersion": 88,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "20261004135839B3A5949231AFDA349982",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004140427D8EEB78D6C0CFB29FCB3",
+      "resourceId": "916c0a89-993f-4ea2-a08e-2de5cbdf90e4",
+      "sourcePath": "tmp/beach-variety/sources/video-nagisa-special-2.source",
+      "sourceBytes": 5207271,
+      "downloadVerified": true,
+      "downloadRequestId": "202610041404289A3CE3E6E663053E254A"
+    },
+    "video-nagisa-pointWin-2": {
+      "nodeId": "node_59deab9aa5",
+      "updateId": "8a8f4b46-798c-4fec-b516-32a29e34756f",
+      "submitId": "a5cc30bc-7094-4ac9-9953-a03faad54df1",
+      "actor": "nagisa",
+      "scene": "pointWin",
+      "type": "video",
+      "duration": 4,
+      "text": "看见了，这个空隙。",
+      "state": "succeeded",
+      "prompt": "高品质写实3D动漫沙滩排球单人演出。{{node:node_x61a4jtypv}}中的唯一25岁成年女运动员，保持脸、头饰、发型和不透明运动泳装完全一致，成年自然全身运动比例。明亮热带沙滩，阳光与海风。小分得分反应：运动员轻快侧步站直，对镜头握拳一次，露出得意微笑；腰上中景转到肩部脸部特写，最后抬手示意下一球。只有一位角色，不出现对手，不出现文字字幕。使用{{node:node_51a96602fc}}作为这一位角色的中文女声说话音色参考，不要复读参考音频，不唱歌。她面向镜头用相同音色自然清晰地且只说一次：「看见了，这个空隙。」；口型和对白同步，生成原生中文对白。背景海风与运动音效轻一点，无背景音乐。",
+      "saveRequestId": "2026100413570411A85E9C15D37CE8121E",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_59deab9aa5",
+            "maxCredits": 24
+          }
+        ],
+        "totalMaxCredits": 24,
+        "draftVersion": 89,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "20261004135839B3A5949231AFDA349982",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004140430BD13DF0AC8FBD3489BB2",
+      "resourceId": "d67d3863-ac4a-4c88-80e3-c6a5129ac8c9",
+      "sourcePath": "tmp/beach-variety/sources/video-nagisa-pointWin-2.source",
+      "sourceBytes": 6034310,
+      "downloadVerified": true,
+      "downloadRequestId": "202610041404314C0EF190B453336082AE"
+    },
+    "video-nagisa-pointLose-2": {
+      "nodeId": "node_dcad8312c8",
+      "updateId": "c634164a-5be5-4fa8-894b-3b75fab05481",
+      "submitId": "0c930d8f-8d42-418c-a86d-d92ad52a416a",
+      "actor": "nagisa",
+      "scene": "pointLose",
+      "type": "video",
+      "duration": 4,
+      "text": "原来如此，再试一次。",
+      "state": "succeeded",
+      "prompt": "高品质写实3D动漫沙滩排球单人演出。{{node:node_x61a4jtypv}}中的唯一25岁成年女运动员，保持脸、头饰、发型和不透明运动泳装完全一致，成年自然全身运动比例。明亮热带沙滩，阳光与海风。小分失利反应：运动员短暂低头呼气，扶膝后挺直身子，手轻拍自己的脸颊鼓励自己；镜头从侧面中景推到坚定的脸部微笑。只有一位角色，不出现对手，不出现文字字幕。使用{{node:node_51a96602fc}}作为这一位角色的中文女声说话音色参考，不要复读参考音频，不唱歌。她面向镜头用相同音色自然清晰地且只说一次：「原来如此，再试一次。」；口型和对白同步，生成原生中文对白。背景海风与运动音效轻一点，无背景音乐。",
+      "saveRequestId": "202610041357067AAF994931A41137D9F3",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_dcad8312c8",
+            "maxCredits": 24
+          }
+        ],
+        "totalMaxCredits": 24,
+        "draftVersion": 90,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "20261004135839B3A5949231AFDA349982",
+      "operationState": "succeeded",
+      "statusRequestId": "202610041404331F6301369B887E23592F",
+      "resourceId": "c85df910-2c21-468d-ac3e-e95cbac29ca1",
+      "sourcePath": "tmp/beach-variety/sources/video-nagisa-pointLose-2.source",
+      "sourceBytes": 5274455,
+      "downloadVerified": true,
+      "downloadRequestId": "2026100414043486D1669E60B1C3EF861E"
+    },
+    "video-nagisa-victory-2": {
+      "nodeId": "node_442fb6abda",
+      "updateId": "ba6f93af-aed3-45bb-88dd-f4ba62c03688",
+      "submitId": "8f52dca1-3de8-4a52-b1c8-dde50b966db4",
+      "actor": "nagisa",
+      "scene": "victory",
+      "type": "video",
+      "duration": 6,
+      "text": "这就是，我找到的答案。谢谢你。",
+      "state": "succeeded",
+      "prompt": "高品质写实3D动漫沙滩排球单人演出。{{node:node_x61a4jtypv}}中的唯一25岁成年女运动员，保持脸、头饰、发型和不透明运动泳装完全一致，成年自然全身运动比例。明亮热带沙滩，阳光与海风。最终胜利：运动员开心抱起排球，小幅转身仰头看蓝天，镜头从全身平稳环绕到肩部近景，微笑向镜头挥手，最后完整站姿展示体育精神。只有一位角色，不出现对手，不出现文字字幕。使用{{node:node_51a96602fc}}作为这一位角色的中文女声说话音色参考，不要复读参考音频，不唱歌。她面向镜头用相同音色自然清晰地且只说一次：「这就是，我找到的答案。谢谢你。」；口型和对白同步，生成原生中文对白。背景海风与运动音效轻一点，无背景音乐。",
+      "saveRequestId": "20261004135708577BF3A98CAB0DAE819B",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_442fb6abda",
+            "maxCredits": 36
+          }
+        ],
+        "totalMaxCredits": 36,
+        "draftVersion": 91,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "202610041358423A049C6692757E3457A5",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004140437C5A393718E99722D1618",
+      "resourceId": "7cce3a4d-eeec-4484-8195-328b77ff4d5b",
+      "sourcePath": "tmp/beach-variety/sources/video-nagisa-victory-2.source",
+      "sourceBytes": 8402019,
+      "downloadVerified": true,
+      "downloadRequestId": "20261004140437E828186C0A835505DB98"
+    },
+    "video-nagisa-defeat-2": {
+      "nodeId": "node_6c677ee713",
+      "updateId": "c87e7e62-aef3-4002-a8a9-b5dc534f3017",
+      "submitId": "02c88068-44c7-40e8-ba99-c0b8f21a16ca",
+      "actor": "nagisa",
+      "scene": "defeat",
+      "type": "video",
+      "duration": 6,
+      "text": "还有新的可能。下次，我会更强。",
+      "state": "succeeded",
+      "prompt": "高品质写实3D动漫沙滩排球单人演出。{{node:node_x61a4jtypv}}中的唯一25岁成年女运动员，保持脸、头饰、发型和不透明运动泳装完全一致，成年自然全身运动比例。明亮热带沙滩，阳光与海风。最终失利：运动员坐在球场边的长凳上轻叹一口气，整理头发，抱起排球站起身，镜头推到脸部，她向镜头温柔点头并露出期待下一场的微笑。只有一位角色，不出现对手，不出现文字字幕。使用{{node:node_51a96602fc}}作为这一位角色的中文女声说话音色参考，不要复读参考音频，不唱歌。她面向镜头用相同音色自然清晰地且只说一次：「还有新的可能。下次，我会更强。」；口型和对白同步，生成原生中文对白。背景海风与运动音效轻一点，无背景音乐。",
+      "saveRequestId": "202610041357102720175CBF2D1C231E26",
+      "quote": {
+        "items": [
+          {
+            "nodeId": "node_6c677ee713",
+            "maxCredits": 36
+          }
+        ],
+        "totalMaxCredits": 36,
+        "draftVersion": 92,
+        "confirmable": true,
+        "confirmationRequired": false
+      },
+      "runRequestId": "202610041358423A049C6692757E3457A5",
+      "operationState": "succeeded",
+      "statusRequestId": "20261004140442738EBA8A59731D30D385",
+      "resourceId": "efcd5fc8-b978-4396-83cf-50cdff218548",
+      "sourcePath": "tmp/beach-variety/sources/video-nagisa-defeat-2.source",
+      "sourceBytes": 8782351,
+      "downloadVerified": true,
+      "downloadRequestId": "20261004140443BC13BA031F4D5C49AEC1"
+    }
+  },
+  "voiceReferences": {
+    "sui": {
+      "nodeId": "node_d163c45adb",
+      "resourceId": "3ad6b77e-9297-40aa-92e1-d1560b42061b",
+      "updateId": "09d264e6-a1ba-4bdf-8c74-e5e62a005d7e",
+      "submitId": "0f7293a9-2f64-4470-a9b9-312491d2fe00",
+      "path": "tmp/beach-variety/sui-voice-reference.wav",
+      "uploadRequestId": "2026100413485920D79BA3C355463752E7",
+      "state": "imported"
+    },
+    "shiori": {
+      "nodeId": "node_c015e0fbc3",
+      "resourceId": "ef9d61b3-dd45-430a-809e-fe3f44b4206f",
+      "updateId": "d77b9618-08ec-45c6-923e-e1f950ce23cb",
+      "submitId": "826d796b-c5cc-4730-846a-3aa0ebda2e5d",
+      "path": "tmp/beach-variety/shiori-voice-reference.wav",
+      "source": "HP2-separated solo livestream speech",
+      "uploadRequestId": "20261004135642D0698CBCB5362A2466A8",
+      "state": "imported"
+    },
+    "nagisa": {
+      "nodeId": "node_51a96602fc",
+      "resourceId": "826224cf-65fd-4748-852b-338d41e3f4e9",
+      "updateId": "a63d714b-fdc4-49d9-8033-90554b128a9e",
+      "submitId": "97f1a6e9-8cf3-45cc-8646-afeb06bbeb6a",
+      "path": "tmp/beach-variety/nagisa-voice-reference.wav",
+      "source": "HP2-separated solo livestream speech",
+      "uploadRequestId": "2026100413564515D5BFB8FBBD282DFDA4",
+      "state": "imported"
+    }
+  }
+}

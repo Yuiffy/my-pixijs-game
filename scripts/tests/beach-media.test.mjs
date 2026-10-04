@@ -67,8 +67,11 @@ test('preload list includes only selected actors, paired overrides, and enabled 
     assert.equal(new Set(all.map((c) => c.src)).size, all.length);
     assert.ok(all.every((c) => c.lite?.src && c.lite.bytes > 0));
     const paired = character !== opponent && ![character, opponent].includes('nagisa');
-    assert.equal(all.length, paired ? 7 : character === opponent ? 6 : 12);
-    assert.ok(all.slice(paired ? 1 : character === opponent ? 1 : 2, paired ? 3 : character === opponent ? 2 : 4).every((c) => c.src.includes('special')));
+    assert.equal(all.length, paired ? 25 : character === opponent ? 11 : 22);
+    if (paired) assert.equal(all.filter(c => c.src.includes('intro')).length, 1, 'only the eligible paired intro is downloaded');
+    const specialIndex = all.findIndex(c => c.src.includes('special'));
+    assert.ok(specialIndex > 0 && all.slice(0, specialIndex).every(c => c.src.includes('intro')));
+    assert.ok(all.slice(specialIndex, specialIndex + (character === opponent ? 2 : 4)).every(c => c.src.includes('special')));
     assert.ok(matchMediaClips(game, manifest, 'key', false).every((c) => !c.src.includes('point')));
     assert.deepEqual(matchMediaClips(game, manifest, 'off', false), []);
     assert.deepEqual(matchMediaClips(game, manifest, 'all', true), []);

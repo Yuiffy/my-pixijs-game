@@ -27,15 +27,16 @@ export function musicForGame(g: Game, movie: Cinematic | null): MusicKind {
   return "match";
 }
 export function voicesForCinema(g: Game, movie: Cinematic): VoiceCue[] {
+  if (movie.dialogue) return [];
   const { side, kind, outcome } = movie;
   if (kind === "special") return [cue(g, side, "special")];
-  if (kind === "intro") return movie.clips.length === 1
+  if (kind === "intro") return movie.paired
       ? [cue(g, 0, "intro"), cue(g, 1, "intro")]
       : [cue(g, side, "intro")];
   const win: VoiceKind = kind === "point" ? "pointWin" : "victory";
   const lose: VoiceKind = kind === "point" ? "pointLose" : "defeat";
   // Retained paired footage includes both actors in one clip.
-  return movie.clips.length === 1
+  return movie.paired
     ? [cue(g, side, win), cue(g, other(side), lose)]
     : [cue(g, side, outcome === "win" ? win : lose)];
 }

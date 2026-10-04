@@ -1,6 +1,7 @@
 import manifest from "../../../public/games/beach-volley/audio.json";
 import type { Character, GameEvent } from "./engine";
 import type { MusicKind, VoiceCue, VoiceKind } from "./audioCues";
+import { VariantPicker } from "./variants";
 
 interface AudioClip {
   src: string;
@@ -11,9 +12,11 @@ interface AudioClip {
 }
 interface AudioManifest {
   music: Record<MusicKind, AudioClip>;
-  voices: Record<Character, Record<VoiceKind, AudioClip>>;
+  voices: Record<Character, Record<VoiceKind, AudioClip | AudioClip[]>>;
+  effort?: Record<Character, AudioClip[]>;
 }
 export const AUDIO = manifest as AudioManifest;
+export const audioVariants = (pool: AudioClip | AudioClip[]) => (Array.isArray(pool) ? pool : [pool]);
 export interface AudioSettings {
   enabled: boolean;
   music: boolean;
@@ -47,10 +50,17 @@ export default class BeachAudio {
   private backgroundPaused = false;
   private disposed = false;
   private lastEvent = 0;
+  private lastContact = 0;
   private scene: MusicKind = "menu";
   private music: PlayingMusic | null = null;
-  private voice: { cue: VoiceCue; source: AudioBufferSourceNode } | null = null;
-  private voiceQueue: VoiceCue[] = [];
+  private voice: { cue: VoiceCue; clip: AudioClip; source: AudioBufferSourceNode } | null = null;
+  private voiceQueue: { cue: VoiceCue; clip: AudioClip }[] = [];
+  private variants: VariantPicker;
+  private cinemaDialogue = false;
+  private effort = new Set<AudioBufferSourceNode>();
+  private effortSerial = 0;
+  private effortPlayed = 0;
+  private lastEffort: { character: Character; src: string; eventId: number } | null = null;
   private voiceTag = "";
   private voiceSerial = 0;
   private pendingVoice: VoiceCue | null = null;
@@ -66,15 +76,22 @@ export default class BeachAudio {
   private queue: Download[] = [];
   private active: { task: Download; controller: AbortController } | null = null;
 
+  constructor(random = Math.random) {
+    this.variants = new VariantPicker(random);
+  }
+
   configure(settings: AudioSettings) {
     this.settings = { ...settings };
-    if (!settings.enabled || !settings.voices) this.clearVoices();
+    if (!settings.enabled || !settings.voices) {
+      this.clearVoices();
+      this.clearEffort();
+    }
     if (!settings.enabled) {
       this.clearEffects();
       this.active?.controller.abort();
     }
     if (!settings.music) this.stopMusic();
-    this.duck(!!this.voice);
+    this.duck(!!this.voice || this.cinemaDialogue);
     this.reconcileContext();
     this.pump();
     this.playMusic();
@@ -100,6 +117,7 @@ export default class BeachAudio {
     this.reconcileContext();
     this.playMusic();
     this.playNextVoice();
+    for (const pool of Object.values(AUDIO.effort || {})) for (const clip of pool) if (this.desired.has(clip.src) && this.encoded.has(clip.src)) this.buffer(clip).catch(() => {});
   }
   private reconcileContext() {
     const ctx = this.context;
@@ -142,17 +160,21 @@ export default class BeachAudio {
     }
     this.playMusic();
   }
+  setCinemaDialogue(active: boolean) {
+    this.cinemaDialogue = active;
+    this.duck(active || !!this.voice);
+  }
   prepare(characters: Character[]) {
     const clips = [AUDIO.music.menu];
     const actors = Array.from(new Set(characters));
-    for (const actor of actors) clips.push(AUDIO.voices[actor].intro, AUDIO.voices[actor].special);
+    for (const actor of actors) clips.push(...(AUDIO.effort?.[actor] || []), ...audioVariants(AUDIO.voices[actor].intro), ...audioVariants(AUDIO.voices[actor].special));
     clips.push(AUDIO.music.match, AUDIO.music.victory, AUDIO.music.defeat);
     for (const actor of actors) for (const kind of [
         "pointWin",
         "pointLose",
         "victory",
         "defeat",
-      ] as VoiceKind[]) clips.push(AUDIO.voices[actor][kind]);
+      ] as VoiceKind[]) clips.push(...audioVariants(AUDIO.voices[actor][kind]));
     this.desired = new Set(
       clips.filter((c) => this.allowed(c)).map((c) => c.src),
     );
@@ -234,6 +256,8 @@ export default class BeachAudio {
           !controller.signal.aborted &&
           this.desired.has(task.clip.src)
         ) this.encoded.set(task.clip.src, bytes);
+        // Effort sounds need to be decoded before the hit, with no later speech queue.
+        if (this.context && Object.values(AUDIO.effort || {}).some((pool) => pool.some((clip) => clip.src === task.clip.src))) this.buffer(task.clip).catch(() => {});
       })
       .catch(() => {
         if (timedOut || !controller.signal.aborted) this.failures.add(task.clip.src);
@@ -340,7 +364,10 @@ export default class BeachAudio {
     this.clearVoices();
     this.voiceTag = tag;
     if (!this.settings.enabled || !this.settings.voices) return;
-    this.voiceQueue = [...cues];
+    this.voiceQueue = cues.flatMap((cue) => {
+      const clip = this.variants.pick(`${cue.character}:${cue.kind}`, audioVariants(AUDIO.voices[cue.character][cue.kind]), (item) => item.src);
+      return clip ? [{ cue, clip }] : [];
+    });
     this.playNextVoice();
   }
   private playNextVoice() {
@@ -353,19 +380,20 @@ export default class BeachAudio {
       this.voice ||
       this.pendingVoice
     ) return;
-    const cue = this.voiceQueue.shift();
-    if (!cue) {
-      this.duck(false);
+    const selected = this.voiceQueue.shift();
+    if (!selected) {
+      this.duck(this.cinemaDialogue);
       return;
     }
+    const { cue, clip } = selected;
     const serial = this.voiceSerial;
     this.pendingVoice = cue;
     this.voiceDeadline = performance.now() + 3000;
-    this.buffer(AUDIO.voices[cue.character][cue.kind]).then((buffer) => {
+    this.buffer(clip).then((buffer) => {
       if (this.disposed || serial !== this.voiceSerial) return;
       this.pendingVoice = null;
       if (this.paused) {
-        this.voiceQueue.unshift(cue);
+        this.voiceQueue.unshift(selected);
         return;
       }
       if (
@@ -381,7 +409,7 @@ export default class BeachAudio {
       const source = this.context.createBufferSource();
       source.buffer = buffer;
       source.connect(this.voiceBus!);
-      this.voice = { cue, source };
+      this.voice = { cue, clip, source };
       this.duck(true);
       source.onended = () => {
         source.disconnect();
@@ -396,7 +424,7 @@ export default class BeachAudio {
     if (!this.musicBus || !this.context) return;
     const now = this.context.currentTime;
     this.musicBus.gain.cancelScheduledValues(now);
-    const level = this.settings.music ? (voice ? 0.1 : 0.38) : 0;
+    const level = this.settings.music ? (voice && this.settings.voices ? 0.1 : 0.38) : 0;
     this.musicBus.gain.setTargetAtTime(level, now, voice ? 0.06 : 0.2);
   }
   clearVoices() {
@@ -404,18 +432,52 @@ export default class BeachAudio {
     this.voiceQueue = [];
     this.pendingVoice = null;
     this.voiceTag = "";
+    for (const task of this.queue) if (task.clip.text) task.urgent = false;
+    if (this.active?.task.clip.text && this.active.task.urgent) {
+      this.active.task.urgent = false;
+      if (this.backgroundPaused) this.active.controller.abort();
+    }
     if (this.voice) {
       this.voice.source.onended = null;
       this.voice.source.stop();
       this.voice.source.disconnect();
       this.voice = null;
     }
-    this.duck(false);
+    this.duck(this.cinemaDialogue);
   }
   resetMatch() {
     this.lastEvent = 0;
+    this.lastContact = 0;
     this.clearVoices();
     this.clearEffects();
+  }
+  private playEffort(character: Character, eventId: number) {
+    if (!this.context || this.paused || !this.settings.enabled || !this.settings.voices) return;
+    const clip = this.variants.pick(`${character}:effort`, AUDIO.effort?.[character] || [], (item) => item.src);
+    if (!clip) return;
+    const serial = this.effortSerial;
+    const deadline = performance.now() + 120;
+    const start = (buffer: AudioBuffer | null) => {
+      if (!buffer || !this.context || this.disposed || this.paused || !this.settings.enabled || !this.settings.voices || serial !== this.effortSerial || performance.now() > deadline) return;
+      const source = this.context.createBufferSource();
+      const gain = this.context.createGain();
+      source.buffer = buffer;
+      gain.gain.value = this.voice || this.cinemaDialogue ? 0.28 : 0.65;
+      source.connect(gain);
+      gain.connect(this.voiceBus!);
+      this.effort.add(source);
+      this.effortPlayed++;
+      this.lastEffort = { character, src: clip.src, eventId };
+      source.onended = () => {
+        this.effort.delete(source);
+        source.disconnect();
+        gain.disconnect();
+      };
+      source.start();
+    };
+    const ready = this.decoded.get(clip.src);
+    if (ready) start(ready);
+    else this.buffer(clip).then(start).catch(() => {});
   }
   private tone(
     frequency: number,
@@ -457,8 +519,18 @@ export default class BeachAudio {
   private clearEffects() {
     for (const effect of Array.from(this.effects)) effect.stop();
     this.effects.clear();
+    this.clearEffort();
   }
-  event(event: GameEvent | null) {
+  private clearEffort() {
+    this.effortSerial++;
+    for (const source of Array.from(this.effort)) source.stop();
+    this.effort.clear();
+  }
+  event(event: GameEvent | null, characters: Character[] = [], contact = event) {
+    if (contact && contact.id !== this.lastContact && ["hit", "serve", "spike"].includes(contact.type) && characters[contact.side]) {
+      this.lastContact = contact.id;
+      this.playEffort(characters[contact.side], contact.id);
+    }
     if (!event || event.id === this.lastEvent) return;
     this.lastEvent = event.id;
     if (event.type === "hit" || event.type === "serve") {
@@ -488,7 +560,7 @@ export default class BeachAudio {
         !this.paused && this.context?.state === "running",
       musicGain: this.musicBus?.gain.value || 0,
       voice: voice
-        ? { ...voice, text: AUDIO.voices[voice.character][voice.kind].text }
+        ? { ...voice, text: this.voice!.clip.text, src: this.voice!.clip.src }
         : null,
       voicePlaying:
         !!voice &&
@@ -496,6 +568,9 @@ export default class BeachAudio {
         this.settings.voices &&
         !this.paused && this.context?.state === "running",
       pendingVoices: this.voiceQueue.length + (this.pendingVoice ? 1 : 0),
+      cinemaDialogue: this.cinemaDialogue,
+      effortPlayed: this.effortPlayed,
+      lastEffort: this.lastEffort,
       loaded: this.encoded.size,
       decoded: this.decoded.size,
       queued: this.queue.length,

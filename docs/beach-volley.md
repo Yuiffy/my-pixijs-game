@@ -1,5 +1,7 @@
 # 晴海双打 · 岁己 × 栞栞 × 米汀
 
+当前媒体清单为 v5，语音清单为 v2；下方日期章节保留历次验收，新版本说明见末尾「RVC、击球短音与随机演出」。
+
 Original prompt: 制作岁己和栞栞在美丽的沙滩上玩沙滩排球的游戏，玩法类似皮卡丘排球小游戏。但是画面要精美，角色最好能像死或生一样逼真性感，不行的话也可以像素风，再不行也可以 poly Q 版。允许生图制作背景和素材，允许用本地 Dreamina CLI 的便宜视频模型制作必杀、胜败与过场动画，允许用变声器制作台词。
 
 ## 视觉与交互
@@ -172,3 +174,34 @@ Enter 不能结束必杀，视频中的 Esc / P 只暂停或继续；开场和�
 最终开发与生产共 44 张截图逐张打开目检，且通过像素 sanity、公开文字状态、DOM 和 Canvas 尺寸交叉检查。证据为 `tmp/beach-audio-{dev,special-dev,media-dev,shared,production-standard,production-lite,production-results}/report.json`（通用客户端为 `state-0.json`）；本地生产用例为 `tmp/beach-audio-production-special.cjs` 与 `tmp/beach-audio-production-results.cjs`。修改源文件 ESLint、完整 check 与随后顺序 build 在独立检出通过，日志 `tmp/beach-audio-{tests,check,build}.log`；构建保留 ESLint。当前生产试玩为 **`http://localhost:4015/game/beach-volley`**，启动时设置 `NEXT_DIST_DIR=.next-beach-audio-build`。此前端口为历史验收记录。
 
 提交前整合 master `555ec96`，再次通过修改源码 ESLint、48 项规则、完整 check 与随后顺序 build，日志 `tmp/beach-audio-master-{tests,check,build}.log`。该最终构建的公开操作音频、缓存、必杀和防守回归通过，无页面／控制台错误；四张新增截图均打开目检，累计 48 张，证据 `tmp/beach-audio-master-production/report.json`。4015 预览现使用 **`NEXT_DIST_DIR=.next-beach-audio-master-build`**。开发服务器已停止并只清理本任务临时类型路径；提交仅包含音乐／语音源码、22 个音频及清单、来源与验收记录，保留其他正在开发的内容。
+
+## 2026-10-04 · RVC、击球短音与随机演出
+
+语音现在经过实际 RVC 推理。岁己采用已有的 `suisuiV140K_e200_s5000.pth`（v1、200 epoch）及对应检索索引；对弱短句与 `suiV2.pth` 做过对比后选择此模型。栞栞和米汀从各自录播的开场独白训练 v2 40 kHz 模型，使用 HP2 分离背景音乐、HuBERT 768 维特征和 RMVPE 音高，加载 f0G／f0D40k 预训练模型，batch 8、缓存 GPU，均完成 120 epoch 并成功保存最终权重。
+
+| 角色 | 录播来源 | 选取语音 | 新模型 |
+| --- | --- | --- | --- |
+| 栞栞 | 2026-10-04《早安獭獭栞！》，已知说话人置信度 ≥0.67 | 127 段，373.21 秒 | `beach_shiori_20261004.pth` |
+| 米汀 | 2026-10-03《金偶像谜案》DLC，前半小时独白 | 164 段，541.52 秒 | `beach_nagisa_20261004.pth` |
+
+时间段、自动字幕、清理后样本 SHA256、训练参数、成功日志末段、权重和索引身份保存在 [`beach-volley-rvc-training.json`](beach-volley-rvc-training.json)。模型与录播保留在本机 RVC 和 ignored 数据目录，不随网页下载。推理使用 RMVPE、pitch 0、默认 index rate 0.75／protect 0.33；岁己第二句必杀降低到 0.25／0.5 以保留辅音。每句来源、实际 RVC 权重、检索参数、文件哈希、解码 RMS／峰值和无声 ASR 检查保存在 [`beach-volley-rvc-delivery.json`](beach-volley-rvc-delivery.json)。ASR 用于发现词句错误，不代表独立测量过声纹相似度。
+
+三位角色每个出场／必杀／得分／失分／最终胜利／最终失败场景各有两种语音，以及各两段「喝／哈」短音，共 42 个文件、900,833 bytes。41 个资源来自 RVC（其中米汀第二句必杀复用已转换且清晰的「新的球路，新的答案。准备好。」）；岁己得分的「耶～」直接采用岁己按钮原声，替换听辨不清的转换。两段击球原料也来自岁己按钮的「喝！（中气十足）」和三连「哈」的第一声，再分别转换成三位角色的声音。只有实际发球、接球和扣杀才触发，空挥和必杀特写准备阶段不触发；最后触球单独保留，随后同一步的碰网／得分不会吞掉短音。
+
+短音提前解码，不进入长台词队列；冷解码超过 120 ms 就放弃该次，避免迟到的「哈」出现在后续回合。短音跟随角色语音开关，合成球声仍独立保留。语音随机选项在入队时固定，同角色同场景避开上一个来源。暂停、重赛、静音和返回菜单会清理过期任务；有声冷视频开始后，旧台词下载取消优先级并让出带宽。
+
+新增十五段个人演出：三位角色的必杀、得分、失分、最终胜利和最终失败各一段。每个池包含旧无声片和新对白片，播放时首次随机，之后避开上一项，整条胜败队列的选择固定。旧岁栞双人片保留，并与个人演出轮换。每个片段明确记录 `paired` 和 `dialogue`，下一角色不会继承上一段的对白。新对白片使用生成器原生声音，停止外部台词；旧片继续独立配音。原生对白与角色语音／总静音开关一致，并在可听时降低 BGM。
+
+视频生成使用 `seedance_2.0_fast_vip` 图片＋音频参考。岁己参考为实际 `suiV2.pth` 转换的声音，栞栞与米汀参考为 HP2 分离后的本人独白。十五个视频任务的报价上限合计 432 积分，十八个新增中性 TTS 参考合计 18 积分；报价不是最终净消费账单。成功任务只轮询原提交 ID，节点、引用、提示词、报价与终态记录在 [`beach-volley-variety-job.json`](beach-volley-variety-job.json)，转码和视觉复核记录在 [`beach-volley-variety-delivery.json`](beach-volley-variety-delivery.json)。
+
+新视频标准版 1280 px／24 fps、CRF 25、AAC 64 kbps；轻量版 640 px、CRF 29、AAC 48 kbps，均为 faststart MP4，保留对白。标准版共 **14,679,873 bytes**，轻量版共 **3,404,658 bytes，减少 76.8%**。后台列举全部可播放变体，不消耗随机选择；岁栞只加载会用到的双人出场，完整模式当前 25 个片段，含米汀的非镜像对局 22 个、镜像 11 个。先完成全部轻量版，再在 32 MiB 上限内补清晰版；到达上限的片段仍能用已缓存的轻量版播放。保留 Save-Data、慢网络、减少动态效果、改选取消、固定源与 Blob 回收逻辑。
+
+56 项规则、媒体和声音测试通过，包含真实模型／训练记录、资源哈希、轻量音轨、混合有声／无声队列、短音去重、静音及冷视频带宽。三角色开发专项自然播放 30 次动画（含全部 15 个对白新片），核对视频不可跳过、暂停、角色语音、触球短音及完整 0.8 秒防守窗口。网络专项确认缓存旧片／新片／复播无新增视频请求，Save-Data 只准备轻量文件，关闭演出／减少动态效果不取视频，离开页面回收 Blob。
+
+本机 1 Mbps／120 ms 冷缓存的新岁己对白必杀，轻量版首帧约 1.24 秒、完整结束约 6.32 秒；标准版首帧约 0.68 秒、完整结束约 5.71 秒。此用例包含不同的游戏／语音准备时序，不证明轻量版首帧或墙钟必然更快；确定收益是较小的下载量和提前缓存后的零追加视频请求。未在实体手机或 Safari 上验证。
+
+生产版分别验证清晰缓存和 Save-Data 轻量缓存：仅用公开操作接回十一球、积满能量、触发必杀，确认真实 RVC 与触球短音解码、暂停音频时钟及同一声音恢复、视频零新增请求、不可跳过和自然结束后的完整 0.8 秒场内动作；防守方可移动，随后按正确球路出球。继续比赛后再次触发新对白变体，实际浏览器音轨解码非零（清晰 1280 px、轻量 640 px），无外部台词，语音开关与反应窗口保持一致。另通过公开操作完成同机岁己 7:0 米汀和单人岁己 0:7 米汀，核对逐分随机语音、岁己按钮「耶～」、实际冠军／败者台词、胜败音乐与重赛清理。生产不暴露修改状态的开发钩子。
+
+修改源文件 ESLint、56 项晴海测试通过；独立检出整合 master `76bd23d` 后，最终完整 `pnpm run check` 与随后顺序执行的 `pnpm run build` 再次通过，构建 ESLint 保持启用。日志为 `tmp/beach-variety-final-{eslint,tests}.log`、`tmp/beach-variety-submit-{check,build}.log`。最终构建的公开操作必杀和原生对白回归也通过。开发、网络、通用客户端及生产共 50 张截图全部通过像素 sanity，与公开文字状态、DOM、Canvas 尺寸和页面／控制台错误交叉核对，并逐张打开目检；页面与控制台错误为空。证据在 `tmp/beach-variety-{dev,media-final-dev,shared,production-standard,production-lite,production-results,submit-production}/`（通用客户端为 `state-0.json`，其余为 `report.json`）。
+
+当前生产试玩 **`http://localhost:4018/game/beach-volley`**，启动时设置 `NEXT_DIST_DIR=.next-beach-variety-submit-build`；此前端口为历史验收记录。最终公开操作回归入口为本机保留的 `tmp/beach-variety-production.cjs`，设置 `BEACH_VOLLEY_URL`、`BEACH_MEDIA_QUALITY=standard|lite`、`BEACH_AUDIO_PRODUCTION_OUTPUT` 指定地址、清晰度和证据目录。开发服务已停止，临时构建类型路径不纳入提交；模型、录播和原始生成资源仍保留在本机外部或 ignored 目录。

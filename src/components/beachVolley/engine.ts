@@ -158,6 +158,7 @@ export interface Game {
   specialWindup: SpecialWindup | null;
   message: string;
   event: GameEvent | null;
+  lastContact: GameEvent | null;
   eventId: number;
   seed: number;
 }
@@ -310,6 +311,7 @@ export function createGame(options: Partial<Options> = {}, seed = 74129): Game {
     specialWindup: null,
     message: "把这个夏天，打成好球。",
     event: null,
+    lastContact: null,
     eventId: 0,
     seed,
   };
@@ -317,8 +319,11 @@ export function createGame(options: Partial<Options> = {}, seed = 74129): Game {
 function emit(g: Game, type: GameEvent["type"], side: Side) {
   g.eventId += 1;
   g.event = { id: g.eventId, type, side };
+  // Contact survives a later net/point event in the same simulation step.
+  if (type === "hit" || type === "spike" || type === "serve") g.lastContact = g.event;
 }
 export function startGame(g: Game) {
+  g.lastContact = null;
   g.phase = "intro";
   g.phaseTime = 0;
   g.paused = false;
@@ -806,5 +811,6 @@ export function describeGame(g: Game) {
     hits: g.hits,
     specials: g.specials,
     event: g.event,
+    lastContact: g.lastContact,
   };
 }

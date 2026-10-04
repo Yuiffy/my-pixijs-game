@@ -11,6 +11,8 @@ const report = { checks: [], screenshots: [], requests: [], errors: [], timings:
 const state = (p) => p.evaluate(() => JSON.parse(window.render_game_to_text()));
 const advance = (p, ms) => p.evaluate((ms) => window.advanceTime(ms), ms);
 const videoPattern = /\/games\/beach-volley\/.*\.mp4(?:\?|$)/;
+const manifest = JSON.parse(fs.readFileSync('public/games/beach-volley/media.json', 'utf8'));
+const varied = manifest.version >= 5;
 async function capture(p, name) {
   const metrics = inspectPng(await p.screenshot({ path: path.join(output, `${name}.png`), fullPage: true, animations: 'disabled' }));
   const canvas = await p.locator('canvas').evaluate((c) => ({ width: c.width, height: c.height, displayWidth: c.clientWidth, displayHeight: c.clientHeight }));
@@ -37,6 +39,7 @@ async function context(browser, name, options = {}) {
       return play.call(this);
     };
   });
+  if (varied) await c.addInitScript(nativeFirst => { Math.random = () => nativeFirst ? 0.99 : 0; }, name === 'cold-1Mbps');
   await c.route('**/api/record', (r) => r.fulfill({ json: { success: true } }));
   await c.route(/https:\/\/(pagead2\.googlesyndication\.com|hm\.baidu\.com)\//, (r) => r.fulfill({ body: '' }));
   c.on('request', (r) => { if (videoPattern.test(r.url())) report.requests.push({ scenario: name, url: r.url(), type: r.resourceType(), time: Date.now() }); });
@@ -91,7 +94,11 @@ async function throttle(c, p) {
   const browser = await chromium.launch({ channel: 'chrome', headless: process.env.HEADED !== '1', args: ['--mute-audio', '--disable-speech-api'] });
   try {
     const warm = await context(browser, 'warm'), p = await warm.newPage(); await load(p);
-    await p.waitForFunction(() => { const c = JSON.parse(window.render_game_to_text()).mediaCache; return c.liteReady === 7 && c.standardReady === 7; });
+    await p.waitForFunction(varied => {
+      const c = JSON.parse(window.render_game_to_text()).mediaCache;
+      return c.liteReady === (varied ? 25 : 7) && c.standardReady > 0 && !c.pending;
+    }, varied);
+    assert.ok((await state(p)).mediaCache.bytes <= 32 * 1024 * 1024);
     assert.ok(report.requests.filter((r) => r.scenario === 'warm').every((r) => !r.url.includes('nagisa')));
     await capture(p, '01-warm-menu'); const downloads = report.requests.length;
     await p.locator('#beach-start').click(); const intro = await playing(p);
@@ -102,6 +109,12 @@ async function throttle(c, p) {
     await p.keyboard.press('Enter'); assert.equal((await state(p)).cinematic.id, frozen.cinematic.id);
     await capture(p, '03-cached-standard-special'); await natural(p); await reaction(p, '04-warm-defense');
     assert.equal(report.requests.length, downloads, 'warm intro and special cause no additional video network request');
+    if (varied) {
+      await rigSpecial(p); await playing(p);
+      assert.ok((await state(p)).cinematic.dialogue);
+      assert.equal((await state(p)).cinematic.cached, true);
+      await capture(p, '04b-cached-native-variant'); await natural(p); await advance(p, 800);
+    }
     await rigSpecial(p); await playing(p); assert.equal((await state(p)).cinematic.playbackSrc, frozen.cinematic.playbackSrc);
     await natural(p); await advance(p, 800);
     await p.getByRole('link', { name: '游戏大厅' }).click();
@@ -120,7 +133,8 @@ async function throttle(c, p) {
     await rigSpecial(pc); const low = await playing(pc);
     report.timings.liteFirstFrameMs = await pc.evaluate(() => window.mediaFirstFrames.at(-1).ms);
     assert.equal(low.width, 640); assert.equal((await state(pc)).cinematic.cached, false);
-    assert.ok((await state(pc)).cinematic.playbackSrc.includes('/lite-v4/'));
+    assert.ok((await state(pc)).cinematic.playbackSrc.includes(varied ? '/lite-v5/' : '/lite-v4/'));
+    if (varied) assert.ok((await state(pc)).cinematic.dialogue);
     const selected = (await state(pc)).cinematic;
     await capture(pc, '05-cold-light-special');
     await pc.keyboard.press('Enter'); assert.equal((await state(pc)).cinematic.id, selected.id);
@@ -136,18 +150,22 @@ async function throttle(c, p) {
     const baseline = await context(browser, 'original-1Mbps'), pb = await baseline.newPage();
     await baseline.addInitScript(() => { try { localStorage.setItem('beach-volley-cinema', 'off'); } catch { /* Opaque third-party frames have no storage. */ } });
     await load(pb); await throttle(baseline, pb);
-    const originalTiming = await pb.evaluate(async () => {
+    const originalTiming = await pb.evaluate(async varied => {
       const video = document.createElement('video'); video.muted = true; video.playsInline = true;
       const start = performance.now();
-      video.src = '/games/beach-volley/special-sui-v2.mp4'; document.body.append(video);
+      video.src = varied ? '/games/beach-volley/variety-v5/video-sui-special-2.mp4' : '/games/beach-volley/special-sui-v2.mp4'; document.body.append(video);
       const elapsed = new Promise((resolve) => video.requestVideoFrameCallback(() => resolve(performance.now() - start)));
       const ended = new Promise((resolve) => video.addEventListener('ended', () => resolve(performance.now() - start), { once: true }));
       await video.play(); const first = await elapsed; const full = await ended; video.remove();
       return { first: Math.round(first), full: Math.round(full) };
-    });
+    }, varied);
     report.timings.originalFirstFrameMs = originalTiming.first;
     report.timings.originalWallPlaybackMs = originalTiming.full;
-    assert.ok(report.timings.liteWallPlaybackMs < report.timings.originalWallPlaybackMs * 0.6, 'light clip completes with less buffering under identical throttling');
+    if (varied) {
+      const native = manifest.characters.sui.special.find(clip => clip.dialogue);
+      assert.ok(native.lite.bytes < fs.statSync(`public${native.src}`).size * 0.35);
+      report.checks.push('native light movie retains dialogue at under 35% of standard bytes; timings are measured without a first-frame speed guarantee');
+    } else assert.ok(report.timings.liteWallPlaybackMs < report.timings.originalWallPlaybackMs * 0.6, 'light clip completes with less buffering under identical throttling');
     await baseline.close();
 
     const data = await context(browser, 'save-data'), pd = await data.newPage();
@@ -157,9 +175,9 @@ async function throttle(c, p) {
     });
     await load(pd); await pd.getByRole('button', { name: /米汀.*NAGISA/ }).click();
     await pd.locator('#beach-opponent').selectOption('shiori');
-    await pd.waitForFunction(() => JSON.parse(window.render_game_to_text()).mediaCache.liteReady === 8);
+    await pd.waitForFunction(varied => JSON.parse(window.render_game_to_text()).mediaCache.liteReady === (varied ? 14 : 8), varied);
     assert.equal((await state(pd)).mediaCache.standardReady, 0);
-    assert.ok(report.requests.filter((r) => r.scenario === 'save-data').every((r) => r.url.includes('/lite-v4/') && !r.url.includes('point-')));
+    assert.ok(report.requests.filter((r) => r.scenario === 'save-data').every((r) => /\/lite-v[45]\//.test(r.url) && !/point(?:-|Win|Lose)/i.test(r.url)));
     await pd.locator('#beach-start').click(); await playing(pd); await capture(pd, '07-cached-light-nagisa');
     await natural(pd); const next = await playing(pd); assert.equal(next.width, 640); assert.equal((await state(pd)).cinematic.character, 'shiori');
     assert.equal((await state(pd)).cinematic.cached, true); await capture(pd, '08-cached-light-next-actor');

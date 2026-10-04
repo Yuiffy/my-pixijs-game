@@ -1,0 +1,2306 @@
+{
+  "engine": "RVC",
+  "torch": "2.8.0.dev20250318+cu128",
+  "gpu": "NVIDIA RTX 5080",
+  "datasets": {
+    "shiori": {
+      "actor": "shiori",
+      "source": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_10_04\\录制-26966466-20261004-100509-166-早安獭獭栞！.flv",
+      "sourceBytes": 1296924028,
+      "subtitle": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_10_04\\录制-26966466-20261004-100509-166-早安獭獭栞！.speaker.srt",
+      "selection": "Initial solo talk, no collab/singing; known speaker >=0.67 where labels exist; HP2 vocal separation",
+      "seconds": 373.21,
+      "samples": [
+        {
+          "start": 40.88,
+          "end": 43.389,
+          "transcript": "[栞栞 0.75] 实姐谢IEE的粉丝爱的牌",
+          "file": "0000.wav",
+          "sha256": "6e7dc776d99a93d7700182d566452351c12839f1b9b8fa2c27ba83efc09f0af8"
+        },
+        {
+          "start": 46.6,
+          "end": 51.05,
+          "transcript": "[栞栞 0.81] 看看你们看是十六号那个那个正式",
+          "file": "0001.wav",
+          "sha256": "8c804435801d2c7acecb51bac34c6c04143342be7283c686be9768b18f6ca1bf"
+        },
+        {
+          "start": 55.28,
+          "end": 57.529,
+          "transcript": "[栞栞 0.76] 所以十四号之前就要练好",
+          "file": "0002.wav",
+          "sha256": "ca6e70e0fe3b823d720a647549929d46471bbee5cc9653fce0eb5b48a21c932e"
+        },
+        {
+          "start": 57.659,
+          "end": 60.514,
+          "transcript": "[栞栞 0.71] 然后这个十三号it",
+          "file": "0003.wav",
+          "sha256": "a526c3ab39497d604ca1ce4a402aeaf3e4644973f29767d13b3c57b8ae1a5fa1"
+        },
+        {
+          "start": 60.514,
+          "end": 63.2,
+          "transcript": "[栞栞 0.71] 所以这个十三号之前交练好十三",
+          "file": "0004.wav",
+          "sha256": "fad776b9237ea359c9efd5aea31e3c3c9ed7ab7a50d3d5b5aa7f0ee3ce8b6d42"
+        },
+        {
+          "start": 63.2,
+          "end": 65.703,
+          "transcript": "[栞栞 0.74] 号之前你看十三号之前有几天啊",
+          "file": "0005.wav",
+          "sha256": "6840598f89fb76e4b7d75ab70e17a09443a264fca0f637fa41aafcbdf28fc5af"
+        },
+        {
+          "start": 85.059,
+          "end": 87.694,
+          "transcript": "[栞栞 0.68] 而且啊而且我像周一",
+          "file": "0006.wav",
+          "sha256": "0c18015cc03d802b1c2edd2f24ff6be30e62510fdbcd41199b4cd7cc17d16aab"
+        },
+        {
+          "start": 87.694,
+          "end": 90.16,
+          "transcript": "[栞栞 0.68] 我昨天晚上不是没播吗",
+          "file": "0007.wav",
+          "sha256": "d797ee0200d0211c84991db576a5d5560ed3cd25e24e67a7bd7d405159a7a243"
+        },
+        {
+          "start": 90.16,
+          "end": 93.619,
+          "transcript": "[栞栞 0.71] 我想周一晚上要播最近本来播的就少",
+          "file": "0008.wav",
+          "sha256": "8683830978c7a6ed84d2a0465d60f301f85bf3a297310b5b96ae819108dc7a1d"
+        },
+        {
+          "start": 124.449,
+          "end": 126.539,
+          "transcript": "[栞栞 0.67] 谢谢偷吃关明的外卖的薯条",
+          "file": "0009.wav",
+          "sha256": "c18e2fe19ca7b0d2cb3bd03b8059bcddac888d4c69ed4c276216d6c656922720"
+        },
+        {
+          "start": 128.189,
+          "end": 130.259,
+          "transcript": "[栞栞 0.75] 谢谢蝙蝠卡的比心",
+          "file": "0010.wav",
+          "sha256": "a244f1595d228e7dd2b6bbca8fed33216564f810297e7b00f0a9a76dc3e24bb1"
+        },
+        {
+          "start": 136.05,
+          "end": 140.69,
+          "transcript": "[栞栞 0.79] 别人是国际七天乐",
+          "file": "0011.wav",
+          "sha256": "5a9da05ea132bd8eecf59be816a54094ea703f0297c1c5b7791b679bbff403d1"
+        },
+        {
+          "start": 140.69,
+          "end": 145.16,
+          "transcript": "[栞栞 0.79] 你是国际七天乐呢啊谢谢恶恶兮兮",
+          "file": "0012.wav",
+          "sha256": "eb98a58a555a76f5b640954ee553d61e023743d7dc6723dbfc8f4edfdc831e9f"
+        },
+        {
+          "start": 159.67,
+          "end": 162.139,
+          "transcript": "[栞栞 0.77] 谢谢玉厨切薇的分三的牌",
+          "file": "0013.wav",
+          "sha256": "9173f7dee50e5ae24b34040464027588e41501080cc2e5386361589da1378ac9"
+        },
+        {
+          "start": 162.469,
+          "end": 167.34,
+          "transcript": "[栞栞 0.83] 换个时间补能因是周五没空啊",
+          "file": "0014.wav",
+          "sha256": "b84898ce05c8ae3ccc9cf97366ddadc2ced05fd43e862f0ba80eab35b545ec9e"
+        },
+        {
+          "start": 167.469,
+          "end": 171.539,
+          "transcript": "[栞栞 0.82] 下周五下周五要不播个早台吧",
+          "file": "0015.wav",
+          "sha256": "15802d7123e6221d95cc51b9cd60d1303044debc058a16ecd3bf7469daa569bf"
+        },
+        {
+          "start": 172.089,
+          "end": 177.0,
+          "transcript": "[栞栞 0.86] 下周五因为下周五约了小明那个练舞",
+          "file": "0016.wav",
+          "sha256": "f0a9d1e02797a98678dee5b82ceb6d53962878db70a10c1a2fb7e7dc935b8658"
+        },
+        {
+          "start": 177.45,
+          "end": 181.384,
+          "transcript": "[栞栞 0.70] 下周五晚上那午练舞吃个饭",
+          "file": "0017.wav",
+          "sha256": "e9d465d5374500528e89ceb03e6d832472fc188eeee0d0b5f33a8db2b862e4a1"
+        },
+        {
+          "start": 184.18,
+          "end": 186.81,
+          "transcript": "[栞栞 0.77] 谢海上鸟的自粉枪开门就好",
+          "file": "0018.wav",
+          "sha256": "1fdbb1fa96de03efee8ecfa2d87df9475e632946f4ce60828d01ae392b901bf0"
+        },
+        {
+          "start": 186.81,
+          "end": 189.234,
+          "transcript": "[栞栞 0.81] 回顾一下经典吧这是什么啊",
+          "file": "0019.wav",
+          "sha256": "f7071e7d1dbfd6f167e776cab019acd11e3006084d8af4a11fa256529ce7c74a"
+        },
+        {
+          "start": 425.619,
+          "end": 431.33,
+          "transcript": "[栞栞 0.72] 但是只写了一些但是有些我都做完了",
+          "file": "0020.wav",
+          "sha256": "fc5154a7d4620ca591c40a23a7bb1207396621077e2382411e03eeabb40cf374"
+        },
+        {
+          "start": 505.019,
+          "end": 507.809,
+          "transcript": "[栞栞 0.68] 别说了开始我十六号其中考试",
+          "file": "0021.wav",
+          "sha256": "a9744f03d2d9b6ca7ab70512b9141227d268ba4bde6029d2402f39e02a0c0bad"
+        },
+        {
+          "start": 528.5,
+          "end": 534.165,
+          "transcript": "[栞栞 0.67] 嗯找了个参考画图大概是这样子吧",
+          "file": "0022.wav",
+          "sha256": "2cdb19c55d74cbba2ff019c04e941f2e4ce5dd6123c33ba9284564eb7754cf63"
+        },
+        {
+          "start": 544.75,
+          "end": 548.225,
+          "transcript": "[栞栞 0.76] 他他看这是题都都是小看手画的",
+          "file": "0023.wav",
+          "sha256": "97c1b3d4336b6c3a3c68e24581133d36a48802233e55b2ef7978c6f3c6336554"
+        },
+        {
+          "start": 551.209,
+          "end": 555.7,
+          "transcript": "[栞栞 0.84] 这个是一千的什么胸围那么大呀",
+          "file": "0024.wav",
+          "sha256": "4b82f98857b1bf39e2b54d5f70ab89ee417ad85401b8275ad348c1d1af404fb6"
+        },
+        {
+          "start": 557.93,
+          "end": 561.7,
+          "transcript": "[栞栞 0.68] 不像你啊这也不是我呀",
+          "file": "0025.wav",
+          "sha256": "f4c8dae6b53bdc42ba0a354e97f8c829a2c3fc8a3f705f36283d0369f6e02aa6"
+        },
+        {
+          "start": 561.7,
+          "end": 564.639,
+          "transcript": "[栞栞 0.81] 这不是我呀",
+          "file": "0026.wav",
+          "sha256": "33789acea9b157b69163d3c82c6d71be26b69d073233aa2d7ebce174f4baf3bb"
+        },
+        {
+          "start": 564.639,
+          "end": 567.58,
+          "transcript": "[栞栞 0.81] 因为那个照片那个照片要去公司的时候才",
+          "file": "0027.wav",
+          "sha256": "ebc9a9b1cf49e7867690ed66e198987fef3e3770678a344677e3b2075537ebab"
+        },
+        {
+          "start": 568.63,
+          "end": 573.94,
+          "transcript": "[栞栞 0.83] 没有我这个照片我只是找那个老师设计",
+          "file": "0028.wav",
+          "sha256": "081f4e51762aa2520b4ba2b2b32add1ccfafe16173a09f5bc3f6fbbae46528bb"
+        },
+        {
+          "start": 574.969,
+          "end": 577.354,
+          "transcript": "[栞栞 0.77] 然后里面的照片我自己去拍",
+          "file": "0029.wav",
+          "sha256": "db9809b428aa19e18f392248e361127c110d4f4edf706f44d1f674a78475be1b"
+        },
+        {
+          "start": 581.199,
+          "end": 583.685,
+          "transcript": "[栞栞 0.69] 不认识海塔这本来也不是我呀",
+          "file": "0030.wav",
+          "sha256": "d5b3b24731b3d21dc66bc061db47c2ed5bbe6276777c640128d8a1028a0d7009"
+        },
+        {
+          "start": 591.27,
+          "end": 594.58,
+          "transcript": "[栞栞 0.80] 把眼睛拽的看的好清拽的看的好清晰",
+          "file": "0031.wav",
+          "sha256": "93e8658e527ed93df2540feb3882082d0a68251038a0e565aa24927cc5ae9826"
+        },
+        {
+          "start": 595.27,
+          "end": 598.2,
+          "transcript": "[栞栞 0.70] 都叫你少少那个点节制一点了",
+          "file": "0032.wav",
+          "sha256": "a7209b10f5aa6ecaab5f9a8d81fcf2a250dcd4a9c4c4ed9f0b274f48f6d8a6ab"
+        },
+        {
+          "start": 603.079,
+          "end": 605.85,
+          "transcript": "[栞栞 0.79] 我上次我上次本来三级三d结束的时候",
+          "file": "0033.wav",
+          "sha256": "3a42dae47c94cf7c14920920e9bac14d0af20193125e55389e687a708f237053"
+        },
+        {
+          "start": 611.599,
+          "end": 614.43,
+          "transcript": "[栞栞 0.78] 我说能不能给我的打歌服调出来",
+          "file": "0034.wav",
+          "sha256": "de1c9a91dd5b40a2feddf35c07e1aad56a67b553c5704df8692262617de757f2"
+        },
+        {
+          "start": 629.069,
+          "end": 632.229,
+          "transcript": "[栞栞 0.74] 急着下班了什么的我想下班说",
+          "file": "0035.wav",
+          "sha256": "a80776b90cfd4c11ed1ab07b48148a1dbffc72e6eb8d42a86e3533b5f4bb6cdd"
+        },
+        {
+          "start": 633.989,
+          "end": 635.999,
+          "transcript": "[栞栞 0.72] 嗯我也不懂那些三d技术嘛",
+          "file": "0036.wav",
+          "sha256": "21d661962b53c0da3d27013fba0895ec0e2eaaa80dee4a6b9203f017a8f15460"
+        },
+        {
+          "start": 635.999,
+          "end": 637.945,
+          "transcript": "[栞栞 0.72] 反正他的意思是调出来要好久",
+          "file": "0037.wav",
+          "sha256": "6c11dbc2af90691aee378f89f6856ed55a1b41c538da2e4bda0ced3e9d6a25ba"
+        },
+        {
+          "start": 649.079,
+          "end": 651.212,
+          "transcript": "[栞栞 0.70] 那下个月再拍吧啊",
+          "file": "0038.wav",
+          "sha256": "ad279da11a13267398ed580e68ee05b71c6e7f492737a939dbcc0eb2dc338223"
+        },
+        {
+          "start": 651.212,
+          "end": 653.175,
+          "transcript": "[栞栞 0.70] 应该也不是很特别着急",
+          "file": "0039.wav",
+          "sha256": "8846980609b1392ded747d9f5d0656370da333e40af4f8cacc6895c2e54eb882"
+        },
+        {
+          "start": 666.91,
+          "end": 669.84,
+          "transcript": "[栞栞 0.72] 大家要下班了你着急开会了",
+          "file": "0040.wav",
+          "sha256": "20ab99d6897d3a15a0460ce0055489d3671dc029006a492e3fe11d35158abad7"
+        },
+        {
+          "start": 671.208,
+          "end": 673.639,
+          "transcript": "[栞栞 0.72] 小看打歌服调出来要很久吗",
+          "file": "0041.wav",
+          "sha256": "1c0b316dceff40fd3c2704142d1b7fbb02feb6df956924ce30853b6126b6e685"
+        },
+        {
+          "start": 673.639,
+          "end": 677.009,
+          "transcript": "[栞栞 0.80] 我我我以为就是一下一下的事情是我不懂",
+          "file": "0042.wav",
+          "sha256": "a66a5b3888ba5e6facc59da86d6fa319db7809d0e634649ae5ea693a03e368ca"
+        },
+        {
+          "start": 677.009,
+          "end": 680.239,
+          "transcript": "[栞栞 0.80] 你想下不下班",
+          "file": "0043.wav",
+          "sha256": "53a1e0253611297a61df563c7f145318bff4ea5aa13c0230adc3643b022d5441"
+        },
+        {
+          "start": 680.239,
+          "end": 684.54,
+          "transcript": "[栞栞 0.76] 了下次再也不敢了下次再早点说了",
+          "file": "0044.wav",
+          "sha256": "57964a2fd07a5bc68bf407ccfb271f0afce8a64f1e60970bbc02411539dd3aeb"
+        },
+        {
+          "start": 690.88,
+          "end": 693.374,
+          "transcript": "[栞栞 0.72] 呃可是我拍出来拍立得挺可爱的呀",
+          "file": "0045.wav",
+          "sha256": "02d12a82eff53974409cb5684c2f9ee3c397822e6cc658c4151cb8d3d7c49e57"
+        },
+        {
+          "start": 705.28,
+          "end": 707.389,
+          "transcript": "[栞栞 0.75] 变一下吧求求了为什么呀",
+          "file": "0046.wav",
+          "sha256": "0845dd4b0f89e531e693b08f2d32d90dcb9434a614a7e6856e1702c533bdc703"
+        },
+        {
+          "start": 709.18,
+          "end": 712.029,
+          "transcript": "[栞栞 0.72] 我这是同期早餐吃什么",
+          "file": "0047.wav",
+          "sha256": "25e4ad57b4c4de35ae68934a5e66c683432eefcd9ea0fff5741defe2d68b83a3"
+        },
+        {
+          "start": 730.809,
+          "end": 733.6,
+          "transcript": "[栞栞 0.81] 这个叫鸡肉饭团",
+          "file": "0048.wav",
+          "sha256": "f7fbb6b6de0f8c723c4a5d39ae0324550b2dd318a7eb58ca0d64016374e83630"
+        },
+        {
+          "start": 738.29,
+          "end": 740.859,
+          "transcript": "[栞栞 0.79] 这个饼干芝士饼干",
+          "file": "0049.wav",
+          "sha256": "62b16e378b8a8201baa6b23cf103248ea5c83383938ac89a279ee32617d26629"
+        },
+        {
+          "start": 740.859,
+          "end": 743.259,
+          "transcript": "[栞栞 0.79] 我特别爱吃超级高热量的东西叫娜",
+          "file": "0050.wav",
+          "sha256": "925fa53eebcaeae84b0e2784ea8c7b89fabe3d0c18b2261bf9e93f26b646d7a7"
+        },
+        {
+          "start": 746.589,
+          "end": 750.659,
+          "transcript": "[栞栞 0.81] 威化饼芝士威化饼巨好吃",
+          "file": "0051.wav",
+          "sha256": "4f30491a3d6f15cd0c5b74e8deadc3178c9bac98ddf1e2623ef5d6e189d8037b"
+        },
+        {
+          "start": 752.209,
+          "end": 754.759,
+          "transcript": "[栞栞 0.70] 那宝迪这个确确实好吃",
+          "file": "0052.wav",
+          "sha256": "9fe9aac2809fa85af764c564c01377639eb7482d0447b06b4c4a6661dbacdc2f"
+        },
+        {
+          "start": 755.55,
+          "end": 761.22,
+          "transcript": "[栞栞 0.73] 天天吃了几口虾去找时机",
+          "file": "0053.wav",
+          "sha256": "7f07b9413d05955767e5a1bd868676b77f99912b05c1de99a57bac85590088dd"
+        },
+        {
+          "start": 761.22,
+          "end": 764.399,
+          "transcript": "[栞栞 0.75] 我也爱吃这个好巧我也爱吃这个",
+          "file": "0054.wav",
+          "sha256": "9d9121115d04642bca699fc895168e33a6510f045d3b815cc257fe5ad60510ab"
+        },
+        {
+          "start": 764.399,
+          "end": 766.259,
+          "transcript": "[栞栞 0.71] 我就吃这两个然后喝了冰红茶",
+          "file": "0055.wav",
+          "sha256": "9dfcee07466f43b62e385f649c4bacdac1866f4a4df05a6b2e6eed3de74f174b"
+        },
+        {
+          "start": 767.309,
+          "end": 771.6,
+          "transcript": "[栞栞 0.77] 好吃好吃好好吃谢谢暖心",
+          "file": "0056.wav",
+          "sha256": "5fb4aa597f3d1632447b75387eea11d59e65ed1334478aaf6866b319fd30a58e"
+        },
+        {
+          "start": 775.03,
+          "end": 778.159,
+          "transcript": "[栞栞 0.74] 确实啊确实好吃",
+          "file": "0057.wav",
+          "sha256": "fe5cc3c4a08adc11b40d8b48b59533ff947c38c410a0aaf77936790ddb640015"
+        },
+        {
+          "start": 790.079,
+          "end": 793.46,
+          "transcript": "[栞栞 0.72] 英语略过的人气票今谢又来人家了",
+          "file": "0058.wav",
+          "sha256": "a421247c6a0a121b5d42d7a389c574dd1cfb99b31f8ad4c4e141e30f944005e7"
+        },
+        {
+          "start": 795.069,
+          "end": 797.96,
+          "transcript": "[栞栞 0.72] 雪莲的粉丝三只螃蟹就会食十度",
+          "file": "0059.wav",
+          "sha256": "2d75dfa0aea546103494bc61541e04bb89e90fe61417c9b39cfc3c03d1f0464d"
+        },
+        {
+          "start": 802.12,
+          "end": 804.32,
+          "transcript": "[栞栞 0.67] 对呀他甜甜口又甜又咸的",
+          "file": "0060.wav",
+          "sha256": "fbe942f7ebbf28a945a20142356d4f868248a136e6f70f64c5e5f74a652677c9"
+        },
+        {
+          "start": 830.559,
+          "end": 832.93,
+          "transcript": "[栞栞 0.78] 谢谢海军哥的小康你知道吗",
+          "file": "0061.wav",
+          "sha256": "8a7a9db7de081e68b9f727311818113b85fe3357392e906922e8d446b96b0b6c"
+        },
+        {
+          "start": 843.27,
+          "end": 845.455,
+          "transcript": "[栞栞 0.70] 谢云一姑姑的三三的白切黑暗",
+          "file": "0062.wav",
+          "sha256": "2d3819fb1568342e9f8195c0005aa87613c10da49f6d1261b665238d1dd352c4"
+        },
+        {
+          "start": 893.089,
+          "end": 895.154,
+          "transcript": "[栞栞 0.73] 我不知道好像油管上有针呢",
+          "file": "0063.wav",
+          "sha256": "82d1f1650ab61671415efba0a7e1acdaedcb5d48da75ef400775daae6b2f7457"
+        },
+        {
+          "start": 901.859,
+          "end": 903.923,
+          "transcript": "[栞栞 0.73] 好了",
+          "file": "0064.wav",
+          "sha256": "ccf40864cb280ae2ebc6ec885c98a616c7fa277d37529b7227a242453366c43f"
+        },
+        {
+          "start": 903.923,
+          "end": 905.816,
+          "transcript": "[栞栞 0.73] 大家想走了",
+          "file": "0065.wav",
+          "sha256": "1ca82b7f76f3acbbd929501d0032396daf70fccab4a392165089d6cca021667a"
+        },
+        {
+          "start": 905.816,
+          "end": 907.71,
+          "transcript": "[栞栞 0.73] 谢谢周大小爱的这么圈",
+          "file": "0066.wav",
+          "sha256": "166487f19446c0444006da3fb56804abbcd17c57a27d6093c831e24c644f850c"
+        },
+        {
+          "start": 911.939,
+          "end": 914.83,
+          "transcript": "[栞栞 0.78] 又黄又脆又咸他是你吧",
+          "file": "0067.wav",
+          "sha256": "d81195ce216989ab0dcfdf9f46cc5e3ff72ec3f0011fdd13740a873734364d29"
+        },
+        {
+          "start": 915.959,
+          "end": 921.33,
+          "transcript": "[栞栞 0.75] 又黄又黄又软又又又外面黄黄的",
+          "file": "0068.wav",
+          "sha256": "61d56096fc3a2743a8ef9b7e9ce29dd2d47ba15d6ee1fc0125e681666af8d90b"
+        },
+        {
+          "start": 930.01,
+          "end": 932.259,
+          "transcript": "[栞栞 0.73] 不高雅不是这个说法什么意思啊",
+          "file": "0069.wav",
+          "sha256": "3df8621706657238fa5ab8ee11d7f84d6763b581e3d831e086bdea813b724f6d"
+        },
+        {
+          "start": 950.859,
+          "end": 954.874,
+          "transcript": "[栞栞 0.74] 你这个你这个黄焖鸡又黄又焖又烧鸡",
+          "file": "0070.wav",
+          "sha256": "7faedfd5a5d96e6b0df5eef4a0b27991533a56032f446b8b3040af86db204725"
+        },
+        {
+          "start": 957.979,
+          "end": 960.17,
+          "transcript": "[栞栞 0.72] 好像是有那种小型麦克风吧",
+          "file": "0071.wav",
+          "sha256": "b6ccbdc80907a1c0978707919b4dc85e49fc73de434ce909592fee87030ac167"
+        },
+        {
+          "start": 1023.809,
+          "end": 1026.199,
+          "transcript": "[栞栞 0.75] 谢谢喝的扣的love的粉丝喊的朋友",
+          "file": "0072.wav",
+          "sha256": "3dfdb404ed902978b721c83ff97aa4e7cdaae6a5cd8f4500de0fbd39a234e90a"
+        },
+        {
+          "start": 1026.199,
+          "end": 1028.635,
+          "transcript": "[栞栞 0.75] 谢谢香辣土豆的粉三动态",
+          "file": "0073.wav",
+          "sha256": "36d05beba543c3999a9743a462c0833886ff05b57f45b2fa8a43c41ef6795427"
+        },
+        {
+          "start": 1083.719,
+          "end": 1085.73,
+          "transcript": "[栞栞 0.75] 你自己问你问问自己的下头",
+          "file": "0074.wav",
+          "sha256": "31ee65ecdab08f56bdb3c7034a07a04f85db948101bcacc14f2af8f29e5135e7"
+        },
+        {
+          "start": 1085.73,
+          "end": 1087.748,
+          "transcript": "[栞栞 0.72] 小凯我这不是公式下头吗",
+          "file": "0075.wav",
+          "sha256": "77cf10dbf82126fbc4e687c8c8af50a247f820497f3530dd025a14ceb04be70b"
+        },
+        {
+          "start": 1088.38,
+          "end": 1090.75,
+          "transcript": "[栞栞 0.73] 很公示的呀谢谢暖暖",
+          "file": "0076.wav",
+          "sha256": "18cae565d76d0f438b1373641165ce69ebbbbe32698b64ae5d6f7946ecd6b08b"
+        },
+        {
+          "start": 1117.289,
+          "end": 1119.639,
+          "transcript": "[栞栞 0.75] 除了半福如东海寿比南山",
+          "file": "0077.wav",
+          "sha256": "e436bed64113b590a5ada6ffb81ffc9fc09dfc214a0f16402a4b4f47f1393d28"
+        },
+        {
+          "start": 1126.969,
+          "end": 1130.32,
+          "transcript": "[栞栞 0.73] 下童真就是第七d七就是单推",
+          "file": "0078.wav",
+          "sha256": "0b1d68b06beef50d86e413d4596004512184c8070d452205f2b8c6d5f7c70ca5"
+        },
+        {
+          "start": 1180.84,
+          "end": 1182.875,
+          "transcript": "[栞栞 0.68] 听着抓心挠肝那就是烧心",
+          "file": "0079.wav",
+          "sha256": "1c21d940a17a3a9426fb9fc2c47bdcfe1cc7b273844cd911004a3232b615f6d8"
+        },
+        {
+          "start": 1206.84,
+          "end": 1209.53,
+          "transcript": "[栞栞 0.70] 奥数就是什么看子",
+          "file": "0080.wav",
+          "sha256": "1c337c9e1376306a20d7c331eb358d5ed47d54391f7fd715303cfa6f3bde0cd4"
+        },
+        {
+          "start": 1290.83,
+          "end": 1292.875,
+          "transcript": "[栞栞 0.71] 你说我们每天吃的苹果饭",
+          "file": "0081.wav",
+          "sha256": "cfda7af61fac77a81da50fc8e799390495837ed9a86d3baf95b16de9dbe75fb7"
+        },
+        {
+          "start": 1313.07,
+          "end": 1316.925,
+          "transcript": "[栞栞 0.70] 想看的奥数轻声细语真是新品鲜品",
+          "file": "0082.wav",
+          "sha256": "e760bf4bd1e13505296605044bbc6ff141821a7351a0b00868af3cbdf3f64ad2"
+        },
+        {
+          "start": 1317.13,
+          "end": 1319.725,
+          "transcript": "[栞栞 0.68] 什么叫有点母语的碎碎念是什么意思",
+          "file": "0083.wav",
+          "sha256": "d1398d47d1c08e55cb78994d8cb0eaf33180573cc2a776902af17fc16b38800b"
+        },
+        {
+          "start": 1333.59,
+          "end": 1336.32,
+          "transcript": "[栞栞 0.73] 其实拼好饭和其他的外卖是一样的",
+          "file": "0084.wav",
+          "sha256": "ac9826a3f08b5748fc1b434fd5e64dc1c81882482aa07cc6537ac5a5e7241693"
+        },
+        {
+          "start": 1338.769,
+          "end": 1340.77,
+          "transcript": "[栞栞 0.73] 你吃拼好饭也不干净",
+          "file": "0085.wav",
+          "sha256": "f64511c224d1c9695d3cf6df0321c1510d2d1082041bb4fbe2dc527fd838bb46"
+        },
+        {
+          "start": 1340.77,
+          "end": 1342.6,
+          "transcript": "[栞栞 0.73] 你吃拼好饭不干净",
+          "file": "0086.wav",
+          "sha256": "075f891abfe280fdb4a1d1ca53bf8116582579dfb77182f2d6fffd1b8bfc4b68"
+        },
+        {
+          "start": 1342.6,
+          "end": 1345.699,
+          "transcript": "[栞栞 0.80] 别的外卖也不干净你自己做",
+          "file": "0087.wav",
+          "sha256": "9aa453f62d1b1650778424086454f491adf3fc55a7b6d7b94603c0f894a92588"
+        },
+        {
+          "start": 1346.189,
+          "end": 1351.8,
+          "transcript": "[栞栞 0.77] 小康纯的假的不去他不看",
+          "file": "0088.wav",
+          "sha256": "7f452da0253870c8b369dc607f38d1f7b3eddc029e5afe018c2f15d3b33a5487"
+        },
+        {
+          "start": 1351.8,
+          "end": 1354.754,
+          "transcript": "[栞栞 0.71] 只吃防腐剂充满的夹心芝士饼干",
+          "file": "0089.wav",
+          "sha256": "e24bd9f652c9e5a15af100b511bb5efcd80b6a8ba64da1040cf03b0896209436"
+        },
+        {
+          "start": 1357.4,
+          "end": 1360.53,
+          "transcript": "[栞栞 0.69] 你拜拜你拜拜我们娜宝娜宝弟",
+          "file": "0090.wav",
+          "sha256": "2d061f8907eca81ddbd05286325e1f883e77ce5ac0b5bae65f4ca8370e21cc12"
+        },
+        {
+          "start": 1370.6,
+          "end": 1372.609,
+          "transcript": "[栞栞 0.79] 谢谢刚毅感谢高毅的自播枪",
+          "file": "0091.wav",
+          "sha256": "29dce865bd9dd22c91931ec99cd4d65a787274d2355ac2ac90660add7f42fd87"
+        },
+        {
+          "start": 1394.049,
+          "end": 1396.514,
+          "transcript": "[栞栞 0.78] 谢谢懒惰至己的k姐的粉丝的牌",
+          "file": "0092.wav",
+          "sha256": "cb47aed1a1d3c01d19d936645157f856966b5fd21772fd8877c98e989dfcee05"
+        },
+        {
+          "start": 1423.049,
+          "end": 1425.8,
+          "transcript": "[栞栞 0.78] 我又忘记了三d的时候",
+          "file": "0093.wav",
+          "sha256": "5ab4ed8dcc8eab61924f168e6bda54272d38320786665d18f6f8398ca9e3c58b"
+        },
+        {
+          "start": 1472.89,
+          "end": 1475.699,
+          "transcript": "[栞栞 0.72] 而且最近也那个放假了",
+          "file": "0094.wav",
+          "sha256": "24da474e88776078ecc8941f990746fbe024da58a0267decc58100aef6d3d38d"
+        },
+        {
+          "start": 1502.039,
+          "end": 1504.129,
+          "transcript": "[栞栞 0.77] 我跟你说吃干净外面的小技巧",
+          "file": "0095.wav",
+          "sha256": "41d0538ec6f87ef97b2749ea67bf045d777c9f83dbb2140eb562e3a32edc57be"
+        },
+        {
+          "start": 1504.129,
+          "end": 1507.969,
+          "transcript": "[栞栞 0.78] 有堂食店观察老板厨子有没有洁癖",
+          "file": "0096.wav",
+          "sha256": "f21d6e9096664fdd879b94b9d54c064fae49a62d8af8ce28ca4dbbe48c2b5b73"
+        },
+        {
+          "start": 1508.478,
+          "end": 1510.59,
+          "transcript": "[栞栞 0.67] 厨子怎么可能会有洁癖呢",
+          "file": "0097.wav",
+          "sha256": "e2cfb6bf8fd45ec351b08b703278527d55fcbe4d56119b4e4a35078d18752a86"
+        },
+        {
+          "start": 1521.239,
+          "end": 1524.389,
+          "transcript": "[栞栞 0.83] 谢莫尼的粉丝在东海有洁癖的人能到那个",
+          "file": "0098.wav",
+          "sha256": "e1caee581bad85d3bf7fd011b8792c771c3d1da33fba4980cf83b6f53064a35f"
+        },
+        {
+          "start": 1524.389,
+          "end": 1527.369,
+          "transcript": "[栞栞 0.83] 饭店后厨去吗",
+          "file": "0099.wav",
+          "sha256": "1f47898d92617f45262522aa985536ed9cd3ea17fd9a770d85a2d97d547ce9a2"
+        },
+        {
+          "start": 1530.92,
+          "end": 1533.949,
+          "transcript": "[栞栞 0.72] 看看手里吃了好多这个火锅店烤肉店",
+          "file": "0100.wav",
+          "sha256": "2286e96b4b68448ef0bbcc64cbb4fc3a4b071a2caf0a019de49ba27d6ef5d8ed"
+        },
+        {
+          "start": 1533.949,
+          "end": 1535.994,
+          "transcript": "[栞栞 0.69] 那个后厨打工天哪脏的要死",
+          "file": "0101.wav",
+          "sha256": "199756af9b565c7b869cba2c7fc913a31df92664ad453dc668f6f591e52bf5ba"
+        },
+        {
+          "start": 1538.63,
+          "end": 1540.84,
+          "transcript": "[栞栞 0.71] 有洁癖的人只能自己做饭",
+          "file": "0102.wav",
+          "sha256": "c4c2578a6f19d5c61e2f53c100bbb857da3cbd4310c486e5fe091ef66dc55322"
+        },
+        {
+          "start": 1540.93,
+          "end": 1543.27,
+          "transcript": "[栞栞 0.77] 自己自己不是自己在家里自己当自己的厨",
+          "file": "0103.wav",
+          "sha256": "42e57b7b8d890980d61786f6111116caf6ffd00823926a7a9737c10da79eeaff"
+        },
+        {
+          "start": 1543.27,
+          "end": 1545.439,
+          "transcript": "[栞栞 0.77] 子",
+          "file": "0104.wav",
+          "sha256": "a5823daa99186355accb40ff16f1c8b3997b88f8f091fdf3ad3b402816e69576"
+        },
+        {
+          "start": 1546.17,
+          "end": 1549.5,
+          "transcript": "[栞栞 0.80] 你没有办法到那种饭店餐厅里去当厨子",
+          "file": "0105.wav",
+          "sha256": "282c417a5647f99f684ccb1aae06dfb9fb3da579427ad25b50609485728f659a"
+        },
+        {
+          "start": 1550.91,
+          "end": 1555.26,
+          "transcript": "[栞栞 0.74] 你怎么干过这么多毒瘾毒眼打暑假工",
+          "file": "0106.wav",
+          "sha256": "c7ff69d6556212ab5f152f1d56b955d8e38f34702296b1a9bf4e9f5d6b1c1392"
+        },
+        {
+          "start": 1556.009,
+          "end": 1558.0,
+          "transcript": "[栞栞 0.68] 谢旺仔馒头的粉丝安灯牌",
+          "file": "0107.wav",
+          "sha256": "9e478d3c0a11e08c570e0262f53577eb5f2f2b619fbd910c99c9020e13b2626f"
+        },
+        {
+          "start": 1574.049,
+          "end": 1576.834,
+          "transcript": "[栞栞 0.78] 饭店吃饭的时候会有个牌子吧",
+          "file": "0108.wav",
+          "sha256": "8bc5c234d8886ecc97b4c388749433eb54ca076b473ba441cd2aeaf6e47449a6"
+        },
+        {
+          "start": 1580.43,
+          "end": 1583.34,
+          "transcript": "[栞栞 0.72] 有ABCD就是绿色的",
+          "file": "0109.wav",
+          "sha256": "2ecddad7df828039941e8cfa7e5659afd4f0b2b41f2a28e8486a705322cf361b"
+        },
+        {
+          "start": 1583.34,
+          "end": 1585.955,
+          "transcript": "[栞栞 0.74] 一笑脸就是非常干净的",
+          "file": "0110.wav",
+          "sha256": "fa03df9b87cf8ecff9331ea43b279769cd5c0190a8da885c675d172302a9d1c4"
+        },
+        {
+          "start": 1590.33,
+          "end": 1593.294,
+          "transcript": "[栞栞 0.75] 他已经是绿色笑脸了就是特别干净",
+          "file": "0111.wav",
+          "sha256": "031644c87c64b929246ae45a9b1a71810e20bbb445a03a58733c7fce7d3987a2"
+        },
+        {
+          "start": 1593.89,
+          "end": 1595.889,
+          "transcript": "[栞栞 0.69] 就是在饭干净等级中已经算是很干净的那",
+          "file": "0112.wav",
+          "sha256": "197ea8d7787c120cb082d6e34f6ca34fc3779f991b8708841a0c6a36daf1e885"
+        },
+        {
+          "start": 1595.889,
+          "end": 1597.719,
+          "transcript": "[栞栞 0.69] 种了",
+          "file": "0113.wav",
+          "sha256": "829e59ad240a1fb5eb3d2383d1c2d1e60e5aa97afc70685ffbef8545a4ff9197"
+        },
+        {
+          "start": 1607.64,
+          "end": 1610.409,
+          "transcript": "[栞栞 0.75] 但是那个地板因为常年做饭什么的",
+          "file": "0114.wav",
+          "sha256": "b3dfae6a8c922fe78adaebf1dac241c156c8458f54e067df9e14d4981d8ccef2"
+        },
+        {
+          "start": 1625.62,
+          "end": 1628.53,
+          "transcript": "[栞栞 0.81] 但是也拖不干净油污啊",
+          "file": "0115.wav",
+          "sha256": "496b46db1317803afe3b15fb3660de6a76fef697057be704857281ab36410aa3"
+        },
+        {
+          "start": 1629.18,
+          "end": 1631.189,
+          "transcript": "[栞栞 0.78] 谢谢糖气内的本三灯牌牌",
+          "file": "0116.wav",
+          "sha256": "b5a66a8471886dbfbac3edca163052c4fb482182e8420231a41a8bcdc41958d4"
+        },
+        {
+          "start": 1632.06,
+          "end": 1635.42,
+          "transcript": "[栞栞 0.82] 九零零五一三的大哥",
+          "file": "0117.wav",
+          "sha256": "adcfb0da191ea8599c0bd40a3d0ccec9ebce163e9027a4ea8ca85b5bdecc225f"
+        },
+        {
+          "start": 1635.42,
+          "end": 1638.609,
+          "transcript": "[栞栞 0.82] 黑色表情有油烟就是这样",
+          "file": "0118.wav",
+          "sha256": "dd53b04499e25bdc1a9feb83bdff2514ae3874c15aceaede34f26ca98346a216"
+        },
+        {
+          "start": 1638.66,
+          "end": 1641.409,
+          "transcript": "[栞栞 0.70] 但它已经是那种卫生级别",
+          "file": "0119.wav",
+          "sha256": "41ec3e74edbb95be68bd402e4eb7674428a0dc43aaec6879b2b797ebe4a0161e"
+        },
+        {
+          "start": 1641.409,
+          "end": 1643.534,
+          "transcript": "[栞栞 0.67] 已经是绿色笑脸的那种了",
+          "file": "0120.wav",
+          "sha256": "78dd85340b220cf407a22f4f6cd0600c85d387414cdd989c5b8e8db7e8a8cfe0"
+        },
+        {
+          "start": 1645.489,
+          "end": 1649.885,
+          "transcript": "[栞栞 0.87] 没有办法谢谢林星小鱼的粉丝牌灯牌",
+          "file": "0121.wav",
+          "sha256": "b04d698a4d7d2ee28369ae755eb5b76e3f1eb3bffe473025d2d57af64596a65f"
+        },
+        {
+          "start": 1669.299,
+          "end": 1672.109,
+          "transcript": "[栞栞 0.71] 拖地都不行那靠姐还在呀",
+          "file": "0122.wav",
+          "sha256": "b67f49a8dee36f0aaccad75294d2e206ffd1638103cb8ec042bdca6bcaad02e3"
+        },
+        {
+          "start": 1672.18,
+          "end": 1675.695,
+          "transcript": "[栞栞 0.74] 还在呀致敬还在呢还是连锁店",
+          "file": "0123.wav",
+          "sha256": "13278501a64591974de97d7a0b78a36e2c75addf1d726ed880315f01cb8ff72f"
+        },
+        {
+          "start": 1679.4,
+          "end": 1681.465,
+          "transcript": "[栞栞 0.77] 他们已经是很干净的了",
+          "file": "0124.wav",
+          "sha256": "3ffce61d691e4f27a64e3b7f176d44b08e74c05688f1c14b7cd23df2e1dd71a0"
+        },
+        {
+          "start": 1738.56,
+          "end": 1742.024,
+          "transcript": "[栞栞 0.68] 就是那种冷冻品这不显得新鲜吗",
+          "file": "0125.wav",
+          "sha256": "265bf98a1d1d4bbe12df6f805ba07c944bc498057a1aafc6c4244ffaa44638ae"
+        },
+        {
+          "start": 1755.259,
+          "end": 1757.544,
+          "transcript": "[栞栞 0.69] 你不是不是说是高级的吗",
+          "file": "0126.wav",
+          "sha256": "9df2cd7284706a632d56869331475ac87ef591a92bd73cf7c8a5e14c50cdccd5"
+        }
+      ],
+      "datasetSha256": "f4f5d66fd24ebb2fce2d5f20621abff0d5d22fc64b7b0b992549e3aa0b00e17b",
+      "sampleCount": 127,
+      "cleanSpeechSeconds": 373.212,
+      "separation": "HP2_all_vocals.pth",
+      "feature": "HuBERT 768",
+      "pitch": "RMVPE",
+      "version": "v2",
+      "sampleRate": 40000,
+      "epochsCompleted": 120,
+      "batchSize": 8,
+      "trainingConfig": {
+        "train": {
+          "log_interval": 40,
+          "seed": 1234,
+          "epochs": 20000,
+          "learning_rate": 0.0001,
+          "betas": [
+            0.8,
+            0.99
+          ],
+          "eps": 1e-09,
+          "batch_size": 8,
+          "fp16_run": true,
+          "lr_decay": 0.999875,
+          "segment_size": 12800,
+          "init_lr_ratio": 1,
+          "warmup_epochs": 0,
+          "c_mel": 45,
+          "c_kl": 1.0
+        },
+        "data": {
+          "max_wav_value": 32768.0,
+          "sampling_rate": 40000,
+          "filter_length": 2048,
+          "hop_length": 400,
+          "win_length": 2048,
+          "n_mel_channels": 125,
+          "mel_fmin": 0.0,
+          "mel_fmax": null,
+          "training_files": "./logs\\beach_shiori_20261004/filelist.txt"
+        },
+        "model": {
+          "inter_channels": 192,
+          "hidden_channels": 192,
+          "filter_channels": 768,
+          "n_heads": 2,
+          "n_layers": 6,
+          "kernel_size": 3,
+          "p_dropout": 0,
+          "resblock": "1",
+          "resblock_kernel_sizes": [
+            3,
+            7,
+            11
+          ],
+          "resblock_dilation_sizes": [
+            [
+              1,
+              3,
+              5
+            ],
+            [
+              1,
+              3,
+              5
+            ],
+            [
+              1,
+              3,
+              5
+            ]
+          ],
+          "upsample_rates": [
+            10,
+            10,
+            2,
+            2
+          ],
+          "upsample_initial_channel": 512,
+          "upsample_kernel_sizes": [
+            16,
+            16,
+            4,
+            4
+          ],
+          "use_spectral_norm": false,
+          "gin_channels": 256,
+          "spk_embed_dim": 109
+        },
+        "model_dir": "./logs\\beach_shiori_20261004",
+        "experiment_dir": "./logs\\beach_shiori_20261004",
+        "save_every_epoch": 30,
+        "name": "beach_shiori_20261004",
+        "total_epoch": 120,
+        "pretrainG": "assets/pretrained_v2/f0G40k.pth",
+        "pretrainD": "assets/pretrained_v2/f0D40k.pth",
+        "version": "v2",
+        "gpus": "0",
+        "sample_rate": "40k",
+        "if_f0": 1,
+        "if_latest": 1,
+        "save_every_weights": "1",
+        "if_cache_data_in_gpu": 1
+      },
+      "trainingLogSha256": "ccd21416e044fc08b438629fc3bc39e439ae392a990c6b3474643714f02ae7a4",
+      "terminalEvidence": [
+        "INFO:beach_shiori_20261004:[2720, 9.853573399228505e-05]",
+        "INFO:beach_shiori_20261004:loss_disc=3.590, loss_gen=4.126, loss_fm=16.282,loss_mel=20.090, loss_kl=0.922",
+        "INFO:beach_shiori_20261004:====> Epoch: 119 [2026-10-04 14:04:40] | (0:00:07.476210)",
+        "INFO:root:Saving model and optimizer state at epoch 120 to ./logs\\beach_shiori_20261004\\G_2333333.pth",
+        "INFO:root:Saving model and optimizer state at epoch 120 to ./logs\\beach_shiori_20261004\\D_2333333.pth",
+        "INFO:beach_shiori_20261004:saving ckpt beach_shiori_20261004_e120:Success.",
+        "INFO:beach_shiori_20261004:====> Epoch: 120 [2026-10-04 14:04:49] | (0:00:09.066014)",
+        "INFO:beach_shiori_20261004:Training is done. The program is closed.",
+        "INFO:beach_shiori_20261004:saving final ckpt:Success."
+      ],
+      "featureFileCount": 174,
+      "filelistSha256": "2fa642223041785494f8f00f16a8fc38db132d1d32f919c3fc37363a5c7d5bd4",
+      "modelSha256": "1339f5b6544fcf4a1d8f62771fd5bba14b983105e304e93f83d5dad3e7a1dcba",
+      "indexSha256": "7583bae6915b11efc77930dbbba0907773d313d88afe6e048b0f16288a71d6a0",
+      "indexType": "IndexFlatL2(768)"
+    },
+    "nagisa": {
+      "actor": "nagisa",
+      "source": "D:\\files\\videos\\DDTV录播\\31368705_米汀Nagisa\\2026_10_03\\录制-31368705-20261003-210852-973-「金偶像谜案」DLC.flv",
+      "sourceBytes": 2843570269,
+      "subtitle": "D:\\files\\videos\\DDTV录播\\31368705_米汀Nagisa\\2026_10_03\\录制-31368705-20261003-210852-973-「金偶像谜案」DLC.srt",
+      "selection": "Initial solo talk, no collab/singing; known speaker >=0.67 where labels exist; HP2 vocal separation",
+      "seconds": 541.52,
+      "samples": [
+        {
+          "start": 233.339,
+          "end": 235.989,
+          "transcript": "大家晚上好晚上好",
+          "file": "0000.wav",
+          "sha256": "28cba2738e95f25608d622df9c052ce9faa6e54848b63a8457ceef4dc7bf5894"
+        },
+        {
+          "start": 235.989,
+          "end": 238.47,
+          "transcript": "我是来自古励高校退敏瘦的",
+          "file": "0001.wav",
+          "sha256": "b4ab068d5c2c045da1e26787252c9f3ec8668feb1f50b747beda1acdd6df2db5"
+        },
+        {
+          "start": 238.47,
+          "end": 240.589,
+          "transcript": "有个同事的你听到一下啊",
+          "file": "0002.wav",
+          "sha256": "36a272b10d4000447947ec79b2b4c2b689834d988defa4f5bf21d78d02a24aee"
+        },
+        {
+          "start": 240.599,
+          "end": 244.206,
+          "transcript": "晚上好",
+          "file": "0003.wav",
+          "sha256": "dc730ab45088ae310fc423e67aa617076d961456c19c87be49f507c3f0b3120d"
+        },
+        {
+          "start": 244.206,
+          "end": 247.643,
+          "transcript": "晚上好",
+          "file": "0004.wav",
+          "sha256": "6e2f1678ecec99081f2752aaf4b21dcc6f1c175006c7c1348164e4bcaa600f03"
+        },
+        {
+          "start": 247.643,
+          "end": 251.079,
+          "transcript": "欢迎来到今天的嗯我们金偶像迷案第",
+          "file": "0005.wav",
+          "sha256": "ce67d4f4b4ee77abf300742a8689a3df2ed729814ff4aa63fcbc899496704e73"
+        },
+        {
+          "start": 253.42,
+          "end": 255.675,
+          "transcript": "晚上好",
+          "file": "0006.wav",
+          "sha256": "380eab5e33d1b63813af4e654cbc973bec344d591918a85e9b59e740d8f9c3d6"
+        },
+        {
+          "start": 255.675,
+          "end": 257.76,
+          "transcript": "晚上好",
+          "file": "0007.wav",
+          "sha256": "db22dbd868ceaf65e4d4e9d56a61bea711ddd7b1e3c3c8ccd876ba6df7a4f3eb"
+        },
+        {
+          "start": 257.76,
+          "end": 259.845,
+          "transcript": "原来他又爬到边边角角去",
+          "file": "0008.wav",
+          "sha256": "d6590396e994245155ae10cdc3acd3499bf2ffa4a150db1acedce27992290864"
+        },
+        {
+          "start": 260.129,
+          "end": 264.075,
+          "transcript": "然后一直在叫有人给他抱过来",
+          "file": "0009.wav",
+          "sha256": "f49ad7d9b27992423a4c9287d94d4f7ef22e428df1b2b955d954e78e3f067722"
+        },
+        {
+          "start": 266.43,
+          "end": 269.434,
+          "transcript": "五块钱收大声叫的小猫听到了吗",
+          "file": "0010.wav",
+          "sha256": "76cb96dc007a83637898e8f2d518363410986f618681739e046e7cff48cebd46"
+        },
+        {
+          "start": 271.449,
+          "end": 274.72,
+          "transcript": "谢谢YY情头人翘嫌冤死",
+          "file": "0011.wav",
+          "sha256": "dd8db0d6fd1cc390d12a46a7466be32ed7058a7eacab8dda194ee21a32ae2cc0"
+        },
+        {
+          "start": 274.72,
+          "end": 277.114,
+          "transcript": "嫌冤死的哦故意强奸",
+          "file": "0012.wav",
+          "sha256": "cafdfa8ca1245be6c2be6a70d61538048b3aaa4a0dc462ec1986a3baca168993"
+        },
+        {
+          "start": 277.43,
+          "end": 279.445,
+          "transcript": "谢谢你的故意惩奸",
+          "file": "0013.wav",
+          "sha256": "8a7ac36c5f73c3a5ddbe7b714ac30c3c5d34fa4b4e2b19b8029a4fbca7e43fc5"
+        },
+        {
+          "start": 279.445,
+          "end": 281.289,
+          "transcript": "谢谢夜来梦雪的时候呃",
+          "file": "0014.wav",
+          "sha256": "6aab85b3287ddfe9d459edb7d6e69746d7bc877a2376dee70d225a2160a30c1c"
+        },
+        {
+          "start": 286.53,
+          "end": 288.767,
+          "transcript": "谢你的梦想归灯",
+          "file": "0015.wav",
+          "sha256": "dacd91eb9b5525b12208cb1deb26c4fc6fb1c05d9749883d05e22bac83f56b67"
+        },
+        {
+          "start": 288.767,
+          "end": 290.835,
+          "transcript": "谢七月赵金兴的粉丝灯牌和人气票",
+          "file": "0016.wav",
+          "sha256": "56cc82ba4162f4426b7a76c7cba84aae31cead73d9a5d1c20af22776eb6e1566"
+        },
+        {
+          "start": 291.259,
+          "end": 295.229,
+          "transcript": "小林小林的短裤不清醒吗",
+          "file": "0017.wav",
+          "sha256": "1768dbdfd1de3f9e3fb552361a012a3478848bea508abcb78b7952583048fcca"
+        },
+        {
+          "start": 295.229,
+          "end": 299.215,
+          "transcript": "不知道哦且七之白白",
+          "file": "0018.wav",
+          "sha256": "2bb87dbee6537caf2b82e595513f1e650706b60015246c06c67f2928f0d5ab5d"
+        },
+        {
+          "start": 303.61,
+          "end": 307.32,
+          "transcript": "谢谢气质歪歪的舰长",
+          "file": "0019.wav",
+          "sha256": "52e5bb7099a75139ff8bf8419912e5f9e5b2cdf00c1c1725ee72f87ab2957425"
+        },
+        {
+          "start": 307.32,
+          "end": 310.859,
+          "transcript": "谢谢你续费的舰长",
+          "file": "0020.wav",
+          "sha256": "817de2c140ce988af2e666a3cc121617f8615d3a306e5838faac9f0cce855244"
+        },
+        {
+          "start": 311.889,
+          "end": 314.999,
+          "transcript": "Thankyou感谢感谢",
+          "file": "0021.wav",
+          "sha256": "beee24d3dfffb1900d81fc1df072bf59603c467bb1e5f46ddb3efc6bf62d120e"
+        },
+        {
+          "start": 314.999,
+          "end": 318.947,
+          "transcript": "晚上没弄什么来的",
+          "file": "0022.wav",
+          "sha256": "2dca1f8ec9d9bcef5e8865c841119ef485781a791e8896943aa4821fb61d7384"
+        },
+        {
+          "start": 318.947,
+          "end": 322.895,
+          "transcript": "谢你的舰长干线续费",
+          "file": "0023.wav",
+          "sha256": "dd7d83b6d0dbb39f26c58618404ed93b2412c9e08266831a6883f08234dd41f1"
+        },
+        {
+          "start": 325.009,
+          "end": 328.299,
+          "transcript": "然后谢谢早安莫顿的粉丝加灯牌",
+          "file": "0024.wav",
+          "sha256": "800bfebd03196a7a8671b7228c693ea1feaafd91daaa1b4dfc279673765b6c57"
+        },
+        {
+          "start": 328.509,
+          "end": 331.499,
+          "transcript": "莎莎痛饮肠岛冰茶的酒",
+          "file": "0025.wav",
+          "sha256": "f5358401f9c3af43c0c52b5c26a13a7efe7a8221d25c44076923724646dde3f6"
+        },
+        {
+          "start": 331.499,
+          "end": 334.239,
+          "transcript": "杀药蛇故意成奸请你的故意成奸",
+          "file": "0026.wav",
+          "sha256": "dec33506fab335259c5a3a14c4228d7199137a2b75b04f2c35ec399310254991"
+        },
+        {
+          "start": 334.239,
+          "end": 336.539,
+          "transcript": "谢USSS谢报告尝试一下",
+          "file": "0027.wav",
+          "sha256": "bb2f7c5055e59dc0dd0ba0f3042825283166e2245279dfc7d3ad1a2603dc09ac"
+        },
+        {
+          "start": 338.79,
+          "end": 341.09,
+          "transcript": "晚饭就吃这个啦",
+          "file": "0028.wav",
+          "sha256": "37bdc649dc3c01aa6b835a98b94fd56bfa2123659f0730e037741749d8421b44"
+        },
+        {
+          "start": 341.09,
+          "end": 343.22,
+          "transcript": "确实比蜂糖味的要好一点",
+          "file": "0029.wav",
+          "sha256": "3f3692861660ba0d949d81aeed9c420fdede4638d45c7162758ef5e6ed2fec6e"
+        },
+        {
+          "start": 343.22,
+          "end": 345.539,
+          "transcript": "不会太腻整体还是咸口的",
+          "file": "0030.wav",
+          "sha256": "d7290ceaeec67ddb903e288acee60ab24419682fa8b8e6a7b94385e7426d7c0a"
+        },
+        {
+          "start": 345.539,
+          "end": 350.645,
+          "transcript": "可以吃巧克力味的还能是咸口的吗",
+          "file": "0031.wav",
+          "sha256": "1ee4df4aebb2fbe23f716e3090ac15791e0fd932d880c60aa3004e8a009c70b4"
+        },
+        {
+          "start": 353.209,
+          "end": 356.627,
+          "transcript": "天仙好吧",
+          "file": "0032.wav",
+          "sha256": "44ee53e6665dfedb422feea9e754d1f5d18125a6e3e636b5e071c75200a8b353"
+        },
+        {
+          "start": 356.627,
+          "end": 359.874,
+          "transcript": "确实这个靠想象是不太能想象出来的",
+          "file": "0033.wav",
+          "sha256": "228a0f2694ad1fc72513b29adf9d805466773bc22551e278ba991fc823ecc1a6"
+        },
+        {
+          "start": 363.66,
+          "end": 366.294,
+          "transcript": "只能这么说了谢谢啊",
+          "file": "0034.wav",
+          "sha256": "64f2a25d3b3538a73af4fc99e59cb67da71fbf22c2113dfd63fbb78b9d268857"
+        },
+        {
+          "start": 366.47,
+          "end": 369.02,
+          "transcript": "Na七YO的粉钻灯牌",
+          "file": "0035.wav",
+          "sha256": "9dd5654033ffa73711d93c0caa38eb99298801faa0a93d55f017fe195cad0cad"
+        },
+        {
+          "start": 369.09,
+          "end": 374.137,
+          "transcript": "谢谢麦当劳给钱巧克力少放点糖就不甜了",
+          "file": "0036.wav",
+          "sha256": "8f1369a7c191f57f6810ad746fc035b062892fc6fbb5eb3facd86098c63e0c45"
+        },
+        {
+          "start": 381.559,
+          "end": 386.664,
+          "transcript": "嗯甜甜的就是来吧我们先开游戏吧",
+          "file": "0037.wav",
+          "sha256": "b9888d41debda3690ca48ba3b9efd0577d532689b0668b5c607f0a07b425ef10"
+        },
+        {
+          "start": 401.019,
+          "end": 409.624,
+          "transcript": "嗯类似于咸奶油哦那有点懂了",
+          "file": "0038.wav",
+          "sha256": "7bfeccd2f8c45d1a290cb9dccf497f7299cb2919e4c5e80fc85642d7f110c703"
+        },
+        {
+          "start": 410.869,
+          "end": 413.21,
+          "transcript": "有点懂了你变的眼神吗",
+          "file": "0039.wav",
+          "sha256": "cf7e3a2c8adb8c33d706813f405ee18b6e455039c3acd75953282d18db9b0889"
+        },
+        {
+          "start": 413.21,
+          "end": 419.664,
+          "transcript": "他用我趴在九角落看着明天",
+          "file": "0040.wav",
+          "sha256": "628b6f9c99166792f6f2be8dcb752339bf1cc8fa8148e843c8bc08e1c489757e"
+        },
+        {
+          "start": 420.61,
+          "end": 428.749,
+          "transcript": "但是他没有进门来吧",
+          "file": "0041.wav",
+          "sha256": "3ceea88127140c4208e09a1278a3c0b8bcee8a0ed04134837fad9ac2edd36fbc"
+        },
+        {
+          "start": 428.749,
+          "end": 436.72,
+          "transcript": "我们先去高地办好了",
+          "file": "0042.wav",
+          "sha256": "a33d0bfbf122bd60d988e617b0b92bfd7fb71215c8ccfa9b86a577e4544d5ecc"
+        },
+        {
+          "start": 436.91,
+          "end": 441.26,
+          "transcript": "直接重新开始哦",
+          "file": "0043.wav",
+          "sha256": "b9ff3d065b165aedabca12f12522a38d32c167b26c88b323724b6291c23c2a9f"
+        },
+        {
+          "start": 441.79,
+          "end": 445.9,
+          "transcript": "是从这边开始啊蓝卡的蜘蛛",
+          "file": "0044.wav",
+          "sha256": "6e3b05119d486545f2e317857a1ff9e692c69af46b9ee58f7162219e6cdfc028"
+        },
+        {
+          "start": 446.389,
+          "end": 454.489,
+          "transcript": "蓝卡蓝卡是不是这个词",
+          "file": "0045.wav",
+          "sha256": "88bd3d9f87ec2b526e241a4ebb98ea0dc8c3007afca03377c2ee35f795c56907"
+        },
+        {
+          "start": 460.249,
+          "end": 463.359,
+          "transcript": "这么说想必就是这里了",
+          "file": "0046.wav",
+          "sha256": "dac07c9a7ebd797d88b832fea21b2ddf73cab17f4cfc3fbb0d7058624b426a08"
+        },
+        {
+          "start": 463.65,
+          "end": 469.34,
+          "transcript": "主队一来玩帕杰克还中间有个杰",
+          "file": "0047.wav",
+          "sha256": "e64658dd42cc3ca95e7fff2ef872a78eb4929fed21dbf7b5afed889875522e42"
+        },
+        {
+          "start": 470.53,
+          "end": 475.015,
+          "transcript": "他真好的吗",
+          "file": "0048.wav",
+          "sha256": "89d1e4ac479508310c484b12a4ab690c72e01b6b9c1c160df5689d1e8e47a39a"
+        },
+        {
+          "start": 477.29,
+          "end": 479.499,
+          "transcript": "可能是到了一个专门什么玩帕杰克的地方",
+          "file": "0049.wav",
+          "sha256": "fa9c9405d2bf2061a1a95fd39f6e633936cd3493fe3dbf697fa61f9386791faf"
+        },
+        {
+          "start": 481.749,
+          "end": 484.929,
+          "transcript": "不知道是什么定位这不是王子吗",
+          "file": "0050.wav",
+          "sha256": "07ac84aee74e8032420275bd66b36e2161dd105fdaa136454ca91010cee89c3e"
+        },
+        {
+          "start": 484.929,
+          "end": 488.975,
+          "transcript": "啊什么王子之前有出现过吗",
+          "file": "0051.wav",
+          "sha256": "1f14d53fcf68558a21b580194b8ed3989203cb097d960cf69513ff41b4b80d60"
+        },
+        {
+          "start": 492.199,
+          "end": 496.424,
+          "transcript": "金哦不是黄百合棋牌室的过火牌曲",
+          "file": "0052.wav",
+          "sha256": "201ed6698d3853eace3659693df6cb36649ae9acf0f2bfd4725ad2eaa5816649"
+        },
+        {
+          "start": 499.769,
+          "end": 502.84,
+          "transcript": "这个是刚刚那个人的这到底是搞什么",
+          "file": "0053.wav",
+          "sha256": "e515899c5806eeaf1208db57c7a407b04ef8eaf4fad252a100cda4bb6922eb62"
+        },
+        {
+          "start": 502.84,
+          "end": 505.02,
+          "transcript": "他们全都死掉了谢谢你救了我一命",
+          "file": "0054.wav",
+          "sha256": "500b487933b29a2ab81efb995e23f3fb253b5dc2097aae905e24a0898fd50335"
+        },
+        {
+          "start": 505.02,
+          "end": 507.275,
+          "transcript": "好心的先生你耳朵怎么了",
+          "file": "0055.wav",
+          "sha256": "f6d615de4d83a1b02f8b934c61119e82a3dde00b7c7ddfc94e9d3e079d42b481"
+        },
+        {
+          "start": 507.55,
+          "end": 511.095,
+          "transcript": "摇摇晃晃的装一个黄色的胸花",
+          "file": "0056.wav",
+          "sha256": "48283d0fbe842573c5d37a1dfd4d613c90ecc46fbd957cc9c133d7bce600e714"
+        },
+        {
+          "start": 511.67,
+          "end": 514.84,
+          "transcript": "是哎呦怎么感觉字体电了呢",
+          "file": "0057.wav",
+          "sha256": "7553542f1f4cee2de9675ee76f1aa34679ca3c5817fabf94990d6ecbcd5f3aaf"
+        },
+        {
+          "start": 514.84,
+          "end": 517.644,
+          "transcript": "是没听到错觉吗",
+          "file": "0058.wav",
+          "sha256": "ebe1b6cf498d60c2a866a7938e0788e69bca9db719fbb6c21eb20971ca4841c8"
+        },
+        {
+          "start": 522.339,
+          "end": 525.22,
+          "transcript": "我亲爱的正品例呢",
+          "file": "0059.wav",
+          "sha256": "4fe03e35c67708468955effe3891511bbac992a4c922789484df1daf0ccf455b"
+        },
+        {
+          "start": 525.22,
+          "end": 527.93,
+          "transcript": "就就嗯体力再过几天我就会到达你",
+          "file": "0060.wav",
+          "sha256": "e7d2995c906e227596fa50dd754e2736727367592b4890c75a363984e1fcc587"
+        },
+        {
+          "start": 527.93,
+          "end": 531.06,
+          "transcript": "那边到时候我会一同请我们一同前往",
+          "file": "0061.wav",
+          "sha256": "c5b287d8d208bb5392951f74d458a3327b3180f58483da707e1e2eebc4523500"
+        },
+        {
+          "start": 531.189,
+          "end": 534.09,
+          "transcript": "詹布普洱在等待我到来的这段时间内",
+          "file": "0062.wav",
+          "sha256": "b0e36abe071493bc381e5b4f427ed2f230164b9df6f2347fb450419103ec2645"
+        },
+        {
+          "start": 537.5,
+          "end": 539.685,
+          "transcript": "然后他来打怕杰克了",
+          "file": "0063.wav",
+          "sha256": "e7aa38bd6771f48740f359f063dfd60c4193de90553e364377073846375cefb0"
+        },
+        {
+          "start": 540.16,
+          "end": 543.81,
+          "transcript": "身为里莫利亚人",
+          "file": "0064.wav",
+          "sha256": "fbc0fe11994f74ff739a21b2f75bbd059ad38fbdf448642564e0057928af049e"
+        },
+        {
+          "start": 543.81,
+          "end": 547.29,
+          "transcript": "我们在兰卡可能会受到哦语众不同",
+          "file": "0065.wav",
+          "sha256": "f502af6ec2bd09dd646245b0fad12b6057f3ac30bf5755ce05813b476a96ab0f"
+        },
+        {
+          "start": 548.28,
+          "end": 550.979,
+          "transcript": "这么细节",
+          "file": "0066.wav",
+          "sha256": "c9fc2d2cdc30e7bebcdb3d59e872c7c51435f074a924435e5c9f910ae3858c88"
+        },
+        {
+          "start": 550.979,
+          "end": 553.509,
+          "transcript": "我们在兰卡可能会受到了众人的敬重",
+          "file": "0067.wav",
+          "sha256": "2f0720aec8213f085d1693fc2469d35f638d5b8a04fd8ac742bdd0d79010b825"
+        },
+        {
+          "start": 553.509,
+          "end": 556.249,
+          "transcript": "但我们万不可因此失失了稳重",
+          "file": "0068.wav",
+          "sha256": "c2cd23bafadaf85064d71607bbe919acdf18317ef2f4c45a56347bac93dc5ba8"
+        },
+        {
+          "start": 556.249,
+          "end": 558.81,
+          "transcript": "谨慎不可辱没的可拉家族的名号",
+          "file": "0069.wav",
+          "sha256": "9af24a9c139b2a497251b1fe46bf304ea3f23d68c7b01c9b08bcd92d950d5853"
+        },
+        {
+          "start": 558.9,
+          "end": 561.09,
+          "transcript": "所以你是可拉就比利是吧",
+          "file": "0070.wav",
+          "sha256": "b69d9acf35eb69721ba89fe271c7c06769117e4596b9bb99c51f4d2d7f2ef0ca"
+        },
+        {
+          "start": 561.219,
+          "end": 567.119,
+          "transcript": "是就比利可拉你是怕杰克高手吗",
+          "file": "0071.wav",
+          "sha256": "8e6d7493359386284148a9252e09255bbf3c33ba04de105fd637bbd7523108b3"
+        },
+        {
+          "start": 567.119,
+          "end": 569.479,
+          "transcript": "快来测测自己的实力赢取奖金吧",
+          "file": "0072.wav",
+          "sha256": "ccceb81446e6b3d0cba0a9219c08b749197268a300b1a907acd9b5c8c800438e"
+        },
+        {
+          "start": 571.01,
+          "end": 574.76,
+          "transcript": "日落时分地点六月十一日地点港口的百呃",
+          "file": "0073.wav",
+          "sha256": "dff96048fc416dbad6ef56987a57dd81b49adc205533fedca6ed1480d28f308b"
+        },
+        {
+          "start": 574.76,
+          "end": 578.34,
+          "transcript": "黄百合棋牌室",
+          "file": "0074.wav",
+          "sha256": "08af4efd368f7bcbf168303ef2b63ae7aa52e4f55875e4aa42320a14556bc350"
+        },
+        {
+          "start": 578.589,
+          "end": 580.739,
+          "transcript": "所以这里是那个是个棋牌室吗",
+          "file": "0075.wav",
+          "sha256": "89caa74391a8245054dc70f52a1c4eeb4558b48ef9d59ef68b534fc0bdfbbb01"
+        },
+        {
+          "start": 581.05,
+          "end": 583.859,
+          "transcript": "砸坏东西都给钱钱都输光了",
+          "file": "0076.wav",
+          "sha256": "491268f0e6fc475151f9feea0237e172c353353f143ea327a9136831658bb65c"
+        },
+        {
+          "start": 584.75,
+          "end": 587.1,
+          "transcript": "喝高了没法玩走人有人作弊",
+          "file": "0077.wav",
+          "sha256": "f95c7970351b302843d36d8234e5e100f24f5f2d448c6d94881741319944b710"
+        },
+        {
+          "start": 592.29,
+          "end": 594.44,
+          "transcript": "比尔蛇什么意思啊",
+          "file": "0078.wav",
+          "sha256": "08e99651b7caca2200df258b1020573adef49a15725470b8cdecb3cc4872d167"
+        },
+        {
+          "start": 599.63,
+          "end": 603.305,
+          "transcript": "不就是输钱那意思就是不不止输钱喽",
+          "file": "0079.wav",
+          "sha256": "9ac7766a44578e79fb085d9f6579c8e8a1eb976ef64bdcaa5ba1594919c22d45"
+        },
+        {
+          "start": 604.229,
+          "end": 607.045,
+          "transcript": "帕杰克和可拉可以合成帕克",
+          "file": "0080.wav",
+          "sha256": "7a1a6698ee927f54e25c62743f7ecd19802afec45b4a18f85bc64333a19dda53"
+        },
+        {
+          "start": 609.329,
+          "end": 613.585,
+          "transcript": "全身付钱钱书纵地比尔",
+          "file": "0081.wav",
+          "sha256": "3de9791429301eff4b2a642d4fc2982cb207009de099c14b1618e45881e652b9"
+        },
+        {
+          "start": 615.069,
+          "end": 617.634,
+          "transcript": "然后就是救了他的人是吧",
+          "file": "0082.wav",
+          "sha256": "191f41d247ffa28fb4575b51756f9360c809f0c1828f6378601779554f1e291b"
+        },
+        {
+          "start": 618.479,
+          "end": 620.945,
+          "transcript": "咱们走吧离开这个肮脏的水坑",
+          "file": "0083.wav",
+          "sha256": "49a597c23deaf433aff4b0c4e808b55228df8fe500ef23738f9aed31ab15d5f9"
+        },
+        {
+          "start": 622.099,
+          "end": 624.384,
+          "transcript": "但是帕克也不是帕克",
+          "file": "0084.wav",
+          "sha256": "fb48e7d002d1c96d328a2bb858d442cf2b04d39951aa4ec17c36ddfc799ff3d3"
+        },
+        {
+          "start": 624.384,
+          "end": 626.499,
+          "transcript": "你看上去没有什么没有受什么严",
+          "file": "0085.wav",
+          "sha256": "59c2ea0bcac4d7b9b864c68ed90b9b11ededb2e5c740b28173113d31dea888e3"
+        },
+        {
+          "start": 626.499,
+          "end": 629.904,
+          "transcript": "重的伤不过是呃不过还是来口烈酒吧",
+          "file": "0086.wav",
+          "sha256": "a7a98e488b5e05a602be48864929776b5eb0c6f2b68a0b3028add7156863057d"
+        },
+        {
+          "start": 635.4,
+          "end": 639.415,
+          "transcript": "他拿了两把枪一把上塔我们都抢一把",
+          "file": "0087.wav",
+          "sha256": "b68106d36f6742bc5965e6a354c670ac6bb365c213bc5bdf08caf7638e7e0c60"
+        },
+        {
+          "start": 641.37,
+          "end": 643.955,
+          "transcript": "打空了一把还留着备用的",
+          "file": "0088.wav",
+          "sha256": "523a32bcfd30283c6f6401ba23248c8cc036ef7bad515c664676cddefaee5e89"
+        },
+        {
+          "start": 648.27,
+          "end": 651.489,
+          "transcript": "一是奥普龙格勒尔狼",
+          "file": "0089.wav",
+          "sha256": "4cdd5f4910cecdc42a671d028cddcee68b4e628bc8c7fce50ec8199e249a71de"
+        },
+        {
+          "start": 651.489,
+          "end": 653.374,
+          "transcript": "卡岛外科医生催眠师",
+          "file": "0090.wav",
+          "sha256": "e8a42c742d69e391ce9c9d728b7b7bc6df6cfe51e499a0bbf9bfc7199b2738ff"
+        },
+        {
+          "start": 654.579,
+          "end": 658.353,
+          "transcript": "哎",
+          "file": "0091.wav",
+          "sha256": "27996cf406d3ea535e6257f87a97131abb1bdc0038efd615c0d7efd850a585be"
+        },
+        {
+          "start": 658.353,
+          "end": 661.956,
+          "transcript": "这个是不是我我上一部的就死了的那个意",
+          "file": "0092.wav",
+          "sha256": "446350f40e7d27772a0189c508806b3457f1352e40e827af8a28b5cd346f5f3e"
+        },
+        {
+          "start": 661.956,
+          "end": 665.56,
+          "transcript": "识啊",
+          "file": "0093.wav",
+          "sha256": "b0892e2e42223f7b41cb0b4dec178f15f928d4a0154ecdcadc3fc7f91b7197f6"
+        },
+        {
+          "start": 666.449,
+          "end": 670.514,
+          "transcript": "对推下去的是医师来着是吧",
+          "file": "0094.wav",
+          "sha256": "608841553e5a2cce96943e53ce295557db9b9e1a082ae68b39c524aeac3dedcc"
+        },
+        {
+          "start": 671.489,
+          "end": 673.58,
+          "transcript": "应该是吧就是有一个医生",
+          "file": "0095.wav",
+          "sha256": "2b10deff11ae482eef07e24d143a486fd8bc026f69292b8bfabec1c2b157da6c"
+        },
+        {
+          "start": 673.58,
+          "end": 676.31,
+          "transcript": "还有一个是还有个启实验",
+          "file": "0096.wav",
+          "sha256": "e78a491285f92240789c5ac9ac1425b578eacb3b8d6df6ec82ca9f92606792a9"
+        },
+        {
+          "start": 679.15,
+          "end": 686.374,
+          "transcript": "在的在的在的对第一张的对啊",
+          "file": "0097.wav",
+          "sha256": "d894016b19e8ee09b53135b19208ed6bcfe8d8d3413b1b84048ca8add5367518"
+        },
+        {
+          "start": 686.469,
+          "end": 688.955,
+          "transcript": "被推下去了那个牵透你手",
+          "file": "0098.wav",
+          "sha256": "0d95fda1ed1e687de93c398406227e85de2d7aac8d1b98a113aa493235b4c408"
+        },
+        {
+          "start": 690.53,
+          "end": 693.644,
+          "transcript": "哦对对对有个香声一个医生",
+          "file": "0099.wav",
+          "sha256": "f282205aac7a95dd7e1ec836200aa75a1b3d1fa2aec6eed6f9e2837687b555ee"
+        },
+        {
+          "start": 695.219,
+          "end": 697.955,
+          "transcript": "然后香生把医生给弄个什么东西啊",
+          "file": "0100.wav",
+          "sha256": "606ec55c0f0fbb57d6b10799c16ac19a912bebb7bb67834137a026f4cbd042d2"
+        },
+        {
+          "start": 699.5,
+          "end": 704.475,
+          "transcript": "看这种模式其实感觉更像那个姐塔罗牌",
+          "file": "0101.wav",
+          "sha256": "ffea00fa440baded69ef186104b74018b84473669cd791683521296ea9764320"
+        },
+        {
+          "start": 705.3,
+          "end": 709.3,
+          "transcript": "一二三PBCANexkiseCBP是",
+          "file": "0102.wav",
+          "sha256": "bb63fddd520a6c9f80f1e65cfdd3b4dae8e520dd8072b1ab43af8a784d96836e"
+        },
+        {
+          "start": 709.3,
+          "end": 713.129,
+          "transcript": "我一会儿要看",
+          "file": "0103.wav",
+          "sha256": "b870e41947785306fbd85f5e081b46da82a1d9ea9813092bb1176b3680d0e869"
+        },
+        {
+          "start": 713.129,
+          "end": 716.215,
+          "transcript": "吧你死多少个IK啊",
+          "file": "0104.wav",
+          "sha256": "279c9e3d38c1900d4c1b2380b80dea33e50504b7cb01d4ad257d38eab752eb85"
+        },
+        {
+          "start": 716.349,
+          "end": 719.475,
+          "transcript": "一三四五有用过吗",
+          "file": "0105.wav",
+          "sha256": "2b770cc1c3a87ff7c0f9a7f53a98bc6fb8a3158a3437aa15bfc1c1213b45d473"
+        },
+        {
+          "start": 719.89,
+          "end": 723.359,
+          "transcript": "这个好像没有见血哦",
+          "file": "0106.wav",
+          "sha256": "5f93d3983dc820feaa397478a81554f97d104254bdab3e55c535278dd118d551"
+        },
+        {
+          "start": 723.359,
+          "end": 726.659,
+          "transcript": "这里是另外一局的哦",
+          "file": "0107.wav",
+          "sha256": "acd9f88d3edf2d9d180aeced8bb26a0561ec973a338c18d1b03ca81f1e82d701"
+        },
+        {
+          "start": 726.659,
+          "end": 729.679,
+          "transcript": "这个是嗯兰花和黄花",
+          "file": "0108.wav",
+          "sha256": "9843963d8026f3bc7053ce95cd1f4f089f8b53e46c4d81dc089264b47f394d3d"
+        },
+        {
+          "start": 729.679,
+          "end": 732.7,
+          "transcript": "这边也是兰花和黄花",
+          "file": "0109.wav",
+          "sha256": "b35e6587fd613cb017fa52e7c019c935bf3d2115edb547e5c09778833287100b"
+        },
+        {
+          "start": 732.87,
+          "end": 735.56,
+          "transcript": "这里是黄花这里是兰花喽",
+          "file": "0110.wav",
+          "sha256": "2b964cccb7a738f2e9c61bfe68ecc33e5d69f051376e82aa52d2687ab09603e3"
+        },
+        {
+          "start": 735.87,
+          "end": 739.519,
+          "transcript": "这个也是黄花的这应该是黄花吧",
+          "file": "0111.wav",
+          "sha256": "c3ddd3dfeff5ebe295dead928a026fddff31feb92504a96ae86695d02691b507"
+        },
+        {
+          "start": 739.519,
+          "end": 741.42,
+          "transcript": "他们分那种黄组和蓝组吗",
+          "file": "0112.wav",
+          "sha256": "ae28ce7da1d096c5020909731acb37f3e3088b539ef25663bde0a7cae4cd4a3e"
+        },
+        {
+          "start": 741.42,
+          "end": 746.899,
+          "transcript": "哦是哦声音有点大好大的鼻子",
+          "file": "0113.wav",
+          "sha256": "b332f45160e46a43912f3c0e344338077578b972cda0acc9881c846d337bf935"
+        },
+        {
+          "start": 747.109,
+          "end": 749.639,
+          "transcript": "宗式高塔奔愁西下的人俏",
+          "file": "0114.wav",
+          "sha256": "f8e392a23ac35fdce763e0ac4f3e77088d6085c9751df3205dd1ca325a01463d"
+        },
+        {
+          "start": 750.63,
+          "end": 759.445,
+          "transcript": "等一下听吧这边切过穿不好看",
+          "file": "0115.wav",
+          "sha256": "40693c52d401c8eee6e95f36e907070f550469099310568d69260d0fc5ca4935"
+        },
+        {
+          "start": 766.75,
+          "end": 770.889,
+          "transcript": "哎呦不相信",
+          "file": "0116.wav",
+          "sha256": "878f9b9cd2bde419200b0e632f74bf82fbd180992ad26f1003f396bfeb1e3a79"
+        },
+        {
+          "start": 770.9,
+          "end": 773.75,
+          "transcript": "然后这个是水壶啊",
+          "file": "0117.wav",
+          "sha256": "791a9d8c279aba9987c552cc23bc9cebc09a4a3d0e21683306b344505fca2589"
+        },
+        {
+          "start": 773.75,
+          "end": 776.43,
+          "transcript": "装郎抹酒的瓶子几乎是近乎是空瓶",
+          "file": "0118.wav",
+          "sha256": "6217ed97da7f6f9ba6b23310641042761f83f4dbb363271b3500bdd42efbddb0"
+        },
+        {
+          "start": 777.28,
+          "end": 780.27,
+          "transcript": "这哦这个是睡着了",
+          "file": "0119.wav",
+          "sha256": "2fd9fda978d39916da0ebb9952b25f0ff61f698174de3ce048d483fd1c6c18ec"
+        },
+        {
+          "start": 780.27,
+          "end": 783.09,
+          "transcript": "这个没死干净的尖头匕首",
+          "file": "0120.wav",
+          "sha256": "21337194b499928613ede95ca0038df845bdb4d7f94df5cd172307ff7493aed1"
+        },
+        {
+          "start": 783.099,
+          "end": 787.05,
+          "transcript": "干净的剑抽签匹配对手的时候调换一下",
+          "file": "0121.wav",
+          "sha256": "38d051268b7376e87ca9fca86687c31032fff997086d2e380bb3a7cc733f8943"
+        },
+        {
+          "start": 787.05,
+          "end": 789.404,
+          "transcript": "让那个新来的最对阵最强的玩家",
+          "file": "0122.wav",
+          "sha256": "32322d53aea0c58dc0407d31bd2ff57251e4c03933c56beb33816d30b5c3db17"
+        },
+        {
+          "start": 789.78,
+          "end": 791.942,
+          "transcript": "他想测测看他的实力",
+          "file": "0123.wav",
+          "sha256": "668de8ad230ceea1ec77df216f25eb0bea7e4ac07ed720c9686801431c954f73"
+        },
+        {
+          "start": 791.942,
+          "end": 793.935,
+          "transcript": "他想测测看他的实力",
+          "file": "0124.wav",
+          "sha256": "68c3d96b777dcab4ad3fc56e2c61709721b08e87086f5f08af55b4cb68b2c233"
+        },
+        {
+          "start": 796.709,
+          "end": 799.33,
+          "transcript": "这两个他不一定是同样嗯",
+          "file": "0125.wav",
+          "sha256": "d90aa699728de88d4a39fca354ff26bc27025635783f3e9fda059fdfe3cc85e2"
+        },
+        {
+          "start": 799.4,
+          "end": 803.024,
+          "transcript": "不一定值得舍",
+          "file": "0126.wav",
+          "sha256": "5c57b18c435f162daab0294d206170a6d26161dbde0215bcdc9ed2db19d67111"
+        },
+        {
+          "start": 803.024,
+          "end": 806.479,
+          "transcript": "不一定只能说心应该感觉就有人给这个",
+          "file": "0127.wav",
+          "sha256": "ac03e1c6d0aa16a211614d6d224d334971cb62bd800be86395bf083f1617764b"
+        },
+        {
+          "start": 806.479,
+          "end": 809.81,
+          "transcript": "人社局看样子这个是新来的吗",
+          "file": "0128.wav",
+          "sha256": "073d301cffbefac7dc5c38ab9f109f79a75fb10783ef722aac30f52bf901834a"
+        },
+        {
+          "start": 809.81,
+          "end": 813.165,
+          "transcript": "他收到邀请到这边来测测实力",
+          "file": "0129.wav",
+          "sha256": "9746be25f8b19e9a2289ddc740e5e4fd67e0dd2b49f76778ab1735f71240dc1c"
+        },
+        {
+          "start": 813.67,
+          "end": 816.175,
+          "transcript": "然后这个人被安排让抽签",
+          "file": "0130.wav",
+          "sha256": "c835810cc4a33b7ab4d9934758e35f3c8c40c8f34da8c6713e65ee6f4f8ba4b5"
+        },
+        {
+          "start": 818.4,
+          "end": 821.034,
+          "transcript": "然后抽到了最强的人唱的",
+          "file": "0131.wav",
+          "sha256": "a7e24b609252022c7c0c67802fc7e0c49431c5d450d943b5971683eb1fff9700"
+        },
+        {
+          "start": 823.689,
+          "end": 825.899,
+          "transcript": "祝我六月八号鱼郎哎",
+          "file": "0132.wav",
+          "sha256": "cbacd19047a1dfd7a49c0ca7daa33f9bb540d815afb19951bd455b1b39f147c2"
+        },
+        {
+          "start": 825.899,
+          "end": 830.295,
+          "transcript": "这个是弄那个符号哦对",
+          "file": "0133.wav",
+          "sha256": "aaab086f6429e6de68b57826734ce7fb64e2413788654f38d6002a1cd24c08f1"
+        },
+        {
+          "start": 830.989,
+          "end": 833.459,
+          "transcript": "夕阳是我们之前那个印章与兰卡群岛建立",
+          "file": "0134.wav",
+          "sha256": "1c140e2dd58c54a5a37f0b2f1058554042fda79fb206c962cef2f30ea662b0e7"
+        },
+        {
+          "start": 833.459,
+          "end": 835.759,
+          "transcript": "起贸易巨打仪",
+          "file": "0135.wav",
+          "sha256": "b4387c1865686c39749757233e0478dfbac8d2d58c78dba3d0b7b89ffdd7325d"
+        },
+        {
+          "start": 838.55,
+          "end": 840.835,
+          "transcript": "可很遗憾里",
+          "file": "0136.wav",
+          "sha256": "d28261f8921102768930a7238df4d15cdb23d8aaa1ba661c9c993737813562e6"
+        },
+        {
+          "start": 840.835,
+          "end": 842.95,
+          "transcript": "莫利亚方面一直对此表示反对",
+          "file": "0137.wav",
+          "sha256": "59acb022ffcdc643cc7782d75b9ef47765ea91f2aeb3db2a6db7f9e5b5b82e34"
+        },
+        {
+          "start": 844.839,
+          "end": 847.239,
+          "transcript": "应该将我们驱逐里莫利亚人没法直接以强",
+          "file": "0138.wav",
+          "sha256": "0e06dfee469a004b7c090f46a023634ea747468f6b9998e8c2b4fc6ac119c968"
+        },
+        {
+          "start": 847.239,
+          "end": 849.47,
+          "transcript": "权影响兰卡",
+          "file": "0139.wav",
+          "sha256": "800175043e0de3f762269893810d6f88f29fc7f0b7c0319398273244f0a00e3a"
+        },
+        {
+          "start": 849.47,
+          "end": 851.77,
+          "transcript": "但是兰卡王国里里",
+          "file": "0140.wav",
+          "sha256": "3180e668257444ffe416660d98b42faaca0cec33ba3a03a325c8bc8962f882a5"
+        },
+        {
+          "start": 851.77,
+          "end": 854.07,
+          "transcript": "莫利亚这个已经贪侵他的帝国曾经",
+          "file": "0141.wav",
+          "sha256": "f5e68ae8fb127c3741e42f6a371ae9047410c31f699b2ea9120ab1ae6e247024"
+        },
+        {
+          "start": 859.239,
+          "end": 861.67,
+          "transcript": "他的帝国的曾经的一部分",
+          "file": "0142.wav",
+          "sha256": "d9f1c474302d80020dd3f976c11511c0748e1bf952fc1dbbd7bed61bd4999609"
+        },
+        {
+          "start": 861.68,
+          "end": 865.357,
+          "transcript": "就兰卡以前设里莫利亚的他们依旧手握宗",
+          "file": "0143.wav",
+          "sha256": "fa7229db23baf9e484f199c2c137ef64048cb0c499f17536b77178393ee54e7f"
+        },
+        {
+          "start": 865.357,
+          "end": 868.864,
+          "transcript": "教的权利",
+          "file": "0144.wav",
+          "sha256": "2e1ad95d95e6bdb1ce7a87217b48d6fb6d5bd9bb6f00336743e9b09c43c5b89a"
+        },
+        {
+          "start": 870.91,
+          "end": 874.3,
+          "transcript": "必须抹除他们对蓝卡的影响力",
+          "file": "0145.wav",
+          "sha256": "a7225cd6bace37d60067ba16566d525d9e374d47966c05a1269d8b5dd05b1a35"
+        },
+        {
+          "start": 874.309,
+          "end": 876.7,
+          "transcript": "你要与我们在当地的特工们合作",
+          "file": "0146.wav",
+          "sha256": "d695e21533bc2207da2eec9df885a3497d64e4f58172ad2706d2ed479d26d355"
+        },
+        {
+          "start": 876.7,
+          "end": 878.6,
+          "transcript": "特别是法师官夫和医生",
+          "file": "0147.wav",
+          "sha256": "1ab00878723b808678ed971f75ad77e2bfbbb469bc329dd88e89880ed396d12e"
+        },
+        {
+          "start": 885.229,
+          "end": 888.879,
+          "transcript": "所以他是其中一个",
+          "file": "0148.wav",
+          "sha256": "e2816fd82ab334079376ffaf1c70d6c1079ef123c5b16e1fd8eba4975690c52f"
+        },
+        {
+          "start": 888.879,
+          "end": 892.359,
+          "transcript": "然后他要和法师法师官夫和医生医",
+          "file": "0149.wav",
+          "sha256": "0a3e86786a9f3fac51365ed400d9407498bfdec08281bfe4b114424aebf68bb4"
+        },
+        {
+          "start": 893.87,
+          "end": 898.197,
+          "transcript": "还是说这只是代偿啊",
+          "file": "0150.wav",
+          "sha256": "3b0edb781a4d93787d0e5f155b52acc2b3b5113fcff0d4e270ad4971255eed80"
+        },
+        {
+          "start": 898.197,
+          "end": 902.354,
+          "transcript": "反正这是个幕后黑手哦",
+          "file": "0151.wav",
+          "sha256": "268678570673d91e67e85b83903476eaec20181e4fd3778804946af47c09828c"
+        },
+        {
+          "start": 902.55,
+          "end": 908.305,
+          "transcript": "我这是未定期知道了",
+          "file": "0152.wav",
+          "sha256": "839904ccdcf5edadbee38b41dcf348918da3bbaaa17b68da237cf36275c9446f"
+        },
+        {
+          "start": 908.489,
+          "end": 910.832,
+          "transcript": "卡洛斯露娜奥博隆和洛尔是那个一弄",
+          "file": "0153.wav",
+          "sha256": "50848455ec074b973992d6744c97a21944d5fc6d1980c66c04ce94686de09675"
+        },
+        {
+          "start": 910.832,
+          "end": 913.004,
+          "transcript": "医生",
+          "file": "0154.wav",
+          "sha256": "e79304511c82fcaa823ca946db81d032352eeb06e00d1279e156eb5b14a350cb"
+        },
+        {
+          "start": 917.559,
+          "end": 922.507,
+          "transcript": "如果嗯小羞离谱离谱",
+          "file": "0155.wav",
+          "sha256": "505bcf65e09cec5b2a0e9d3a7ac986c8c416413c9b88c17c780aded67ffb1c8e"
+        },
+        {
+          "start": 922.507,
+          "end": 927.284,
+          "transcript": "那比谱就是这个了",
+          "file": "0156.wav",
+          "sha256": "f8beb1597a4a20ee1c2b2169693f32958447e5d3168a4f4e4765fa09fcd0863d"
+        },
+        {
+          "start": 939.91,
+          "end": 943.634,
+          "transcript": "然后奥格和斯里对上我",
+          "file": "0157.wav",
+          "sha256": "45f7e1a028a81626f62f94c9d080b0645959f6c0dadddc8a6c7eb27f9cdc2a91"
+        },
+        {
+          "start": 946.29,
+          "end": 948.58,
+          "transcript": "好的对比尔是最强的",
+          "file": "0158.wav",
+          "sha256": "2961c4f02b2e501bff002de228440e593b1478912ca57cd2e47ac3a19fef37a9"
+        },
+        {
+          "start": 948.58,
+          "end": 950.45,
+          "transcript": "这个谁最强",
+          "file": "0159.wav",
+          "sha256": "b049d3d61e0f18a7bd32d87d3896b0953937d0353f4ec70ba751dcaffd93a2d6"
+        },
+        {
+          "start": 950.45,
+          "end": 953.404,
+          "transcript": "看起来这个你是比尔吗",
+          "file": "0160.wav",
+          "sha256": "cefcd7e155427e91c6e5a7869cd8faba77948492add796866924b2b22de2af76"
+        },
+        {
+          "start": 966.16,
+          "end": 969.55,
+          "transcript": "叫上你的船员",
+          "file": "0161.wav",
+          "sha256": "5fd3e51326510d7ca520a2b558826fa72d8fcb9b25dae31a27590306e8ac7633"
+        },
+        {
+          "start": 969.55,
+          "end": 972.769,
+          "transcript": "我们要在黄百合来一次八人的比赛哦哦",
+          "file": "0162.wav",
+          "sha256": "df2985059a854738b9ef679239c065ebc802e4e5af86ff8bdd91f1f3ff4a11b4"
+        },
+        {
+          "start": 972.769,
+          "end": 974.79,
+          "transcript": "这是给他下的战书是吧",
+          "file": "0163.wav",
+          "sha256": "e51126c3cab5baa771555bb8909677f5da2d61a807075ded93c1bca089e1b7cc"
+        }
+      ],
+      "datasetSha256": "f850b168a217e18d4c5d6b6a55f9162ccd4fdab3d1606c5fbe374038be7c3682",
+      "sampleCount": 164,
+      "cleanSpeechSeconds": 541.515,
+      "separation": "HP2_all_vocals.pth",
+      "feature": "HuBERT 768",
+      "pitch": "RMVPE",
+      "version": "v2",
+      "sampleRate": 40000,
+      "epochsCompleted": 120,
+      "batchSize": 8,
+      "trainingConfig": {
+        "train": {
+          "log_interval": 40,
+          "seed": 1234,
+          "epochs": 20000,
+          "learning_rate": 0.0001,
+          "betas": [
+            0.8,
+            0.99
+          ],
+          "eps": 1e-09,
+          "batch_size": 8,
+          "fp16_run": true,
+          "lr_decay": 0.999875,
+          "segment_size": 12800,
+          "init_lr_ratio": 1,
+          "warmup_epochs": 0,
+          "c_mel": 45,
+          "c_kl": 1.0
+        },
+        "data": {
+          "max_wav_value": 32768.0,
+          "sampling_rate": 40000,
+          "filter_length": 2048,
+          "hop_length": 400,
+          "win_length": 2048,
+          "n_mel_channels": 125,
+          "mel_fmin": 0.0,
+          "mel_fmax": null,
+          "training_files": "./logs\\beach_nagisa_20261004/filelist.txt"
+        },
+        "model": {
+          "inter_channels": 192,
+          "hidden_channels": 192,
+          "filter_channels": 768,
+          "n_heads": 2,
+          "n_layers": 6,
+          "kernel_size": 3,
+          "p_dropout": 0,
+          "resblock": "1",
+          "resblock_kernel_sizes": [
+            3,
+            7,
+            11
+          ],
+          "resblock_dilation_sizes": [
+            [
+              1,
+              3,
+              5
+            ],
+            [
+              1,
+              3,
+              5
+            ],
+            [
+              1,
+              3,
+              5
+            ]
+          ],
+          "upsample_rates": [
+            10,
+            10,
+            2,
+            2
+          ],
+          "upsample_initial_channel": 512,
+          "upsample_kernel_sizes": [
+            16,
+            16,
+            4,
+            4
+          ],
+          "use_spectral_norm": false,
+          "gin_channels": 256,
+          "spk_embed_dim": 109
+        },
+        "model_dir": "./logs\\beach_nagisa_20261004",
+        "experiment_dir": "./logs\\beach_nagisa_20261004",
+        "save_every_epoch": 30,
+        "name": "beach_nagisa_20261004",
+        "total_epoch": 120,
+        "pretrainG": "assets/pretrained_v2/f0G40k.pth",
+        "pretrainD": "assets/pretrained_v2/f0D40k.pth",
+        "version": "v2",
+        "gpus": "0",
+        "sample_rate": "40k",
+        "if_f0": 1,
+        "if_latest": 1,
+        "save_every_weights": "1",
+        "if_cache_data_in_gpu": 1
+      },
+      "trainingLogSha256": "6afc4fbbd5df1d7e07c6722d171b7b2212dee3260d133e0b057b6c537734f28c",
+      "terminalEvidence": [
+        "INFO:beach_nagisa_20261004:[3680, 9.853573399228505e-05]",
+        "INFO:beach_nagisa_20261004:loss_disc=3.562, loss_gen=3.264, loss_fm=11.641,loss_mel=18.284, loss_kl=1.059",
+        "INFO:beach_nagisa_20261004:====> Epoch: 119 [2026-10-04 14:26:08] | (0:00:10.299605)",
+        "INFO:root:Saving model and optimizer state at epoch 120 to ./logs\\beach_nagisa_20261004\\G_2333333.pth",
+        "INFO:root:Saving model and optimizer state at epoch 120 to ./logs\\beach_nagisa_20261004\\D_2333333.pth",
+        "INFO:beach_nagisa_20261004:saving ckpt beach_nagisa_20261004_e120:Success.",
+        "INFO:beach_nagisa_20261004:====> Epoch: 120 [2026-10-04 14:26:21] | (0:00:12.499087)",
+        "INFO:beach_nagisa_20261004:Training is done. The program is closed.",
+        "INFO:beach_nagisa_20261004:saving final ckpt:Success."
+      ],
+      "featureFileCount": 246,
+      "filelistSha256": "74e8a66f07aad0896d45991898cdf4aa02e0b798a775a919b60343a3dfdaca30",
+      "modelSha256": "25b9e4fa46c7f0a797b774744c63ac672bd38ce4722140025b26d670e1f06de0",
+      "indexSha256": "bf8eed5dfae4e48ffcd5e1b5b7605284dc8c70edd755efa5788360337ec5962a",
+      "indexType": "IndexFlatL2(768)"
+    }
+  }
+}

@@ -42,6 +42,7 @@ import { introVoices, musicForGame, voicesForCinema, voicesForEvent } from "./au
 import { createControls } from "./controls";
 import { matchMediaClips, nextCinematic, selectCinematic } from "./cinematics";
 import { CinemaCache } from "./mediaCache";
+import { VariantPicker } from "./variants";
 import type { MediaPlayback } from "./mediaCache";
 import type {
   CinemaKind,
@@ -117,6 +118,7 @@ export default function BeachVolley() {
   const mediaRef = useRef<MediaManifest | null>(null);
   const [media, setMedia] = useState<MediaManifest | null>(null);
   const cacheRef = useRef<CinemaCache | null>(null);
+  const variantsRef = useRef(new VariantPicker());
   const modeRef = useRef<CinemaMode>("all");
   const playbackRef = useRef<PlaybackCinematic | null>(null);
   const cinemaSerialRef = useRef(0);
@@ -136,6 +138,7 @@ export default function BeachVolley() {
     audio?.setPaused(document.hidden || !document.hasFocus() || helpRef.current || (movie ? cinemaPauseRef.current : activePaused));
     audio?.setBackgroundPaused(!!movie && !movie.playback.cached);
     audio?.setScene(musicForGame(g, movie));
+    audio?.setCinemaDialogue(!!movie?.dialogue);
   }, []);
   const resetInput = useCallback(() => {
     controlsRef.current.clear();
@@ -171,6 +174,7 @@ export default function BeachVolley() {
         window.matchMedia("(prefers-reduced-motion: reduce)").matches,
         kind,
         side,
+        variantsRef.current,
       );
       if (!plan) return false;
       plan.sequenceId = `${plan.sequenceId}:${++cinemaSerialRef.current}`;
@@ -352,7 +356,7 @@ export default function BeachVolley() {
       const g = gameRef.current;
       stepGame(g, controlsRef.current.inputs, STEP);
       const { event } = g;
-      audio.event(event);
+      audio.event(event, g.players.map((player) => player.character), g.lastContact);
       if (event && event.id !== seenEventRef.current && !cinemaRef.current) {
         seenEventRef.current = event.id;
         let shown = false;
@@ -392,6 +396,8 @@ export default function BeachVolley() {
               outcome: playbackRef.current.outcome,
               index: playbackRef.current.index,
               count: playbackRef.current.clips.length,
+              dialogue: playbackRef.current.dialogue?.text || null,
+              paired: playbackRef.current.paired,
             }
           : null,
         cinemaMode: modeRef.current,
@@ -987,7 +993,7 @@ export default function BeachVolley() {
               poster={cinematic.poster}
               preload="auto"
               playsInline
-              muted={muted}
+              muted={muted || !voicesEnabled || !cinematic.dialogue}
               onEnded={() => endClip(cinematic.id)}
               onError={() => endClip(cinematic.id)}
             >
@@ -1004,7 +1010,7 @@ export default function BeachVolley() {
                       : "SUMMER FINALE"}
               </small>
               <span>{cinematic.title}</span>
-              <p>{audioView?.voice
+              <p>{cinematic.dialogue ? `「${cinematic.dialogue.text}」` : audioView?.voice
                 ? `${audioView.voice.side + 1}P · ${CHARACTERS[audioView.voice.character].name}「${audioView.voice.text}」`
                 : cinematic.line}</p>
               {cinemaPaused && (

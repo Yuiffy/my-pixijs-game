@@ -9,12 +9,14 @@ const { createGame, CHARACTER_IDS } = await loadTypescriptModule('src/components
 const { selectCinematic, nextCinematic } = await loadTypescriptModule('src/components/beachVolley/cinematics.ts');
 const { musicForGame, voicesForCinema, voicesForEvent, introVoices } = await loadTypescriptModule('src/components/beachVolley/audioCues.ts');
 const media = JSON.parse(fs.readFileSync('public/games/beach-volley/media.json', 'utf8'));
+const silentMedia = JSON.parse(JSON.stringify(media, (key, value) => key === 'dialogue' ? undefined : value));
+const voiceAsset = (actor, kind) => Array.isArray(AUDIO.voices[actor][kind]) ? AUDIO.voices[actor][kind][0] : AUDIO.voices[actor][kind];
 const flush = () => new Promise(resolve => setImmediate(resolve));
 
 test('22 successful pure audio generations ship compressed, non-silent, verified assets', () => {
   const job = JSON.parse(fs.readFileSync('docs/beach-volley-audio-job.json', 'utf8'));
   const delivery = JSON.parse(fs.readFileSync('docs/beach-volley-audio-delivery.json', 'utf8'));
-  const clips = [...Object.values(AUDIO.music), ...Object.values(AUDIO.voices).flatMap(Object.values)];
+  const clips = Object.values(delivery.items);
   assert.equal(clips.length, 22);
   assert.equal(new Set(clips.map(c => c.src)).size, 22);
   assert.ok(delivery.totalBytes < 2_000_000);
@@ -42,7 +44,7 @@ test('all matchups voice their actual winner, loser and special actor, including
     const g = createGame({ character, opponent, mode: 'local' });
     assert.deepEqual(introVoices(g).map(c => c.character), [character, opponent]);
     for (const side of [0, 1]) for (const kind of ['intro', 'special', 'point', 'result']) {
-      let movie = selectCinematic(g, media, 'all', false, kind, side);
+      let movie = selectCinematic(g, silentMedia, 'all', false, kind, side);
       const cues = [];
       while (movie) { cues.push(...voicesForCinema(g, movie)); movie = nextCinematic(movie); }
       const expectedSides = kind === 'intro' ? [0, 1] : kind === 'special' ? [side] : [side, 1 - side];
@@ -101,7 +103,7 @@ async function mocked(task) {
     requests.push(r);
     signal.addEventListener('abort', () => { r.done = true; reject(new DOMException('Aborted', 'AbortError')); });
   });
-  const audio = new BeachAudio();
+  const audio = new BeachAudio(() => 0);
   const drain = async () => { for (let i = 0; i < 100; i++) { const r = requests.find(r => !r.done); if (!r) { await flush(); if (!requests.some(r => !r.done)) break; } else { r.complete(); await flush(); } } };
   try { await task({ audio, contexts, requests, drain }); }
   finally { audio.dispose(); await flush(); globalThis.AudioContext = previousContext; globalThis.fetch = previousFetch; }
@@ -109,10 +111,10 @@ async function mocked(task) {
 
 test('one download at a time prepares only this matchup and drops obsolete actors', () => mocked(async ({ audio, requests, drain }) => {
   audio.prepare(['sui', 'nagisa']); assert.equal(requests.filter(r => !r.done).length, 1);
-  await drain(); assert.equal(audio.snapshot().loaded, 16);
+  await drain(); assert.equal(audio.snapshot().loaded, 32);
   assert.ok(requests.every(r => !r.src.includes('shiori')));
   const initial = requests.length;
-  audio.prepare(['shiori', 'shiori']); await drain(); assert.equal(audio.snapshot().loaded, 10);
+  audio.prepare(['shiori', 'shiori']); await drain(); assert.equal(audio.snapshot().loaded, 18);
   assert.ok(requests.slice(initial).every(r => r.src.includes('shiori')));
 }));
 
@@ -132,7 +134,7 @@ test('gesture unlock, loop and one-shot music, ducking and pause preserve playba
 
 test('skipped or restarted speech cannot start from a late network response', () => mocked(async ({ audio, contexts, requests, drain }) => {
   audio.prepare(['sui']); audio.unlock(); audio.queueVoices([{ character: 'sui', side: 0, kind: 'special' }], 'old');
-  await flush(); assert.equal(requests.find(r => !r.done).src, AUDIO.voices.sui.special.src);
+  await flush(); assert.equal(requests.find(r => !r.done).src, voiceAsset('sui', 'special').src);
   audio.clearVoices(); await drain(); audio.setScene('menu'); await flush();
   assert.equal(audio.snapshot().voice, null);
   assert.equal(contexts[0].nodes.filter(n => n.kind === 'buffer').length, 1, 'only BGM started');
@@ -144,9 +146,23 @@ test('cold video holds BGM downloads while a short active voice has priority', (
   audio.prepare(['sui']); audio.unlock(); audio.setBackgroundPaused(true); await flush();
   assert.equal(requests.filter(r => !r.done).length, 0);
   audio.queueVoices([{ character: 'sui', side: 0, kind: 'special' }], 'special'); await flush();
-  const r = requests.find(r => !r.done); assert.equal(r.src, AUDIO.voices.sui.special.src); r.complete(); await flush();
+  const r = requests.find(r => !r.done); assert.equal(r.src, voiceAsset('sui', 'special').src); r.complete(); await flush();
   assert.equal(audio.snapshot().voicePlaying, true); assert.equal(requests.filter(r => !r.done).length, 0);
-  audio.setBackgroundPaused(false); await drain(); assert.equal(audio.snapshot().loaded, 10);
+  audio.setBackgroundPaused(false); await drain(); assert.equal(audio.snapshot().loaded, 18);
+}));
+
+test('native cold movies release an obsolete speech download and resume it only in the background', () => mocked(async ({ audio, requests, drain }) => {
+  audio.prepare(['sui']); audio.unlock(); audio.setBackgroundPaused(true); await flush();
+  audio.queueVoices([{ character: 'sui', side: 0, kind: 'intro' }], 'intro'); await flush();
+  const speech = requests.find(r => !r.done);
+  assert.equal(speech.src, voiceAsset('sui', 'intro').src);
+  audio.setCinemaDialogue(true); audio.queueVoices([], 'native'); await flush();
+  assert.equal(speech.signal.aborted, true);
+  assert.equal(requests.filter(r => !r.done).length, 0);
+  assert.equal(audio.snapshot().voice, null);
+  audio.setBackgroundPaused(false); await drain();
+  assert.equal(audio.snapshot().loaded, 18);
+  assert.equal(audio.snapshot().voice, null);
 }));
 
 test('master mute cancels speech, independent switches preserve effects, and match event IDs reset', () => mocked(async ({ audio, contexts, drain }) => {
@@ -167,7 +183,55 @@ test('failed audio finishes its cue without stopping subsequent voices or retryi
   audio.prepare(['sui']); audio.unlock();
   audio.queueVoices([{ character: 'sui', side: 0, kind: 'special' }, { character: 'sui', side: 0, kind: 'victory' }], 'failed'); await flush();
   requests.find(r => !r.done).complete(false); await flush(); await drain(); await flush();
-  assert.ok(audio.snapshot().failures.includes(AUDIO.voices.sui.special.src)); assert.equal(audio.snapshot().voice.kind, 'victory');
+  assert.ok(audio.snapshot().failures.includes(voiceAsset('sui', 'special').src)); assert.equal(audio.snapshot().voice.kind, 'victory');
   const count = requests.length;
   audio.queueVoices([{ character: 'sui', side: 0, kind: 'special' }], 'again'); await flush(); assert.equal(requests.length, count);
+}));
+
+test('each contact voices its actual athlete once; preparation and empty swings are silent', () => mocked(async ({ audio, contexts, drain }) => {
+  audio.prepare(['sui', 'shiori']); await drain(); audio.unlock(); await flush();
+  const actors = ['sui', 'shiori'];
+  let previous = null;
+  for (const [id, type, side] of [[1, 'serve', 0], [2, 'hit', 1], [3, 'spike', 0], [4, 'hit', 1]]) {
+    audio.event({ id, type, side }, actors);
+    const s = audio.snapshot(); assert.equal(s.effortPlayed, id);
+    assert.equal(s.lastEffort.character, actors[side]);
+    assert.equal(s.lastEffort.eventId, id);
+    if (previous && previous.character === actors[side]) assert.notEqual(s.lastEffort.src, previous.src);
+    previous = s.lastEffort;
+    audio.event({ id, type, side }, actors); assert.equal(audio.snapshot().effortPlayed, id);
+  }
+  audio.event({ id: 5, type: 'special', side: 0 }, actors);
+  audio.event({ id: 6, type: 'jump', side: 1 }, actors);
+  assert.equal(audio.snapshot().effortPlayed, 4);
+  const active = contexts[0].nodes.filter(n => n.kind === 'buffer' && !n.loop && n.started);
+  audio.configure({ enabled: true, music: true, voices: false }); assert.ok(active.every(n => n.stopped));
+  audio.event({ id: 7, type: 'hit', side: 0 }, actors); assert.equal(audio.snapshot().effortPlayed, 4);
+}));
+
+test('speech variants avoid repeats and native dialogue ducks music without an external voice', () => mocked(async ({ audio, drain }) => {
+  audio.prepare(['sui']); await drain(); audio.unlock(); await flush();
+  const cue = [{ character: 'sui', side: 0, kind: 'pointWin' }]; const sources = [];
+  for (let i = 0; i < 4; i++) {
+    audio.queueVoices(cue, `point:${i}`); await flush(); sources.push(audio.snapshot().voice.src);
+  }
+  assert.ok(sources.every((src, i) => !i || src !== sources[i - 1]));
+  audio.clearVoices(); audio.setCinemaDialogue(true);
+  assert.equal(audio.snapshot().voice, null); assert.equal(audio.snapshot().musicGain, 0.1);
+  audio.configure({ enabled: true, music: true, voices: false });
+  assert.equal(audio.snapshot().musicGain, 0.38, 'muted native dialogue does not lower music');
+  audio.configure({ enabled: true, music: true, voices: true });
+  assert.equal(audio.snapshot().musicGain, 0.1);
+  audio.setCinemaDialogue(false); assert.equal(audio.snapshot().musicGain, 0.38);
+}));
+
+test('a later point event cannot hide a contact, and old contacts do not replay', () => mocked(async ({ audio, drain }) => {
+  audio.prepare(['sui']); await drain(); audio.unlock(); await flush();
+  const contact = { id: 1, type: 'hit', side: 0 };
+  audio.event({ id: 2, type: 'point', side: 1 }, ['sui', 'sui'], contact);
+  assert.equal(audio.snapshot().effortPlayed, 1);
+  audio.event({ id: 3, type: 'jump', side: 0 }, ['sui', 'sui'], contact);
+  assert.equal(audio.snapshot().effortPlayed, 1);
+  audio.resetMatch(); audio.event({ id: 4, type: 'serve', side: 1 }, ['sui', 'sui'], { id: 4, type: 'serve', side: 1 });
+  assert.equal(audio.snapshot().effortPlayed, 2);
 }));
