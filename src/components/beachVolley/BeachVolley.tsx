@@ -866,6 +866,7 @@ export default function BeachVolley() {
                       value={options.target}
                       onChange={(event) => choose({ target: Number(event.target.value) })}
                     >
+                      <option value={5}>5 分短局</option>
                       <option value={7}>7 分短局</option>
                       <option value={11}>11 分比赛</option>
                     </select>

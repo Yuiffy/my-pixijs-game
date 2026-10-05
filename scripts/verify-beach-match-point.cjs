@@ -12,6 +12,8 @@ const voiceSources = kind => Object.values(audioManifest.voices).flatMap(actor =
 const pointSources = [...voiceSources('pointWin'), ...voiceSources('pointLose')];
 
 const production = process.env.BEACH_MATCH_PRODUCTION === '1';
+const matchTarget = Number(process.env.BEACH_MATCH_TARGET || 7);
+assert.ok([5, 7, 11].includes(matchTarget), 'supported match target');
 const url = process.env.BEACH_VOLLEY_URL || 'http://localhost:4021/game/beach-volley';
 const output = path.resolve(process.env.BEACH_MATCH_OUTPUT || `tmp/beach-match-point/${production ? 'production' : 'dev'}`);
 fs.mkdirSync(output, { recursive: true });
@@ -28,7 +30,7 @@ async function capture(p, name) {
   report.screenshots.push({ name, metrics, canvas, state: await state(p), dom: await p.locator('main').innerText() });
 }
 
-async function setup(browser, { mode = 'local', cinema = 'all', target = 7, viewport = { width: 1440, height: 900 }, mobile = false } = {}) {
+async function setup(browser, { mode = 'local', cinema = 'all', target = matchTarget, viewport = { width: 1440, height: 900 }, mobile = false } = {}) {
   const c = await browser.newContext({ viewport, isMobile: mobile, hasTouch: mobile });
   await c.addInitScript(instrumentAudio);
   await c.addInitScript(() => {
@@ -46,6 +48,10 @@ async function setup(browser, { mode = 'local', cinema = 'all', target = 7, view
   await p.waitForFunction(() => window.render_game_to_text && JSON.parse(window.render_game_to_text()).assetsReady, null, { polling: 100 });
   assert.equal(await p.evaluate(() => typeof window.beachVolley), production ? 'undefined' : 'object');
   await p.getByRole('button', { name: { local: '同机双人', solo: '单人挑战', practice: '自由练习' }[mode], exact: true }).click();
+  if (mode !== 'practice') {
+    assert.equal(await p.locator('#beach-target').inputValue(), '7', 'default target');
+    assert.deepEqual(await p.locator('#beach-target option').evaluateAll(options => options.map(o => o.value)), ['5', '7', '11']);
+  }
   await p.getByRole('button', { name: /岁己.*SUI/ }).click();
   await p.locator('#beach-opponent').selectOption('nagisa');
   if (mode !== 'practice') await p.locator('#beach-target').selectOption(String(target));
@@ -149,6 +155,7 @@ async function result(p, winner, name, natural = false) {
   await p.getByRole('button', { name: /再来一场/ }).click(); await skip(p);
   const fresh = await state(p);
   assert.equal(fresh.phase, 'serve'); assert.deepEqual(fresh.score, [0, 0]); assert.equal(fresh.winner, null);
+  assert.equal(fresh.target, s.target, 'rematch retains the selected target');
   assert.deepEqual(fresh.matchPoints, [false, false]); assert.equal(fresh.cinematic, null);
   report.checks.push(`${name}: direct match winner/loser presentation, stable terminal score/event and clean rematch`);
 }
@@ -193,13 +200,15 @@ async function publicMatch(browser, mode, cinema) {
     assert.equal(s.cinematic?.kind || null, cinema === 'all' ? 'point' : null);
     if (n === 0 && cinema === 'all') await capture(p, `${mode}-ordinary-point`);
     await skip(p);
-    if (s.score[winner] === 6) {
+    if (s.score[winner] === matchTarget - 1) {
       await hint(p, winner === 0 ? [true, false] : [false, true]);
       await capture(p, `${mode}-${cinema}-match-point`);
     }
   }
   const terminal = await state(p);
   assert.equal(terminal.phase, 'result');
+  assert.equal(terminal.target, matchTarget);
+  assert.deepEqual(terminal.score, winner === 0 ? [matchTarget, 0] : [0, matchTarget]);
   report.matches.push({ mode, cinema, points, score: terminal.score, winner: terminal.winner });
   await result(p, winner, `${mode}-${cinema}`, mode === 'local' && cinema === 'all');
   await c.close();
@@ -215,7 +224,7 @@ async function publicMatch(browser, mode, cinema) {
       await publicMatch(browser, 'local', 'off');
     } else {
       const { c, p } = await setup(browser);
-      await rig(p, [5, 2]); let s = await ground(p, 1);
+      await rig(p, [matchTarget - 2, 2]); let s = await ground(p, 1);
       assert.equal(s.phase, 'point'); assert.equal(s.cinematic.kind, 'point');
       await capture(p, 'ordinary-point'); await skip(p); await hint(p, [true, false]);
       await capture(p, 'left-match-point');
@@ -224,9 +233,9 @@ async function publicMatch(browser, mode, cinema) {
       await p.keyboard.press('KeyP'); await advance(p, 9);
       s = await ground(p, 1); assert.equal(s.cinematic.kind, 'result');
       await result(p, 0, 'local-all', true);
-      await rig(p, [6, 5]); await ground(p, 0); await skip(p); await hint(p, [false, false]);
+      await rig(p, [matchTarget - 1, matchTarget - 2]); await ground(p, 0); await skip(p); await hint(p, [false, false]);
       await capture(p, 'saved-match-point-deuce');
-      await rig(p, [10, 10]); await hint(p, [true, true]); await capture(p, 'dual-cap-match-point');
+      await rig(p, [matchTarget + 3, matchTarget + 3]); await hint(p, [true, true]); await capture(p, 'dual-cap-match-point');
       s = await ground(p, 0); assert.equal(s.phase, 'result'); assert.equal(s.cinematic.kind, 'result');
       await skip(p); await c.close();
       const solo = await setup(browser, { mode: 'solo', cinema: 'key', target: 11 });
@@ -234,7 +243,7 @@ async function publicMatch(browser, mode, cinema) {
       await ground(solo.p, 0); await result(solo.p, 1, 'solo-key');
       await solo.c.close();
       const off = await setup(browser, { cinema: 'off' });
-      await rig(off.p, [6, 0]); await ground(off.p, 1); await result(off.p, 0, 'local-off');
+      await rig(off.p, [matchTarget - 1, 0]); await ground(off.p, 1); await result(off.p, 0, 'local-off');
       await off.c.close();
       const practice = await setup(browser, { mode: 'practice', cinema: 'off' });
       await rig(practice.p, [20, 0]); await hint(practice.p, [false, false]); s = await ground(practice.p, 1);
@@ -243,7 +252,7 @@ async function publicMatch(browser, mode, cinema) {
       await capture(practice.p, 'practice-no-match-point'); await practice.c.close();
       for (const [width, height] of [[320, 740], [390, 844], [844, 390]]) {
         const mobile = await setup(browser, { cinema: 'off', viewport: { width, height }, mobile: true });
-        await rig(mobile.p, width === 390 ? [10, 10] : [5, 6]);
+        await rig(mobile.p, width === 390 ? [matchTarget + 3, matchTarget + 3] : [matchTarget - 2, matchTarget - 1]);
         await hint(mobile.p, width === 390 ? [true, true] : [false, true]);
         await capture(mobile.p, `mobile-${width}-match-point`);
         await mobile.c.close();

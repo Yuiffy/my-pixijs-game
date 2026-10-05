@@ -219,14 +219,16 @@ test('ball hitting each court awards exactly one point and transfers serve', () 
   }
 });
 test('win by two, sudden death cap, and practice without a match end', () => {
-  const g = rally(); g.score = [6, 6]; ground(g, 1); skipTransition(g); assert.equal(g.phase, 'serve');
-  ground(g, 1); skipTransition(g); assert.equal(g.phase, 'result'); assert.equal(g.winner, 0);
-  const cap = rally(); cap.score = [10, 10]; ground(cap, 0); skipTransition(cap); assert.equal(cap.winner, 1);
+  for (const target of [5, 7, 11]) {
+    const g = rally({ target }); g.score = [target - 1, target - 1]; ground(g, 1); skipTransition(g); assert.equal(g.phase, 'serve');
+    ground(g, 1); skipTransition(g); assert.equal(g.phase, 'result'); assert.equal(g.winner, 0);
+    const cap = rally({ target }); cap.score = [target + 3, target + 3]; ground(cap, 0); skipTransition(cap); assert.equal(cap.winner, 1);
+  }
   const practice = rally({ mode: 'practice' }); practice.score = [20, 0]; ground(practice, 1); skipTransition(practice); assert.equal(practice.phase, 'serve');
 });
 
-test('match points follow the next-point outcome for both targets, deuce and the cap', () => {
-  for (const target of [7, 11]) {
+test('match points follow the next-point outcome for all targets, deuce and the cap', () => {
+  for (const target of [5, 7, 11]) {
     const cases = [
       [[target - 2, 0], [false, false]],
       [[target - 1, 0], [true, false]],
@@ -264,7 +266,7 @@ test('a saved match point clears at deuce and reappears for the new leader', () 
 });
 
 test('deciding points immediately emit only one match win and never return to a serve', () => {
-  for (const target of [7, 11]) for (const mode of ['solo', 'local']) for (const side of [0, 1]) {
+  for (const target of [5, 7, 11]) for (const mode of ['solo', 'local']) for (const side of [0, 1]) {
     const g = rally({ target, mode });
     g.score[side] = target - 1; g.score[1 - side] = target - 2;
     ground(g, 1 - side);
