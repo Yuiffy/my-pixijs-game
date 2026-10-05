@@ -1,0 +1,262 @@
+{
+  "tool": "built-in image_gen",
+  "method": "whole-strip generation from shipped idle seeds; connected component extraction; skill shared-scale normalization; stable face-derived body anchor; preserved alpha",
+  "limitations": "Four illustrated jogging keyframes, not skeletal animation. Mirror the right-facing source for left travel.",
+  "items": {
+    "sui": {
+      "src": "/games/beach-volley/run-v1/sui-run.webp",
+      "bytes": 95938,
+      "sha256": "4ef9edd3ecc2d6f76e07789d2c31f2cb51fc26cf6d235f8f605e8f9d00d1f494",
+      "sourcePath": "C:\\Users\\yuiffy\\.codex\\generated_images\\01a0fb98-08fc-7952-888e-5a6e346df76f\\exec-dbf98277-6c71-4e1e-aaa5-05d644f64f4e.png",
+      "sourceSha256": "3baf265fadecd5b66a77ca410c361f13c55273156d98429e90a8317afaa60e2e",
+      "seedPath": "public/games/beach-volley/sui-atlas-v2.webp",
+      "seedSha256": "7f3392b8d121f1b855c4a2570baa94f4f855c7b840c9253e121d75748350727a",
+      "seedCropSha256": "cb680f2cf7c0bfe18c7184a7561db1dbc36633c4951622c7c02332723319989c",
+      "sourceBounds": [
+        [
+          54,
+          11,
+          549,
+          661
+        ],
+        [
+          601,
+          11,
+          380,
+          671
+        ],
+        [
+          1091,
+          21,
+          531,
+          657
+        ],
+        [
+          1696,
+          14,
+          387,
+          667
+        ]
+      ],
+      "sharedScale": 0.5603576751117735,
+      "faceCenters": [
+        332.0,
+        265.0,
+        335.0,
+        264.0
+      ],
+      "horizontalShifts": [
+        -6,
+        -15,
+        -12,
+        -13
+      ],
+      "prompt": "Use case: identity-preserve. Create one production game sprite sheet: exactly FOUR full-body running poses in a single row, transparent background. IMAGE 1 is the approved character identity, hairstyle, headwear, face, palette and exact swim athletic outfit to keep. IMAGE 2 is a STICK-FIGURE POSE GUIDE for the four running frames; follow its leg geometry precisely. Red in the guide means the foreground leg, blue means background leg: keep those roles fixed but DRAW BOTH LEGS WITH NORMAL SKIN. Frame 1 foreground leg extends forward-right, background leg behind-left; frame 2 foreground leg straight down supporting, background knee raised forward; frame 3 foreground leg extends BACKWARDS LEFT with bent knee, background leg extends FORWARDS RIGHT planted; frame 4 foreground knee raised forward, background leg straight supporting. Thus the foreground knee must be behind the hips in frame 3: this is essential. The two legs actually alternate stepping. Change the pose freely from image 1. Show more of a SIDE VIEW facing screen-right so the run mechanics are clear; head can turn slightly toward the camera. Use the same 3D anime illustration style and slender athletic proportions, no realism/style changes. Arms swing opposite legs. Same scale, head/hip placement and ground baseline across frames; all feet and flowing hair fit each evenly spaced slot with clean transparent gutters. Genuine transparent alpha, clean edges, no colored outlines or fringe noise. No ground, shadows, labels, markings, ball, scenery, grid or extra figures. This is ONE WHOLE LOOP generated at once, not a poster.",
+      "rejectedEarlierPasses": 2,
+      "spec": {
+        "file": "run-v1/sui-run.webp",
+        "frames": [
+          [
+            0,
+            0,
+            384,
+            384
+          ],
+          [
+            384,
+            0,
+            384,
+            384
+          ],
+          [
+            768,
+            0,
+            384,
+            384
+          ],
+          [
+            1152,
+            0,
+            384,
+            384
+          ]
+        ],
+        "anchor": [
+          192,
+          380
+        ],
+        "scale": 0.6170212765957447
+      }
+    },
+    "shiori": {
+      "src": "/games/beach-volley/run-v1/shiori-run.webp",
+      "bytes": 77530,
+      "sha256": "c15677717d2a50d1ae467847d2d23ffbe2687d0b3b23e000fa73a7cabc9353a6",
+      "sourcePath": "C:\\Users\\yuiffy\\.codex\\generated_images\\01a0fb98-08fc-7952-888e-5a6e346df76f\\exec-f29707f6-9a13-4470-92b8-af85e1a15c56.png",
+      "sourceSha256": "b7cc5e7965c2e2b7b65015afc8ff785387b817f68f17585066fc7446c5cde53d",
+      "seedPath": "public/games/beach-volley/shiori-atlas-v2.webp",
+      "seedSha256": "af46ca481be7415fdddf68394664eba479ae7a76d25884519da9aaacb9d3de1b",
+      "seedCropSha256": "2d66bff884517c5876ec7d061382235aa282754c4ef5acae6abcbe7bfbd06760",
+      "sourceBounds": [
+        [
+          26,
+          7,
+          541,
+          668
+        ],
+        [
+          641,
+          6,
+          346,
+          685
+        ],
+        [
+          1115,
+          6,
+          466,
+          686
+        ],
+        [
+          1743,
+          6,
+          340,
+          687
+        ]
+      ],
+      "sharedScale": 0.5473071324599709,
+      "faceCenters": [
+        291.0,
+        174.0,
+        259.0,
+        179.0
+      ],
+      "horizontalShifts": [
+        15,
+        26,
+        12,
+        21
+      ],
+      "prompt": "Use case: identity-preserve. Create one production game sprite sheet: exactly FOUR full-body running poses in a single row, transparent background. IMAGE 1 is the approved character identity, hairstyle, headwear, face, palette and exact swim athletic outfit to keep. IMAGE 2 is a STICK-FIGURE POSE GUIDE for the four running frames; follow its leg geometry precisely. Red in the guide means the foreground leg, blue means background leg: keep those roles fixed but DRAW BOTH LEGS WITH NORMAL SKIN. Frame 1 foreground leg extends forward-right, background leg behind-left; frame 2 foreground leg straight down supporting, background knee raised forward; frame 3 foreground leg extends BACKWARDS LEFT with bent knee, background leg extends FORWARDS RIGHT planted; frame 4 foreground knee raised forward, background leg straight supporting. Thus the foreground knee must be behind the hips in frame 3: this is essential. The two legs actually alternate stepping. Change the pose freely from image 1. Show more of a SIDE VIEW facing screen-right so the run mechanics are clear; head can turn slightly toward the camera. Use the same 3D anime illustration style and slender athletic proportions, no realism/style changes. Arms swing opposite legs. Same scale, head/hip placement and ground baseline across frames; all feet and flowing hair fit each evenly spaced slot with clean transparent gutters. Genuine transparent alpha, clean edges, no colored outlines or fringe noise. No ground, shadows, labels, markings, ball, scenery, grid or extra figures. This is ONE WHOLE LOOP generated at once, not a poster.",
+      "rejectedEarlierPasses": 2,
+      "spec": {
+        "file": "run-v1/shiori-run.webp",
+        "frames": [
+          [
+            0,
+            0,
+            384,
+            384
+          ],
+          [
+            384,
+            0,
+            384,
+            384
+          ],
+          [
+            768,
+            0,
+            384,
+            384
+          ],
+          [
+            1152,
+            0,
+            384,
+            384
+          ]
+        ],
+        "anchor": [
+          192,
+          380
+        ],
+        "scale": 0.6170212765957447
+      }
+    },
+    "nagisa": {
+      "src": "/games/beach-volley/run-v1/nagisa-run.webp",
+      "bytes": 98408,
+      "sha256": "680c1a42f0f3780e5431818f8e4dda7b16d508b067f2db3cbe6143eeeba67a26",
+      "sourcePath": "C:\\Users\\yuiffy\\.codex\\generated_images\\01a0fb98-08fc-7952-888e-5a6e346df76f\\exec-a1c7a834-4684-4a7b-9c60-76e4bab93740.png",
+      "sourceSha256": "9d5f3af5f06da08b388a3523fac60ea189cac63e932c722d1384c0af8d780c38",
+      "seedPath": "public/games/beach-volley/nagisa-atlas-v2.webp",
+      "seedSha256": "ddeaeda1f6d4cd2adc04cd3164b78706fc46fc3b449a6233d43f0cf2790b30f7",
+      "seedCropSha256": "3d25a87d5e473f009d067eb64ba1396f6e69bbfc044b868c6896aef0ade12ad1",
+      "sourceBounds": [
+        [
+          57,
+          13,
+          537,
+          664
+        ],
+        [
+          580,
+          12,
+          447,
+          682
+        ],
+        [
+          1111,
+          8,
+          517,
+          684
+        ],
+        [
+          1667,
+          7,
+          448,
+          687
+        ]
+      ],
+      "sharedScale": 0.5473071324599709,
+      "faceCenters": [
+        317.0,
+        299.0,
+        342.0,
+        290.0
+      ],
+      "horizontalShifts": [
+        -1,
+        -15,
+        -19,
+        -10
+      ],
+      "prompt": "Use case: identity-preserve. Create one production game sprite sheet: exactly FOUR full-body running poses in a single row, transparent background. IMAGE 1 is the approved character identity, hairstyle, headwear, face, palette and exact swim athletic outfit to keep. IMAGE 2 is a STICK-FIGURE POSE GUIDE for the four running frames; follow its leg geometry precisely. Red in the guide means the foreground leg, blue means background leg: keep those roles fixed but DRAW BOTH LEGS WITH NORMAL SKIN. Frame 1 foreground leg extends forward-right, background leg behind-left; frame 2 foreground leg straight down supporting, background knee raised forward; frame 3 foreground leg extends BACKWARDS LEFT with bent knee, background leg extends FORWARDS RIGHT planted; frame 4 foreground knee raised forward, background leg straight supporting. Thus the foreground knee must be behind the hips in frame 3: this is essential. The two legs actually alternate stepping. Change the pose freely from image 1. Show more of a SIDE VIEW facing screen-right so the run mechanics are clear; head can turn slightly toward the camera. Use the same 3D anime illustration style and slender athletic proportions, no realism/style changes. Arms swing opposite legs. Same scale, head/hip placement and ground baseline across frames; all feet and flowing hair fit each evenly spaced slot with clean transparent gutters. Genuine transparent alpha, clean edges, no colored outlines or fringe noise. No ground, shadows, labels, markings, ball, scenery, grid or extra figures. This is ONE WHOLE LOOP generated at once, not a poster.",
+      "rejectedEarlierPasses": 2,
+      "spec": {
+        "file": "run-v1/nagisa-run.webp",
+        "frames": [
+          [
+            0,
+            0,
+            384,
+            384
+          ],
+          [
+            384,
+            0,
+            384,
+            384
+          ],
+          [
+            768,
+            0,
+            384,
+            384
+          ],
+          [
+            1152,
+            0,
+            384,
+            384
+          ]
+        ],
+        "anchor": [
+          192,
+          380
+        ],
+        "scale": 0.6170212765957447
+      }
+    }
+  }
+}

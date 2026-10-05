@@ -33,6 +33,21 @@ export const DIVE_DURATION = 0.6;
 export const DIVE_FLIGHT_TIME = 0.24;
 export const DIVE_SLIDE_TIME = 0.18;
 export const DIVE_RECOVERY_TIME = DIVE_DURATION - DIVE_FLIGHT_TIME - DIVE_SLIDE_TIME;
+// One full running cycle covers two steps. Only actual ground travel advances it.
+export const RUN_CYCLE_DISTANCE = 176;
+export function runState(p: Player, reduced = false) {
+  const active = p.pose <= 2 && p.y >= FLOOR - 0.01 && p.dive <= 0 && p.swing <= 0 && p.runBlend > 0.015;
+  const phase = (p.runDistance / RUN_CYCLE_DISTANCE) % 1;
+  return {
+    active,
+    frame: active ? Math.floor(phase * 4) : null,
+    phase,
+    blend: active ? p.runBlend : 0,
+    direction: p.runDirection,
+    lift: active && !reduced ? Math.sin(phase * Math.PI * 4) ** 2 * 2.5 * p.runBlend : 0,
+    lean: !reduced && p.y >= FLOOR - 0.01 && p.dive <= 0 && p.swing <= 0 ? p.runLean : 0,
+  };
+}
 export function diveState(p: Pick<Player, "dive" | "facing">) {
   if (p.dive <= 0) return null;
   const elapsed = Math.max(0, DIVE_DURATION - p.dive);
@@ -106,6 +121,11 @@ export interface Player {
   special: number;
   pose: number;
   facing: number;
+  runDistance: number;
+  runBlend: number;
+  runLean: number;
+  runDirection: number;
+  groundSpeed: number;
   lastInput: Input;
   aiTarget: number;
   aiTimer: number;
@@ -279,6 +299,11 @@ function player(character: Character, side: Side): Player {
     special: 0,
     pose: 0,
     facing: side === 0 ? 1 : -1,
+    runDistance: 0,
+    runBlend: 0,
+    runLean: 0,
+    runDirection: side === 0 ? 1 : -1,
+    groundSpeed: 0,
     lastInput: emptyInput(),
     aiTarget: side === 0 ? 295 : 985,
     aiTimer: 0,
@@ -366,6 +391,11 @@ export function prepareServe(g: Game) {
     p.special = 0;
     p.cooldown = 0;
     p.pose = 0;
+    p.runDistance = 0;
+    p.runBlend = 0;
+    p.runLean = 0;
+    p.runDirection = i === 0 ? 1 : -1;
+    p.groundSpeed = 0;
     p.lastInput = emptyInput();
     p.aim = { lift: "drive", depth: "middle" };
     p.shotAim = null;
@@ -521,6 +551,9 @@ export function aiInput(g: Game, side: Side, dt: number): Input {
   return input;
 }
 function movePlayer(g: Game, p: Player, side: Side, input: Input, dt: number) {
+  const previousX = p.x;
+  const previousVx = p.vx;
+  const wasGrounded = p.y >= FLOOR - 0.01;
   p.swing = Math.max(0, p.swing - dt);
   const previousDive = p.dive;
   p.dive = Math.max(0, p.dive - dt);
@@ -573,6 +606,18 @@ function movePlayer(g: Game, p: Player, side: Side, input: Input, dt: number) {
   p.vy += GRAVITY * 1.18 * dt;
   p.y = Math.min(FLOOR, p.y + p.vy * dt);
   if (p.y >= FLOOR) p.vy = 0;
+  const running = wasGrounded && p.y >= FLOOR - 0.01 && p.dive <= 0 && previousDive <= 0 && p.swing <= 0;
+  const travel = running ? p.x - previousX : 0;
+  p.groundSpeed = dt > 0 ? travel / dt : 0;
+  if (Math.abs(travel) > 0.01) p.runDirection = Math.sign(travel);
+  // Ignore the final subpixel drift after releasing a key; wall clamping gives zero travel.
+  if (Math.abs(p.groundSpeed) > 12) p.runDistance = (p.runDistance + Math.abs(travel)) % RUN_CYCLE_DISTANCE;
+  const blend = running ? clamp((Math.abs(p.groundSpeed) - 12) / 170, 0, 1) : 0;
+  p.runBlend += (blend - p.runBlend) * (1 - Math.exp(-dt * (blend > p.runBlend ? 20 : 28)));
+  const acceleration = dt > 0 ? (p.vx - previousVx) / dt : 0;
+  const lean = running && Math.abs(p.groundSpeed) > 12
+    ? clamp((p.groundSpeed / 368) * 0.035 + (acceleration / 10000) * 0.025, -0.07, 0.07) : 0;
+  p.runLean += (lean - p.runLean) * (1 - Math.exp(-dt * 18));
   p.pose =
     p.dive > 0
       ? 3
@@ -582,8 +627,8 @@ function movePlayer(g: Game, p: Player, side: Side, input: Input, dt: number) {
           ? 4
           : p.swing > 0
             ? 3
-            : Math.abs(p.vx) > 60
-              ? 1 + (Math.floor(g.time * 10) % 2)
+            : p.runBlend > 0.015
+              ? 1 + (Math.floor(p.runDistance / (RUN_CYCLE_DISTANCE / 4)) % 2)
               : 0;
   p.lastInput = { ...input };
 }
@@ -658,6 +703,9 @@ function hitBall(g: Game, p: Player, side: Side) {
     p.dive = 0;
     p.vx = 0;
     p.facing = dir;
+    p.groundSpeed = 0;
+    p.runBlend = 0;
+    p.runLean = 0;
     p.pose = p.y < FLOOR - 8 ? 4 : 0;
     emit(g, "special", side);
   } else emit(g, smash ? "spike" : "hit", side);
@@ -832,6 +880,15 @@ export function describeGame(g: Game) {
       y: +p.y.toFixed(1),
       energy: p.energy,
       pose: p.pose,
+      facing: p.facing,
+      movement: {
+        ...runState(p),
+        phase: +runState(p).phase.toFixed(3),
+        distance: +p.runDistance.toFixed(3),
+        speed: +p.groundSpeed.toFixed(2),
+        blend: +runState(p).blend.toFixed(3),
+        lean: +runState(p).lean.toFixed(4),
+      },
       diving: p.dive > 0,
       dive: p.dive > 0 ? { ...diveState(p), remaining: Math.round(p.dive * 1000) / 1000 } : null,
       diveCooldown: Math.round(p.cooldown * 1000) / 1000,

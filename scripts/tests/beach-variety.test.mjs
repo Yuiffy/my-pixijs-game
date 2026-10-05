@@ -11,7 +11,7 @@ const { voicesForCinema } = await loadTypescriptModule('src/components/beachVoll
 const media = JSON.parse(fs.readFileSync('public/games/beach-volley/media.json', 'utf8'));
 const audio = JSON.parse(fs.readFileSync('public/games/beach-volley/audio.json', 'utf8'));
 
-test('active voices have verified performer recordings or the retained Nagisa RVC model', () => {
+test('active voices retain source provenance or the retained Nagisa RVC model', () => {
   const delivery = JSON.parse(fs.readFileSync('docs/beach-volley-rvc-delivery.json', 'utf8'));
   const recordings = JSON.parse(fs.readFileSync('docs/beach-volley-recording-delivery.json', 'utf8'));
   const assets = { ...delivery.items, ...recordings.items };
@@ -198,11 +198,54 @@ test('Sui and Shiori never select an unconverted synthesized soundtrack; Nagisa 
       if (clip.dialogue) assert.equal(clip.dialogue.source, 'recording');
     }
     for (const clip of [...Object.values(audio.voices[actor]).flat(), ...audio.effort[actor]]) {
-      assert.ok(clip.src.startsWith('/games/beach-volley/audio-v3/'));
+      assert.match(clip.src, /^\/games\/beach-volley\/audio-v[34]\//);
     }
   }
   for (const clip of [...Object.values(audio.voices.nagisa).flat(), ...audio.effort.nagisa]) {
     const evidence = Object.values(retained.items).find(item => item.src === clip.src);
     assert.equal(crypto.createHash('sha256').update(fs.readFileSync(`public${clip.src}`)).digest('hex'), evidence.sha256);
   }
+});
+
+test('rejected Shiori laughter cannot return through external voices or embedded point-win video', () => {
+  const recordings = JSON.parse(fs.readFileSync('docs/beach-volley-recording-delivery.json', 'utf8'));
+  const dubbing = JSON.parse(fs.readFileSync('docs/beach-volley-dubbing-delivery.json', 'utf8'));
+  const active = [...Object.values(audio.voices.shiori).flat(), ...audio.effort.shiori];
+  for (const key of ['shiori-pointWin-2', 'shiori-victory-1', 'shiori-effort-2']) {
+    const old = recordings.rejectedItems[key], replacement = recordings.items[key];
+    assert.equal(old.status, 'rejected');
+    assert.ok(active.every(c => c.src !== old.src));
+    assert.ok(active.some(c => c.src === replacement.src));
+    assert.notEqual(replacement.sourceSha256, old.sourceSha256);
+    assert.equal(replacement.sourceKind, 'authentic-button');
+    assert.equal(replacement.repository, 'https://github.com/forsakenrei/shiori-button');
+    assert.match(replacement.repositoryRevision, /^[a-f0-9]{40}$/);
+    assert.match(replacement.src, /\/audio-v4\//);
+    assert.match(replacement.identityEvidence, /upstream project/);
+    assert.equal(crypto.createHash('sha256').update(fs.readFileSync(`public${old.src}`)).digest('hex'), old.sha256, 'rejected history is retained');
+  }
+  const movie = media.characters.shiori.point.win.find(c => c.dialogue);
+  assert.equal(movie.src, dubbing.items['shiori-pointWin'].src);
+  assert.equal(dubbing.items['shiori-pointWin'].voiceSrc, recordings.items['shiori-pointWin-2'].src);
+  assert.notEqual(movie.src, dubbing.rejectedItems['shiori-pointWin'].src);
+  assert.notEqual(movie.lite.src, dubbing.rejectedItems['shiori-pointWin'].lite.src);
+  assert.ok(fs.readFileSync('public/games/beach-volley/audio-v4/SHIORI-BUTTON-LICENSE.txt', 'utf8').includes('GNU GENERAL PUBLIC LICENSE'));
+});
+
+test('all actors ship compact four-frame transparent running strips with provenance', () => {
+  const manifest = JSON.parse(fs.readFileSync('public/games/beach-volley/run-v1/manifest.json', 'utf8'));
+  const delivery = JSON.parse(fs.readFileSync('docs/beach-volley-run-assets.json', 'utf8'));
+  let total = 0;
+  for (const actor of CHARACTER_IDS) {
+    const spec = manifest.characters[actor], record = delivery.items[actor];
+    assert.equal(spec.frames.length, 4);
+    assert.deepEqual(spec.anchor, [192, 380]);
+    const bytes = fs.readFileSync(`public/games/beach-volley/${spec.file}`);
+    total += bytes.length;
+    assert.equal(bytes.length, record.bytes);
+    assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'), record.sha256);
+    assert.equal(record.sourceBounds.length, 4);
+    assert.equal(record.horizontalShifts.length, 4);
+  }
+  assert.ok(total < 350000, 'movement does not add a large movie download');
 });

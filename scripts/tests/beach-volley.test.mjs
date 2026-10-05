@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { loadTypescriptModule } from './helpers/load-typescript-module.mjs';
 const { createGame, startGame, prepareServe, skipTransition, finishSpecialCinematic, stepGame, emptyInput, aiInput,
-  describeGame, CHARACTER_IDS, SPECIAL_WINDUP_TIME, STEP, FLOOR, NET_X, NET_TOP, BALL_RADIUS } = await loadTypescriptModule('src/components/beachVolley/engine.ts');
+  describeGame, runState, RUN_CYCLE_DISTANCE, CHARACTER_IDS, SPECIAL_WINDUP_TIME, STEP, FLOOR, NET_X, NET_TOP, BALL_RADIUS } = await loadTypescriptModule('src/components/beachVolley/engine.ts');
 const idle = () => [emptyInput(), emptyInput()];
 function advance(g, seconds, inputs = idle()) { for (let i = 0; i < Math.round(seconds / STEP); i++) stepGame(g, inputs, STEP); }
 function rally(options = {}) { const g = createGame({ mode: 'local', ...options }); g.phase = 'rally'; g.ball.y = 60; g.ball.vy = -20; return g; }
@@ -35,6 +35,70 @@ function advanceMovement(g, seconds, inputs = idle()) {
     stepGame(g, inputs);
   }
 }
+
+test('running follows real ground distance on either side and stops cycling at walls', () => {
+  for (const actor of CHARACTER_IDS) for (const side of [0, 1]) {
+    const g = rally({ character: actor, opponent: actor }), p = g.players[side], inputs = idle();
+    inputs[side].right = true;
+    const origin = p.x;
+    advanceMovement(g, .3, inputs);
+    assert.ok(runState(p).active);
+    assert.ok(Math.abs(p.runDistance - (p.x - origin)) < .5);
+    assert.equal(runState(p).direction, 1);
+    const frames = new Set();
+    for (let i = 0; i < 62; i++) {
+      if (p.x > (side ? 1100 : 480)) p.x = side ? 780 : 180;
+      advanceMovement(g, .01, inputs);
+      frames.add(runState(p).frame);
+    }
+    assert.equal(frames.size, 4);
+    advanceMovement(g, 1.5, inputs);
+    const distance = p.runDistance;
+    advanceMovement(g, .25, inputs);
+    assert.equal(p.runDistance, distance, 'holding into a clamped wall never advances feet');
+    assert.equal(runState(p).active, false);
+    assert.equal(p.groundSpeed, 0);
+    assert.ok(p.runDistance < RUN_CYCLE_DISTANCE);
+  }
+});
+
+test('stopping, reversal, jumping, diving and pause preserve a coherent running cycle', () => {
+  const g = rally(), p = g.players[0], inputs = idle();
+  inputs[0].right = true;
+  advanceMovement(g, .15, inputs);
+  const running = p.runDistance;
+  g.paused = true;
+  const paused = describeGame(g).players;
+  advanceMovement(g, .5, inputs);
+  assert.deepEqual(describeGame(g).players, paused);
+  g.paused = false;
+  inputs[0] = { ...emptyInput(), left: true };
+  advanceMovement(g, .12, inputs);
+  assert.equal(runState(p).direction, -1);
+  assert.ok(p.runDistance > running, 'reversing continues distance through deceleration and acceleration');
+  assert.equal(runState(p, true).lift, 0);
+  assert.equal(runState(p, true).lean, 0);
+  assert.equal(runState(p, true).frame, runState(p).frame, 'essential leg animation survives reduced motion');
+  inputs[0] = emptyInput();
+  advanceMovement(g, .4, inputs);
+  assert.equal(runState(p).active, false);
+  const resting = p.runDistance;
+  advanceMovement(g, .2, inputs);
+  assert.equal(p.runDistance, resting);
+  inputs[0] = { ...emptyInput(), right: true, jump: true };
+  advanceMovement(g, .2, inputs);
+  assert.equal(p.runDistance, resting, 'air travel does not move the ground step cycle');
+  assert.equal(runState(p).active, false);
+  Object.assign(p, { y: FLOOR, vy: 0, swing: 0, cooldown: 0 });
+  inputs[0] = { ...emptyInput(), left: true, dive: true };
+  advanceMovement(g, .3, inputs);
+  assert.equal(p.runDistance, resting, 'the separate dive animation takes priority');
+  assert.equal(runState(p).active, false);
+  prepareServe(g);
+  assert.equal(p.runDistance, 0);
+  assert.equal(p.runBlend, 0);
+  assert.equal(p.runLean, 0);
+});
 
 test('a dive locks its travel direction on both sides until slide and recovery finish', () => {
   for (const side of [0, 1]) for (const direction of [-1, 1]) {

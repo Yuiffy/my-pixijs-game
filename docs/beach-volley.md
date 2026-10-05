@@ -256,3 +256,8 @@ node scripts/verify-beach-dive-production.cjs
 67 项规则／控制／媒体／语音回归、修改源码 ESLint、独立检出完整 `pnpm run check` → `pnpm run build` 顺序通过，构建 ESLint 保持开启。静音系统 Chrome 开发检查普通小分、双边／封顶赛点、挽救赛点回到平分、11 分制、暂停／练习和 320／390／844 布局。生产仅用公开键盘和 `advanceTime` 完成同机完整模式 7:0、单人精彩模式 0:7、同机关闭演出 7:0；制胜分直接整场队列，实际解码冠军／败者语音且无小分语音，结算分数和事件稳定，重赛归零。测试时冻结 RAF，生产没有修改状态的开发钩子。开发 14 张、通用客户端 1 张、生产 10 张最终截图通过像素 sanity、公开状态／DOM／Canvas／错误核对并逐张打开目检；页面与控制台错误为空。未测实体手机或 Safari。
 
 复跑 `node scripts/verify-beach-match-point.cjs`；生产设置 `BEACH_MATCH_PRODUCTION=1`，用 `BEACH_VOLLEY_URL` 和 `BEACH_MATCH_OUTPUT` 指定地址和证据目录。旧基础、v2、语音与随机演出验收脚本也同步直接结算断言，移除制胜分后原本用来跳过小分片的按键，避免跳掉整场片；四个旧脚本通过语法检查，本轮完整浏览器验收使用新专项脚本。证据及 `rules.log`、`check.log`、`build.log` 保存在 `tmp/beach-match-point/`。当前生产试玩 **`http://localhost:4022/game/beach-volley`**，启动设置 `NEXT_DIST_DIR=.next-beach-match-build`；此前端口保留为历史记录。构建独立复制到根目录，临时类型路径不提交；本轮仅交付晴海赛点、结算和对应验收记录。
+
+
+## 栞栞声音纠正与移动动作（2026-10-05）
+
+用户否定的两句胜利声和第二段击球短音均来自 9 月 10 日同一段说话人不明确的笑声，已从实际播放移除，之前对这三段身份验收的表述撤回。改用公开海獭按钮的「我是天才／哈哈哈哈我是天才」和独立「哈」原声；小分视频的标准、轻量音轨同步更新。三角色新增四帧跑步、按地面位移推进、转向及起停混合，新增 WebP 合计 271,876 bytes。来源、处理、许可证、提示词、动作限制及复跑见 [语音纠正与跑步](beach-volley-voice-motion.md)。

@@ -10,16 +10,19 @@ import {
   WIDTH,
   clamp,
   diveState,
+  runState,
   shotVector,
 } from "./engine";
 import type { Character, Game, Player } from "./engine";
 import { FRAMES } from "./frames";
 import diveManifest from "../../../public/games/beach-volley/dive/manifest.json";
+import runManifest from "../../../public/games/beach-volley/run-v1/manifest.json";
 
 export interface Assets {
   beach: HTMLImageElement;
   atlases: Record<Character, HTMLImageElement>;
   dives: Record<Character, HTMLImageElement>;
+  runs: Record<Character, HTMLImageElement>;
   victories: Partial<Record<Character, HTMLImageElement>>;
   heroes: Record<Character, HTMLImageElement>;
   specials: Record<Character, HTMLImageElement>;
@@ -36,14 +39,15 @@ export async function loadAssets(): Promise<Assets> {
     Promise.all(
       CHARACTER_IDS.map(async (id) => {
         const victory = CHARACTERS[id].victoryImage;
-        const [atlas, hero, special, celebration, dive] = await Promise.all([
+        const [atlas, hero, special, celebration, dive, run] = await Promise.all([
           load(`${id}-atlas-v2.webp`),
           load(`${id}-hero-v2.webp`),
           load(`special-${id}-v2.webp`),
           victory ? load(victory) : null,
           load(diveManifest.characters[id].file),
+          load(runManifest.characters[id].file),
         ]);
-        return { id, atlas, hero, special, celebration, dive };
+        return { id, atlas, hero, special, celebration, dive, run };
       }),
     ),
   ]);
@@ -53,6 +57,7 @@ export async function loadAssets(): Promise<Assets> {
       characters.map((c) => [c.id, c.atlas]),
     ) as Record<Character, HTMLImageElement>,
     dives: Object.fromEntries(characters.map((c) => [c.id, c.dive])) as Record<Character, HTMLImageElement>,
+    runs: Object.fromEntries(characters.map((c) => [c.id, c.run])) as Record<Character, HTMLImageElement>,
     heroes: Object.fromEntries(characters.map((c) => [c.id, c.hero])) as Record<
       Character,
       HTMLImageElement
@@ -88,6 +93,7 @@ export function drawCharacter(
   pose: number,
   flip: boolean,
   time: number,
+  reduced = false,
 ) {
   const dive = scale < 1.2 ? diveState(p) : null;
   if (dive) {
@@ -111,22 +117,28 @@ export function drawCharacter(
     ctx.restore();
     return;
   }
+  const movement = scale < 1.2 && pose <= 2 ? runState(p, reduced) : null;
+  const run = movement?.active ? movement : null;
+  const runOpacity = run ? clamp((run.blend - 0.015) / 0.97, 0, 1) : 0;
   const victory = pose === 6 ? assets.victories[p.character] : null;
   const frame = victory
     ? [0, 0, victory.width, victory.height]
-    : FRAMES[p.character][pose];
+    : FRAMES[p.character][run ? 0 : pose];
   const base = victory ? 265 / victory.height : 232 / FRAMES[p.character][0][3];
   const size = base * scale;
   const w = frame[2] * size;
   const h = frame[3] * size;
-  const breathing = pose === 0 ? Math.sin(time * 2.4) * 1.7 * scale : 0;
+  const breathing = !run && pose === 0 ? Math.sin(time * 2.4) * 1.7 * scale : 0;
   ctx.save();
-  ctx.translate(x, y + breathing);
+  ctx.translate(x, y + breathing - (run?.lift ?? 0) * scale);
+  if (movement) ctx.rotate(movement.lean);
   if (pose === 7) {
     ctx.rotate(Math.sin(time * 1.45) * 0.018);
     ctx.scale(1, 1 + Math.sin(time * 2.1) * 0.008);
   }
-  if (flip) ctx.scale(-1, 1);
+  if (run ? run.direction < 0 : flip) ctx.scale(-1, 1);
+  const opacity = ctx.globalAlpha;
+  ctx.globalAlpha = opacity * (1 - runOpacity);
   ctx.drawImage(
     victory || assets.atlases[p.character],
     frame[0],
@@ -138,6 +150,23 @@ export function drawCharacter(
     w,
     h,
   );
+  if (run && run.frame !== null) {
+    const spec = runManifest.characters[p.character];
+    const runFrame = spec.frames[run.frame];
+    const runSize = spec.scale * scale;
+    ctx.globalAlpha = opacity * runOpacity;
+    ctx.drawImage(
+      assets.runs[p.character],
+      runFrame[0],
+      runFrame[1],
+      runFrame[2],
+      runFrame[3],
+      -spec.anchor[0] * runSize,
+      -spec.anchor[1] * runSize,
+      runFrame[2] * runSize,
+      runFrame[3] * runSize,
+    );
+  }
   ctx.restore();
 }
 function drawHero(
@@ -517,7 +546,7 @@ export function renderGame(
     ctx.save();
     ctx.translate(p.x, p.y);
     ctx.rotate(lean);
-    drawCharacter(ctx, assets, p, 0, 0, 1, pose, i === 1, t);
+    drawCharacter(ctx, assets, p, 0, 0, 1, pose, i === 1, t, reduced);
     ctx.restore();
     ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
     ctx.textAlign = "center";

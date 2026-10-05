@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "music": {
     "menu": {
       "src": "/games/beach-volley/audio-v1/music-menu.mp3",
@@ -150,10 +150,10 @@
           "text": "好耶！"
         },
         {
-          "src": "/games/beach-volley/audio-v3/shiori-pointWin-2.mp3",
-          "bytes": 15980,
-          "duration": 1.91,
-          "text": "耶耶耶！"
+          "src": "/games/beach-volley/audio-v4/shiori-pointWin-2.mp3",
+          "bytes": 14828,
+          "duration": 1.77,
+          "text": "我是天才！"
         }
       ],
       "pointLose": [
@@ -172,10 +172,10 @@
       ],
       "victory": [
         {
-          "src": "/games/beach-volley/audio-v3/shiori-victory-1.mp3",
-          "bytes": 33836,
-          "duration": 4.143,
-          "text": "哈哈哈，耶～！"
+          "src": "/games/beach-volley/audio-v4/shiori-victory-1.mp3",
+          "bytes": 23468,
+          "duration": 2.8523,
+          "text": "哈哈哈哈，我是天才！"
         },
         {
           "src": "/games/beach-volley/audio-v3/shiori-victory-2.mp3",
@@ -309,9 +309,9 @@
         "text": "呀！"
       },
       {
-        "src": "/games/beach-volley/audio-v3/shiori-effort-2.mp3",
-        "bytes": 4268,
-        "duration": 0.443,
+        "src": "/games/beach-volley/audio-v4/shiori-effort-2.mp3",
+        "bytes": 4652,
+        "duration": 0.482,
         "text": "哈！"
       }
     ],

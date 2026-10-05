@@ -142,25 +142,29 @@
     "shiori-pointWin": {
       "actor": "shiori",
       "scene": "pointWin",
-      "src": "/games/beach-volley/dubbed-v6/shiori-pointWin-recording.mp4",
-      "bytes": 808933,
-      "sha256": "e146db4e0742fa75197b4692990e5fe889aada24dbc58cc5b34d43e4d6cd2f54",
+      "src": "/games/beach-volley/dubbed-v8/shiori-pointWin-button.mp4",
+      "bytes": 808019,
+      "sha256": "30bdebdf3e8bd39f1281a373e26cd48f2bc180ecf590b8794a53f70d1db81afa",
       "duration": 4.096009,
-      "voiceSrc": "/games/beach-volley/audio-v3/shiori-pointWin-2.mp3",
-      "voiceSha256": "7dd3c71e01b8b26a70b5b2169571e1202cfcee253352b42c29b483fcb3c4ef2f",
+      "voiceSrc": "/games/beach-volley/audio-v4/shiori-pointWin-2.mp3",
+      "voiceSha256": "a5da361d27176c4bf07cfe9bada89e67e9793c237967685246b258b3a371a63a",
       "voiceStart": 0.1,
-      "voiceEnd": 2.01,
+      "voiceEnd": 1.87,
       "originalSrc": "/games/beach-volley/variety-v5/video-shiori-pointWin-2.mp4",
       "originalSha256": "0ecad8229b5c7fafc1907cdc7bfebde1e1a868b74ac16ed6aec5f7d48d323dc9",
       "imageStreamCopied": true,
       "originalSoundtrackRemoved": true,
-      "rmsDb": -21.98,
-      "peak": 0.6407,
+      "rmsDb": -23.88,
+      "peak": 0.3513,
       "lite": {
-        "src": "/games/beach-volley/lite-v6/shiori-pointWin-recording.mp4",
-        "bytes": 160547,
-        "sha256": "b18b15723493b5e6c86f9f610cf78a757f418bb3dee4afd4126916abfd44d062"
-      }
+        "src": "/games/beach-volley/lite-v8/shiori-pointWin-button.mp4",
+        "bytes": 160052,
+        "sha256": "b54ce9019afa08228e751e532317e24467afbbbe42433d5f3a2eff0586708370"
+      },
+      "status": "rejected",
+      "reason": "Embedded rejected Shiori pointWin-2 laughter",
+      "replacesSrc": "/games/beach-volley/dubbed-v6/shiori-pointWin-recording.mp4",
+      "sourceAttribution": "Shiori-only public fan button catalog; see audio-v4/SOURCES.md"
     },
     "shiori-pointLose": {
       "actor": "shiori",
@@ -237,5 +241,32 @@
     "audio": "Actual decoded soundtrack correlated with intended recording at 0.95885 to 0.99828 across standard and light versions; this verifies track replacement, not speaker similarity.",
     "limits": "No lip-sync regeneration. Existing special ball handling remains incorrect pending separate rally-video credit approval.",
     "evidence": "tmp/beach-rally-voices/dubbing-validation.json"
+  },
+  "rejectedItems": {
+    "shiori-pointWin": {
+      "actor": "shiori",
+      "scene": "pointWin",
+      "src": "/games/beach-volley/dubbed-v6/shiori-pointWin-recording.mp4",
+      "bytes": 808933,
+      "sha256": "e146db4e0742fa75197b4692990e5fe889aada24dbc58cc5b34d43e4d6cd2f54",
+      "duration": 4.096009,
+      "voiceSrc": "/games/beach-volley/audio-v3/shiori-pointWin-2.mp3",
+      "voiceSha256": "7dd3c71e01b8b26a70b5b2169571e1202cfcee253352b42c29b483fcb3c4ef2f",
+      "voiceStart": 0.1,
+      "voiceEnd": 2.01,
+      "originalSrc": "/games/beach-volley/variety-v5/video-shiori-pointWin-2.mp4",
+      "originalSha256": "0ecad8229b5c7fafc1907cdc7bfebde1e1a868b74ac16ed6aec5f7d48d323dc9",
+      "imageStreamCopied": true,
+      "originalSoundtrackRemoved": true,
+      "rmsDb": -21.98,
+      "peak": 0.6407,
+      "lite": {
+        "src": "/games/beach-volley/lite-v6/shiori-pointWin-recording.mp4",
+        "bytes": 160547,
+        "sha256": "b18b15723493b5e6c86f9f610cf78a757f418bb3dee4afd4126916abfd44d062"
+      },
+      "status": "rejected",
+      "reason": "Embedded rejected Shiori pointWin-2 laughter"
+    }
   }
 }
