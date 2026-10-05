@@ -4,7 +4,6 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { ConfigProvider, theme, Typography, Spin } from 'antd';
 import { getLiverConfig, LiverInfo } from '@/data/livers';
 import LiverAvatar from '@/components/LiverAvatar';
-import BetaBadge from '@/components/BetaBadge';
 import RecordsModule from '@/components/Home/RecordsModule';
 import { StreamData } from '@/components/Home/RecordsShared';
 import Link from 'next/link';
@@ -121,13 +120,11 @@ function LiverPageContent({ liverId }: { liverId: string }) {
               <ArrowLeftOutlined />
               <span>主播列表</span>
             </Link>
-            {liverId === 'sui' && <Link href="/liver/sui/songs" className="flex items-center min-h-11 text-emerald-300 hover:text-white px-2 py-1">岁己歌单<BetaBadge /></Link>}
-            {liverId === 'sui' && <Link href="/liver/sui/gifts" className="flex items-center min-h-11 text-rose-300 hover:text-white px-2 py-1">舰礼档案<BetaBadge /></Link>}
             <Link href="/demos" className="flex items-center min-h-11 text-cyan-300 hover:text-white px-3 py-1">小游戏合集</Link>
           </div>
         </nav>
 
-        <div className={`max-w-5xl mx-auto px-6 pb-24 relative z-10 ${liverId === 'sui' ? 'pt-48 sm:pt-24' : 'pt-36 sm:pt-24'}`}>
+        <div className="max-w-5xl mx-auto px-6 pb-24 relative z-10 pt-36 sm:pt-24">
           {/* Header */}
           <div className="text-center mb-12">
             <LiverAvatar

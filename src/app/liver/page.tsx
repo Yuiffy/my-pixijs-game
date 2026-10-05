@@ -7,7 +7,6 @@ import {
 } from '@ant-design/icons';
 import type { CSSProperties } from 'react';
 import LiverPortrait from '@/components/LiverPortrait';
-import BetaBadge from '@/components/BetaBadge';
 import {
   getLiverDirectoryMember,
   LIVER_DIRECTORY_GROUPS,
@@ -32,8 +31,6 @@ export default function LiverIndexPage() {
           <span className={styles.brandLabel}>岁己首页</span>
         </Link>
         <nav className={styles.topbarMeta} aria-label="相关入口">
-          <Link href="/liver/sui/songs">岁己歌单<BetaBadge /> ↗</Link>
-          <Link href="/liver/sui/gifts">舰礼档案<BetaBadge /> ↗</Link>
           <Link href="/demos">小游戏合集 ↗</Link>
           <span>LIVE ARCHIVE</span>
           <strong>{totalMembers} 位成员</strong>
