@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "characters": {
     "sui": {
       "intro": {
@@ -13,21 +13,21 @@
       },
       "special": [
         {
-          "src": "/games/beach-volley/special-sui-v2.mp4",
+          "src": "/games/beach-volley/rally-v7/sui-special-1.mp4",
           "poster": "/games/beach-volley/special-sui-v2.webp",
-          "duration": 4,
+          "duration": 4.0,
           "lite": {
-            "src": "/games/beach-volley/lite-v4/special-sui-v2.mp4",
-            "bytes": 237798
+            "src": "/games/beach-volley/lite-v7/sui-special-1.mp4",
+            "bytes": 149413
           }
         },
         {
-          "src": "/games/beach-volley/dubbed-v6/sui-special-recording.mp4",
+          "src": "/games/beach-volley/rally-v7/sui-special-2.mp4",
           "poster": "/games/beach-volley/special-sui-v2.webp",
-          "duration": 4.096009,
+          "duration": 4.067667,
           "lite": {
-            "src": "/games/beach-volley/lite-v6/sui-special-recording.mp4",
-            "bytes": 107089
+            "src": "/games/beach-volley/lite-v7/sui-special-2.mp4",
+            "bytes": 164909
           },
           "dialogue": {
             "source": "recording",
@@ -148,21 +148,21 @@
       },
       "special": [
         {
-          "src": "/games/beach-volley/special-shiori-v2.mp4",
+          "src": "/games/beach-volley/rally-v7/shiori-special-1.mp4",
           "poster": "/games/beach-volley/special-shiori-v2.webp",
-          "duration": 4,
+          "duration": 4.0,
           "lite": {
-            "src": "/games/beach-volley/lite-v4/special-shiori-v2.mp4",
-            "bytes": 200558
+            "src": "/games/beach-volley/lite-v7/shiori-special-1.mp4",
+            "bytes": 120181
           }
         },
         {
-          "src": "/games/beach-volley/dubbed-v6/shiori-special-recording.mp4",
+          "src": "/games/beach-volley/rally-v7/shiori-special-2.mp4",
           "poster": "/games/beach-volley/special-shiori-v2.webp",
-          "duration": 4.096009,
+          "duration": 4.067667,
           "lite": {
-            "src": "/games/beach-volley/lite-v6/shiori-special-recording.mp4",
-            "bytes": 220718
+            "src": "/games/beach-volley/lite-v7/shiori-special-2.mp4",
+            "bytes": 160736
           },
           "dialogue": {
             "source": "recording",
@@ -283,21 +283,21 @@
       },
       "special": [
         {
-          "src": "/games/beach-volley/special-nagisa-v3.mp4",
+          "src": "/games/beach-volley/rally-v7/nagisa-special-1.mp4",
           "poster": "/games/beach-volley/special-nagisa-v2.webp",
-          "duration": 4,
+          "duration": 4.0,
           "lite": {
-            "src": "/games/beach-volley/lite-v4/special-nagisa-v3.mp4",
-            "bytes": 236477
+            "src": "/games/beach-volley/lite-v7/nagisa-special-1.mp4",
+            "bytes": 139298
           }
         },
         {
-          "src": "/games/beach-volley/variety-v5/video-nagisa-special-2.mp4",
+          "src": "/games/beach-volley/rally-v7/nagisa-special-2.mp4",
           "poster": "/games/beach-volley/special-nagisa-v2.webp",
-          "duration": 4.096009,
+          "duration": 4.062993,
           "lite": {
-            "src": "/games/beach-volley/lite-v5/video-nagisa-special-2.mp4",
-            "bytes": 215500
+            "src": "/games/beach-volley/lite-v7/nagisa-special-2.mp4",
+            "bytes": 168222
           },
           "dialogue": {
             "source": "native",

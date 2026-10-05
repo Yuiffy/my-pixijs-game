@@ -79,6 +79,7 @@ test('embedded performer dialogue retains faststart light variants and authentic
   const job = JSON.parse(fs.readFileSync('docs/beach-volley-variety-job.json', 'utf8'));
   const delivery = JSON.parse(fs.readFileSync('docs/beach-volley-variety-delivery.json', 'utf8'));
   const dubbing = JSON.parse(fs.readFileSync('docs/beach-volley-dubbing-delivery.json', 'utf8'));
+  const rally = JSON.parse(fs.readFileSync('docs/beach-volley-rally-delivery.json', 'utf8'));
   assert.equal(Object.keys(delivery.items).length, 15);
   for (const actor of CHARACTER_IDS) {
     const pools = [media.characters[actor].special, media.characters[actor].point.win, media.characters[actor].point.lose, media.characters[actor].result.win, media.characters[actor].result.lose];
@@ -87,17 +88,26 @@ test('embedded performer dialogue retains faststart light variants and authentic
       assert.equal(new Set(pool.map(c => c.src)).size, 2);
       assert.equal(pool.filter(c => c.dialogue).length, 1);
       const movie = pool.find(c => c.dialogue);
-      const record = Object.values(actor === 'nagisa' ? delivery.items : dubbing.items).find(i => i.src === movie.src);
+      const isRally = pool === media.characters[actor].special;
+      const record = Object.values(isRally ? rally.items : actor === 'nagisa' ? delivery.items : dubbing.items).find(i => i.src === movie.src);
       assert.ok(record, movie.src);
       if (actor === 'nagisa') {
-        const request = Object.values(job.items).find(i => i.resourceId === record.resourceId);
-        assert.equal(request.operationState, 'succeeded'); assert.equal(record.reviewed, true);
+        if (isRally) {
+          assert.equal(record.retainedSoundtrack, true);
+          const original = Object.values(delivery.items).find(i => i.src === record.voiceSrc);
+          assert.equal(record.voiceSha256, original.sha256);
+        } else {
+          const request = Object.values(job.items).find(i => i.resourceId === record.resourceId);
+          assert.equal(request.operationState, 'succeeded');
+        }
+        assert.equal(record.reviewed, true);
         assert.equal(movie.dialogue.source, 'native');
         assert.ok(record.nativeAudio && record.transcriptSimilarity > 0.65);
       } else {
         assert.equal(movie.dialogue.source, 'recording');
         assert.equal(record.originalSoundtrackRemoved, true);
-        assert.equal(record.imageStreamCopied, true);
+        if (isRally) assert.equal(record.generatedSoundtrackRemoved, true);
+        else assert.equal(record.imageStreamCopied, true);
         const voice = fs.readFileSync(`public${record.voiceSrc}`);
         assert.equal(crypto.createHash('sha256').update(voice).digest('hex'), record.voiceSha256);
         assert.ok(record.voiceEnd < movie.duration, 'the entire line fits the animation');
@@ -138,6 +148,46 @@ test('selection alternates variants per scene, preserves chosen queues and never
     assert.equal(cached.length, 11);
     assert.ok(cached.includes(media.characters[actor].point.win.find(c => c.dialogue).src));
   }
+});
+
+test('every selectable special uses a reviewed rally attack; rejected and old shots stay out of playback', () => {
+  const job = JSON.parse(fs.readFileSync('docs/beach-volley-rally-job.json', 'utf8'));
+  const delivery = JSON.parse(fs.readFileSync('docs/beach-volley-rally-delivery.json', 'utf8'));
+  assert.equal(job.authorizationText, '批准144积分');
+  assert.equal(job.authorizedCreditCeiling, 144);
+  assert.ok(job.quote.totalMaxCredits <= job.authorizedCreditCeiling);
+  assert.equal(Object.keys(job.items).length, 6);
+  assert.equal(Object.keys(delivery.items).length, 6);
+  assert.equal(delivery.acceptedGenerationOutputs, 5);
+  assert.equal(job.items['sui-special-1'].contentDecision, 'rejected');
+  const rejected = job.items['sui-special-1'].resourceId;
+  const oldSources = new Set(Object.values(delivery.items).map(item => item.replacesSrc));
+  for (const actor of CHARACTER_IDS) {
+    for (const [index, movie] of media.characters[actor].special.entries()) {
+      const record = delivery.items[`${actor}-special-${index + 1}`];
+      const source = job.items[record.sourceKey];
+      assert.equal(source.operationState, 'succeeded');
+      assert.equal(source.downloadVerified, true);
+      assert.ok(source.contentDecision.startsWith('accepted'));
+      assert.equal(record.sourceSha256, source.sourceSha256);
+      assert.equal(record.resourceId, source.resourceId);
+      assert.notEqual(record.resourceId, rejected);
+      assert.equal(record.reviewed, true);
+      assert.equal(record.generatedSoundtrackRemoved, true);
+      assert.equal(oldSources.has(movie.src), false);
+      assert.match(movie.src, /\/rally-v7\//);
+      assert.match(movie.lite.src, /\/lite-v7\//);
+      for (const [clip, evidence] of [[movie, record], [movie.lite, record.lite]]) {
+        const bytes = fs.readFileSync(`public${clip.src}`);
+        assert.equal(bytes.length, evidence.bytes);
+        assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'), evidence.sha256);
+        assert.ok(bytes.indexOf(Buffer.from('moov')) < bytes.indexOf(Buffer.from('mdat')));
+        assert.equal(bytes.includes(Buffer.from('soun')), Boolean(movie.dialogue));
+      }
+    }
+  }
+  assert.equal(delivery.items['sui-special-1'].derivedCameraFraming, true);
+  assert.deepEqual(delivery.items['nagisa-special-2'].crop, [1216, 684, 64, 0]);
 });
 
 test('Sui and Shiori never select an unconverted synthesized soundtrack; Nagisa voices stay intact', () => {

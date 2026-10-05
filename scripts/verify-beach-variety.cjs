@@ -62,7 +62,7 @@ async function naturalMovie(p, expectedKind, name) {
     assert.equal(s.audio.voice, null); assert.equal(s.audio.pendingVoices, 0); assert.equal(s.audio.cinemaDialogue, true);
     assert.equal(await p.locator('video').evaluate(v => v.muted), false);
     assert.ok(!probe.starts.some(r => r.src?.includes(`/${movie.character}-${expectedKind === 'special' ? 'special' : expectedKind === 'point' ? movie.outcome === 'win' ? 'pointWin' : 'pointLose' : movie.outcome === 'win' ? 'victory' : 'defeat'}-`) && !r.ended && !r.stopped));
-    await capture(p, name);
+    if (expectedKind !== 'special') await capture(p, name);
   } else if (expectedKind === 'special') {
     await p.waitForFunction(() => JSON.parse(window.render_game_to_text()).audio.voicePlaying);
     assert.match((await state(p)).audio.voice.src, /\/audio-v[23]\//);
@@ -70,6 +70,8 @@ async function naturalMovie(p, expectedKind, name) {
   report.movies.push({ movie, voice: (await state(p)).audio.voice });
   const frozen = JSON.stringify({ score: s.score, ball: s.ball, players: s.players });
   if (expectedKind === 'special') {
+    assert.match(movie.src, /\/rally-v7\//);
+    await capture(p, `${name}-incoming`);
     await p.keyboard.press('Enter'); assert.equal((await state(p)).cinematic.id, movie.id);
     await advance(p, 160); const during = await state(p); assert.equal(JSON.stringify({ score: during.score, ball: during.ball, players: during.players }), frozen);
     if (movie.dialogue) {
@@ -78,6 +80,8 @@ async function naturalMovie(p, expectedKind, name) {
       assert.ok(Math.abs(await p.locator('video').evaluate(v => v.currentTime) - time) < 0.03);
       await p.keyboard.press('KeyP');
     }
+    await p.waitForFunction(() => { const v = document.querySelector('video'); return v && v.currentTime >= 3.28 && !v.paused; }, null, { timeout: 20000 });
+    await capture(p, `${name}-attack`);
   }
   await p.waitForFunction(id => JSON.parse(window.render_game_to_text()).cinematic?.id !== id, movie.id, { timeout: 20000 });
 }
@@ -91,7 +95,7 @@ async function main() {
       let previous = null;
       for (let round = 0; round < 2; round++) {
         await special(p); const selected = (await state(p)).cinematic.src; assert.notEqual(selected, previous); previous = selected;
-        await naturalMovie(p, 'special', `${actor}-special-embedded-${round}`);
+        await naturalMovie(p, 'special', `${actor}-special-variant-${round + 1}`);
         assert.equal((await state(p)).specialWindup.remaining, 0.8);
         const prior = (await state(p)).audio.effortPlayed; await advance(p, 790); assert.equal((await state(p)).audio.effortPlayed, prior);
         await advance(p, 18); assert.equal((await state(p)).audio.effortPlayed, prior + 1);

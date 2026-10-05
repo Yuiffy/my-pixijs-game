@@ -1,0 +1,228 @@
+{
+  "jobKey": "beach-rally-20261005",
+  "canvasId": "73fa43ff-0177-4d07-912f-ff8ac90b9654",
+  "webUrl": "https://jimeng.jianying.com/ai-tool/ai-canvas/73fa43ff-0177-4d07-912f-ff8ac90b9654",
+  "region": "cn",
+  "model": "seedance_2.0_fast_vip",
+  "references": {
+    "sui": "node_51s1prqpf3",
+    "shiori": "node_hspqketz33",
+    "nagisa": "node_x61a4jtypv"
+  },
+  "items": {
+    "sui-special-1": {
+      "actor": "sui",
+      "scene": "special",
+      "variant": 1,
+      "nodeId": "node_d57d197796",
+      "updateId": "4a8e3559-0d55-4671-8b86-13213c7b93fe",
+      "submitId": "cc75d140-baa4-42da-b8c0-c9565f09610a",
+      "prompt": "高品质写实3D动漫沙滩排球游戏必杀演出，4秒。只参考{{node:node_51s1prqpf3}}这位25岁成年女运动员岁己的脸、发型、头饰和不透明运动服外观，保持身份。场景是正在进行的沙滩排球回合，白色球网和球场边线清晰可见，角色在球网左侧前场面对右侧对方球场，只有这一名运动员，不画对手。网侧三分之四侧面中远景，一镜到底，完整拍到跃起、手掌击球、球穿过网上方和落地。第一帧就有一颗黄蓝排球从镜头右上方飞来、在球网顶部之上下降，角色目光追踪空中的来球、双手空空；她立即助跑两步，双脚蹬沙跃起，左手指向来球，右肘拉到头后，右手张开在球网之上迎击来球，手掌清晰击中排球一次。排球被猛扣向球网另一侧的右下方，金色太阳光轨只跟随被击出的球。接着她空手随挥、双脚落地屈膝卸力，恢复防守姿态。球的物理轨迹连贯、先飞来后扣出，球从始至终在空中，这是一记回合中的进攻扣杀。禁止发球、禁止角色自己抛球、禁止手持球、禁止拍球和运球、禁止球在沙地弹跳、禁止生成第二颗球、禁止把球击向天空。不要说话、唱歌、字幕、文字或背景音乐；只允许轻微海风和击球音。",
+      "duration": 4,
+      "state": "succeeded",
+      "saveRequestId": "20261005040037971FABF58C9C561951AE",
+      "authorizedCreditCeiling": 144,
+      "runRequestId": "2026100512294205056D7E61E4FDB36E47",
+      "operationState": "succeeded",
+      "statusRequestId": "202610051238131450E643BD2898ADEBE9",
+      "resourceId": "c7ac2f38-144f-4310-bfa3-968169a9503f",
+      "sourcePath": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-rally-voices\\sources\\sui-special-1.mp4",
+      "sourceBytes": 4289653,
+      "sourceSha256": "a8f02ff33618df8c7dba2abf52add04c15d8ec68c38545bb992c850aed9da00d",
+      "downloadRequestId": "202610051238297D95E3C0A1668D664699",
+      "downloadVerified": true,
+      "contentDecision": "rejected",
+      "contentReason": "Ball leaves upward after contact; use the reviewed second Sui attack for both camera framings",
+      "contentReview": {
+        "fullSequenceFrames": 20,
+        "contactSheetsOpened": true,
+        "sheet": "tmp/beach-rally-voices/rally-sui-special-1-sequence.jpg"
+      }
+    },
+    "sui-special-2": {
+      "actor": "sui",
+      "scene": "special",
+      "variant": 2,
+      "nodeId": "node_22fe6e4d38",
+      "updateId": "b7495a7a-a9cf-425e-9e46-69a048bf6f5c",
+      "submitId": "510257e7-54d0-4168-abac-d31267f56d97",
+      "prompt": "高品质写实3D动漫沙滩排球游戏必杀演出，4秒。只参考{{node:node_51s1prqpf3}}这位25岁成年女运动员岁己的脸、发型、头饰和不透明运动服外观，保持身份。场景是正在进行的沙滩排球回合，白色球网和球场边线清晰可见，角色在球网左侧前场面对右侧对方球场，只有这一名运动员，不画对手。低机位网侧全身跟拍，空中转肩斜线扣杀，击球时轻微慢动作，再恢复正常速度落地。第一帧就有一颗黄蓝排球从镜头右上方飞来、在球网顶部之上下降，角色目光追踪空中的来球、双手空空；她立即助跑两步，双脚蹬沙跃起，左手指向来球，右肘拉到头后，右手张开在球网之上迎击来球，手掌清晰击中排球一次。排球被猛扣向球网另一侧的右下方，金色太阳光轨只跟随被击出的球。接着她空手随挥、双脚落地屈膝卸力，恢复防守姿态。球的物理轨迹连贯、先飞来后扣出，球从始至终在空中，这是一记回合中的进攻扣杀。禁止发球、禁止角色自己抛球、禁止手持球、禁止拍球和运球、禁止球在沙地弹跳、禁止生成第二颗球、禁止把球击向天空。不要说话、唱歌、字幕、文字或背景音乐；只允许轻微海风和击球音。",
+      "duration": 4,
+      "state": "succeeded",
+      "saveRequestId": "20261005040038D22CE911BD8678177EC9",
+      "authorizedCreditCeiling": 144,
+      "runRequestId": "2026100512294205056D7E61E4FDB36E47",
+      "operationState": "succeeded",
+      "statusRequestId": "20261005123256E63119CB84C1DF8FBA76",
+      "resourceId": "38708b71-ee1b-4cb0-8461-ad4089e01fb1",
+      "sourcePath": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-rally-voices\\sources\\sui-special-2.mp4",
+      "sourceBytes": 7291223,
+      "sourceSha256": "9fbe3d4ce5d9a68ec36fbcfd0e7063ffa2c557845bafa986d1d60f958dbd3db2",
+      "downloadRequestId": "20261005123831F38F2E3A7D3DFA52619A",
+      "downloadVerified": true,
+      "contentDecision": "accepted",
+      "contentReason": "Incoming airborne ball, empty hands, approach and jump, one forward/downward swing, follow-through and landing; no self-toss or ground bounce",
+      "contentReview": {
+        "fullSequenceFrames": 20,
+        "contactSheetsOpened": true,
+        "sheet": "tmp/beach-rally-voices/rally-sui-special-2-sequence.jpg"
+      }
+    },
+    "shiori-special-1": {
+      "actor": "shiori",
+      "scene": "special",
+      "variant": 1,
+      "nodeId": "node_48c095e1b9",
+      "updateId": "61bff515-42a7-4816-8e35-abc04d64979c",
+      "submitId": "ba94d440-9076-4e2c-97d8-8858e71be9e1",
+      "prompt": "高品质写实3D动漫沙滩排球游戏必杀演出，4秒。只参考{{node:node_hspqketz33}}这位25岁成年女运动员栞栞的脸、发型、头饰和不透明运动服外观，保持身份。场景是正在进行的沙滩排球回合，白色球网和球场边线清晰可见，角色在球网左侧前场面对右侧对方球场，只有这一名运动员，不画对手。网侧三分之四侧面中远景，一镜到底，完整拍到跃起、手掌击球、球穿过网上方和落地。第一帧就有一颗黄蓝排球从镜头右上方飞来、在球网顶部之上下降，角色目光追踪空中的来球、双手空空；她立即助跑两步，双脚蹬沙跃起，左手指向来球，右肘拉到头后，右手张开在球网之上迎击来球，手掌清晰击中排球一次。排球被猛扣向球网另一侧的右下方，青蓝潮汐光轨只跟随被击出的球。接着她空手随挥、双脚落地屈膝卸力，恢复防守姿态。球的物理轨迹连贯、先飞来后扣出，球从始至终在空中，这是一记回合中的进攻扣杀。禁止发球、禁止角色自己抛球、禁止手持球、禁止拍球和运球、禁止球在沙地弹跳、禁止生成第二颗球、禁止把球击向天空。不要说话、唱歌、字幕、文字或背景音乐；只允许轻微海风和击球音。",
+      "duration": 4,
+      "state": "succeeded",
+      "saveRequestId": "202610050400395C32DAFBE9659C13E252",
+      "authorizedCreditCeiling": 144,
+      "runRequestId": "2026100512294205056D7E61E4FDB36E47",
+      "operationState": "succeeded",
+      "statusRequestId": "2026100512325706B9F3C89CAF6F4D4138",
+      "resourceId": "9751046e-a83d-4aad-bd36-358f742bf985",
+      "sourcePath": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-rally-voices\\sources\\shiori-special-1.mp4",
+      "sourceBytes": 4776789,
+      "sourceSha256": "85d8b6cb34cf11389ac5abebb3c644022401dedb0c177b1e16af4b5ad6365aac",
+      "downloadRequestId": "20261005123834288B3499F7D93D66FB6F",
+      "downloadVerified": true,
+      "contentDecision": "accepted",
+      "contentReason": "Incoming airborne ball, empty hands, approach and jump, one forward/downward swing, follow-through and landing; no self-toss or ground bounce",
+      "contentReview": {
+        "fullSequenceFrames": 20,
+        "contactSheetsOpened": true,
+        "sheet": "tmp/beach-rally-voices/rally-shiori-special-1-sequence.jpg"
+      }
+    },
+    "shiori-special-2": {
+      "actor": "shiori",
+      "scene": "special",
+      "variant": 2,
+      "nodeId": "node_7dd8da0b6f",
+      "updateId": "b61bde98-f4b3-468d-887d-6644116becd0",
+      "submitId": "9a6847f4-934c-4a00-ba71-777f0170c378",
+      "prompt": "高品质写实3D动漫沙滩排球游戏必杀演出，4秒。只参考{{node:node_hspqketz33}}这位25岁成年女运动员栞栞的脸、发型、头饰和不透明运动服外观，保持身份。场景是正在进行的沙滩排球回合，白色球网和球场边线清晰可见，角色在球网左侧前场面对右侧对方球场，只有这一名运动员，不画对手。低机位网侧全身跟拍，空中转肩斜线扣杀，击球时轻微慢动作，再恢复正常速度落地。第一帧就有一颗黄蓝排球从镜头右上方飞来、在球网顶部之上下降，角色目光追踪空中的来球、双手空空；她立即助跑两步，双脚蹬沙跃起，左手指向来球，右肘拉到头后，右手张开在球网之上迎击来球，手掌清晰击中排球一次。排球被猛扣向球网另一侧的右下方，青蓝潮汐光轨只跟随被击出的球。接着她空手随挥、双脚落地屈膝卸力，恢复防守姿态。球的物理轨迹连贯、先飞来后扣出，球从始至终在空中，这是一记回合中的进攻扣杀。禁止发球、禁止角色自己抛球、禁止手持球、禁止拍球和运球、禁止球在沙地弹跳、禁止生成第二颗球、禁止把球击向天空。不要说话、唱歌、字幕、文字或背景音乐；只允许轻微海风和击球音。",
+      "duration": 4,
+      "state": "succeeded",
+      "saveRequestId": "20261005040039F613FEED499AD91571CB",
+      "authorizedCreditCeiling": 144,
+      "runRequestId": "2026100512294205056D7E61E4FDB36E47",
+      "operationState": "succeeded",
+      "statusRequestId": "202610051238135D095097209AD4431C76",
+      "resourceId": "acb8fc74-d04a-482f-a6aa-8d7dc8ba92b6",
+      "sourcePath": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-rally-voices\\sources\\shiori-special-2.mp4",
+      "sourceBytes": 7264525,
+      "sourceSha256": "7a43819dcfd5d04fb7ee406084d697f9186decd79c16e39856b2d8dac4088f50",
+      "downloadRequestId": "202610051238363D09A9308240C423C625",
+      "downloadVerified": true,
+      "contentDecision": "accepted",
+      "contentReason": "Incoming airborne ball, empty hands, approach and jump, one forward/downward swing, follow-through and landing; no self-toss or ground bounce",
+      "contentReview": {
+        "fullSequenceFrames": 20,
+        "contactSheetsOpened": true,
+        "sheet": "tmp/beach-rally-voices/rally-shiori-special-2-sequence.jpg"
+      }
+    },
+    "nagisa-special-1": {
+      "actor": "nagisa",
+      "scene": "special",
+      "variant": 1,
+      "nodeId": "node_dcfd3539a1",
+      "updateId": "0b49cd08-a2d7-4582-8b7d-f4333d933c7e",
+      "submitId": "f5995899-d078-4608-8389-7dbe7e3b3cbc",
+      "prompt": "高品质写实3D动漫沙滩排球游戏必杀演出，4秒。只参考{{node:node_x61a4jtypv}}这位25岁成年女运动员米汀的脸、发型、头饰和不透明运动服外观，保持身份。场景是正在进行的沙滩排球回合，白色球网和球场边线清晰可见，角色在球网左侧前场面对右侧对方球场，只有这一名运动员，不画对手。网侧三分之四侧面中远景，一镜到底，完整拍到跃起、手掌击球、球穿过网上方和落地。第一帧就有一颗黄蓝排球从镜头右上方飞来、在球网顶部之上下降，角色目光追踪空中的来球、双手空空；她立即助跑两步，双脚蹬沙跃起，左手指向来球，右肘拉到头后，右手张开在球网之上迎击来球，手掌清晰击中排球一次。排球被猛扣向球网另一侧的右下方，银紫星屑光轨只跟随被击出的球。接着她空手随挥、双脚落地屈膝卸力，恢复防守姿态。球的物理轨迹连贯、先飞来后扣出，球从始至终在空中，这是一记回合中的进攻扣杀。禁止发球、禁止角色自己抛球、禁止手持球、禁止拍球和运球、禁止球在沙地弹跳、禁止生成第二颗球、禁止把球击向天空。不要说话、唱歌、字幕、文字或背景音乐；只允许轻微海风和击球音。",
+      "duration": 4,
+      "state": "succeeded",
+      "saveRequestId": "20261005040040187F3B2D2102A6366301",
+      "authorizedCreditCeiling": 144,
+      "runRequestId": "2026100512294205056D7E61E4FDB36E47",
+      "operationState": "succeeded",
+      "statusRequestId": "20261005123258733784E6B88AFA47627B",
+      "resourceId": "9ebd53bd-af19-46cf-aa2a-0e985aaa22a9",
+      "sourcePath": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-rally-voices\\sources\\nagisa-special-1.mp4",
+      "sourceBytes": 4318826,
+      "sourceSha256": "ee08f11be85bd8530b95244f42b90479abf8d61ef6b17f4e6bab3c7f974921b5",
+      "downloadRequestId": "202610051238380037890A0082EBA134DB",
+      "downloadVerified": true,
+      "contentDecision": "accepted",
+      "contentReason": "Incoming airborne ball, empty hands, approach and jump, one forward/downward swing, follow-through and landing; no self-toss or ground bounce",
+      "contentReview": {
+        "fullSequenceFrames": 20,
+        "contactSheetsOpened": true,
+        "sheet": "tmp/beach-rally-voices/rally-nagisa-special-1-sequence.jpg"
+      }
+    },
+    "nagisa-special-2": {
+      "actor": "nagisa",
+      "scene": "special",
+      "variant": 2,
+      "nodeId": "node_f81b61fb06",
+      "updateId": "91e898b7-7d1b-49b5-9082-f63af4098e3d",
+      "submitId": "120a7c76-865c-48a5-a20a-88220aa8c810",
+      "prompt": "高品质写实3D动漫沙滩排球游戏必杀演出，4秒。只参考{{node:node_x61a4jtypv}}这位25岁成年女运动员米汀的脸、发型、头饰和不透明运动服外观，保持身份。场景是正在进行的沙滩排球回合，白色球网和球场边线清晰可见，角色在球网左侧前场面对右侧对方球场，只有这一名运动员，不画对手。低机位网侧全身跟拍，空中转肩斜线扣杀，击球时轻微慢动作，再恢复正常速度落地。第一帧就有一颗黄蓝排球从镜头右上方飞来、在球网顶部之上下降，角色目光追踪空中的来球、双手空空；她立即助跑两步，双脚蹬沙跃起，左手指向来球，右肘拉到头后，右手张开在球网之上迎击来球，手掌清晰击中排球一次。排球被猛扣向球网另一侧的右下方，银紫星屑光轨只跟随被击出的球。接着她空手随挥、双脚落地屈膝卸力，恢复防守姿态。球的物理轨迹连贯、先飞来后扣出，球从始至终在空中，这是一记回合中的进攻扣杀。禁止发球、禁止角色自己抛球、禁止手持球、禁止拍球和运球、禁止球在沙地弹跳、禁止生成第二颗球、禁止把球击向天空。不要说话、唱歌、字幕、文字或背景音乐；只允许轻微海风和击球音。",
+      "duration": 4,
+      "state": "succeeded",
+      "saveRequestId": "202610050400414DB4D1B227D01B230A04",
+      "authorizedCreditCeiling": 144,
+      "runRequestId": "2026100512294205056D7E61E4FDB36E47",
+      "operationState": "succeeded",
+      "statusRequestId": "202610051238143D09A9308240C423C1EB",
+      "resourceId": "693d9731-6606-4293-a033-eb000fa8361e",
+      "sourcePath": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-rally-voices\\sources\\nagisa-special-2.mp4",
+      "sourceBytes": 5812041,
+      "sourceSha256": "163dcd9644e24a394b39d4718222b3ef7a441834b4d656f1c4963600e9f91097",
+      "downloadRequestId": "20261005123840F9147DFBDB960B866D53",
+      "downloadVerified": true,
+      "contentDecision": "accepted-with-crop",
+      "contentReason": "Remove the additional stationary ball at the extreme left edge",
+      "contentReview": {
+        "fullSequenceFrames": 20,
+        "contactSheetsOpened": true,
+        "sheet": "tmp/beach-rally-voices/rally-nagisa-special-2-sequence.jpg"
+      }
+    }
+  },
+  "quote": {
+    "items": [
+      {
+        "nodeId": "node_d57d197796",
+        "maxCredits": 24
+      },
+      {
+        "nodeId": "node_22fe6e4d38",
+        "maxCredits": 24
+      },
+      {
+        "nodeId": "node_48c095e1b9",
+        "maxCredits": 24
+      },
+      {
+        "nodeId": "node_7dd8da0b6f",
+        "maxCredits": 24
+      },
+      {
+        "nodeId": "node_dcfd3539a1",
+        "maxCredits": 24
+      },
+      {
+        "nodeId": "node_f81b61fb06",
+        "maxCredits": 24
+      }
+    ],
+    "totalMaxCredits": 144,
+    "draftVersion": 112,
+    "confirmable": true,
+    "confirmationRequired": true
+  },
+  "quoteRequestId": "20261005122940202BF179F13A23D3E9DF",
+  "authorizedCreditCeiling": 144,
+  "authorizationText": "批准144积分",
+  "authorizationSource": "Human user message in this task",
+  "confirmation": {
+    "creditCeiling": 144,
+    "requestId": "20261005122941206E4575B6B6465424F3"
+  }
+}

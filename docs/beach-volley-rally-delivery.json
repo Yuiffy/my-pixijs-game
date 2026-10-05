@@ -1,0 +1,456 @@
+{
+  "method": "Reviewed rally attacks, H.264 faststart standard and light versions; remove generated audio, retain existing performer voices",
+  "canvasId": "73fa43ff-0177-4d07-912f-ff8ac90b9654",
+  "authorizedCreditCeiling": 144,
+  "generationOutputs": 6,
+  "acceptedGenerationOutputs": 5,
+  "items": {
+    "sui-special-1": {
+      "actor": "sui",
+      "scene": "special",
+      "variant": 1,
+      "src": "/games/beach-volley/rally-v7/sui-special-1.mp4",
+      "bytes": 961997,
+      "sha256": "e9a59bf3ad40d5dd2bdf2c53fd6ec9629dab48514d59a5de9408da732c5b4ab0",
+      "duration": 4.0,
+      "resourceId": "38708b71-ee1b-4cb0-8461-ad4089e01fb1",
+      "sourceKey": "sui-special-2",
+      "sourceSha256": "9fbe3d4ce5d9a68ec36fbcfd0e7063ffa2c557845bafa986d1d60f958dbd3db2",
+      "sourceBytes": 7291223,
+      "replacesSrc": "/games/beach-volley/special-sui-v2.mp4",
+      "crop": [
+        1152,
+        648,
+        64,
+        0
+      ],
+      "derivedCameraFraming": true,
+      "generatedSoundtrackRemoved": true,
+      "reviewed": true,
+      "lite": {
+        "src": "/games/beach-volley/lite-v7/sui-special-1.mp4",
+        "bytes": 149413,
+        "sha256": "9d65ef05e4fdbb815d1cc8d26b4b579f78353d5156664d23ae26ecaaaa066a33"
+      },
+      "encoding": {
+        "standard": {
+          "width": 1280,
+          "height": 720,
+          "fps": 24,
+          "crf": 24
+        },
+        "lite": {
+          "width": 640,
+          "height": 360,
+          "fps": 24,
+          "crf": 31
+        }
+      },
+      "review": {
+        "standardAndLiteSheetsOpened": true,
+        "framesPerVersion": 12,
+        "times": [
+          0,
+          0.4,
+          0.8,
+          1.1,
+          1.45,
+          1.8,
+          2.2,
+          2.65,
+          2.98,
+          3.18,
+          3.42,
+          3.9
+        ],
+        "noSelfToss": true,
+        "noGroundBounce": true,
+        "emptyHandsBeforeContact": true,
+        "singleRallyBall": true,
+        "forwardDownwardAttack": true,
+        "followThroughAndLanding": true,
+        "note": "Sui framing variants share the same accepted attack; Nagisa variant 2 removes the left-edge extra ball by cropping."
+      }
+    },
+    "sui-special-2": {
+      "actor": "sui",
+      "scene": "special",
+      "variant": 2,
+      "src": "/games/beach-volley/rally-v7/sui-special-2.mp4",
+      "bytes": 1072233,
+      "sha256": "b9d62183926a6191cbba887d02e99a5cca88e128d7c142cac00ed43f671fdc42",
+      "duration": 4.067667,
+      "resourceId": "38708b71-ee1b-4cb0-8461-ad4089e01fb1",
+      "sourceKey": "sui-special-2",
+      "sourceSha256": "9fbe3d4ce5d9a68ec36fbcfd0e7063ffa2c557845bafa986d1d60f958dbd3db2",
+      "sourceBytes": 7291223,
+      "replacesSrc": "/games/beach-volley/dubbed-v6/sui-special-recording.mp4",
+      "crop": null,
+      "derivedCameraFraming": false,
+      "generatedSoundtrackRemoved": true,
+      "reviewed": true,
+      "lite": {
+        "src": "/games/beach-volley/lite-v7/sui-special-2.mp4",
+        "bytes": 164909,
+        "sha256": "2c5ad89d95de6192e17c7fb1c6c7005ceffaa26777ffde249a85a8b9cad23441"
+      },
+      "encoding": {
+        "standard": {
+          "width": 1280,
+          "height": 720,
+          "fps": 24,
+          "crf": 24
+        },
+        "lite": {
+          "width": 640,
+          "height": 360,
+          "fps": 24,
+          "crf": 31
+        }
+      },
+      "voiceSrc": "/games/beach-volley/audio-v3/sui-special-2.mp3",
+      "voiceSha256": "bd22d77dae6f2a7e0655cb2317c7461c6d9227cda728d7953d0af5f4bea222db",
+      "voiceStart": 0.1,
+      "voiceEnd": 2.5300000000000002,
+      "originalSoundtrackRemoved": true,
+      "rmsDb": -21.18,
+      "peak": 0.7862,
+      "review": {
+        "standardAndLiteSheetsOpened": true,
+        "framesPerVersion": 12,
+        "times": [
+          0,
+          0.4,
+          0.8,
+          1.1,
+          1.45,
+          1.8,
+          2.2,
+          2.65,
+          2.98,
+          3.18,
+          3.42,
+          3.9
+        ],
+        "noSelfToss": true,
+        "noGroundBounce": true,
+        "emptyHandsBeforeContact": true,
+        "singleRallyBall": true,
+        "forwardDownwardAttack": true,
+        "followThroughAndLanding": true,
+        "note": "Sui framing variants share the same accepted attack; Nagisa variant 2 removes the left-edge extra ball by cropping."
+      },
+      "audioValidation": {
+        "standard": {
+          "outsideVoiceRms": 0.000343,
+          "recordingCorrelation": 0.99797,
+          "voiceOffsetSeconds": 0.0427,
+          "peak": 0.78618
+        },
+        "lite": {
+          "outsideVoiceRms": 0.000344,
+          "recordingCorrelation": 0.98144,
+          "voiceOffsetSeconds": 0.0853,
+          "peak": 0.79329
+        }
+      }
+    },
+    "shiori-special-1": {
+      "actor": "shiori",
+      "scene": "special",
+      "variant": 1,
+      "src": "/games/beach-volley/rally-v7/shiori-special-1.mp4",
+      "bytes": 792339,
+      "sha256": "d7e08486c6f11f27644adb463d56d1897268f8705cdf0d7ba6038910a3102286",
+      "duration": 4.0,
+      "resourceId": "9751046e-a83d-4aad-bd36-358f742bf985",
+      "sourceKey": "shiori-special-1",
+      "sourceSha256": "85d8b6cb34cf11389ac5abebb3c644022401dedb0c177b1e16af4b5ad6365aac",
+      "sourceBytes": 4776789,
+      "replacesSrc": "/games/beach-volley/special-shiori-v2.mp4",
+      "crop": null,
+      "derivedCameraFraming": false,
+      "generatedSoundtrackRemoved": true,
+      "reviewed": true,
+      "lite": {
+        "src": "/games/beach-volley/lite-v7/shiori-special-1.mp4",
+        "bytes": 120181,
+        "sha256": "a3fb44e9e49449534fa4fab450bba98f02a4021d5bed5459e846182b739c296b"
+      },
+      "encoding": {
+        "standard": {
+          "width": 1280,
+          "height": 720,
+          "fps": 24,
+          "crf": 24
+        },
+        "lite": {
+          "width": 640,
+          "height": 360,
+          "fps": 24,
+          "crf": 31
+        }
+      },
+      "review": {
+        "standardAndLiteSheetsOpened": true,
+        "framesPerVersion": 12,
+        "times": [
+          0,
+          0.4,
+          0.8,
+          1.1,
+          1.45,
+          1.8,
+          2.2,
+          2.65,
+          2.98,
+          3.18,
+          3.42,
+          3.9
+        ],
+        "noSelfToss": true,
+        "noGroundBounce": true,
+        "emptyHandsBeforeContact": true,
+        "singleRallyBall": true,
+        "forwardDownwardAttack": true,
+        "followThroughAndLanding": true,
+        "note": "Sui framing variants share the same accepted attack; Nagisa variant 2 removes the left-edge extra ball by cropping."
+      }
+    },
+    "shiori-special-2": {
+      "actor": "shiori",
+      "scene": "special",
+      "variant": 2,
+      "src": "/games/beach-volley/rally-v7/shiori-special-2.mp4",
+      "bytes": 1040655,
+      "sha256": "5c5bdd4afa14e698f2dd356ae79c857db9948b3f3fb6344b6d19419df13ec080",
+      "duration": 4.067667,
+      "resourceId": "acb8fc74-d04a-482f-a6aa-8d7dc8ba92b6",
+      "sourceKey": "shiori-special-2",
+      "sourceSha256": "7a43819dcfd5d04fb7ee406084d697f9186decd79c16e39856b2d8dac4088f50",
+      "sourceBytes": 7264525,
+      "replacesSrc": "/games/beach-volley/dubbed-v6/shiori-special-recording.mp4",
+      "crop": null,
+      "derivedCameraFraming": false,
+      "generatedSoundtrackRemoved": true,
+      "reviewed": true,
+      "lite": {
+        "src": "/games/beach-volley/lite-v7/shiori-special-2.mp4",
+        "bytes": 160736,
+        "sha256": "c69989b754e53cc6862decde9cb1cd5c4b3a827c300ec5987067b2c53dc7f4e3"
+      },
+      "encoding": {
+        "standard": {
+          "width": 1280,
+          "height": 720,
+          "fps": 24,
+          "crf": 24
+        },
+        "lite": {
+          "width": 640,
+          "height": 360,
+          "fps": 24,
+          "crf": 31
+        }
+      },
+      "voiceSrc": "/games/beach-volley/audio-v3/shiori-special-2.mp3",
+      "voiceSha256": "e89205cfea8b7c10b242651d8e4fa24333f0f7b8e568bd4daf08fe6690802839",
+      "voiceStart": 0.1,
+      "voiceEnd": 1.24,
+      "originalSoundtrackRemoved": true,
+      "rmsDb": -26.1,
+      "peak": 0.8576,
+      "review": {
+        "standardAndLiteSheetsOpened": true,
+        "framesPerVersion": 12,
+        "times": [
+          0,
+          0.4,
+          0.8,
+          1.1,
+          1.45,
+          1.8,
+          2.2,
+          2.65,
+          2.98,
+          3.18,
+          3.42,
+          3.9
+        ],
+        "noSelfToss": true,
+        "noGroundBounce": true,
+        "emptyHandsBeforeContact": true,
+        "singleRallyBall": true,
+        "forwardDownwardAttack": true,
+        "followThroughAndLanding": true,
+        "note": "Sui framing variants share the same accepted attack; Nagisa variant 2 removes the left-edge extra ball by cropping."
+      },
+      "audioValidation": {
+        "standard": {
+          "outsideVoiceRms": 1.9e-05,
+          "recordingCorrelation": 0.99828,
+          "voiceOffsetSeconds": 0.0427,
+          "peak": 0.85765
+        },
+        "lite": {
+          "outsideVoiceRms": 6.1e-05,
+          "recordingCorrelation": 0.97093,
+          "voiceOffsetSeconds": 0.0853,
+          "peak": 0.83451
+        }
+      }
+    },
+    "nagisa-special-1": {
+      "actor": "nagisa",
+      "scene": "special",
+      "variant": 1,
+      "src": "/games/beach-volley/rally-v7/nagisa-special-1.mp4",
+      "bytes": 819067,
+      "sha256": "fc92738698920f837face71d1910cafc3264ad5031b2e10978d1d679dadd4207",
+      "duration": 4.0,
+      "resourceId": "9ebd53bd-af19-46cf-aa2a-0e985aaa22a9",
+      "sourceKey": "nagisa-special-1",
+      "sourceSha256": "ee08f11be85bd8530b95244f42b90479abf8d61ef6b17f4e6bab3c7f974921b5",
+      "sourceBytes": 4318826,
+      "replacesSrc": "/games/beach-volley/special-nagisa-v3.mp4",
+      "crop": null,
+      "derivedCameraFraming": false,
+      "generatedSoundtrackRemoved": true,
+      "reviewed": true,
+      "lite": {
+        "src": "/games/beach-volley/lite-v7/nagisa-special-1.mp4",
+        "bytes": 139298,
+        "sha256": "be01a0253abe96ae8fdc7d4d1dce18fc52b0e4d1c064e9b999cb276039ba47d6"
+      },
+      "encoding": {
+        "standard": {
+          "width": 1280,
+          "height": 720,
+          "fps": 24,
+          "crf": 24
+        },
+        "lite": {
+          "width": 640,
+          "height": 360,
+          "fps": 24,
+          "crf": 31
+        }
+      },
+      "review": {
+        "standardAndLiteSheetsOpened": true,
+        "framesPerVersion": 12,
+        "times": [
+          0,
+          0.4,
+          0.8,
+          1.1,
+          1.45,
+          1.8,
+          2.2,
+          2.65,
+          2.98,
+          3.18,
+          3.42,
+          3.9
+        ],
+        "noSelfToss": true,
+        "noGroundBounce": true,
+        "emptyHandsBeforeContact": true,
+        "singleRallyBall": true,
+        "forwardDownwardAttack": true,
+        "followThroughAndLanding": true,
+        "note": "Sui framing variants share the same accepted attack; Nagisa variant 2 removes the left-edge extra ball by cropping."
+      }
+    },
+    "nagisa-special-2": {
+      "actor": "nagisa",
+      "scene": "special",
+      "variant": 2,
+      "src": "/games/beach-volley/rally-v7/nagisa-special-2.mp4",
+      "bytes": 1004817,
+      "sha256": "e3a85533aa19f8c25e9662cafdc71536df5545894cae7748de5e2066452d120a",
+      "duration": 4.062993,
+      "resourceId": "693d9731-6606-4293-a033-eb000fa8361e",
+      "sourceKey": "nagisa-special-2",
+      "sourceSha256": "163dcd9644e24a394b39d4718222b3ef7a441834b4d656f1c4963600e9f91097",
+      "sourceBytes": 5812041,
+      "replacesSrc": "/games/beach-volley/variety-v5/video-nagisa-special-2.mp4",
+      "crop": [
+        1216,
+        684,
+        64,
+        0
+      ],
+      "derivedCameraFraming": false,
+      "generatedSoundtrackRemoved": true,
+      "reviewed": true,
+      "lite": {
+        "src": "/games/beach-volley/lite-v7/nagisa-special-2.mp4",
+        "bytes": 168222,
+        "sha256": "c03dd39d536329e78e27bf938ff785d337873a8d8a5a0b79fa31d6c501cddc14"
+      },
+      "encoding": {
+        "standard": {
+          "width": 1280,
+          "height": 720,
+          "fps": 24,
+          "crf": 24
+        },
+        "lite": {
+          "width": 640,
+          "height": 360,
+          "fps": 24,
+          "crf": 31
+        }
+      },
+      "voiceSrc": "/games/beach-volley/variety-v5/video-nagisa-special-2.mp4",
+      "voiceSha256": "da8c12556f1fe87b1d2de8fd8c532fd1939c80d2ef40f3ac4f7dbdfd6ba0a359",
+      "retainedSoundtrack": true,
+      "nativeAudio": true,
+      "transcript": "行下折光 改变路线",
+      "transcriptSimilarity": 0.75,
+      "rmsDb": -16.12,
+      "peak": 0.991,
+      "review": {
+        "standardAndLiteSheetsOpened": true,
+        "framesPerVersion": 12,
+        "times": [
+          0,
+          0.4,
+          0.8,
+          1.1,
+          1.45,
+          1.8,
+          2.2,
+          2.65,
+          2.98,
+          3.18,
+          3.42,
+          3.9
+        ],
+        "noSelfToss": true,
+        "noGroundBounce": true,
+        "emptyHandsBeforeContact": true,
+        "singleRallyBall": true,
+        "forwardDownwardAttack": true,
+        "followThroughAndLanding": true,
+        "note": "Sui framing variants share the same accepted attack; Nagisa variant 2 removes the left-edge extra ball by cropping."
+      },
+      "audioValidation": {
+        "standard": {
+          "recordingCorrelation": 1.0,
+          "voiceOffsetSeconds": 0.0,
+          "peak": 0.99099
+        },
+        "lite": {
+          "recordingCorrelation": 0.99167,
+          "voiceOffsetSeconds": 0.0,
+          "peak": 0.97456
+        }
+      }
+    }
+  },
+  "standardBytes": 5691108,
+  "liteBytes": 902759,
+  "liteReductionPercent": 84.14
+}
