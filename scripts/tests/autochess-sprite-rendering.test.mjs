@@ -778,10 +778,6 @@ test("文字、圆形头像和宿主 Canvas 根据真实视口同步高 DPI 渲�
     scene,
     /maximumResolution = this\.isMobileSizedViewport\(\) \? MAX_MOBILE_TEXT_RESOLUTION : MAX_TEXT_RESOLUTION/,
   );
-  assert.match(
-    scene,
-    /Math\.min\(maximumResolution, Math\.ceil\(devicePixelRatio\)\)/,
-  );
   assert.match(scene, /resolution: this\.textResolution/);
   assert.match(scene, /tooltipLayoutFor\(/);
   assert.match(
@@ -945,16 +941,8 @@ test("场上满员时 DOM 商店仍预测待激活羁绊", () => {
   assert.match(hud, /待上阵，需调整人口或站位/);
 });
 
-test("桌面商店下半区详情向上展开并保持箭头贴近卡片", () => {
-  assert.match(
-    hudCss,
-    /\.rift-dom-shop-desktop \.rift-shop-card-wrap:nth-child\(n \+ 3\) \.rift-shop-card-detail \{ top: auto; bottom: -5px; \}/,
-  );
-  assert.match(
-    hudCss,
-    /\.rift-dom-shop-desktop \.rift-shop-card-wrap:nth-child\(n \+ 3\) \.rift-shop-card-detail::after \{ top: auto; bottom: 19px; \}/,
-  );
-});
+// Text density and viewport-aware shop detail placement are exercised across
+// real Chrome zoom cycles in scripts/verify-autochess-zoom.cjs.
 
 test("移动商店用独立按钮查看买不起棋子的详情", () => {
   assert.match(hudShop, /detailDisclosure\?: \{/);

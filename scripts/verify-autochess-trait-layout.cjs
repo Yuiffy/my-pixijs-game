@@ -107,7 +107,7 @@ const artifactDirectory = ".tmp/autochess/trait-layout";
 mkdirSync(artifactDirectory, { recursive: true });
 
 (async () => {
-  const browser = await chromium.launch({ channel: "chrome", headless: true });
+  const browser = await chromium.launch({ channel: "chrome", headless: process.env.AUTOCHESS_HEADED !== "1", args: ["--mute-audio"] });
   const page = await browser.newPage({ viewport: { width: 2048, height: 1104 } });
   const errors = [];
   page.on("console", (message) => {
@@ -115,6 +115,7 @@ mkdirSync(artifactDirectory, { recursive: true });
   });
   page.on("pageerror", (error) => errors.push(error.message));
 
+  await page.addInitScript(() => { speechSynthesis.speak = () => {}; });
   const response = await page.goto(`${baseUrl}/game/autochess?seed=31`, { waitUntil: "domcontentloaded" });
   if (!response?.ok()) throw new Error(`Autochess URL returned ${response?.status()}`);
   const canvas = page.locator('[data-game-canvas="rift-line"]');
@@ -161,7 +162,7 @@ mkdirSync(artifactDirectory, { recursive: true });
     const scene = window.__codexAutoChessGame.scene.getScene("RiftLineScene");
     const content = scene.traitContent;
     return {
-      labels: content.list
+      labels: scene.traitLabels.list
         .filter((child) => child.type === "Text")
         .map((label) => ({ text: label.text, x: label.x, y: label.y, width: label.width })),
       contentX: content.x,

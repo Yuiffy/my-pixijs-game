@@ -1,4 +1,5 @@
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { CSSProperties } from "react";
 import { InfoCircleOutlined } from "@ant-design/icons";
 import type { AutoChessEngine } from "../core/gameEngine";
@@ -22,6 +23,7 @@ import {
   type OwnedStars,
 } from "./shared";
 import { Sheet } from "./MobileSheets";
+import { useShopDetailPosition } from "./useShopDetailPosition";
 
 type ShopCardProps = {
   unitId: string | null;
@@ -36,8 +38,11 @@ type ShopCardProps = {
 
 export function ShopCard({ unitId, engine, owned, onBuy, detailDisclosure }: ShopCardProps) {
   const [showDesktopDetail, setShowDesktopDetail] = useState(false);
+  const hideDetailTimer = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => () => clearTimeout(hideDetailTimer.current), []);
   const detailId = useId();
   const characterStyle = useCharacterStyle();
+  const { detailRef, anchorRef, container } = useShopDetailPosition(showDesktopDetail && !detailDisclosure, unitId);
   if (!unitId) return <div className="rift-dom-shop-card empty">已征募</div>;
   const def = UNIT_DEFS[unitId as keyof typeof UNIT_DEFS];
   const portrait = resolveUnitPortrait(def.id, characterStyle);
@@ -60,18 +65,37 @@ export function ShopCard({ unitId, engine, owned, onBuy, detailDisclosure }: Sho
   });
   const orderedTraits = [...traitTags].sort((left, right) => Number(right.willActivate) - Number(left.willActivate)
     || Number(right.status.active) - Number(left.status.active));
-  const extraTraits = orderedTraits.slice(2);
+  const detail = (
+    <div ref={detailRef} id={detailId} className={`rift-shop-card-detail ${detailDisclosure ? "" : "is-floating"}`} role={detailDisclosure ? "region" : "tooltip"} aria-label={detailDisclosure ? `${def.name}详情` : undefined}>
+      <div className="rift-detail-head"><span className="rift-eyebrow">UNIT BRIEF / TIER {def.tier}</span><strong>{def.name}</strong><small>{def.title}</small></div>
+      <div className="rift-detail-tags">{traitTags.map(({ id, trait, status, willActivate }) => <i key={id} className={`rift-trait-tag ${status.active ? "is-active" : ""} ${willActivate ? "is-next" : ""}`} style={{ "--tag-color": trait.color } as CSSProperties}>{trait.name}</i>)}</div>
+      {traitPreview.filter(entry => entry.advances).map(entry => <p className="rift-trait-preview" key={entry.id}>{entry.deploysImmediately ? "购买并上阵" : "待上阵，需调整人口或站位"}：{TRAITS[entry.id].name} {entry.count} → {entry.nextCount} 人 · {entry.level} → {entry.nextLevel} 档</p>)}
+      <div className="rift-detail-stats"><span>生命 <b>{def.hp}</b></span><span>攻击 <b>{def.attack}</b></span><span>护甲 <b>{def.armor}</b></span><span>射程 <b>{def.range}</b></span></div>
+      <div className="rift-detail-skill"><span>技能 · {def.abilityName}</span><p>{def.abilityDescription}{abilityGrowth && <><br />星级成长：{abilityGrowth}</>}</p></div>
+      {def.passiveName && def.passiveDescription && <div className="rift-detail-passive"><span>被动 · {def.passiveName}</span><p>{def.passiveDescription}</p></div>}
+      <small className="rift-detail-energy">{def.energyProfile.name} · {describeEnergyRecovery(def.energyProfile)}</small>
+    </div>
+  );
   return (
     <div
+      ref={anchorRef}
       className={`rift-shop-card-wrap ${detailDisclosure ? "is-inspectable" : ""} ${showDetail ? "is-detail-open" : ""}`}
-      onMouseEnter={detailDisclosure ? undefined : () => setShowDesktopDetail(true)}
-      onMouseLeave={detailDisclosure ? undefined : () => setShowDesktopDetail(false)}
+      onMouseEnter={detailDisclosure ? undefined : () => {
+        clearTimeout(hideDetailTimer.current);
+        setShowDesktopDetail(true);
+      }}
+      onMouseLeave={detailDisclosure ? undefined : () => {
+        hideDetailTimer.current = setTimeout(() => setShowDesktopDetail(false), 120);
+      }}
     >
       <button
         type="button"
         className={`rift-dom-shop-card ${totalOwned > 0 ? "has-owned" : ""} ${affordable ? "" : "disabled"} tier-card-${def.tier}`}
         onClick={onBuy}
-        onFocus={detailDisclosure ? undefined : () => setShowDesktopDetail(true)}
+        onFocus={detailDisclosure ? undefined : () => {
+          clearTimeout(hideDetailTimer.current);
+          setShowDesktopDetail(true);
+        }}
         onBlur={detailDisclosure ? undefined : () => setShowDesktopDetail(false)}
         disabled={!affordable}
         aria-label={`购买${def.name}，${def.cost}金币，${def.abilityName}`}
@@ -79,7 +103,7 @@ export function ShopCard({ unitId, engine, owned, onBuy, detailDisclosure }: Sho
       >
         <div className="rift-shop-card-accent" />
         <div className={`rift-dom-portrait ${portrait.portraitStyle === "sprite" ? "is-sprite" : ""}`} style={{ borderColor: def.accent, backgroundColor: def.color }}><UnitPortrait unitId={unitId as keyof typeof UNIT_DEFS} size={portrait.portraitStyle === "sprite" ? 60 : 46} /></div>
-        <div className="rift-dom-shop-copy"><strong>{def.name}</strong><span>{role} · {def.abilityName}</span><div>{orderedTraits.slice(0, 2).map(({ id, trait, status, willActivate }) => <i key={id} className={`rift-trait-tag ${status.active ? "is-active" : ""} ${willActivate ? "is-next" : ""}`} style={{ "--tag-color": trait.color } as CSSProperties} title={willActivate ? `上阵后可提升${trait.name}羁绊` : trait.description}>{trait.name}</i>)}{extraTraits.length > 0 && <em title={extraTraits.map(({ trait }) => trait.name).join("、")} aria-label={`其他羁绊：${extraTraits.map(({ trait }) => trait.name).join("、")}`}>+{extraTraits.length}</em>}</div></div>
+        <div className="rift-dom-shop-copy"><strong>{def.name}</strong><span>{role} · {def.abilityName}</span><div>{orderedTraits.map(({ id, trait, status, willActivate }) => <i key={id} className={`rift-trait-tag ${status.active ? "is-active" : ""} ${willActivate ? "is-next" : ""}`} style={{ "--tag-color": trait.color } as CSSProperties} title={willActivate ? `上阵后可提升${trait.name}羁绊` : trait.description}>{trait.name}</i>)}</div></div>
         <div className="rift-shop-card-meta">{totalOwned > 0 && <small className="rift-shop-owned">{ownedLabel(owned)}</small>}<b className="rift-dom-cost">{def.cost}</b></div>
       </button>
       {detailDisclosure && (
@@ -95,17 +119,7 @@ export function ShopCard({ unitId, engine, owned, onBuy, detailDisclosure }: Sho
           <InfoCircleOutlined aria-hidden="true" />
         </button>
       )}
-      {showDetail && (
-        <div id={detailId} className="rift-shop-card-detail" role={detailDisclosure ? "region" : "tooltip"} aria-label={detailDisclosure ? `${def.name}详情` : undefined}>
-          <div className="rift-detail-head"><span className="rift-eyebrow">UNIT BRIEF / TIER {def.tier}</span><strong>{def.name}</strong><small>{def.title}</small></div>
-          <div className="rift-detail-tags">{traitTags.map(({ id, trait, status, willActivate }) => <i key={id} className={`rift-trait-tag ${status.active ? "is-active" : ""} ${willActivate ? "is-next" : ""}`} style={{ "--tag-color": trait.color } as CSSProperties}>{trait.name}</i>)}</div>
-          {traitPreview.filter(entry => entry.advances).map(entry => <p className="rift-trait-preview" key={entry.id}>{entry.deploysImmediately ? "购买并上阵" : "待上阵，需调整人口或站位"}：{TRAITS[entry.id].name} {entry.count} → {entry.nextCount} 人 · {entry.level} → {entry.nextLevel} 档</p>)}
-          <div className="rift-detail-stats"><span>生命 <b>{def.hp}</b></span><span>攻击 <b>{def.attack}</b></span><span>护甲 <b>{def.armor}</b></span><span>射程 <b>{def.range}</b></span></div>
-          <div className="rift-detail-skill"><span>技能 · {def.abilityName}</span><p>{def.abilityDescription}{abilityGrowth && <><br />星级成长：{abilityGrowth}</>}</p></div>
-          {def.passiveName && def.passiveDescription && <div className="rift-detail-passive"><span>被动 · {def.passiveName}</span><p>{def.passiveDescription}</p></div>}
-          <small className="rift-detail-energy">{def.energyProfile.name} · {describeEnergyRecovery(def.energyProfile)}</small>
-        </div>
-      )}
+      {showDetail && (detailDisclosure || !container ? detail : createPortal(detail, container))}
     </div>
   );
 }

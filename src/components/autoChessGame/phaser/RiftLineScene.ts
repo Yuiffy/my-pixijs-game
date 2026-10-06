@@ -254,6 +254,7 @@ export class RiftLineScene extends Phaser.Scene {
   private battleTimerRect: { x: number; y: number; width: number; height: number } | null = null;
 
   private traitContent: Phaser.GameObjects.Container | null = null;
+  private traitLabels: Phaser.GameObjects.Container | null = null;
 
   private traitFade: Phaser.GameObjects.Graphics | null = null;
 
@@ -555,6 +556,7 @@ export class RiftLineScene extends Phaser.Scene {
     this.rankingStateKey = "";
     this.rankingRefreshAccum = 0;
     this.traitContent = null;
+    this.traitLabels = null;
     this.traitFade = null;
     this.traitEntries = [];
     this.traitBaseOffset = 0;
@@ -576,6 +578,7 @@ export class RiftLineScene extends Phaser.Scene {
     }
     this.profile = this.profileForViewport();
     this.syncLogicalCamera();
+    this.updateQuality();
     this.resetLayers();
     this.phase = nextPhase;
     // The desktop preparation stage keeps its established Phaser composition:
@@ -625,10 +628,10 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private updateQuality() {
-    // DPR sharpens text textures only; authored card geometry remains unchanged.
-    const devicePixelRatio = typeof window === "undefined" ? 1 : window.devicePixelRatio || 1;
+    // Camera zoom already includes the backing buffer density and shell scale.
+    // DPR alone can undersample text after zooming out on a large desktop.
     const maximumResolution = this.isMobileSizedViewport() ? MAX_MOBILE_TEXT_RESOLUTION : MAX_TEXT_RESOLUTION;
-    this.textResolution = Math.min(maximumResolution, Math.ceil(devicePixelRatio));
+    this.textResolution = Math.min(maximumResolution, Math.max(1, Math.ceil(this.cameras.main.zoom)));
   }
 
   private text(x: number, y: number, value: string, size = 14, color = COLORS.text, style: Phaser.Types.GameObjects.Text.TextStyle = {}) {
@@ -1019,11 +1022,14 @@ export class RiftLineScene extends Phaser.Scene {
     maskGraphics.fillStyle(0xffffff).fillRect(strip.x, strip.y, strip.width, strip.height);
     this.children.remove(maskGraphics);
     const content = this.add.container(strip.x + this.traitBaseOffset + this.traitOffset, strip.y);
+    const labels = this.add.container(content.x, content.y);
     if (this.renderer.type === Phaser.CANVAS) {
       content.setMask(maskGraphics.createGeometryMask());
     } else {
       content.enableFilters().filters!.external.addMask(maskGraphics, false, this.cameras.main, "world");
     }
+    // The detached mask is not owned by the scene display list or the filter.
+    content.once(Phaser.GameObjects.Events.DESTROY, () => maskGraphics.destroy());
     let cursor = 0;
     this.traitEntries.forEach(({ trait, status, label, width }) => {
       const { color } = Phaser.Display.Color.HexStringToColor(trait.color);
@@ -1035,11 +1041,14 @@ export class RiftLineScene extends Phaser.Scene {
       content.add([
         graphics,
         this.add.circle(cursor + 12, strip.height / 2, 3, color, status.active ? 1 : 0.72),
-        this.text(cursor + 21, 7, label, 10, status.active ? "#effaff" : "#7f96a6", { fontStyle: "bold" }),
       ]);
+      // Render glyphs directly, avoiding a second resampling through the mask's
+      // framebuffer after resize. Crop the text texture when the strip scrolls.
+      labels.add(this.text(cursor + 21, 7, label, 10, status.active ? "#effaff" : "#7f96a6", { fontStyle: "bold" }));
       cursor += width + gap;
     });
     this.traitContent = content;
+    this.traitLabels = labels;
     const zone = this.add.zone(strip.x + strip.width / 2, strip.y + strip.height / 2, strip.width, strip.height).setInteractive({ useHandCursor: true });
     zone.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => this.updateTraitTooltip(pointer));
     zone.on(Phaser.Input.Events.POINTER_MOVE, (pointer: Phaser.Input.Pointer) => {
@@ -1056,7 +1065,7 @@ export class RiftLineScene extends Phaser.Scene {
     zone.on(Phaser.Input.Events.POINTER_OUT, () => {
       if (!this.isCompact() && !this.traitDrag) this.clearTooltip();
     });
-    this.phaseLayer.add([content, zone]);
+    this.phaseLayer.add([content, labels, zone]);
     this.updateTraitViewport();
   }
 
@@ -1073,6 +1082,18 @@ export class RiftLineScene extends Phaser.Scene {
   private updateTraitViewport() {
     const strip = this.traitStrip();
     this.traitContent?.setX(strip.x + this.traitBaseOffset + this.traitOffset);
+    if (this.traitLabels) {
+      const offset = this.traitBaseOffset + this.traitOffset;
+      this.traitLabels.setX(strip.x + offset);
+      this.traitLabels.list.forEach(child => {
+        const label = child as Phaser.GameObjects.Text;
+        const left = Math.max(0, -offset - label.x);
+        const right = Math.min(label.width, strip.width - offset - label.x);
+        label.setVisible(right > left);
+        // Text crop coordinates address physical texture pixels, not font units.
+        label.setCrop(left * label.style.resolution, 0, Math.max(0, right - left) * label.style.resolution, label.canvas.height);
+      });
+    }
     this.traitFade?.destroy();
     this.traitFade = null;
     if (this.traitMinimumOffset === 0) return;

@@ -121,7 +121,7 @@ const attachBridge = async (page) => page.evaluate(() => {
 });
 
 (async () => {
-  const browser = await chromium.launch({ channel: "chrome", headless: true });
+  const browser = await chromium.launch({ channel: "chrome", headless: process.env.AUTOCHESS_HEADED !== "1", args: ["--mute-audio"] });
   const page = await browser.newPage({ viewport: { width: 2048, height: 1000 }, deviceScaleFactor: 1 });
   const errors = [];
   const failedResponses = [];
@@ -134,6 +134,7 @@ const attachBridge = async (page) => page.evaluate(() => {
   });
 
   try {
+    await page.addInitScript(() => { speechSynthesis.speak = () => {}; });
     const response = await page.goto(`${baseUrl}/game/autochess?seed=1`, { waitUntil: "domcontentloaded" });
     assert.ok(response?.ok(), `Autochess URL returned ${response?.status()}`);
     await page.locator('[data-game-canvas="rift-line"]').waitFor();
@@ -155,10 +156,11 @@ const attachBridge = async (page) => page.evaluate(() => {
     for (let index = 0; index < 5; index += 1) {
       const card = cards.nth(index);
       await card.hover();
+      await page.waitForTimeout(150);
       const layout = await page.evaluate((cardIndex) => {
         const wraps = [...document.querySelectorAll(".rift-dom-shop-desktop .rift-shop-card-wrap")];
         const wrap = wraps[cardIndex];
-        const tooltip = wrap?.querySelector(".rift-shop-card-detail");
+        const tooltip = document.querySelector(".rift-shop-card-detail.is-floating");
         const canvas = document.querySelector('[data-game-canvas="rift-line"]');
         if (!wrap || !tooltip || !(canvas instanceof HTMLCanvasElement)) return null;
         const cardBox = wrap.getBoundingClientRect();
@@ -166,6 +168,7 @@ const attachBridge = async (page) => page.evaluate(() => {
         const arrow = getComputedStyle(tooltip, "::after");
         return {
           viewport: { width: innerWidth, height: innerHeight },
+          headerBottom: document.querySelector(".rift-dom-header").getBoundingClientRect().bottom,
           card: { top: cardBox.top, bottom: cardBox.bottom },
           tooltip: { top: tooltipBox.top, bottom: tooltipBox.bottom, height: tooltipBox.height },
           arrow: { top: arrow.top, bottom: arrow.bottom },
@@ -179,15 +182,9 @@ const attachBridge = async (page) => page.evaluate(() => {
         };
       }, index);
       assert.ok(layout, `Missing tooltip layout for card ${index + 1}`);
-      assert.ok(layout.tooltip.top >= 0, JSON.stringify(layout));
+      assert.ok(layout.tooltip.top >= layout.headerBottom, JSON.stringify(layout));
       assert.ok(layout.tooltip.bottom <= layout.viewport.height + 0.5, JSON.stringify(layout));
       assert.ok(layout.domOverflow <= 1, JSON.stringify(layout));
-      if (index < 2) {
-        assert.ok(Math.abs(layout.tooltip.top - (layout.card.top - 5)) <= 2, JSON.stringify(layout));
-      } else {
-        assert.ok(Math.abs(layout.tooltip.bottom - (layout.card.bottom + 5)) <= 2, JSON.stringify(layout));
-        assert.equal(layout.arrow.bottom, "19px");
-      }
       layouts.push(layout);
       if (index === 2 || index === 4) {
         const name = index === 2 ? "third-card-detail" : "fifth-card-detail";

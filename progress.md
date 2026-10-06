@@ -711,3 +711,15 @@ Original prompt: 检查沉灯船坞渡船节点无法传送；悠亚背后的纸
 开发静音安装版 Chrome 已复现并验证桌面／390px 放灯远近、真实 E 键过场与回到旅途，三种船坞状态、双向、刷新和地图；所有采用的截图逐张目检并交叉核对状态／DOM／画布／像素，错误为空。修改源文件 ESLint 与 144/144 雨夜规则通过，含既有主线、两岸、庭院和副本普通输入流程。独立验收检出 D:/workspace/myrepo/my-pixijs-game-night-experience，只纳入本轮路径，保护主工作区其他线程修改。
 
 最终完整 pnpm run check 后顺序 pnpm run build 通过，Next 构建 ESLint 保持启用。生产版全 33 节点目录及放灯／船坞专项共 50 张截图逐张目检通过，页面／控制台错误为空。补测 720p 发现普通模式的航线要求被交互按钮遮挡，已调整短桌面窗口的刻文位置；重新顺序通过完整门禁，生产复跑三种船坞状态／往返／读档／地图，新增两张 720p 截图与静音通用客户端一张截图均目检通过，文字与按钮间距实测 18px，错误为空。最终采用生产证据共 53 张，在主工作区 tmp/night-landmarks-{production,production-final,shared-final}/；规则、ESLint、完整门禁与浏览器日志在验收检出 tmp/night-landmarks-*-release.log 和 tmp/night-landmarks-browser-{production,final}.log。手机验收为 Chrome 窄屏模拟，保留正常墙体遮挡与近处交互，造型仍为程序低模。按此前授权提交并发布 master，部署结果另以 GitHub 的 Vercel 状态核对。
+
+## 2026-10-06 · 自走棋商店完整羁绊与缩放清晰度（本地验收）
+
+Original prompt: 商店卡片恢复全部羁绊，不用两个加「+N」省略；修复多次浏览器放大缩小后布阵羁绊文字模糊，以及放大后商店 hover 详情被顶部 header 遮挡。
+
+ShopCard 移除两个标签限制和单行裁切，桌面／手机均按完整羁绊换行。矮窗口的商店列表独立滚动，操作按钮保留，极矮窗口收紧标题与留白以至少完整容纳一张卡片。详情通过 portal 放在 HUD 层内，按真实矩形和 shell 缩放换算位置，避开 header 并限制可用高度；长详情可悬停进入滚动，鼠标跨越时短暂延迟关闭，手机仍使用独立展开按钮。
+
+布阵标签文字从 Phaser 的遮罩中分离，直接渲染并按纹理像素裁切，保留背景遮罩、单行横向滚动／拖拽和羁绊说明。文字贴图按实际相机到 backing canvas 的缩放选择分辨率，每次重建重新计算，沿用桌面／手机上限；同时释放重建时脱离显示列表的遮罩 Graphics，避免反复 resize 遗留对象。
+
+新增 scripts/verify-autochess-zoom.cjs：临时 Chrome profile 内加载仅供测试的 tabs.setZoom 扩展，使用安装版 headed Chrome、--mute-audio 和 TTS stub。开发与最终生产构建均通过 46 项角色定义的桌面／390px 全标签检查、67%～200% 共 13 次真实缩放、每轮五张卡片详情边界／顶层命中检查、恢复 100% 后文字 raster 一致性、长详情滚动、羁绊滚轮／拖拽／末端裁切、320px 标签、购买／锁店／开战／暂停。最终生产 13 张截图全部打开目检，PNG sanity、文本状态、DOM 和画布交叉核对通过，页面／控制台错误为空；另有既有羁绊布局三张、商店详情两张截图已目检通过。没有使用共享 SwiftShader 客户端；早期 headless 与真实 zoom 下 fullPage 裁切异常的截图不作验收，最终采用 headed Chrome 的整视口 page.screenshot。
+
+465/465 规则测试通过（旧的固定 nth-child 详情定位源码断言由真实浏览器边界回归替代）；修改 TS 的 ESLint、测试脚本语法、完整 pnpm run check 后顺序 pnpm run build 均通过，保持构建 ESLint。证据 tmp/autochess-zoom/production/report.json、生产截图、{rules,check,build,production}.log。已停止临时开发服务并清理其 tsconfig include；本地生产预览 http://127.0.0.1:4039/game/autochess。2026-10-07 用户授权提交 master；提交前再次顺序通过完整 check／build，仅纳入本轮自走棋修复和验证文件，保留工作区其他任务改动。手机为 Chrome 窄屏模拟，未验证实体手机与其他浏览器；本轮目标无待处理项。
