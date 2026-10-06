@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "music": {
     "menu": {
       "src": "/games/beach-volley/audio-v1/music-menu.mp3",
@@ -202,86 +202,86 @@
     "nagisa": {
       "intro": [
         {
-          "src": "/games/beach-volley/audio-v2/nagisa-intro-1.mp3",
-          "bytes": 31917,
-          "duration": 3.9,
-          "text": "场地确认完毕。让我看看，你的球路。"
+          "src": "/games/beach-volley/audio-v6/nagisa-intro-1.mp3",
+          "bytes": 20780,
+          "duration": 2.5,
+          "text": "来吧，看看这个是什么！"
         },
         {
-          "src": "/games/beach-volley/audio-v2/nagisa-intro-2.mp3",
-          "bytes": 30957,
-          "duration": 3.78,
-          "text": "新的球路，新的答案。准备好。"
+          "src": "/games/beach-volley/audio-v6/nagisa-intro-2.mp3",
+          "bytes": 43820,
+          "duration": 5.38,
+          "text": "好了，这里我们差不多开始了吧！"
         }
       ],
       "special": [
         {
-          "src": "/games/beach-volley/audio-v2/nagisa-special-1.mp3",
-          "bytes": 16557,
-          "duration": 1.98,
-          "text": "找到破绽了。看这道星光！"
+          "src": "/games/beach-volley/audio-v6/nagisa-special-1.mp3",
+          "bytes": 13484,
+          "duration": 1.6,
+          "text": "不要欺米太甚！"
         },
         {
-          "src": "/games/beach-volley/audio-v2/nagisa-special-2.mp3",
-          "bytes": 30957,
-          "duration": 3.78,
-          "text": "新的球路，新的答案。准备好。"
+          "src": "/games/beach-volley/audio-v6/nagisa-special-2.mp3",
+          "bytes": 20780,
+          "duration": 2.5,
+          "text": "来吧，看看这个是什么！"
         }
       ],
       "pointWin": [
         {
-          "src": "/games/beach-volley/audio-v2/nagisa-pointWin-1.mp3",
-          "bytes": 15405,
-          "duration": 1.84,
-          "text": "这一分，拿下了。"
+          "src": "/games/beach-volley/audio-v6/nagisa-pointWin-1.mp3",
+          "bytes": 6572,
+          "duration": 0.73,
+          "text": "成功了！"
         },
         {
-          "src": "/games/beach-volley/audio-v2/nagisa-pointWin-2.mp3",
-          "bytes": 18093,
-          "duration": 2.18,
-          "text": "看见了，这个空隙。"
+          "src": "/games/beach-volley/audio-v6/nagisa-pointWin-2.mp3",
+          "bytes": 10220,
+          "duration": 1.2,
+          "text": "做得太厉害了！"
         }
       ],
       "pointLose": [
         {
-          "src": "/games/beach-volley/audio-v2/nagisa-pointLose-1.mp3",
-          "bytes": 28077,
-          "duration": 3.42,
-          "text": "记住了。下一球，我会改变路线。"
+          "src": "/games/beach-volley/audio-v6/nagisa-pointLose-1.mp3",
+          "bytes": 11948,
+          "duration": 1.4,
+          "text": "不太可能吧？"
         },
         {
-          "src": "/games/beach-volley/audio-v2/nagisa-pointLose-2.mp3",
-          "bytes": 21549,
-          "duration": 2.6,
-          "text": "原来如此，再试一次。"
+          "src": "/games/beach-volley/audio-v6/nagisa-pointLose-2.mp3",
+          "bytes": 10220,
+          "duration": 1.2,
+          "text": "至于吗？"
         }
       ],
       "victory": [
         {
-          "src": "/games/beach-volley/audio-v2/nagisa-victory-1.mp3",
-          "bytes": 31917,
-          "duration": 3.9,
-          "text": "胜负已定。和你交手，很有意思。"
+          "src": "/games/beach-volley/audio-v6/nagisa-victory-1.mp3",
+          "bytes": 14828,
+          "duration": 1.76,
+          "text": "嗯，我真是个天才！"
         },
         {
-          "src": "/games/beach-volley/audio-v2/nagisa-victory-2.mp3",
-          "bytes": 34029,
-          "duration": 4.16,
-          "text": "这就是，我找到的答案。谢谢你。"
+          "src": "/games/beach-volley/audio-v6/nagisa-victory-2.mp3",
+          "bytes": 6572,
+          "duration": 0.73,
+          "text": "成功了！"
         }
       ],
       "defeat": [
         {
-          "src": "/games/beach-volley/audio-v2/nagisa-defeat-1.mp3",
-          "bytes": 41901,
-          "duration": 5.16,
-          "text": "这次是你赢了。下次，我会找到新的答案。"
+          "src": "/games/beach-volley/audio-v6/nagisa-defeat-1.mp3",
+          "bytes": 11948,
+          "duration": 1.4,
+          "text": "不太可能吧？"
         },
         {
-          "src": "/games/beach-volley/audio-v2/nagisa-defeat-2.mp3",
-          "bytes": 35181,
-          "duration": 4.3,
-          "text": "还有新的可能。下次，我会更强。"
+          "src": "/games/beach-volley/audio-v6/nagisa-defeat-2.mp3",
+          "bytes": 10220,
+          "duration": 1.2,
+          "text": "至于吗？"
         }
       ]
     }
@@ -317,16 +317,16 @@
     ],
     "nagisa": [
       {
-        "src": "/games/beach-volley/audio-v2/nagisa-effort-he.mp3",
-        "bytes": 5421,
-        "duration": 0.6,
-        "text": "喝！"
+        "src": "/games/beach-volley/audio-v6/nagisa-effort-1.mp3",
+        "bytes": 4460,
+        "duration": 0.48,
+        "text": "哼！"
       },
       {
-        "src": "/games/beach-volley/audio-v2/nagisa-effort-ha.mp3",
-        "bytes": 4269,
-        "duration": 0.45,
-        "text": "哈！"
+        "src": "/games/beach-volley/audio-v6/nagisa-effort-2.mp3",
+        "bytes": 3308,
+        "duration": 0.33,
+        "text": "呀！"
       }
     ]
   }

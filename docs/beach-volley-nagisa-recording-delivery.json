@@ -1,0 +1,1102 @@
+{
+  "version": 1,
+  "deliveredAt": "2026-10-07",
+  "externalAudioOnly": true,
+  "catalogUrl": "https://www.nagisa.live/SecWeb/expression/expression_base.php",
+  "officialAccountUrl": "https://space.bilibili.com/2124647716",
+  "upstreamWarning": "请注意音量大小，部分语音会有少量修改。以及由于技术原因，部分语音出现失真，感谢谅解。",
+  "speakerIdentityLimit": "Source attribution and independent ASR are recorded separately. Neither ASR nor separation authenticates a speaker.",
+  "items": {
+    "nagisa-intro-1": {
+      "src": "/games/beach-volley/audio-v6/nagisa-intro-1.mp3",
+      "bytes": 20780,
+      "duration": 2.5,
+      "text": "来吧，看看这个是什么！",
+      "actor": "nagisa",
+      "scene": "intro",
+      "conversion": "authentic-recording",
+      "sha256": "af702576ae443f46c030ee9f63a7cfc95f7e2e81166198d072419626fc1a2897",
+      "samples": 60000,
+      "rmsDb": -19.019,
+      "peak": 0.506131,
+      "sourceKind": "authentic-livestream",
+      "sourcePath": "D:\\files\\videos\\DDTV录播\\31368705_米汀Nagisa\\2026_09_29\\录制-31368705-20260929-080845-433-早安一会儿.opus",
+      "sourceSha256": "393f57829daa5419d905cd3de00f36e41298e745e4bc62626cd59474ca0b6a96",
+      "rawSha256": "e389d8ca961c6aa5019e28ff6a19f6ab8c12aa3358712c83b4729d5d84010372",
+      "contiguousCrop": [
+        6218.879,
+        6221.379
+      ],
+      "excerptCrop": [
+        0,
+        2.5
+      ],
+      "sourceKey": "live-2847",
+      "processing": "Continuous crop, HP70/LP10500, loudnorm I=-18 TP=-3 LRA9, 8ms fades, mono24kHz64kbpsMP3; no pitch, timing or voice conversion",
+      "backgroundSeparation": null,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "initialPrompt": null,
+        "transcript": "来吧看看这个是什么",
+        "expected": "来吧，看看这个是什么！",
+        "similarity": 1.0,
+        "expectedPinyin": [
+          "lai",
+          "ba",
+          "kan",
+          "kan",
+          "zhe",
+          "ge",
+          "shi",
+          "shen",
+          "me"
+        ],
+        "transcriptPinyin": [
+          "lai",
+          "ba",
+          "kan",
+          "kan",
+          "zhe",
+          "ge",
+          "shi",
+          "shen",
+          "me"
+        ],
+        "phoneticSimilarity": 1.0,
+        "sha256": "af702576ae443f46c030ee9f63a7cfc95f7e2e81166198d072419626fc1a2897"
+      },
+      "sourceUrl": "https://live.bilibili.com/31368705",
+      "date": "2026_09_29",
+      "title": "早安一会儿",
+      "sourceSubtitle": "D:\\files\\videos\\DDTV录播\\31368705_米汀Nagisa\\2026_09_29\\录制-31368705-20260929-080845-433-早安一会儿.srt",
+      "subtitleId": "1993",
+      "subtitleText": "来吧看看这个是什么",
+      "previousCaption": [
+        "也播讲了会稍微睡一小会的"
+      ],
+      "nextCaption": [
+        "有"
+      ],
+      "identityEvidence": "Local recording of Nagisa room 31368705; solo morning talk or solo silent-text puzzle-game session. Attribution is from recording context, not ASR or biometric verification."
+    },
+    "nagisa-intro-2": {
+      "src": "/games/beach-volley/audio-v6/nagisa-intro-2.mp3",
+      "bytes": 43820,
+      "duration": 5.38,
+      "text": "好了，这里我们差不多开始了吧！",
+      "actor": "nagisa",
+      "scene": "intro",
+      "conversion": "authentic-recording",
+      "sha256": "159aaa7938fe68af962a8b977568a820a290fabeba23e1535e18a03fb6bb58cc",
+      "samples": 129120,
+      "rmsDb": -19.024,
+      "peak": 0.861553,
+      "sourceKind": "authentic-livestream",
+      "sourcePath": "D:\\files\\videos\\DDTV录播\\31368705_米汀Nagisa\\2026_10_04\\录制-31368705-20261004-150818-539-看看「金偶像崛起」.flv",
+      "sourceSha256": "7e386ec76cf063ad54ca016bd93fa389bba23be58d523aa4bf50d1fb47939e0f",
+      "rawSha256": "eabd7d59db8dafa8f72f649f3ea17c576856a2518d82e27dc0f32d0fa1e98eb7",
+      "contiguousCrop": [
+        956.249,
+        961.629
+      ],
+      "excerptCrop": [
+        0,
+        5.38
+      ],
+      "sourceKey": "live-1348",
+      "processing": "Continuous crop, HP70/LP10500, loudnorm I=-18 TP=-3 LRA9, 8ms fades, mono24kHz64kbpsMP3; no pitch, timing or voice conversion",
+      "backgroundSeparation": null,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "initialPrompt": null,
+        "transcript": "好了这里我们差不多开始了吧",
+        "expected": "好了，这里我们差不多开始了吧！",
+        "similarity": 1.0,
+        "expectedPinyin": [
+          "hao",
+          "le",
+          "zhe",
+          "li",
+          "wo",
+          "men",
+          "cha",
+          "bu",
+          "duo",
+          "kai",
+          "shi",
+          "le",
+          "ba"
+        ],
+        "transcriptPinyin": [
+          "hao",
+          "le",
+          "zhe",
+          "li",
+          "wo",
+          "men",
+          "cha",
+          "bu",
+          "duo",
+          "kai",
+          "shi",
+          "le",
+          "ba"
+        ],
+        "phoneticSimilarity": 1.0,
+        "sha256": "159aaa7938fe68af962a8b977568a820a290fabeba23e1535e18a03fb6bb58cc"
+      },
+      "sourceUrl": "https://live.bilibili.com/31368705",
+      "date": "2026_10_04",
+      "title": "看看「金偶像崛起」",
+      "sourceSubtitle": "D:\\files\\videos\\DDTV录播\\31368705_米汀Nagisa\\2026_10_04\\录制-31368705-20261004-150818-539-看看「金偶像崛起」.srt",
+      "subtitleId": "120",
+      "subtitleText": "好了这里赢了我们差不多开始了吧",
+      "previousCaption": [
+        "故意逞奸欠再次九二五五的粉色灯牌"
+      ],
+      "nextCaption": [
+        "金融像崛起第一时间想到还是关联"
+      ],
+      "identityEvidence": "Local recording of Nagisa room 31368705; solo morning talk or solo silent-text puzzle-game session. Attribution is from recording context, not ASR or biometric verification."
+    },
+    "nagisa-special-1": {
+      "src": "/games/beach-volley/audio-v6/nagisa-special-1.mp3",
+      "bytes": 13484,
+      "duration": 1.6,
+      "text": "不要欺米太甚！",
+      "actor": "nagisa",
+      "scene": "special",
+      "conversion": "authentic-recording",
+      "sha256": "ad79017dbe7739cb02d784a8f6efdf28802afdef7bd9747afc375871f3324efd",
+      "samples": 38400,
+      "rmsDb": -19.842,
+      "peak": 0.630844,
+      "sourceKind": "authentic-button",
+      "sourcePath": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-nagisa-recording\\sources\\button-34.wav",
+      "sourceSha256": "b4dd7b657726f948e33481f867903a1fbb9bc628265aa027f52b6438082c6801",
+      "rawSha256": "b4dd7b657726f948e33481f867903a1fbb9bc628265aa027f52b6438082c6801",
+      "contiguousCrop": [
+        0,
+        1.6
+      ],
+      "excerptCrop": [
+        0,
+        1.6
+      ],
+      "sourceKey": "button-34",
+      "processing": "Continuous crop, HP70/LP10500, loudnorm I=-18 TP=-3 LRA9, 8ms fades, mono24kHz64kbpsMP3; no pitch, timing or voice conversion",
+      "backgroundSeparation": null,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "initialPrompt": null,
+        "transcript": "不要七米太深了",
+        "expected": "不要欺米太甚！",
+        "similarity": 0.615385,
+        "expectedPinyin": [
+          "bu",
+          "yao",
+          "qi",
+          "mi",
+          "tai",
+          "shen"
+        ],
+        "transcriptPinyin": [
+          "bu",
+          "yao",
+          "qi",
+          "mi",
+          "tai",
+          "shen",
+          "le"
+        ],
+        "phoneticSimilarity": 0.923077,
+        "sha256": "ad79017dbe7739cb02d784a8f6efdf28802afdef7bd9747afc375871f3324efd"
+      },
+      "sourceUrl": "https://www.nagisa.live/assets/audios/buyaoqimitaishen_c6c08445.wav",
+      "catalogUrl": "https://www.nagisa.live/SecWeb/expression/expression_base.php",
+      "label": "不要欺米太甚",
+      "upstreamProcessingNotice": "Source site discloses small modifications and occasional distortion; original broadcast timing is not supplied.",
+      "identityEvidence": "Attribution comes from the Nagisa fan-site voice catalog and its linked official Bilibili account. ASR checks speech content, not speaker identity.",
+      "license": "No explicit audio license found on the catalog page; do not infer a license from the site code."
+    },
+    "nagisa-special-2": {
+      "src": "/games/beach-volley/audio-v6/nagisa-special-2.mp3",
+      "bytes": 20780,
+      "duration": 2.5,
+      "text": "来吧，看看这个是什么！",
+      "actor": "nagisa",
+      "scene": "special",
+      "conversion": "authentic-recording",
+      "sha256": "af702576ae443f46c030ee9f63a7cfc95f7e2e81166198d072419626fc1a2897",
+      "samples": 60000,
+      "rmsDb": -19.019,
+      "peak": 0.506131,
+      "sourceKind": "authentic-livestream",
+      "sourcePath": "D:\\files\\videos\\DDTV录播\\31368705_米汀Nagisa\\2026_09_29\\录制-31368705-20260929-080845-433-早安一会儿.opus",
+      "sourceSha256": "393f57829daa5419d905cd3de00f36e41298e745e4bc62626cd59474ca0b6a96",
+      "rawSha256": "e389d8ca961c6aa5019e28ff6a19f6ab8c12aa3358712c83b4729d5d84010372",
+      "contiguousCrop": [
+        6218.879,
+        6221.379
+      ],
+      "excerptCrop": [
+        0,
+        2.5
+      ],
+      "sourceKey": "live-2847",
+      "processing": "Continuous crop, HP70/LP10500, loudnorm I=-18 TP=-3 LRA9, 8ms fades, mono24kHz64kbpsMP3; no pitch, timing or voice conversion",
+      "backgroundSeparation": null,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "initialPrompt": null,
+        "transcript": "来吧看看这个是什么",
+        "expected": "来吧，看看这个是什么！",
+        "similarity": 1.0,
+        "expectedPinyin": [
+          "lai",
+          "ba",
+          "kan",
+          "kan",
+          "zhe",
+          "ge",
+          "shi",
+          "shen",
+          "me"
+        ],
+        "transcriptPinyin": [
+          "lai",
+          "ba",
+          "kan",
+          "kan",
+          "zhe",
+          "ge",
+          "shi",
+          "shen",
+          "me"
+        ],
+        "phoneticSimilarity": 1.0,
+        "sha256": "af702576ae443f46c030ee9f63a7cfc95f7e2e81166198d072419626fc1a2897"
+      },
+      "sourceUrl": "https://live.bilibili.com/31368705",
+      "date": "2026_09_29",
+      "title": "早安一会儿",
+      "sourceSubtitle": "D:\\files\\videos\\DDTV录播\\31368705_米汀Nagisa\\2026_09_29\\录制-31368705-20260929-080845-433-早安一会儿.srt",
+      "subtitleId": "1993",
+      "subtitleText": "来吧看看这个是什么",
+      "previousCaption": [
+        "也播讲了会稍微睡一小会的"
+      ],
+      "nextCaption": [
+        "有"
+      ],
+      "identityEvidence": "Local recording of Nagisa room 31368705; solo morning talk or solo silent-text puzzle-game session. Attribution is from recording context, not ASR or biometric verification."
+    },
+    "nagisa-pointWin-1": {
+      "src": "/games/beach-volley/audio-v6/nagisa-pointWin-1.mp3",
+      "bytes": 6572,
+      "duration": 0.73,
+      "text": "成功了！",
+      "actor": "nagisa",
+      "scene": "pointWin",
+      "conversion": "authentic-recording",
+      "sha256": "54c15a1d5e0f1a81e0a9178a2363c3b154ab4105e816f1cd5bbc63070719831f",
+      "samples": 17520,
+      "rmsDb": -19.482,
+      "peak": 0.423173,
+      "sourceKind": "authentic-livestream",
+      "sourcePath": "D:\\files\\videos\\DDTV录播\\31368705_米汀Nagisa\\2026_10_02\\录制-31368705-20261002-150656-623-「金偶像谜案」初见.opus",
+      "sourceSha256": "58e4472203aad692126ec11a55dda1b9e6e92efaffdc5971213d02238c01cc79",
+      "rawSha256": "36fda932f85021ca4e21ac06cf934a6ea70dd50d902f6a2a67467802e824473b",
+      "contiguousCrop": [
+        18597.38,
+        18598.11
+      ],
+      "excerptCrop": [
+        0.92,
+        1.65
+      ],
+      "sourceKey": "live-1785",
+      "processing": "Continuous crop, HP70/LP10500, loudnorm I=-18 TP=-3 LRA9, 8ms fades, mono24kHz64kbpsMP3; no pitch, timing or voice conversion",
+      "backgroundSeparation": "UVR HP2_all_vocals (background separation only)",
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "initialPrompt": null,
+        "transcript": "成功了",
+        "expected": "成功了！",
+        "similarity": 1.0,
+        "expectedPinyin": [
+          "cheng",
+          "gong",
+          "le"
+        ],
+        "transcriptPinyin": [
+          "cheng",
+          "gong",
+          "le"
+        ],
+        "phoneticSimilarity": 1.0,
+        "sha256": "54c15a1d5e0f1a81e0a9178a2363c3b154ab4105e816f1cd5bbc63070719831f"
+      },
+      "sourceUrl": "https://live.bilibili.com/31368705",
+      "date": "2026_10_02",
+      "title": "「金偶像谜案」初见",
+      "sourceSubtitle": "D:\\files\\videos\\DDTV录播\\31368705_米汀Nagisa\\2026_10_02\\录制-31368705-20261002-150656-623-「金偶像谜案」初见.srt",
+      "subtitleId": "3954",
+      "subtitleText": "对的哦成功了",
+      "previousCaption": [
+        "就是沃尔特吉恩"
+      ],
+      "nextCaption": [
+        "在一次行动中沃沃尔特基恩被俘"
+      ],
+      "identityEvidence": "Local recording of Nagisa room 31368705; solo morning talk or solo silent-text puzzle-game session. Attribution is from recording context, not ASR or biometric verification."
+    },
+    "nagisa-pointWin-2": {
+      "src": "/games/beach-volley/audio-v6/nagisa-pointWin-2.mp3",
+      "bytes": 10220,
+      "duration": 1.2,
+      "text": "做得太厉害了！",
+      "actor": "nagisa",
+      "scene": "pointWin",
+      "conversion": "authentic-recording",
+      "sha256": "708f440760dbdf7834572e9058174ad7b4af8e1612f838a0545f247a64879623",
+      "samples": 28800,
+      "rmsDb": -18.498,
+      "peak": 0.553233,
+      "sourceKind": "authentic-livestream",
+      "sourcePath": "D:\\files\\videos\\DDTV录播\\31368705_米汀Nagisa\\2026_09_21\\录制-31368705-20260921-080839-747-早安一会儿.opus",
+      "sourceSha256": "03f17d62bf7d531b9ce06e9558c0f6b893f587eae47d6f99b5b3ecc798137851",
+      "rawSha256": "fa26b42945af3855f2399504b40431f64de58adb883354ea8858472c98735b92",
+      "contiguousCrop": [
+        2986.369,
+        2987.569
+      ],
+      "excerptCrop": [
+        0,
+        1.2
+      ],
+      "sourceKey": "live-921",
+      "processing": "Continuous crop, HP70/LP10500, loudnorm I=-18 TP=-3 LRA9, 8ms fades, mono24kHz64kbpsMP3; no pitch, timing or voice conversion",
+      "backgroundSeparation": "UVR HP2_all_vocals (background separation only)",
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "initialPrompt": null,
+        "transcript": "做得太厉害了",
+        "expected": "做得太厉害了！",
+        "similarity": 1.0,
+        "expectedPinyin": [
+          "zuo",
+          "de",
+          "tai",
+          "li",
+          "hai",
+          "le"
+        ],
+        "transcriptPinyin": [
+          "zuo",
+          "de",
+          "tai",
+          "li",
+          "hai",
+          "le"
+        ],
+        "phoneticSimilarity": 1.0,
+        "sha256": "708f440760dbdf7834572e9058174ad7b4af8e1612f838a0545f247a64879623"
+      },
+      "sourceUrl": "https://live.bilibili.com/31368705",
+      "date": "2026_09_21",
+      "title": "早安一会儿",
+      "sourceSubtitle": "D:\\files\\videos\\DDTV录播\\31368705_米汀Nagisa\\2026_09_21\\录制-31368705-20260921-080839-747-早安一会儿.srt",
+      "subtitleId": "782",
+      "subtitleText": "太厉害了",
+      "previousCaption": [
+        "生态系统做的"
+      ],
+      "nextCaption": [
+        "对的"
+      ],
+      "identityEvidence": "Local recording of Nagisa room 31368705; solo morning talk or solo silent-text puzzle-game session. Attribution is from recording context, not ASR or biometric verification."
+    },
+    "nagisa-pointLose-1": {
+      "src": "/games/beach-volley/audio-v6/nagisa-pointLose-1.mp3",
+      "bytes": 11948,
+      "duration": 1.4,
+      "text": "不太可能吧？",
+      "actor": "nagisa",
+      "scene": "pointLose",
+      "conversion": "authentic-recording",
+      "sha256": "ee5738c6b8df87605c6f3c13ea791a72a478634f8614c205d1c27bf6a097464c",
+      "samples": 33600,
+      "rmsDb": -19.46,
+      "peak": 0.499086,
+      "sourceKind": "authentic-button",
+      "sourcePath": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-nagisa-recording\\sources\\button-28.wav",
+      "sourceSha256": "61fff30e19e99a6f79349aa6c78184a37d5ffe673c37eb0d6c0e9578cd846e4a",
+      "rawSha256": "61fff30e19e99a6f79349aa6c78184a37d5ffe673c37eb0d6c0e9578cd846e4a",
+      "contiguousCrop": [
+        0,
+        1.4
+      ],
+      "excerptCrop": [
+        0,
+        1.4
+      ],
+      "sourceKey": "button-28",
+      "processing": "Continuous crop, HP70/LP10500, loudnorm I=-18 TP=-3 LRA9, 8ms fades, mono24kHz64kbpsMP3; no pitch, timing or voice conversion",
+      "backgroundSeparation": null,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "initialPrompt": null,
+        "transcript": "不大可能吧",
+        "expected": "不太可能吧？",
+        "similarity": 0.8,
+        "expectedPinyin": [
+          "bu",
+          "tai",
+          "ke",
+          "neng",
+          "ba"
+        ],
+        "transcriptPinyin": [
+          "bu",
+          "da",
+          "ke",
+          "neng",
+          "ba"
+        ],
+        "phoneticSimilarity": 0.8,
+        "sha256": "ee5738c6b8df87605c6f3c13ea791a72a478634f8614c205d1c27bf6a097464c"
+      },
+      "sourceUrl": "https://www.nagisa.live/assets/audios/butaikennegba_90b4ccc6.wav",
+      "catalogUrl": "https://www.nagisa.live/SecWeb/expression/expression_base.php",
+      "label": "不太可能吧",
+      "upstreamProcessingNotice": "Source site discloses small modifications and occasional distortion; original broadcast timing is not supplied.",
+      "identityEvidence": "Attribution comes from the Nagisa fan-site voice catalog and its linked official Bilibili account. ASR checks speech content, not speaker identity.",
+      "license": "No explicit audio license found on the catalog page; do not infer a license from the site code."
+    },
+    "nagisa-pointLose-2": {
+      "src": "/games/beach-volley/audio-v6/nagisa-pointLose-2.mp3",
+      "bytes": 10220,
+      "duration": 1.2,
+      "text": "至于吗？",
+      "actor": "nagisa",
+      "scene": "pointLose",
+      "conversion": "authentic-recording",
+      "sha256": "a743fb6014ae4376c81d899af45fa75f69b453fb3912204be13538e7a5f4a749",
+      "samples": 28800,
+      "rmsDb": -20.481,
+      "peak": 0.549568,
+      "sourceKind": "authentic-button",
+      "sourcePath": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-nagisa-recording\\sources\\button-27.wav",
+      "sourceSha256": "7a51a4a3af64b2ff16c2287209c38d7f7add63ca03cbafb5b3191d5a85d8a050",
+      "rawSha256": "7a51a4a3af64b2ff16c2287209c38d7f7add63ca03cbafb5b3191d5a85d8a050",
+      "contiguousCrop": [
+        0,
+        1.2
+      ],
+      "excerptCrop": [
+        0,
+        1.2
+      ],
+      "sourceKey": "button-27",
+      "processing": "Continuous crop, HP70/LP10500, loudnorm I=-18 TP=-3 LRA9, 8ms fades, mono24kHz64kbpsMP3; no pitch, timing or voice conversion",
+      "backgroundSeparation": null,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "initialPrompt": null,
+        "transcript": "至于吗",
+        "expected": "至于吗？",
+        "similarity": 1.0,
+        "expectedPinyin": [
+          "zhi",
+          "yu",
+          "ma"
+        ],
+        "transcriptPinyin": [
+          "zhi",
+          "yu",
+          "ma"
+        ],
+        "phoneticSimilarity": 1.0,
+        "sha256": "a743fb6014ae4376c81d899af45fa75f69b453fb3912204be13538e7a5f4a749"
+      },
+      "sourceUrl": "https://www.nagisa.live/assets/audios/zhiyuma_5681cfd8.wav",
+      "catalogUrl": "https://www.nagisa.live/SecWeb/expression/expression_base.php",
+      "label": "至于吗",
+      "upstreamProcessingNotice": "Source site discloses small modifications and occasional distortion; original broadcast timing is not supplied.",
+      "identityEvidence": "Attribution comes from the Nagisa fan-site voice catalog and its linked official Bilibili account. ASR checks speech content, not speaker identity.",
+      "license": "No explicit audio license found on the catalog page; do not infer a license from the site code."
+    },
+    "nagisa-victory-1": {
+      "src": "/games/beach-volley/audio-v6/nagisa-victory-1.mp3",
+      "bytes": 14828,
+      "duration": 1.76,
+      "text": "嗯，我真是个天才！",
+      "actor": "nagisa",
+      "scene": "victory",
+      "conversion": "authentic-recording",
+      "sha256": "0dbb13a005bf0fd9fb9c81de68564041164e401e9084704c125efc0db88b5aaf",
+      "samples": 42240,
+      "rmsDb": -19.652,
+      "peak": 0.58438,
+      "sourceKind": "authentic-livestream",
+      "sourcePath": "D:\\files\\videos\\DDTV录播\\31368705_米汀Nagisa\\2026_09_22\\录制-31368705-20260922-080904-337-早安一会儿.opus",
+      "sourceSha256": "70eca730d142121363bb1ac768eedfc98880cdcade4b928efed7a07561a8fb08",
+      "rawSha256": "b539c96530d8c09934a2b5addcbc675920187d525cd5c354cdf4b51277462e25",
+      "contiguousCrop": [
+        4961.639,
+        4963.399
+      ],
+      "excerptCrop": [
+        0,
+        1.76
+      ],
+      "sourceKey": "live-1174",
+      "processing": "Continuous crop, HP70/LP10500, loudnorm I=-18 TP=-3 LRA9, 8ms fades, mono24kHz64kbpsMP3; no pitch, timing or voice conversion",
+      "backgroundSeparation": "UVR HP2_all_vocals (background separation only)",
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "initialPrompt": null,
+        "transcript": "嗯我真是个天才",
+        "expected": "嗯，我真是个天才！",
+        "similarity": 1.0,
+        "expectedPinyin": [
+          "n",
+          "wo",
+          "zhen",
+          "shi",
+          "ge",
+          "tian",
+          "cai"
+        ],
+        "transcriptPinyin": [
+          "n",
+          "wo",
+          "zhen",
+          "shi",
+          "ge",
+          "tian",
+          "cai"
+        ],
+        "phoneticSimilarity": 1.0,
+        "sha256": "0dbb13a005bf0fd9fb9c81de68564041164e401e9084704c125efc0db88b5aaf"
+      },
+      "sourceUrl": "https://live.bilibili.com/31368705",
+      "date": "2026_09_22",
+      "title": "早安一会儿",
+      "sourceSubtitle": "D:\\files\\videos\\DDTV录播\\31368705_米汀Nagisa\\2026_09_22\\录制-31368705-20260922-080904-337-早安一会儿.srt",
+      "subtitleId": "1267",
+      "subtitleText": "嗯我真是个天才",
+      "previousCaption": [
+        "但是也有做梦的时候觉得天哪"
+      ],
+      "nextCaption": [
+        "醒来之后发现什么东西的具体例子想不起"
+      ],
+      "identityEvidence": "Local recording of Nagisa room 31368705; solo morning talk or solo silent-text puzzle-game session. Attribution is from recording context, not ASR or biometric verification."
+    },
+    "nagisa-victory-2": {
+      "src": "/games/beach-volley/audio-v6/nagisa-victory-2.mp3",
+      "bytes": 6572,
+      "duration": 0.73,
+      "text": "成功了！",
+      "actor": "nagisa",
+      "scene": "victory",
+      "conversion": "authentic-recording",
+      "sha256": "54c15a1d5e0f1a81e0a9178a2363c3b154ab4105e816f1cd5bbc63070719831f",
+      "samples": 17520,
+      "rmsDb": -19.482,
+      "peak": 0.423173,
+      "sourceKind": "authentic-livestream",
+      "sourcePath": "D:\\files\\videos\\DDTV录播\\31368705_米汀Nagisa\\2026_10_02\\录制-31368705-20261002-150656-623-「金偶像谜案」初见.opus",
+      "sourceSha256": "58e4472203aad692126ec11a55dda1b9e6e92efaffdc5971213d02238c01cc79",
+      "rawSha256": "36fda932f85021ca4e21ac06cf934a6ea70dd50d902f6a2a67467802e824473b",
+      "contiguousCrop": [
+        18597.38,
+        18598.11
+      ],
+      "excerptCrop": [
+        0.92,
+        1.65
+      ],
+      "sourceKey": "live-1785",
+      "processing": "Continuous crop, HP70/LP10500, loudnorm I=-18 TP=-3 LRA9, 8ms fades, mono24kHz64kbpsMP3; no pitch, timing or voice conversion",
+      "backgroundSeparation": "UVR HP2_all_vocals (background separation only)",
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "initialPrompt": null,
+        "transcript": "成功了",
+        "expected": "成功了！",
+        "similarity": 1.0,
+        "expectedPinyin": [
+          "cheng",
+          "gong",
+          "le"
+        ],
+        "transcriptPinyin": [
+          "cheng",
+          "gong",
+          "le"
+        ],
+        "phoneticSimilarity": 1.0,
+        "sha256": "54c15a1d5e0f1a81e0a9178a2363c3b154ab4105e816f1cd5bbc63070719831f"
+      },
+      "sourceUrl": "https://live.bilibili.com/31368705",
+      "date": "2026_10_02",
+      "title": "「金偶像谜案」初见",
+      "sourceSubtitle": "D:\\files\\videos\\DDTV录播\\31368705_米汀Nagisa\\2026_10_02\\录制-31368705-20261002-150656-623-「金偶像谜案」初见.srt",
+      "subtitleId": "3954",
+      "subtitleText": "对的哦成功了",
+      "previousCaption": [
+        "就是沃尔特吉恩"
+      ],
+      "nextCaption": [
+        "在一次行动中沃沃尔特基恩被俘"
+      ],
+      "identityEvidence": "Local recording of Nagisa room 31368705; solo morning talk or solo silent-text puzzle-game session. Attribution is from recording context, not ASR or biometric verification."
+    },
+    "nagisa-defeat-1": {
+      "src": "/games/beach-volley/audio-v6/nagisa-defeat-1.mp3",
+      "bytes": 11948,
+      "duration": 1.4,
+      "text": "不太可能吧？",
+      "actor": "nagisa",
+      "scene": "defeat",
+      "conversion": "authentic-recording",
+      "sha256": "ee5738c6b8df87605c6f3c13ea791a72a478634f8614c205d1c27bf6a097464c",
+      "samples": 33600,
+      "rmsDb": -19.46,
+      "peak": 0.499086,
+      "sourceKind": "authentic-button",
+      "sourcePath": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-nagisa-recording\\sources\\button-28.wav",
+      "sourceSha256": "61fff30e19e99a6f79349aa6c78184a37d5ffe673c37eb0d6c0e9578cd846e4a",
+      "rawSha256": "61fff30e19e99a6f79349aa6c78184a37d5ffe673c37eb0d6c0e9578cd846e4a",
+      "contiguousCrop": [
+        0,
+        1.4
+      ],
+      "excerptCrop": [
+        0,
+        1.4
+      ],
+      "sourceKey": "button-28",
+      "processing": "Continuous crop, HP70/LP10500, loudnorm I=-18 TP=-3 LRA9, 8ms fades, mono24kHz64kbpsMP3; no pitch, timing or voice conversion",
+      "backgroundSeparation": null,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "initialPrompt": null,
+        "transcript": "不大可能吧",
+        "expected": "不太可能吧？",
+        "similarity": 0.8,
+        "expectedPinyin": [
+          "bu",
+          "tai",
+          "ke",
+          "neng",
+          "ba"
+        ],
+        "transcriptPinyin": [
+          "bu",
+          "da",
+          "ke",
+          "neng",
+          "ba"
+        ],
+        "phoneticSimilarity": 0.8,
+        "sha256": "ee5738c6b8df87605c6f3c13ea791a72a478634f8614c205d1c27bf6a097464c"
+      },
+      "sourceUrl": "https://www.nagisa.live/assets/audios/butaikennegba_90b4ccc6.wav",
+      "catalogUrl": "https://www.nagisa.live/SecWeb/expression/expression_base.php",
+      "label": "不太可能吧",
+      "upstreamProcessingNotice": "Source site discloses small modifications and occasional distortion; original broadcast timing is not supplied.",
+      "identityEvidence": "Attribution comes from the Nagisa fan-site voice catalog and its linked official Bilibili account. ASR checks speech content, not speaker identity.",
+      "license": "No explicit audio license found on the catalog page; do not infer a license from the site code."
+    },
+    "nagisa-defeat-2": {
+      "src": "/games/beach-volley/audio-v6/nagisa-defeat-2.mp3",
+      "bytes": 10220,
+      "duration": 1.2,
+      "text": "至于吗？",
+      "actor": "nagisa",
+      "scene": "defeat",
+      "conversion": "authentic-recording",
+      "sha256": "a743fb6014ae4376c81d899af45fa75f69b453fb3912204be13538e7a5f4a749",
+      "samples": 28800,
+      "rmsDb": -20.481,
+      "peak": 0.549568,
+      "sourceKind": "authentic-button",
+      "sourcePath": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-nagisa-recording\\sources\\button-27.wav",
+      "sourceSha256": "7a51a4a3af64b2ff16c2287209c38d7f7add63ca03cbafb5b3191d5a85d8a050",
+      "rawSha256": "7a51a4a3af64b2ff16c2287209c38d7f7add63ca03cbafb5b3191d5a85d8a050",
+      "contiguousCrop": [
+        0,
+        1.2
+      ],
+      "excerptCrop": [
+        0,
+        1.2
+      ],
+      "sourceKey": "button-27",
+      "processing": "Continuous crop, HP70/LP10500, loudnorm I=-18 TP=-3 LRA9, 8ms fades, mono24kHz64kbpsMP3; no pitch, timing or voice conversion",
+      "backgroundSeparation": null,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "initialPrompt": null,
+        "transcript": "至于吗",
+        "expected": "至于吗？",
+        "similarity": 1.0,
+        "expectedPinyin": [
+          "zhi",
+          "yu",
+          "ma"
+        ],
+        "transcriptPinyin": [
+          "zhi",
+          "yu",
+          "ma"
+        ],
+        "phoneticSimilarity": 1.0,
+        "sha256": "a743fb6014ae4376c81d899af45fa75f69b453fb3912204be13538e7a5f4a749"
+      },
+      "sourceUrl": "https://www.nagisa.live/assets/audios/zhiyuma_5681cfd8.wav",
+      "catalogUrl": "https://www.nagisa.live/SecWeb/expression/expression_base.php",
+      "label": "至于吗",
+      "upstreamProcessingNotice": "Source site discloses small modifications and occasional distortion; original broadcast timing is not supplied.",
+      "identityEvidence": "Attribution comes from the Nagisa fan-site voice catalog and its linked official Bilibili account. ASR checks speech content, not speaker identity.",
+      "license": "No explicit audio license found on the catalog page; do not infer a license from the site code."
+    },
+    "nagisa-effort-1": {
+      "src": "/games/beach-volley/audio-v6/nagisa-effort-1.mp3",
+      "bytes": 4460,
+      "duration": 0.48,
+      "text": "哼！",
+      "actor": "nagisa",
+      "scene": "effort",
+      "conversion": "authentic-recording",
+      "sha256": "c30fc64187f0d779cedf8f93d96afe06f7e80c2ace30694b58cb0f25786a643d",
+      "samples": 11520,
+      "rmsDb": -18.564,
+      "peak": 0.640635,
+      "sourceKind": "authentic-button",
+      "sourcePath": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-nagisa-recording\\sources\\button-39.wav",
+      "sourceSha256": "e91f505a2b6e0d59d2b869bdc2f2db14a4b2f9e9c76cbb16e52be6c09e483630",
+      "rawSha256": "e91f505a2b6e0d59d2b869bdc2f2db14a4b2f9e9c76cbb16e52be6c09e483630",
+      "contiguousCrop": [
+        0,
+        0.48
+      ],
+      "excerptCrop": [
+        0,
+        0.48
+      ],
+      "sourceKey": "button-39",
+      "processing": "Continuous crop, HP70/LP10500, loudnorm I=-18 TP=-3 LRA9, 8ms fades, mono24kHz64kbpsMP3; no pitch, timing or voice conversion",
+      "backgroundSeparation": null,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "initialPrompt": null,
+        "transcript": "哼",
+        "expected": "哼！",
+        "similarity": 1.0,
+        "expectedPinyin": [
+          "heng"
+        ],
+        "transcriptPinyin": [
+          "heng"
+        ],
+        "phoneticSimilarity": 1.0,
+        "sha256": "c30fc64187f0d779cedf8f93d96afe06f7e80c2ace30694b58cb0f25786a643d"
+      },
+      "sourceUrl": "https://www.nagisa.live/assets/audios/suannishixiang_b5a8e873.wav",
+      "catalogUrl": "https://www.nagisa.live/SecWeb/expression/expression_base.php",
+      "label": "哼算你识相",
+      "upstreamProcessingNotice": "Source site discloses small modifications and occasional distortion; original broadcast timing is not supplied.",
+      "identityEvidence": "Attribution comes from the Nagisa fan-site voice catalog and its linked official Bilibili account. ASR checks speech content, not speaker identity.",
+      "license": "No explicit audio license found on the catalog page; do not infer a license from the site code."
+    },
+    "nagisa-effort-2": {
+      "src": "/games/beach-volley/audio-v6/nagisa-effort-2.mp3",
+      "bytes": 3308,
+      "duration": 0.33,
+      "text": "呀！",
+      "actor": "nagisa",
+      "scene": "effort",
+      "conversion": "authentic-recording",
+      "sha256": "8ff662e76411541c3f0f69f64e1551e9d27f79d8cc59dccc9334c40e5e0a6d23",
+      "samples": 7920,
+      "rmsDb": -15.454,
+      "peak": 0.944241,
+      "sourceKind": "authentic-livestream",
+      "sourcePath": "D:\\files\\videos\\DDTV录播\\31368705_米汀Nagisa\\2026_09_07\\录制-31368705-20260907-081045-114-早安一会儿_merged.opus",
+      "sourceSha256": "02137aeb6507e9fd8d150fa4684404fae220c05bd5a98c71eb474ed62ac511bf",
+      "rawSha256": "35b2497d85ef03e87b4b9dc8eb86e2aab76cb55dcff3e9cadf65a6db9935edbf",
+      "contiguousCrop": [
+        7316.739,
+        7317.069
+      ],
+      "excerptCrop": [
+        0.3,
+        0.63
+      ],
+      "sourceKey": "live-3664",
+      "processing": "Continuous crop, HP70/LP10500, loudnorm I=-18 TP=-3 LRA9, 8ms fades, mono24kHz64kbpsMP3; no pitch, timing or voice conversion",
+      "backgroundSeparation": "UVR HP2_all_vocals (background separation only)",
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "initialPrompt": null,
+        "transcript": "啊",
+        "expected": "呀！",
+        "similarity": 0.0,
+        "expectedPinyin": [
+          "ya"
+        ],
+        "transcriptPinyin": [
+          "a"
+        ],
+        "phoneticSimilarity": 0.0,
+        "sha256": "8ff662e76411541c3f0f69f64e1551e9d27f79d8cc59dccc9334c40e5e0a6d23"
+      },
+      "sourceUrl": "https://live.bilibili.com/31368705",
+      "date": "2026_09_07",
+      "title": "早安一会儿_merged",
+      "sourceSubtitle": "D:\\files\\videos\\DDTV录播\\31368705_米汀Nagisa\\2026_09_07\\录制-31368705-20260907-081045-114-早安一会儿_merged.srt",
+      "subtitleId": "1863",
+      "subtitleText": "哎呀",
+      "previousCaption": [
+        "感觉米米对有效知识比较感兴趣"
+      ],
+      "nextCaption": [
+        "米星恰好就是对无效知识还挺感兴趣的"
+      ],
+      "identityEvidence": "Local recording of Nagisa room 31368705; solo morning talk or solo silent-text puzzle-game session. Attribution is from recording context, not ASR or biometric verification."
+    }
+  },
+  "retiredRvc": [
+    {
+      "src": "/games/beach-volley/audio-v2/nagisa-intro-1.mp3",
+      "bytes": 31917,
+      "duration": 3.9,
+      "text": "场地确认完毕。让我看看，你的球路。",
+      "sha256": "cadbcb30031641316dfd6d831344f18bda05b29ea1f59a61960f350175fa1037",
+      "status": "retired-from-active-external-pool"
+    },
+    {
+      "src": "/games/beach-volley/audio-v2/nagisa-intro-2.mp3",
+      "bytes": 30957,
+      "duration": 3.78,
+      "text": "新的球路，新的答案。准备好。",
+      "sha256": "259c02bcf098dd9a496807f2f053fe992e76fbf7b25a11031d2378ea4e952f00",
+      "status": "retired-from-active-external-pool"
+    },
+    {
+      "src": "/games/beach-volley/audio-v2/nagisa-special-1.mp3",
+      "bytes": 16557,
+      "duration": 1.98,
+      "text": "找到破绽了。看这道星光！",
+      "sha256": "85e8dfce5fb22d543c6e580b091f9f441bea73c29658dc8e5eddfafc370355fd",
+      "status": "retired-from-active-external-pool"
+    },
+    {
+      "src": "/games/beach-volley/audio-v2/nagisa-special-2.mp3",
+      "bytes": 30957,
+      "duration": 3.78,
+      "text": "新的球路，新的答案。准备好。",
+      "sha256": "259c02bcf098dd9a496807f2f053fe992e76fbf7b25a11031d2378ea4e952f00",
+      "status": "retired-from-active-external-pool"
+    },
+    {
+      "src": "/games/beach-volley/audio-v2/nagisa-pointWin-1.mp3",
+      "bytes": 15405,
+      "duration": 1.84,
+      "text": "这一分，拿下了。",
+      "sha256": "41fa9da197a5d9484f42e26c15eed84db2d71247998ddadf951cce6baf2c2ce5",
+      "status": "retired-from-active-external-pool"
+    },
+    {
+      "src": "/games/beach-volley/audio-v2/nagisa-pointWin-2.mp3",
+      "bytes": 18093,
+      "duration": 2.18,
+      "text": "看见了，这个空隙。",
+      "sha256": "cae592273423e93a9d829c229c8622e8845e60ecde0c352009043c62d1faad9e",
+      "status": "retired-from-active-external-pool"
+    },
+    {
+      "src": "/games/beach-volley/audio-v2/nagisa-pointLose-1.mp3",
+      "bytes": 28077,
+      "duration": 3.42,
+      "text": "记住了。下一球，我会改变路线。",
+      "sha256": "88d9c8b386054079685b1eb2d624966c49fedc9fb81b9355f26696a71295124f",
+      "status": "retired-from-active-external-pool"
+    },
+    {
+      "src": "/games/beach-volley/audio-v2/nagisa-pointLose-2.mp3",
+      "bytes": 21549,
+      "duration": 2.6,
+      "text": "原来如此，再试一次。",
+      "sha256": "b589bad37fd3bc3f2a2a451daf7accd1491f3daec67bd797c54a4b8d5b95f85b",
+      "status": "retired-from-active-external-pool"
+    },
+    {
+      "src": "/games/beach-volley/audio-v2/nagisa-victory-1.mp3",
+      "bytes": 31917,
+      "duration": 3.9,
+      "text": "胜负已定。和你交手，很有意思。",
+      "sha256": "f2005a55abaa1ea7b94a791c96ce35b8e63a551edc5f754f6d0ba16b0cd579ca",
+      "status": "retired-from-active-external-pool"
+    },
+    {
+      "src": "/games/beach-volley/audio-v2/nagisa-victory-2.mp3",
+      "bytes": 34029,
+      "duration": 4.16,
+      "text": "这就是，我找到的答案。谢谢你。",
+      "sha256": "397150989e33e05b4adba4f68b6686565192121c3f98f2e2ceb40afb9c18618c",
+      "status": "retired-from-active-external-pool"
+    },
+    {
+      "src": "/games/beach-volley/audio-v2/nagisa-defeat-1.mp3",
+      "bytes": 41901,
+      "duration": 5.16,
+      "text": "这次是你赢了。下次，我会找到新的答案。",
+      "sha256": "ab1ee9ab7c8900f9914c11ebcd24f955094b49c549353da6cdb56c958e37e967",
+      "status": "retired-from-active-external-pool"
+    },
+    {
+      "src": "/games/beach-volley/audio-v2/nagisa-defeat-2.mp3",
+      "bytes": 35181,
+      "duration": 4.3,
+      "text": "还有新的可能。下次，我会更强。",
+      "sha256": "4186920e3e514f4de657e0b709fb2a04754fd9d8fb24dee878b103814c45fe90",
+      "status": "retired-from-active-external-pool"
+    },
+    {
+      "src": "/games/beach-volley/audio-v2/nagisa-effort-he.mp3",
+      "bytes": 5421,
+      "duration": 0.6,
+      "text": "喝！",
+      "sha256": "5645d934c44f2a9adadc28b67a27c48d8b7b220d53df272f228850f6181bb75c",
+      "status": "retired-from-active-external-pool"
+    },
+    {
+      "src": "/games/beach-volley/audio-v2/nagisa-effort-ha.mp3",
+      "bytes": 4269,
+      "duration": 0.45,
+      "text": "哈！",
+      "sha256": "cf0c82c6d9da36b95dbb2badcb6045819caf4bf7428a383c6297ded9ab59d948",
+      "status": "retired-from-active-external-pool"
+    }
+  ],
+  "retainedMediaManifestSha256": "12f8d413472003c2ef49ab033811647a7ec57bbbf127146a6b36b1c5b5b929af",
+  "retainedNagisaVideos": [
+    {
+      "src": "/games/beach-volley/intro-nagisa-v3.mp4",
+      "sha256": "e49aca1816299396d801bb1957fa7c79e42d5b1aeb703bd9b8dcc820991a2765",
+      "bytes": 2179475
+    },
+    {
+      "src": "/games/beach-volley/lite-v4/intro-nagisa-v3.mp4",
+      "sha256": "525cd9e2cc277294b1b3442d80c789231fa9b2513d9ee32e9c58edfaaf761b89",
+      "bytes": 295925
+    },
+    {
+      "src": "/games/beach-volley/rally-v7/nagisa-special-1.mp4",
+      "sha256": "fc92738698920f837face71d1910cafc3264ad5031b2e10978d1d679dadd4207",
+      "bytes": 819067
+    },
+    {
+      "src": "/games/beach-volley/lite-v7/nagisa-special-1.mp4",
+      "sha256": "be01a0253abe96ae8fdc7d4d1dce18fc52b0e4d1c064e9b999cb276039ba47d6",
+      "bytes": 139298
+    },
+    {
+      "src": "/games/beach-volley/rally-v7/nagisa-special-2.mp4",
+      "sha256": "e3a85533aa19f8c25e9662cafdc71536df5545894cae7748de5e2066452d120a",
+      "bytes": 1004817
+    },
+    {
+      "src": "/games/beach-volley/lite-v7/nagisa-special-2.mp4",
+      "sha256": "c03dd39d536329e78e27bf938ff785d337873a8d8a5a0b79fa31d6c501cddc14",
+      "bytes": 168222
+    },
+    {
+      "src": "/games/beach-volley/point-nagisa-win-v3.mp4",
+      "sha256": "aaea95b1c774c7de7f18050935384b83928e62f10d9343586fd71e765ece0b9d",
+      "bytes": 1426262
+    },
+    {
+      "src": "/games/beach-volley/lite-v4/point-nagisa-win-v3.mp4",
+      "sha256": "138be39043b06c8ef2b29a882fdc5fe3efa0596b7ed1caff4f3d643b0ec782b8",
+      "bytes": 202032
+    },
+    {
+      "src": "/games/beach-volley/variety-v5/video-nagisa-pointWin-2.mp4",
+      "sha256": "7437ac5763f607a87ec678d5e40f7d300b555c4b932e89ac91faf755f5506f11",
+      "bytes": 895903
+    },
+    {
+      "src": "/games/beach-volley/lite-v5/video-nagisa-pointWin-2.mp4",
+      "sha256": "b9faa29b8eb8f60051a7c4c0872f23985c337a4c40c219338d6b0cbcf59d57d4",
+      "bytes": 207009
+    },
+    {
+      "src": "/games/beach-volley/point-nagisa-lose-v3.mp4",
+      "sha256": "27f12816d818225b4fd52a42e18f00166a0aae248c943abbb0c789244b827ace",
+      "bytes": 1442099
+    },
+    {
+      "src": "/games/beach-volley/lite-v4/point-nagisa-lose-v3.mp4",
+      "sha256": "d3a96df1b3e72eed7a74428f817646cb6fd1111192f16e9cefc92b376786c801",
+      "bytes": 192499
+    },
+    {
+      "src": "/games/beach-volley/variety-v5/video-nagisa-pointLose-2.mp4",
+      "sha256": "fa12f1b0641bece5eabfbb77014d3047c3ab00204d79420453970d11791ee790",
+      "bytes": 869427
+    },
+    {
+      "src": "/games/beach-volley/lite-v5/video-nagisa-pointLose-2.mp4",
+      "sha256": "2ab251aae51cd12cdb6b0e51302aad07349352f6fd228380b498131ee4555f74",
+      "bytes": 195538
+    },
+    {
+      "src": "/games/beach-volley/result-nagisa-win-v3.mp4",
+      "sha256": "538a729742af72d39c2684067f5614cc3314443dd38579914687fc8671ff65ea",
+      "bytes": 3603158
+    },
+    {
+      "src": "/games/beach-volley/lite-v4/result-nagisa-win-v3.mp4",
+      "sha256": "032fdf3eea1dca103c7580f1359c93ffeef0e8d03f81171b492bcd52154759f7",
+      "bytes": 502763
+    },
+    {
+      "src": "/games/beach-volley/variety-v5/video-nagisa-victory-2.mp4",
+      "sha256": "3ff711cffc94114459f459e0ad87d8eba26fa605e02ca5854575ef56e1df9a55",
+      "bytes": 1300202
+    },
+    {
+      "src": "/games/beach-volley/lite-v5/video-nagisa-victory-2.mp4",
+      "sha256": "d5e012b47a4d394f3904d99164c537873ec063ddae54697b0445bad1e73b1122",
+      "bytes": 288680
+    },
+    {
+      "src": "/games/beach-volley/result-nagisa-lose-v3.mp4",
+      "sha256": "9efba13a19dd89e85e6b5c6c251981cf7b34865febe2fbde11ce0026478cef2b",
+      "bytes": 2615157
+    },
+    {
+      "src": "/games/beach-volley/lite-v4/result-nagisa-lose-v3.mp4",
+      "sha256": "b9ab5fba4461f66dbedde3e11896e6dfeaa7616f2d1342339e4935f787923db3",
+      "bytes": 361002
+    },
+    {
+      "src": "/games/beach-volley/variety-v5/video-nagisa-defeat-2.mp4",
+      "sha256": "66ed5ecfea91261e365a5f85f708fdbbc1dc7c95b53c5b3dcc425c38a60c3f33",
+      "bytes": 1096906
+    },
+    {
+      "src": "/games/beach-volley/lite-v5/video-nagisa-defeat-2.mp4",
+      "sha256": "caded73ce67b5bd59f275df2aab188c34fffd82af2a9f022200a6da17adeff48",
+      "bytes": 260325
+    }
+  ],
+  "byteTotal": 189160
+}

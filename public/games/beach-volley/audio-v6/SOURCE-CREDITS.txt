@@ -1,0 +1,13 @@
+米汀 Nagisa 录音语音
+
+Fan voice-button catalog: https://www.nagisa.live/SecWeb/expression/expression_base.php
+Official performer account: https://space.bilibili.com/2124647716
+Livestream room: https://live.bilibili.com/31368705
+
+Catalog warning: 请注意音量大小，部分语音会有少量修改。以及由于技术原因，部分语音出现失真，感谢谅解。
+No explicit audio license was found on the source catalog. No license for the audio is inferred from the fan-site code.
+
+Other voices are continuous excerpts from locally retained solo broadcasts.
+No RVC, pitch shift, time stretch, or synthesized speech is used in these MP3 files.
+Individual source URLs, dates, timestamps, hashes, processing and ASR evidence:
+docs/beach-volley-nagisa-recording-delivery.json
