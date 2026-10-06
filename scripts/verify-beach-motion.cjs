@@ -92,7 +92,7 @@ async function voices(browser) {
   await rig(p, true); await expectVoice(p, '/games/beach-volley/audio-v4/shiori-pointWin-2.mp3');
   await capture(p, 'shiori-button-point-win'); await waitAudioDone(p);
   for (let i = 0; i < 2; i++) { await rig(p, true, true); await waitAudioDone(p); }
-  await expectVoice(p, '/games/beach-volley/audio-v4/shiori-victory-1.mp3');
+  await expectVoice(p, '/games/beach-volley/audio-v5/shiori-victory-1.mp3');
   await capture(p, 'shiori-button-match-win');
   const starts = await p.evaluate(() => window.audioProbe().starts);
   assert.ok(starts.every(s => !/audio-v3\/shiori-(pointWin-2|victory-1|effort-2)\.mp3$/.test(s.src || '')));

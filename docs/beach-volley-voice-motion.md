@@ -16,7 +16,17 @@
 
 三个 URL 改用 `audio-v4`，避免浏览器缓存旧声。使用高通 70 Hz、低通 10.5 kHz、-18 LUFS 目标响度、-3 dBTP 上限及 8 ms 边缘淡入淡出，24 kHz 单声道／64 kbps MP3；去掉上游较大的 XMP 元数据，不改音高、语速或音色。原「呀」和其他既有语音保留。
 
-小分胜利有声视频原本也嵌入「耶耶耶」，因此另行换轨到 `dubbed-v8/shiori-pointWin-button.mp4` 和 `lite-v8/shiori-pointWin-button.mp4`。标准版直接复制原图像流，轻量版 640 px／24 fps，均保留 faststart。整场有声视频本来使用另一段未被否定的「好耶」，继续沿用。旧三个 MP3 和旧视频保留为历史资源，活跃清单和选择池均排除。
+小分胜利有声视频原本也嵌入「耶耶耶」，因此另行换轨到 `dubbed-v8/shiori-pointWin-button.mp4` 和 `lite-v8/shiori-pointWin-button.mp4`。标准版直接复制原图像流，轻量版 640 px／24 fps，均保留 faststart。此前这里写的「整场有声视频使用未被否定的好耶」不准确：它实际仍嵌入被否定的 `audio-v3/shiori-victory-1.mp3`，上次仅替换外部胜利池，漏换了整场视频；10 月 6 日按用户反馈纠正，见下文。旧三个 MP3 和旧视频作为历史资源保留。
+
+## 整场胜利漏换修复（2026-10-06）
+
+新回归在修复前明确失败于 `dubbed-v6/shiori-victory-recording.mp4`：该片的换轨记录仍指向被否定的九月多人笑声，运行时嵌入对白又会抑制外部胜利语音，所以仅换 MP3 池无法替换用户听到的视频音轨。
+
+整场胜利两段外部录音均改用同一海獭按钮固定版本中的明确台词：`我是天才01.mp3` 的 1.0–2.7 秒「我是天才！」，及 `我是天才06.mp3` 的 0–1.18 秒「我都说我是天才了！」。排除前后笑声，保留原音高／语速。第二段最终 ASR 将末字「了」识别成「的」，原样记录；ASR 只用于核对内容，身份依据仍是上游粉丝目录的归属。先前外部含笑版本作为 retired 历史保留；原「好耶」仅有 0.66 的说话人标签，亦保守排除，不再宣称身份已确认。
+
+音频清单 v5 选择新的 `audio-v5/shiori-victory-{1,2}.mp3`；媒体清单 v9 选择 `dubbed-v9/shiori-victory-button.mp4`／`lite-v9/shiori-victory-button.mp4`，嵌入第一句「我是天才！」。清晰版的图像流与原片哈希相同，轻量版为 640 px／24 fps，复制同一 AAC 音轨避免二次语音压缩，均 faststart。两版音轨实解码与新 MP3 的相关性均 0.995101，实际 ASR 为「我是天才」，没有旧笑声或欢呼。新 URL 避免复用旧资源缓存；原料、GPL v3 许可证与来源说明保存在 `audio-v5`。
+
+新增回归检查所有可选栞栞嵌入对白的 `voiceSrc`，同时排除全部 rejected／retired 外部音源，覆盖此前遗漏的整场片。修复后 74 项晴海回归通过；浏览器与最终门禁记录见本轮 `progress.md`。
 
 GPL v3 的来源说明、原许可证和两个未修改 MP3 原料都放在 `public/games/beach-volley/audio-v4/`。来源 URL、版本、完整 SHA256、截取范围、最终解码响度／峰值／ASR 以及旧项的 rejected 状态见 [录音记录](beach-volley-recording-delivery.json) 和 [换轨记录](beach-volley-dubbing-delivery.json)。没有把历史来源替换成新来源后冒充先前已验证。
 

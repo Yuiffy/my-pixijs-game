@@ -747,79 +747,79 @@
       }
     },
     "shiori-victory-1": {
-      "src": "/games/beach-volley/audio-v4/shiori-victory-1.mp3",
-      "bytes": 23468,
-      "duration": 2.8523,
-      "text": "哈哈哈哈，我是天才！",
+      "src": "/games/beach-volley/audio-v5/shiori-victory-1.mp3",
+      "bytes": 14252,
+      "duration": 1.7,
+      "text": "我是天才！",
       "actor": "shiori",
       "scene": "victory",
       "conversion": "authentic-recording",
-      "sha256": "960da6fe892b3ff54b79386f9cdfb28e8bc2192ce7d1b4981b5a4dc602351c54",
-      "samples": 68456,
-      "rmsDb": -20.16,
-      "peak": 0.3128,
+      "sha256": "550d78b76bbbfc30ae79518fb130e01c38d92f4f19efb753f9a5211a3478323f",
+      "samples": 40800,
+      "rmsDb": -20.21,
+      "peak": 0.3825,
       "peakSafetyGain": 1,
       "sourceKind": "authentic-button",
-      "sourcePath": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-voice-motion\\button-5.mp3",
-      "sourceUrl": "https://raw.githubusercontent.com/forsakenrei/shiori-button/761b50adca9dfa7d611c448d278a4df61f2b42ff/public/audio/%E7%8D%AD%E7%AC%91%E6%88%91%E6%98%AF%E5%A4%A9%E6%89%8D.mp3",
-      "sourceSha256": "59a243db050da09f663b02096ad08f31c97bbb08ebe2c4b7e178ce515f5017dd",
-      "rawSha256": "59a243db050da09f663b02096ad08f31c97bbb08ebe2c4b7e178ce515f5017dd",
+      "sourcePath": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-victory-fix\\我是天才01.mp3",
+      "sourceUrl": "https://raw.githubusercontent.com/forsakenrei/shiori-button/761b50adca9dfa7d611c448d278a4df61f2b42ff/public/audio/%E6%88%91%E6%98%AF%E5%A4%A9%E6%89%8D01.mp3",
+      "sourceSha256": "110a6ec521f261b68bdadf7d0036e985971b2d6ef5b0a983b0125252f6b72fec",
+      "rawSha256": "110a6ec521f261b68bdadf7d0036e985971b2d6ef5b0a983b0125252f6b72fec",
       "contiguousCrop": [
-        0,
-        2.95
+        1.0,
+        2.7
       ],
-      "label": "哈哈哈哈我是天才——",
-      "category": "老馋獭笑",
+      "label": "我不是笨蛋，我是天才",
+      "category": "短句",
       "repository": "https://github.com/forsakenrei/shiori-button",
       "repositoryRevision": "761b50adca9dfa7d611c448d278a4df61f2b42ff",
-      "identityEvidence": "Fan-maintained Shiori-only button catalog and README link to Shiori official Bilibili account. Attribution is from the upstream project, not inferred from automatic diarization or ASR.",
-      "contentEvidence": "Catalog label and final decoded speech ASR; short ha matches the independent ha button. ASR verifies content, not speaker.",
+      "identityEvidence": "Attribution comes from the upstream project Shiori button catalog, associated with her official Bilibili account. ASR does not authenticate the speaker.",
+      "contentEvidence": "Final encoded speech ASR verifies the selected spoken words; preceding/following laughter is outside the contiguous crop.",
       "processing": "Contiguous crop, HP70/LP10500, loudnorm I=-18 TP=-3 LRA7, 8ms fades, mono24kHz64kbpsMP3; no pitch/time/voice conversion",
       "license": "GPL-3.0-only (upstream repository)",
       "asr": {
         "model": "faster-whisper-large-v3-turbo",
-        "transcript": "啊哈哈哈哈哈哈我是天台",
-        "expected": "哈哈哈哈，我是天才！",
-        "similarity": 0.875,
-        "sha256": "960da6fe892b3ff54b79386f9cdfb28e8bc2192ce7d1b4981b5a4dc602351c54"
+        "transcript": "我是天才",
+        "expected": "我是天才！",
+        "similarity": 1.0,
+        "sha256": "550d78b76bbbfc30ae79518fb130e01c38d92f4f19efb753f9a5211a3478323f"
       }
     },
     "shiori-victory-2": {
-      "src": "/games/beach-volley/audio-v3/shiori-victory-2.mp3",
-      "bytes": 5228,
-      "duration": 0.56,
-      "text": "好耶！",
+      "src": "/games/beach-volley/audio-v5/shiori-victory-2.mp3",
+      "bytes": 10220,
+      "duration": 1.18,
+      "text": "我都说我是天才了！",
       "actor": "shiori",
       "scene": "victory",
       "conversion": "authentic-recording",
-      "sha256": "7a6f68c231b9258631a6b8447ec8871c7084e44a265972691a9257cdb1510d45",
-      "samples": 13440,
-      "rmsDb": -17.92,
-      "peak": 0.6795,
-      "sourcePath": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_09_26\\录制-26966466-20260926-221101-725-小栞冲击10w粉！.opus",
-      "sourceKind": "authentic-livestream",
-      "sourceSha256": "7008ba1e500d86f4ced089c91e8a1ef26a27f818ef373fc80cf031df9a0591c1",
-      "rawSha256": "74008e96b3af06602cdc99e4475f911443bd7e8f64fbf9ee7423161b9e68f236",
-      "cleanSha256": "6783d53b5bb83c96326c89170e6caa7b0620ce873b9d7e93a5b3b4d5501779bf",
-      "contiguousCrop": [
-        0.16,
-        0.72
-      ],
-      "label": "好耶",
-      "subtitle": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_09_26\\录制-26966466-20260926-221101-725-小栞冲击10w粉！.speaker.srt",
-      "subtitleId": "1998",
-      "speakerConfidence": 0.66,
-      "recordingRange": [
-        7038.46,
-        7039.02
-      ],
+      "sha256": "f7ff643fa14684c0caf55fcf3eef903ca31609c55c3caa96927f67333f87df12",
+      "samples": 28320,
+      "rmsDb": -19.66,
+      "peak": 0.5711,
       "peakSafetyGain": 1,
+      "sourceKind": "authentic-button",
+      "sourcePath": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-victory-fix\\我是天才06.mp3",
+      "sourceUrl": "https://raw.githubusercontent.com/forsakenrei/shiori-button/761b50adca9dfa7d611c448d278a4df61f2b42ff/public/audio/%E6%88%91%E6%98%AF%E5%A4%A9%E6%89%8D06.mp3",
+      "sourceSha256": "add9d42400f4dd6c9d50ca73914ef415094b83f63d42c741007bb756da50d96b",
+      "rawSha256": "add9d42400f4dd6c9d50ca73914ef415094b83f63d42c741007bb756da50d96b",
+      "contiguousCrop": [
+        0,
+        1.18
+      ],
+      "label": "我都说我是天才了",
+      "category": "短句",
+      "repository": "https://github.com/forsakenrei/shiori-button",
+      "repositoryRevision": "761b50adca9dfa7d611c448d278a4df61f2b42ff",
+      "identityEvidence": "Attribution comes from the upstream project Shiori button catalog, associated with her official Bilibili account. ASR does not authenticate the speaker.",
+      "contentEvidence": "Final encoded speech ASR verifies the selected spoken words; preceding/following laughter is outside the contiguous crop.",
+      "processing": "Contiguous crop, HP70/LP10500, loudnorm I=-18 TP=-3 LRA7, 8ms fades, mono24kHz64kbpsMP3; no pitch/time/voice conversion",
+      "license": "GPL-3.0-only (upstream repository)",
       "asr": {
         "model": "faster-whisper-large-v3-turbo",
-        "transcript": "好耶",
-        "expected": "好耶！",
-        "similarity": 1.0,
-        "sha256": "7a6f68c231b9258631a6b8447ec8871c7084e44a265972691a9257cdb1510d45"
+        "transcript": "我都说我是天才的",
+        "expected": "我都说我是天才了！",
+        "similarity": 0.875,
+        "sha256": "f7ff643fa14684c0caf55fcf3eef903ca31609c55c3caa96927f67333f87df12"
       }
     },
     "shiori-defeat-1": {
@@ -977,7 +977,7 @@
       }
     }
   },
-  "totalBytes": 314960,
+  "totalBytes": 310736,
   "validationNotes": {
     "identity": "Authentic local recording provenance; no independently measured speaker-similarity score.",
     "shortSounds": "ASR is unreliable on subsecond exclamations and effort sounds. Longer source excerpts were checked; short final transcript strings alone are not acceptance evidence.",
@@ -1109,7 +1109,88 @@
       "status": "rejected",
       "reason": "User rejected identity and/or delivery; cut from ambiguous mixed-speaker laughter, original speaker unconfirmed",
       "replacementSrc": "/games/beach-volley/audio-v4/shiori-effort-2.mp3"
+    },
+    "shiori-victory-1-button-laughter-v4": {
+      "src": "/games/beach-volley/audio-v4/shiori-victory-1.mp3",
+      "bytes": 23468,
+      "duration": 2.8523,
+      "text": "哈哈哈哈，我是天才！",
+      "actor": "shiori",
+      "scene": "victory",
+      "conversion": "authentic-recording",
+      "sha256": "960da6fe892b3ff54b79386f9cdfb28e8bc2192ce7d1b4981b5a4dc602351c54",
+      "samples": 68456,
+      "rmsDb": -20.16,
+      "peak": 0.3128,
+      "peakSafetyGain": 1,
+      "sourceKind": "authentic-button",
+      "sourcePath": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\beach-voice-motion\\button-5.mp3",
+      "sourceUrl": "https://raw.githubusercontent.com/forsakenrei/shiori-button/761b50adca9dfa7d611c448d278a4df61f2b42ff/public/audio/%E7%8D%AD%E7%AC%91%E6%88%91%E6%98%AF%E5%A4%A9%E6%89%8D.mp3",
+      "sourceSha256": "59a243db050da09f663b02096ad08f31c97bbb08ebe2c4b7e178ce515f5017dd",
+      "rawSha256": "59a243db050da09f663b02096ad08f31c97bbb08ebe2c4b7e178ce515f5017dd",
+      "contiguousCrop": [
+        0,
+        2.95
+      ],
+      "label": "哈哈哈哈我是天才——",
+      "category": "老馋獭笑",
+      "repository": "https://github.com/forsakenrei/shiori-button",
+      "repositoryRevision": "761b50adca9dfa7d611c448d278a4df61f2b42ff",
+      "identityEvidence": "Fan-maintained Shiori-only button catalog and README link to Shiori official Bilibili account. Attribution is from the upstream project, not inferred from automatic diarization or ASR.",
+      "contentEvidence": "Catalog label and final decoded speech ASR; short ha matches the independent ha button. ASR verifies content, not speaker.",
+      "processing": "Contiguous crop, HP70/LP10500, loudnorm I=-18 TP=-3 LRA7, 8ms fades, mono24kHz64kbpsMP3; no pitch/time/voice conversion",
+      "license": "GPL-3.0-only (upstream repository)",
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "啊哈哈哈哈哈哈我是天台",
+        "expected": "哈哈哈哈，我是天才！",
+        "similarity": 0.875,
+        "sha256": "960da6fe892b3ff54b79386f9cdfb28e8bc2192ce7d1b4981b5a4dc602351c54"
+      },
+      "status": "retired",
+      "reason": "Retired the external laugh-bearing variant along with the missed embedded legacy laugh; use speech-only victory lines."
+    },
+    "shiori-victory-2": {
+      "src": "/games/beach-volley/audio-v3/shiori-victory-2.mp3",
+      "bytes": 5228,
+      "duration": 0.56,
+      "text": "好耶！",
+      "actor": "shiori",
+      "scene": "victory",
+      "conversion": "authentic-recording",
+      "sha256": "7a6f68c231b9258631a6b8447ec8871c7084e44a265972691a9257cdb1510d45",
+      "samples": 13440,
+      "rmsDb": -17.92,
+      "peak": 0.6795,
+      "sourcePath": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_09_26\\录制-26966466-20260926-221101-725-小栞冲击10w粉！.opus",
+      "sourceKind": "authentic-livestream",
+      "sourceSha256": "7008ba1e500d86f4ced089c91e8a1ef26a27f818ef373fc80cf031df9a0591c1",
+      "rawSha256": "74008e96b3af06602cdc99e4475f911443bd7e8f64fbf9ee7423161b9e68f236",
+      "cleanSha256": "6783d53b5bb83c96326c89170e6caa7b0620ce873b9d7e93a5b3b4d5501779bf",
+      "contiguousCrop": [
+        0.16,
+        0.72
+      ],
+      "label": "好耶",
+      "subtitle": "D:\\files\\videos\\DDTV录播\\26966466_栞栞Shiori\\2026_09_26\\录制-26966466-20260926-221101-725-小栞冲击10w粉！.speaker.srt",
+      "subtitleId": "1998",
+      "speakerConfidence": 0.66,
+      "recordingRange": [
+        7038.46,
+        7039.02
+      ],
+      "peakSafetyGain": 1,
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "transcript": "好耶",
+        "expected": "好耶！",
+        "similarity": 1.0,
+        "sha256": "7a6f68c231b9258631a6b8447ec8871c7084e44a265972691a9257cdb1510d45"
+      },
+      "status": "rejected",
+      "reason": "A short cheer attributed only by diarization confidence 0.66; replaced conservatively after repeated user feedback about ambiguous cheers. Original speaker remains unconfirmed."
     }
   },
-  "correctionNote": "Three excerpts from the September 10 01:26:11–01:26:16 laughter sequence were rejected after user listening feedback. Earlier actual-audio and authenticated-speaker wording overstated verification; it is withdrawn for those clips. The original speaker remains unconfirmed."
+  "correctionNote": "Three excerpts from the September 10 01:26:11–01:26:16 laughter sequence were rejected after user listening feedback. Earlier actual-audio and authenticated-speaker wording overstated verification; it is withdrawn for those clips. The original speaker remains unconfirmed.",
+  "victoryCorrectionNote": "October 6: prior external-only victory fix missed the embedded v6 video, which still used rejected audio-v3/shiori-victory-1. Both victory pool voices now use spoken Shiori-button crops; the embedded winner video uses the first and has been replaced in standard and lite qualities. Prior September short cheer identity attribution is withdrawn."
 }

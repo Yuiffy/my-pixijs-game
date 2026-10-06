@@ -1,5 +1,5 @@
 {
-  "version": 8,
+  "version": 9,
   "characters": {
     "sui": {
       "intro": {
@@ -232,16 +232,16 @@
             }
           },
           {
-            "src": "/games/beach-volley/dubbed-v6/shiori-victory-recording.mp4",
+            "src": "/games/beach-volley/dubbed-v9/shiori-victory-button.mp4",
             "poster": "/games/beach-volley/special-shiori-v2.webp",
             "duration": 6.08,
             "lite": {
-              "src": "/games/beach-volley/lite-v6/shiori-victory-recording.mp4",
-              "bytes": 219803
+              "src": "/games/beach-volley/lite-v9/shiori-victory-button.mp4",
+              "bytes": 211211
             },
             "dialogue": {
               "source": "recording",
-              "text": "哈哈哈，耶～！"
+              "text": "我是天才！"
             }
           }
         ],

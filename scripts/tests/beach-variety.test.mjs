@@ -198,7 +198,7 @@ test('Sui and Shiori never select an unconverted synthesized soundtrack; Nagisa 
       if (clip.dialogue) assert.equal(clip.dialogue.source, 'recording');
     }
     for (const clip of [...Object.values(audio.voices[actor]).flat(), ...audio.effort[actor]]) {
-      assert.match(clip.src, /^\/games\/beach-volley\/audio-v[34]\//);
+      assert.match(clip.src, /^\/games\/beach-volley\/audio-v[345]\//);
     }
   }
   for (const clip of [...Object.values(audio.voices.nagisa).flat(), ...audio.effort.nagisa]) {
@@ -220,7 +220,7 @@ test('rejected Shiori laughter cannot return through external voices or embedded
     assert.equal(replacement.sourceKind, 'authentic-button');
     assert.equal(replacement.repository, 'https://github.com/forsakenrei/shiori-button');
     assert.match(replacement.repositoryRevision, /^[a-f0-9]{40}$/);
-    assert.match(replacement.src, /\/audio-v4\//);
+    assert.match(replacement.src, /\/audio-v[45]\//);
     assert.match(replacement.identityEvidence, /upstream project/);
     assert.equal(crypto.createHash('sha256').update(fs.readFileSync(`public${old.src}`)).digest('hex'), old.sha256, 'rejected history is retained');
   }
@@ -230,6 +230,23 @@ test('rejected Shiori laughter cannot return through external voices or embedded
   assert.notEqual(movie.src, dubbing.rejectedItems['shiori-pointWin'].src);
   assert.notEqual(movie.lite.src, dubbing.rejectedItems['shiori-pointWin'].lite.src);
   assert.ok(fs.readFileSync('public/games/beach-volley/audio-v4/SHIORI-BUTTON-LICENSE.txt', 'utf8').includes('GNU GENERAL PUBLIC LICENSE'));
+});
+
+test('every selectable Shiori soundtrack excludes all rejected recordings, including match victory', () => {
+  const recordings = JSON.parse(fs.readFileSync('docs/beach-volley-recording-delivery.json', 'utf8'));
+  const dubbing = JSON.parse(fs.readFileSync('docs/beach-volley-dubbing-delivery.json', 'utf8'));
+  const rally = JSON.parse(fs.readFileSync('docs/beach-volley-rally-delivery.json', 'utf8'));
+  const rejected = new Set(Object.values(recordings.rejectedItems).map(item => item.src));
+  const g = createGame({ character: 'shiori', opponent: 'sui', mode: 'local' });
+  for (const movie of matchMediaClips(g, media, 'all', false)) {
+    if (!movie.dialogue || !movie.src.includes('shiori')) continue;
+    const record = [...Object.values(dubbing.items), ...Object.values(rally.items)].find(item => item.src === movie.src);
+    assert.ok(record, movie.src);
+    assert.equal(rejected.has(record.voiceSrc), false, `Rejected recording remains embedded in ${movie.src}`);
+  }
+  for (const clip of [...Object.values(audio.voices.shiori).flat(), ...audio.effort.shiori]) {
+    assert.equal(rejected.has(clip.src), false, `Rejected external recording ${clip.src}`);
+  }
 });
 
 test('all actors ship compact four-frame transparent running strips with provenance', () => {

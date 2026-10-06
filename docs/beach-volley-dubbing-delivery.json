@@ -192,25 +192,46 @@
     "shiori-victory": {
       "actor": "shiori",
       "scene": "victory",
-      "src": "/games/beach-volley/dubbed-v6/shiori-victory-recording.mp4",
-      "bytes": 1084053,
-      "sha256": "9a63498cf0ec137a1bdbebd67c521a36664211f024d5a178b57191fbe39d8c81",
+      "src": "/games/beach-volley/dubbed-v9/shiori-victory-button.mp4",
+      "bytes": 1064587,
+      "sha256": "e7a2d1a81fef8137336902dbf12f8908679f7563fed93f0efd27d18f117e8661",
       "duration": 6.08,
-      "voiceSrc": "/games/beach-volley/audio-v3/shiori-victory-1.mp3",
-      "voiceSha256": "7902fc889e9516ddf934d38906bbd608204edbfc9f42df7252c03d66fa893c74",
+      "voiceSrc": "/games/beach-volley/audio-v5/shiori-victory-1.mp3",
+      "voiceSha256": "550d78b76bbbfc30ae79518fb130e01c38d92f4f19efb753f9a5211a3478323f",
       "voiceStart": 0.1,
-      "voiceEnd": 4.242999999999999,
+      "voiceEnd": 1.8,
       "originalSrc": "/games/beach-volley/variety-v5/video-shiori-victory-2.mp4",
       "originalSha256": "d8077e756043e18afe52fa4fb1e13fb8dbeec3dca01f847d558ece0f9a818866",
       "imageStreamCopied": true,
       "originalSoundtrackRemoved": true,
-      "rmsDb": -20.47,
-      "peak": 0.73,
+      "rmsDb": -25.79,
+      "peak": 0.3918,
       "lite": {
-        "src": "/games/beach-volley/lite-v6/shiori-victory-recording.mp4",
-        "bytes": 219803,
-        "sha256": "32d1fd634e30e01bc71fe47cfd73aa417a1ef596fd8934508bac619a1bb20697"
-      }
+        "src": "/games/beach-volley/lite-v9/shiori-victory-button.mp4",
+        "bytes": 211211,
+        "sha256": "fecb65349ded942691e10d20317b722fac140815c9509e232ab8233e29ace008"
+      },
+      "replacesSrc": "/games/beach-volley/dubbed-v6/shiori-victory-recording.mp4",
+      "sourceAttribution": "Speech-only Shiori fan-button crop; audio-v5/SOURCES.md",
+      "audioVerification": [
+        {
+          "file": "shiori-victory-button.mp4",
+          "path": "C:\\Users\\yuiffy\\.codex\\worktrees\\beach-rally-voices\\my-pixijs-game\\public\\games\\beach-volley\\dubbed-v9\\shiori-victory-button.mp4",
+          "sha256": "e7a2d1a81fef8137336902dbf12f8908679f7563fed93f0efd27d18f117e8661",
+          "audioSourceCorrelation": 0.995101,
+          "audioOffset": 0.0997,
+          "decodedTranscript": "我是天才"
+        },
+        {
+          "file": "shiori-victory-button.mp4",
+          "path": "C:\\Users\\yuiffy\\.codex\\worktrees\\beach-rally-voices\\my-pixijs-game\\public\\games\\beach-volley\\lite-v9\\shiori-victory-button.mp4",
+          "sha256": "fecb65349ded942691e10d20317b722fac140815c9509e232ab8233e29ace008",
+          "audioSourceCorrelation": 0.995101,
+          "audioOffset": 0.0997,
+          "decodedTranscript": "我是天才"
+        }
+      ],
+      "imageStreamSha256": "SHA256=7102586ec754c603117c2783f6f7558898639077be8edb595aebe1eed4dcb365"
     },
     "shiori-defeat": {
       "actor": "shiori",
@@ -267,6 +288,31 @@
       },
       "status": "rejected",
       "reason": "Embedded rejected Shiori pointWin-2 laughter"
+    },
+    "shiori-victory": {
+      "actor": "shiori",
+      "scene": "victory",
+      "src": "/games/beach-volley/dubbed-v6/shiori-victory-recording.mp4",
+      "bytes": 1084053,
+      "sha256": "9a63498cf0ec137a1bdbebd67c521a36664211f024d5a178b57191fbe39d8c81",
+      "duration": 6.08,
+      "voiceSrc": "/games/beach-volley/audio-v3/shiori-victory-1.mp3",
+      "voiceSha256": "7902fc889e9516ddf934d38906bbd608204edbfc9f42df7252c03d66fa893c74",
+      "voiceStart": 0.1,
+      "voiceEnd": 4.242999999999999,
+      "originalSrc": "/games/beach-volley/variety-v5/video-shiori-victory-2.mp4",
+      "originalSha256": "d8077e756043e18afe52fa4fb1e13fb8dbeec3dca01f847d558ece0f9a818866",
+      "imageStreamCopied": true,
+      "originalSoundtrackRemoved": true,
+      "rmsDb": -20.47,
+      "peak": 0.73,
+      "lite": {
+        "src": "/games/beach-volley/lite-v6/shiori-victory-recording.mp4",
+        "bytes": 219803,
+        "sha256": "32d1fd634e30e01bc71fe47cfd73aa417a1ef596fd8934508bac619a1bb20697"
+      },
+      "status": "rejected",
+      "reason": "Still embedded the September 10 mixed-speaker laughter audio-v3/shiori-victory-1, despite the October 5 external voice replacement."
     }
   }
 }
