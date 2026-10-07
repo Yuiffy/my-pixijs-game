@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Typography } from 'antd';
-import ReactMarkdown from 'react-markdown';
+import type { Components } from 'react-markdown';
 import { StarOutlined, ThunderboltOutlined, CoffeeOutlined } from '@ant-design/icons';
-
-const { Text } = Typography;
+import StreamRecapContent from './StreamRecapContent';
+import type { StreamRecap } from './streamRecap';
 
 export interface StreamData {
   id: string;
@@ -19,6 +18,7 @@ export interface StreamData {
   xml: string | null;
   cover: string | null;
   highlights: string | null; // Now can be a path or content
+  recap?: StreamRecap;
   images: string[];
   replayUrl?: string;
   duration?: number;
@@ -63,39 +63,45 @@ export const ModalMarkdownComponents = {
 
 interface HighlightsDisplayProps {
   highlights: string | null;
-  components?: any;
+  recap?: StreamRecap;
+  liverId?: string;
+  streamId?: string;
+  components?: Components;
 }
 
-export const HighlightsDisplay = ({ highlights, components = MarkdownComponents }: HighlightsDisplayProps) => {
+export const HighlightsDisplay = ({ highlights, recap, liverId = 'sui', streamId, components = MarkdownComponents }: HighlightsDisplayProps) => {
   const [content, setContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    setFailed(false);
+    setContent(null);
+    setLoading(false);
     if (!highlights) {
-      setContent(null);
-      return;
-    }
-    if (highlights.startsWith('/data/streams/')) {
+      return () => controller.abort();
+    } if (highlights.startsWith('/data/streams/')) {
       setLoading(true);
-      fetch(highlights)
-        .then(res => res.text())
-        .then(text => setContent(text))
-        .catch(() => setContent('加载失败'))
-        .finally(() => setLoading(false));
+      fetch(highlights, { signal: controller.signal })
+        .then(res => { if (!res.ok) throw new Error('Highlights unavailable'); return res.text(); })
+        .then(text => { if (active) setContent(text); })
+        .catch(() => { if (active) setFailed(true); })
+        .finally(() => { if (active) setLoading(false); });
     } else {
       setContent(highlights);
     }
+    return () => { active = false; controller.abort(); };
   }, [highlights]);
 
-  if (loading) {
-    return <Text className="text-slate-400 font-bold tracking-widest uppercase text-xs">Loading Highlights...</Text>;
-  }
-
-  return content ? (
-    <ReactMarkdown components={components}>
-      {content}
-    </ReactMarkdown>
-  ) : '暂无 AI 总结摘要...';
+  return (
+    <>
+      {(!loading && !failed) || recap ? <StreamRecapContent content={content || ''} recap={recap} liverId={liverId} streamId={streamId} components={components} /> : null}
+      {loading && <p role="status" className="text-slate-400 text-xs">正在加载晚安回复与 Highlight…</p>}
+      {failed && <p role="status" className="text-slate-400 text-xs">晚安回复与 Highlight 加载失败。</p>}
+    </>
+  );
 };
 
 // 获取时间段信息的函数

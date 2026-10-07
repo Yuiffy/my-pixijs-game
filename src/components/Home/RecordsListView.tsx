@@ -9,6 +9,7 @@ const { Title, Text } = Typography;
 
 interface RecordsListViewProps {
   streams: StreamData[];
+  liverId?: string;
   loading: boolean;
   currentPage: number;
   pageSize: number;
@@ -18,6 +19,7 @@ interface RecordsListViewProps {
 
 const RecordsListView: React.FC<RecordsListViewProps> = ({
   streams,
+  liverId = 'sui',
   loading,
   currentPage,
   pageSize,
@@ -74,7 +76,7 @@ const RecordsListView: React.FC<RecordsListViewProps> = ({
                 </div>
               </div>
 
-              <div className={`w-full md:w-[55%] flex flex-col p-6 md:p-8 bg-gradient-to-br ${period.bg} h-full overflow-hidden`}>
+              <div className={`w-full md:w-[55%] min-w-0 flex flex-col p-6 md:p-8 bg-gradient-to-br ${period.bg} h-full overflow-hidden`}>
                 <div className="flex flex-col gap-4 mb-6">
                   <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
                     <div className="flex items-center gap-3">
@@ -95,9 +97,9 @@ const RecordsListView: React.FC<RecordsListViewProps> = ({
                   <Title level={2} className="!text-white group-hover:text-cyan-300 transition-colors !mb-0 !text-2xl md:!text-3xl leading-tight font-black">{stream.title}</Title>
                 </div>
 
-                <div className="flex-1 bg-black/40 backdrop-blur-md p-5 rounded-2xl mb-6 overflow-y-auto custom-scrollbar border border-white/10 shadow-inner group/summary">
+                <div className="flex-1 min-h-0 max-h-[28rem] md:max-h-none bg-black/40 backdrop-blur-md p-5 rounded-2xl mb-6 overflow-y-auto custom-scrollbar border border-white/10 shadow-inner group/summary">
                   <article className="prose prose-invert prose-sm max-w-none text-slate-300 font-sans leading-relaxed opacity-80 group-hover/summary:opacity-100 transition-opacity">
-                    <HighlightsDisplay highlights={stream.highlights} />
+                    <HighlightsDisplay highlights={stream.highlights} recap={stream.recap} liverId={liverId} streamId={stream.id} />
                   </article>
                 </div>
 

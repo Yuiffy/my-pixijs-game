@@ -209,6 +209,7 @@ Original prompt: 必杀应该不能跳过，因为仍在游戏过程中，不要
 在独立检出顺序完成 `pnpm run check` 与 `pnpm run build`，保留构建 ESLint。生产版仅用公开键盘和固定步长时钟打出 11 次接球，在 0:0 的正常对局中积满能量触发栞栞必杀，确认无开发修改钩子、不可跳过、自然播完、完整反应窗口、防守移动、挥击后出球及能量 / 比分保持；3 张生产暂停截图也逐张目检，错误为空。总计 42 张截图。
 
 验证器 `scripts/verify-beach-special.cjs`；证据 `tmp/beach-special-{dev,full-dev,controls-dev,production}/report.json`，日志 `tmp/beach-special-{tests,check,build}.log`。提交前已整合最新 master `4f786ee`，再次顺序通过完整 check / build，日志 `tmp/beach-special-master-{check,build}.log`。开发服务已停止并移除本任务临时类型路径。生产试玩为 `http://localhost:4012/game/beach-volley`，最终目录 `.next-beach-special-master-build`；本轮独立提交目标为 `origin/master`。
+
 ## 2026-10-03 · 晴海对决「潮夜」像素重制（已完成）
 
 Original prompt: demos增加入口，提交到master远端；旧版太粗糙，希望调研、策划、实现精致且有角色魅力、特色战斗、平衡与交互的像素格斗。后续要求默认不用泳装，采用小猫帽原皮岁己，也可以换皮肤或不同角色。
@@ -571,7 +572,6 @@ Original prompt: 继续完善和拓展泰国雨夜3D魂系游戏。现在地图�
 
 修改源文件 ESLint、`pnpm run check`、随后顺序执行的 `pnpm run build` 和 `git diff --check` 均通过，保留构建 ESLint 检查；只有其他游戏既有 lint 警告及浏览器数据库过期提示。生产构建使用独立 `.next-night-rain-chapter-build`，与预览 `.next-night-rain-citadel` 分开，已移除本轮临时 tsconfig 引用。本地预览为 `http://localhost:3924/game/night-rain`。未提交、推送或部署。下一阶段可继续增强街区美术、首领专属动作，并进行实体手机／手柄体验测试。
 
-
 ## 2026-10-03 · 雨夜寻味：第二关「雾河回响」
 
 Original prompt: 继续开发第二关。可以是开放世界，和第一关能无缝衔接。也可以是箱庭，有一些过来过去的方法。
@@ -583,7 +583,6 @@ Original prompt: 继续开发第二关。可以是开放世界，和第一关能
 已修复采茶归门地面重叠绕门、竹关路牌遮挡、栈道横梁穿地、倒地首领武器遮挡与地图顶部标签裁切。近路实测、存档条件、复现命令、GPU 桌面采样和低模／即时渡船表现边界见 [雾河回响](docs/night-rain-second-chapter.md)。本地预览 `http://localhost:3926/game/night-rain`。
 
 修改源文件 ESLint、`pnpm run check` 及随后顺序执行的 `pnpm run build` 均通过，保留构建 ESLint；仅有其他游戏既有 lint 警告与浏览器数据库过期提示。生产产物使用独立 `.next-night-rain-valley-build`，开发预览使用 `.next-night-rain-valley`，已清理本任务临时 tsconfig 引用并保留其他任务配置。未提交、推送或部署。后续可继续增强河谷场景、首领专属动作和渡船过场，并开展实体手机／手柄实测。
-
 
 ## 2026-10-03 · 雨夜寻味：归灯庭与灯下暗线
 
@@ -679,6 +678,8 @@ Original prompt: 引入更合理、流畅的动作，默认重击削弱并有明
 
 前版地下入口、连续双向升降、到达提示，以及 12 件装备独立 SVG 造型与空护符槽占位图均保留。复现与低模程序动画／模拟设备的表现边界见 docs/night-rain-player-motion.md；规则与门禁在验收检出 tmp/night-motion-{rules,check,build}-release.log，生产报告在主工作区 tmp/night-motion-production/report.json。仅提交本轮清单，其他线程修改保留；发布状态单独通过 Vercel API 核对。
 
+推送前整合远程 master 的 7e51993 雨夜主角动作更新，保留双方进度记录；本次游戏源码和模型与完整验收版本一致。整合后再次通过 21 项规则、修改源文件 ESLint、顺序完整 check／build，以及从 /demos 搜索点击进入游戏并开始游玩的静音 Chrome 冒烟验证。三张新增生产截图已逐张目检，像素／状态／DOM／画布一致，脸部版本为 3，错误为空；证据 tmp/sui-face-v3-integrated-smoke/ 与 tmp/sui-face-v3-integrated-{rules,check,build,browser}.log。
+
 ## 2026-10-04 · 岁己：零点之后面部第三版（已验收）
 
 Original prompt: 身体不错，但两个大眼睛让脸有些惊悚；参考岁己 3D 回形象，以相似、简化或面部贴图方式达到合适效果。追加要求：提交远程 master，demos 放入口。
@@ -690,7 +691,6 @@ Original prompt: 身体不错，但两个大眼睛让脸有些惊悚；参考岁
 /demos 入口已验证搜索点击并进入 /game/after-hours，预览替换为目检过的新脸实际标题画面。证据 tmp/sui-face-v3-{dev,production}/，门禁／浏览器日志 tmp/sui-face-v3-release-{check,build,browser}.log；详细参考与复现见 docs/after-hours.md。开发服务器已停止，仅移除本任务临时 tsconfig 引用。仍为独立风格化模型，手机为 Chrome 触控模拟，未验收实体手机 GPU／Safari。
 
 推送前整合远程 master 的 7e51993 雨夜主角动作更新，保留双方进度记录；本次游戏源码和模型与完整验收版本一致。整合后再次通过 21 项规则、修改源文件 ESLint、顺序完整 check／build，以及从 /demos 搜索点击进入游戏并开始游玩的静音 Chrome 冒烟验证。三张新增生产截图已逐张目检，像素／状态／DOM／画布一致，脸部版本为 3，错误为空；证据 tmp/sui-face-v3-integrated-smoke/ 与 tmp/sui-face-v3-integrated-{rules,check,build,browser}.log。
-
 
 ## 2026-10-04 · 岁己：零点之后圆润动漫眼（已验收）
 
@@ -713,6 +713,8 @@ Original prompt: 花礼为什么是粉色的，感觉不像呢。重新对比各
 修改前 14 张、开发版 31 张和场景补充 8 张已打开对比；生产角色专项 31 张、地下／装备回归 24 张、通用客户端 1 张均通过 sanity／状态／DOM／画布／错误核对并逐张打开目检。双副本入口发现提示、连续往返、途中读档、暂停和地图正常；装备／锻造桌面及 320px 菜单覆盖 12 件独立 SVG 与空护符槽、更换双苇短刃／风苇披风。规则 137/137、修改源文件 ESLint、完整 check 后顺序 build 通过，保留构建 ESLint。
 
 独立验收检出合入最新远程 master cd44e14 后，再次顺序通过 137 项规则、完整 check／build；从 /demos 点击进入、继续存档和花礼图鉴三张最终生产冒烟截图亦逐张目检通过，错误为空。证据在主工作区 tmp/night-character-{before,dev,dev-world,production,underground-production,shared,integrated-smoke}/，最终门禁在验收检出 tmp/night-character-integrated-{rules,check,build}.log。按既有授权提交 master，只纳入本轮 13 个路径；正式部署另以 Vercel API 核对。造型仍为风格化程序低模，手机为 Chrome 窄屏模拟。
+
+本轮角色校正已发布：源码提交 c0b7ff5，master 为 0aef2ab；Vercel 的 GitHub 状态与 Deployment API 均确认 Production 部署成功。直接 Vercel API 的本机旧令牌已失效，因此以 Vercel 集成的正式部署回报为验收依据，没有请求线上游戏 URL。完整回报见 tmp/night-character-github-production-release.json；最终发布审计见 tmp/night-character-final-audit.json。开发／生产测试服务已停止，验收检出临时类型路径已清理。
 
 ## 2026-10-05 · 雨夜寻味：渡船反馈与交互物辨识
 

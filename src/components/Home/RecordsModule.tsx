@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Typography, Button, Space, Modal, Image as AntImage, Tag } from 'antd';
 import { HistoryOutlined, CalendarOutlined, ThunderboltOutlined, CloseOutlined, PlayCircleOutlined, InfoCircleOutlined, EyeOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -11,6 +11,8 @@ import RecordsListView from './RecordsListView';
 import RecordsCalendarView from './RecordsCalendarView';
 import { StreamData, HighlightsDisplay, ModalMarkdownComponents, getDownloadFilename, getPeriodInfo, getPublicFileUrl } from './RecordsShared';
 import { getLiverConfig, type LiverInfo } from '@/data/livers';
+import savedRecaps from '@/data/stream-recaps/sui.json';
+import { chooseStreamRecap, type StreamRecap } from './streamRecap';
 
 // Extend dayjs with required plugins for Ant Design Calendar
 dayjs.extend(weekday);
@@ -34,6 +36,10 @@ const RecordsModule = ({ streams: externalStreams, liverId = 'sui' }: RecordsMod
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [liverConfig, setLiverConfig] = useState<LiverInfo | null>(null);
   const pageSize = 5;
+  const displayStreams = useMemo(() => streams.map(stream => ({
+    ...stream,
+    recap: chooseStreamRecap(stream.recap, liverId === 'sui' ? (savedRecaps as Record<string, StreamRecap>)[stream.id] : undefined),
+  })), [streams, liverId]);
 
   // 加载主播配置
   useEffect(() => {
@@ -136,7 +142,8 @@ const RecordsModule = ({ streams: externalStreams, liverId = 'sui' }: RecordsMod
 
       {viewMode === 'list' ? (
         <RecordsListView
-          streams={streams}
+          streams={displayStreams}
+          liverId={liverId}
           loading={loading}
           currentPage={currentPage}
           pageSize={pageSize}
@@ -145,7 +152,7 @@ const RecordsModule = ({ streams: externalStreams, liverId = 'sui' }: RecordsMod
         />
       ) : (
         <RecordsCalendarView
-          streams={streams}
+          streams={displayStreams}
           calendarValue={calendarValue}
           calendarMode={calendarMode}
           onCalendarValueChange={handleCalendarValueChange}
@@ -179,9 +186,9 @@ const RecordsModule = ({ streams: externalStreams, liverId = 'sui' }: RecordsMod
           if (!selectedStream) return null;
           const period = getPeriodInfo(selectedStream.time);
           return (
-            <div className="flex flex-col md:flex-row h-full max-h-[80vh] overflow-hidden">
+            <div className="flex flex-col md:flex-row h-[80vh] overflow-hidden">
               {/* Left Column: Image */}
-              <div className="w-full md:w-[45%] shrink-0 h-[300px] md:h-full bg-slate-900/50 relative overflow-hidden border-r border-white/5">
+              <div className="w-full md:w-[45%] shrink-0 h-[160px] md:h-full bg-slate-900/50 relative overflow-hidden border-r border-white/5">
                 <div
                   className={`absolute top-0 left-0 h-full w-1.5 bg-gradient-to-b from-transparent ${period.accent} to-transparent opacity-80 z-20 pointer-events-none`}
                   style={{
@@ -229,7 +236,7 @@ const RecordsModule = ({ streams: externalStreams, liverId = 'sui' }: RecordsMod
 
               {/* Right Column: Info */}
                <div
-                  className={`w-full md:w-[55%] flex flex-col p-8 bg-gradient-to-br ${period.bg} overflow-hidden`}
+                  className={`w-full md:w-[55%] min-w-0 min-h-0 flex-1 flex flex-col p-5 md:p-8 bg-gradient-to-br ${period.bg} overflow-hidden`}
                   style={{
                    background: liverConfig ?
                      `linear-gradient(to bottom right, ${liverConfig.colorMain}20, ${liverConfig.colorSub}20)` :
@@ -258,10 +265,10 @@ const RecordsModule = ({ streams: externalStreams, liverId = 'sui' }: RecordsMod
                 <div className="flex-1 bg-black/50 backdrop-blur-xl p-6 rounded-[24px] mb-6 overflow-y-auto custom-scrollbar border border-white/5 shadow-inner min-h-0">
                    <div className="flex items-center gap-2 mb-4 opacity-60">
                       <InfoCircleOutlined className="text-cyan-400" />
-                      <span className="text-[11px] font-black uppercase tracking-widest">AI Highlights</span>
+                      <span className="text-[11px] font-black tracking-widest">直播内容</span>
                    </div>
                    <article className="prose prose-invert prose-sm max-w-none text-slate-300 font-sans leading-relaxed">
-                     <HighlightsDisplay highlights={selectedStream.highlights} components={ModalMarkdownComponents} />
+                     <HighlightsDisplay key={selectedStream.id} highlights={selectedStream.highlights} recap={selectedStream.recap} liverId={liverId} streamId={selectedStream.id} components={ModalMarkdownComponents} />
                    </article>
                 </div>
 

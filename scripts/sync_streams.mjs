@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { liverConfigs, getLiverConfig, getAllLiverIds } from './liver-config.js';
 import { syncSongs } from './sync-songs.mjs';
+import { composeStreamTexts, enrichStreamRecaps } from './sync-stream-recaps.mjs';
 import {
   calculateOverlapRatio,
   choosePreferredArtifact,
@@ -764,6 +765,7 @@ async function syncStreams() {
 
     // Initial highlights from any AI_HIGHLIGHT file in the group
     let groupHighlights = null;
+    const textDocuments = [];
 
     const preferredSrt = choosePreferredSrt(stream.files);
     const preferredXml = choosePreferredArtifact(stream.files, 'xml');
@@ -818,26 +820,15 @@ async function syncStreams() {
            });
 
            if (hasMatchingVideo || file.includes('AI_HIGHLIGHT')) {
-             if (streamData.highlights) {
-                // If current file is .md and existing is likely from .txt (AI_HIGHLIGHT), prepend.
-                if (ext === '.md') {
-                   streamData.highlights = content + '\n\n---\n\n' + streamData.highlights;
-                } else {
-                   streamData.highlights += '\n\n---\n\n' + content;
-                }
-             } else {
-                streamData.highlights = content;
-             }
+             textDocuments.push({ file, content });
            } else if (!groupHighlights) {
-             groupHighlights = content;
+             groupHighlights = { file, content };
            }
         }
       }
     });
 
-    if (!streamData.highlights && groupHighlights) {
-      streamData.highlights = groupHighlights;
-    }
+    streamData.highlights = composeStreamTexts(textDocuments.length ? textDocuments : groupHighlights ? [groupHighlights] : []);
 
     if (streamData.highlights) {
       const highlightsPath = path.join(targetDir, 'highlights.md');
@@ -1015,6 +1006,8 @@ async function syncStreams() {
   console.log(`最终去重后: ${finalStreams.length} 个直播数据`);
 
   finalStreams.sort((a, b) => b.id.localeCompare(a.id));
+
+  finalStreams = enrichStreamRecaps(finalStreams, { sourceDirs, liverId: currentLiverId });
 
   fs.writeFileSync(
     path.join(targetBaseDir, 'streams.json'),
