@@ -82,7 +82,13 @@ test('official announcements stay distinct from viewer clues and restore through
   const result = filterMonths(months, parseFilters(new URLSearchParams(serializeFilters(filters))));
   assert.deepEqual(result.map(month => month.month), ['2026-10']);
   assert.deepEqual(visibleEntries(result[0], filters).flatMap(entry => entry.items), ['摇摇乐立牌', '开瓶器吧唧', '行李牌']);
-  assert.ok(result[0].sources.every(source => source.kind === 'official-dynamic'));
+  assert.ok(visibleEntries(result[0], filters).every(entry => entry.sources.some(id => result[0].sources.some(source => source.id === id && source.kind === 'official-dynamic'))));
+  const { images } = result[0];
+  assert.ok(images.some(image => image.kind === 'official' && image.originalUrl));
+  const poster = images.find(image => image.src.endsWith('/2026-10-poster-live.webp'));
+  assert.ok(poster, 'keep the October livestream poster alongside the earlier official illustration');
+  assert.equal(poster.time, '04:37:24');
+  assert.equal(result[0].sources.find(source => source.id === poster.source).date, '2026-10-06');
   assert.equal(filterMonths(months, { ...filters, evidence: 'lead' }).length, 0);
   assert.equal(filterMonths(months, { ...filters, evidence: 'recorded' }).length, 0);
 });
