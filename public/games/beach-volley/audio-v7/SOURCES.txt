@@ -1,0 +1,4 @@
+Nagisa original livestream recording; cleaned copies for intro-1 and special-2.
+Source: https://live.bilibili.com/31368705, 2026-09-29, 6218.879–6221.379.
+HP2 background separation; no voice conversion. Full provenance and rejected history:
+docs/beach-volley-nagisa-recording-delivery.json

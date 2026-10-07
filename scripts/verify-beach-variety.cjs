@@ -65,12 +65,12 @@ async function naturalMovie(p, expectedKind, name) {
     if (expectedKind !== 'special') await capture(p, name);
   } else if (expectedKind === 'special') {
     await p.waitForFunction(() => JSON.parse(window.render_game_to_text()).audio.voicePlaying);
-    assert.match((await state(p)).audio.voice.src, /\/audio-v[236]\//);
+    assert.match((await state(p)).audio.voice.src, /\/audio-v[2367]\//);
   }
   report.movies.push({ movie, voice: (await state(p)).audio.voice });
   const frozen = JSON.stringify({ score: s.score, ball: s.ball, players: s.players });
   if (expectedKind === 'special') {
-    assert.match(movie.src, /\/rally-v7\//);
+    assert.match(movie.src, /\/(rally-v7|dubbed-v10)\//);
     await capture(p, `${name}-incoming`);
     await p.keyboard.press('Enter'); assert.equal((await state(p)).cinematic.id, movie.id);
     await advance(p, 160); const during = await state(p); assert.equal(JSON.stringify({ score: during.score, ball: during.ball, players: during.players }), frozen);

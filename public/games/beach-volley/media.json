@@ -1,5 +1,5 @@
 {
-  "version": 9,
+  "version": 10,
   "characters": {
     "sui": {
       "intro": {
@@ -292,16 +292,16 @@
           }
         },
         {
-          "src": "/games/beach-volley/rally-v7/nagisa-special-2.mp4",
+          "src": "/games/beach-volley/dubbed-v10/nagisa-special-recording.mp4",
           "poster": "/games/beach-volley/special-nagisa-v2.webp",
           "duration": 4.062993,
           "lite": {
-            "src": "/games/beach-volley/lite-v7/nagisa-special-2.mp4",
-            "bytes": 168222
+            "src": "/games/beach-volley/lite-v10/nagisa-special-recording.mp4",
+            "bytes": 171141
           },
           "dialogue": {
-            "source": "native",
-            "text": "星屑折光，改变路线。"
+            "source": "recording",
+            "text": "来吧，看看这个是什么！"
           }
         }
       ],
@@ -317,16 +317,16 @@
             }
           },
           {
-            "src": "/games/beach-volley/variety-v5/video-nagisa-pointWin-2.mp4",
+            "src": "/games/beach-volley/dubbed-v10/nagisa-pointWin-recording.mp4",
             "poster": "/games/beach-volley/special-nagisa-v2.webp",
             "duration": 4.096009,
             "lite": {
-              "src": "/games/beach-volley/lite-v5/video-nagisa-pointWin-2.mp4",
-              "bytes": 207009
+              "src": "/games/beach-volley/lite-v10/nagisa-pointWin-recording.mp4",
+              "bytes": 197746
             },
             "dialogue": {
-              "source": "native",
-              "text": "看见了，这个空隙。"
+              "source": "recording",
+              "text": "做得太厉害了！"
             }
           }
         ],
@@ -341,16 +341,16 @@
             }
           },
           {
-            "src": "/games/beach-volley/variety-v5/video-nagisa-pointLose-2.mp4",
+            "src": "/games/beach-volley/dubbed-v10/nagisa-pointLose-recording.mp4",
             "poster": "/games/beach-volley/special-nagisa-v2.webp",
             "duration": 4.096009,
             "lite": {
-              "src": "/games/beach-volley/lite-v5/video-nagisa-pointLose-2.mp4",
-              "bytes": 195538
+              "src": "/games/beach-volley/lite-v10/nagisa-pointLose-recording.mp4",
+              "bytes": 182659
             },
             "dialogue": {
-              "source": "native",
-              "text": "原来如此，再试一次。"
+              "source": "recording",
+              "text": "至于吗？"
             }
           }
         ]
@@ -367,16 +367,16 @@
             }
           },
           {
-            "src": "/games/beach-volley/variety-v5/video-nagisa-victory-2.mp4",
+            "src": "/games/beach-volley/dubbed-v10/nagisa-victory-recording.mp4",
             "poster": "/games/beach-volley/special-nagisa-v2.webp",
             "duration": 6.08,
             "lite": {
-              "src": "/games/beach-volley/lite-v5/video-nagisa-victory-2.mp4",
-              "bytes": 288680
+              "src": "/games/beach-volley/lite-v10/nagisa-victory-recording.mp4",
+              "bytes": 266451
             },
             "dialogue": {
-              "source": "native",
-              "text": "这就是，我找到的答案。谢谢你。"
+              "source": "recording",
+              "text": "嗯，我真是个天才！"
             }
           }
         ],
@@ -391,16 +391,16 @@
             }
           },
           {
-            "src": "/games/beach-volley/variety-v5/video-nagisa-defeat-2.mp4",
+            "src": "/games/beach-volley/dubbed-v10/nagisa-defeat-recording.mp4",
             "poster": "/games/beach-volley/special-nagisa-v2.webp",
             "duration": 6.08,
             "lite": {
-              "src": "/games/beach-volley/lite-v5/video-nagisa-defeat-2.mp4",
-              "bytes": 260325
+              "src": "/games/beach-volley/lite-v10/nagisa-defeat-recording.mp4",
+              "bytes": 236877
             },
             "dialogue": {
-              "source": "native",
-              "text": "还有新的可能。下次，我会更强。"
+              "source": "recording",
+              "text": "不太可能吧？"
             }
           }
         ]

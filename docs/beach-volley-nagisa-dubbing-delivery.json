@@ -1,0 +1,628 @@
+{
+  "version": 1,
+  "deliveredAt": "2026-10-07",
+  "method": "Replace the complete generated soundtrack with original Nagisa button/livestream recordings; copy both existing H.264 image streams.",
+  "speakerIdentityLimit": "Recording correlation verifies track provenance; source attribution comes from the recording catalog and session context, not ASR or biometrics.",
+  "newGenerationCredits": 0,
+  "items": {
+    "nagisa-special": {
+      "actor": "nagisa",
+      "scene": "special",
+      "src": "/games/beach-volley/dubbed-v10/nagisa-special-recording.mp4",
+      "bytes": 994985,
+      "sha256": "5bbbbe977cfdda01c9840ae6d1f63acde6158663682857889acb563f25613d3f",
+      "duration": 4.062993,
+      "voiceSrc": "/games/beach-volley/audio-v7/nagisa-special-2.mp3",
+      "voiceSha256": "24beec87ed1dc71537290f11264e1da3ca3551509402982facc61070e085fb98",
+      "voiceStart": 0.1,
+      "voiceEnd": 2.6,
+      "text": "来吧，看看这个是什么！",
+      "voiceProvenance": "docs/beach-volley-nagisa-recording-delivery.json",
+      "originalSrc": "/games/beach-volley/rally-v7/nagisa-special-2.mp4",
+      "originalSha256": "e3a85533aa19f8c25e9662cafdc71536df5545894cae7748de5e2066452d120a",
+      "originalDialogue": {
+        "source": "native",
+        "text": "星屑折光，改变路线。"
+      },
+      "imageStreamCopied": true,
+      "originalSoundtrackRemoved": true,
+      "rmsDb": -21.87,
+      "peak": 0.68437,
+      "validation": {
+        "standard": {
+          "imageStreamSha256": "f56c25db8a63dc3d0389b49651dccfad089d31882f06bf106510c067906dedf3",
+          "originalImageStreamSha256": "f56c25db8a63dc3d0389b49651dccfad089d31882f06bf106510c067906dedf3",
+          "audioPacketSha256": "55027820db1a30be1b35f3914931568ac322dc7632af06671d57b5354f9c2d99",
+          "audioSourceCorrelation": 0.998348,
+          "voiceOffsetSeconds": 0.1,
+          "outsideVoiceRms": 0.0,
+          "peak": 0.68437,
+          "rmsDb": -21.87,
+          "duration": 4.063,
+          "faststart": true
+        },
+        "lite": {
+          "imageStreamSha256": "11fb288089bdf736a5164325b1be196dd0faf3bb09fb57da1b9e5649e6b144e3",
+          "originalImageStreamSha256": "11fb288089bdf736a5164325b1be196dd0faf3bb09fb57da1b9e5649e6b144e3",
+          "audioPacketSha256": "55027820db1a30be1b35f3914931568ac322dc7632af06671d57b5354f9c2d99",
+          "audioSourceCorrelation": 0.998348,
+          "voiceOffsetSeconds": 0.1,
+          "outsideVoiceRms": 0.0,
+          "peak": 0.68437,
+          "rmsDb": -21.87,
+          "duration": 4.063,
+          "faststart": true
+        }
+      },
+      "lite": {
+        "src": "/games/beach-volley/lite-v10/nagisa-special-recording.mp4",
+        "bytes": 171141,
+        "sha256": "8dd7b6721237c78a7c80ce554546f7c19ea32446a95df5d11a637ab871505338",
+        "originalSrc": "/games/beach-volley/lite-v7/nagisa-special-2.mp4",
+        "originalSha256": "c03dd39d536329e78e27bf938ff785d337873a8d8a5a0b79fa31d6c501cddc14",
+        "imageStreamCopied": true,
+        "audioStreamCopiedFromStandard": true
+      },
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "initialPrompt": null,
+        "transcript": "来吧,看看这个是什么",
+        "expected": "来吧，看看这个是什么！",
+        "words": [
+          {
+            "text": "来",
+            "start": 0.0,
+            "end": 0.7,
+            "probability": 0.583
+          },
+          {
+            "text": "吧,",
+            "start": 0.7,
+            "end": 0.9,
+            "probability": 0.997
+          },
+          {
+            "text": "看看",
+            "start": 1.1,
+            "end": 1.4,
+            "probability": 0.984
+          },
+          {
+            "text": "这个",
+            "start": 1.4,
+            "end": 1.78,
+            "probability": 0.972
+          },
+          {
+            "text": "是",
+            "start": 1.78,
+            "end": 2.12,
+            "probability": 0.989
+          },
+          {
+            "text": "什么",
+            "start": 2.12,
+            "end": 2.46,
+            "probability": 0.997
+          }
+        ],
+        "similarity": 1.0,
+        "sha256": "5bbbbe977cfdda01c9840ae6d1f63acde6158663682857889acb563f25613d3f",
+        "scope": "Full final encoded standard MP4; the lite variant copies the identical AAC packet stream.",
+        "sourceAsr": "来吧,看看这个是什么",
+        "interpretation": "Content aid only. Longer padded video can produce different short-line recognition; PCM correlation independently verifies that the entire specified source recording survives."
+      }
+    },
+    "nagisa-pointWin": {
+      "actor": "nagisa",
+      "scene": "pointWin",
+      "src": "/games/beach-volley/dubbed-v10/nagisa-pointWin-recording.mp4",
+      "bytes": 878396,
+      "sha256": "c56853a4e935586bb3060dfd975d0dd5be27b488f1e314a8c2fe4e9e72e4ce1f",
+      "duration": 4.096009,
+      "voiceSrc": "/games/beach-volley/audio-v6/nagisa-pointWin-2.mp3",
+      "voiceSha256": "708f440760dbdf7834572e9058174ad7b4af8e1612f838a0545f247a64879623",
+      "voiceStart": 0.1,
+      "voiceEnd": 1.3,
+      "text": "做得太厉害了！",
+      "voiceProvenance": "docs/beach-volley-nagisa-recording-delivery.json",
+      "originalSrc": "/games/beach-volley/variety-v5/video-nagisa-pointWin-2.mp4",
+      "originalSha256": "7437ac5763f607a87ec678d5e40f7d300b555c4b932e89ac91faf755f5506f11",
+      "originalDialogue": {
+        "source": "native",
+        "text": "看见了，这个空隙。"
+      },
+      "imageStreamCopied": true,
+      "originalSoundtrackRemoved": true,
+      "rmsDb": -23.849,
+      "peak": 0.551533,
+      "validation": {
+        "standard": {
+          "imageStreamSha256": "8a138fe671474492d55de7386b287ed21be300e8dde0dbb1ea08698949f853e3",
+          "originalImageStreamSha256": "8a138fe671474492d55de7386b287ed21be300e8dde0dbb1ea08698949f853e3",
+          "audioPacketSha256": "3ff8f354a13da880d5491f3baf340c9f9a6d1fb15251fce5a5b6639b01b3cc8a",
+          "audioSourceCorrelation": 0.999786,
+          "voiceOffsetSeconds": 0.1,
+          "outsideVoiceRms": 0.0,
+          "peak": 0.551533,
+          "rmsDb": -23.849,
+          "duration": 4.096,
+          "faststart": true
+        },
+        "lite": {
+          "imageStreamSha256": "c2c917a3afa0b6fcf3edb4f3ad4075d2221dc494f82333b1d4454ba1c6322291",
+          "originalImageStreamSha256": "c2c917a3afa0b6fcf3edb4f3ad4075d2221dc494f82333b1d4454ba1c6322291",
+          "audioPacketSha256": "3ff8f354a13da880d5491f3baf340c9f9a6d1fb15251fce5a5b6639b01b3cc8a",
+          "audioSourceCorrelation": 0.999786,
+          "voiceOffsetSeconds": 0.1,
+          "outsideVoiceRms": 0.0,
+          "peak": 0.551533,
+          "rmsDb": -23.849,
+          "duration": 4.096,
+          "faststart": true
+        }
+      },
+      "lite": {
+        "src": "/games/beach-volley/lite-v10/nagisa-pointWin-recording.mp4",
+        "bytes": 197746,
+        "sha256": "73356c5a1df9cc7e55883e162968cec5301ae25ad097cfeaf557f12060091012",
+        "originalSrc": "/games/beach-volley/lite-v5/video-nagisa-pointWin-2.mp4",
+        "originalSha256": "b9faa29b8eb8f60051a7c4c0872f23985c337a4c40c219338d6b0cbcf59d57d4",
+        "imageStreamCopied": true,
+        "audioStreamCopiedFromStandard": true
+      },
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "initialPrompt": null,
+        "transcript": "做得太好",
+        "expected": "做得太厉害了！",
+        "words": [
+          {
+            "text": "做",
+            "start": 0.0,
+            "end": 0.3,
+            "probability": 0.507
+          },
+          {
+            "text": "得",
+            "start": 0.3,
+            "end": 0.44,
+            "probability": 0.298
+          },
+          {
+            "text": "太",
+            "start": 0.44,
+            "end": 0.58,
+            "probability": 0.832
+          },
+          {
+            "text": "好",
+            "start": 0.58,
+            "end": 0.94,
+            "probability": 0.476
+          }
+        ],
+        "similarity": 0.6,
+        "sha256": "c56853a4e935586bb3060dfd975d0dd5be27b488f1e314a8c2fe4e9e72e4ce1f",
+        "scope": "Full final encoded standard MP4; the lite variant copies the identical AAC packet stream.",
+        "sourceAsr": "做得太厉害了",
+        "interpretation": "Content aid only. Longer padded video can produce different short-line recognition; PCM correlation independently verifies that the entire specified source recording survives."
+      }
+    },
+    "nagisa-pointLose": {
+      "actor": "nagisa",
+      "scene": "pointLose",
+      "src": "/games/beach-volley/dubbed-v10/nagisa-pointLose-recording.mp4",
+      "bytes": 848216,
+      "sha256": "312bc7d10288c245212d10b063d732fa520f2e3cf3a153c23941049f60596137",
+      "duration": 4.096009,
+      "voiceSrc": "/games/beach-volley/audio-v6/nagisa-pointLose-2.mp3",
+      "voiceSha256": "a743fb6014ae4376c81d899af45fa75f69b453fb3912204be13538e7a5f4a749",
+      "voiceStart": 0.1,
+      "voiceEnd": 1.3,
+      "text": "至于吗？",
+      "voiceProvenance": "docs/beach-volley-nagisa-recording-delivery.json",
+      "originalSrc": "/games/beach-volley/variety-v5/video-nagisa-pointLose-2.mp4",
+      "originalSha256": "fa12f1b0641bece5eabfbb77014d3047c3ab00204d79420453970d11791ee790",
+      "originalDialogue": {
+        "source": "native",
+        "text": "原来如此，再试一次。"
+      },
+      "imageStreamCopied": true,
+      "originalSoundtrackRemoved": true,
+      "rmsDb": -25.833,
+      "peak": 0.54504,
+      "validation": {
+        "standard": {
+          "imageStreamSha256": "c553f91948d6f9e18f8d5c66db9cd0eaf648bfa9558c9627455438e1e08bb565",
+          "originalImageStreamSha256": "c553f91948d6f9e18f8d5c66db9cd0eaf648bfa9558c9627455438e1e08bb565",
+          "audioPacketSha256": "99868a3ba1a855842eb475704e21f9b4eab446b19fe7e2cec5dda00e6df67bc0",
+          "audioSourceCorrelation": 0.999657,
+          "voiceOffsetSeconds": 0.1,
+          "outsideVoiceRms": 1.329e-05,
+          "peak": 0.54504,
+          "rmsDb": -25.833,
+          "duration": 4.096,
+          "faststart": true
+        },
+        "lite": {
+          "imageStreamSha256": "ed4649b66b83e68b82d90ff8e72cf35ef9a473cb5c938dae119e2070497b6702",
+          "originalImageStreamSha256": "ed4649b66b83e68b82d90ff8e72cf35ef9a473cb5c938dae119e2070497b6702",
+          "audioPacketSha256": "99868a3ba1a855842eb475704e21f9b4eab446b19fe7e2cec5dda00e6df67bc0",
+          "audioSourceCorrelation": 0.999657,
+          "voiceOffsetSeconds": 0.1,
+          "outsideVoiceRms": 1.329e-05,
+          "peak": 0.54504,
+          "rmsDb": -25.833,
+          "duration": 4.096,
+          "faststart": true
+        }
+      },
+      "lite": {
+        "src": "/games/beach-volley/lite-v10/nagisa-pointLose-recording.mp4",
+        "bytes": 182659,
+        "sha256": "68886e12f18990d7fa00db9f25d394cf1858b3b3ea33dc58c9bb509de3a4a5f9",
+        "originalSrc": "/games/beach-volley/lite-v5/video-nagisa-pointLose-2.mp4",
+        "originalSha256": "2ab251aae51cd12cdb6b0e51302aad07349352f6fd228380b498131ee4555f74",
+        "imageStreamCopied": true,
+        "audioStreamCopiedFromStandard": true
+      },
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "initialPrompt": null,
+        "transcript": "至于吗",
+        "expected": "至于吗？",
+        "words": [
+          {
+            "text": "至",
+            "start": 0.0,
+            "end": 0.76,
+            "probability": 0.892
+          },
+          {
+            "text": "于",
+            "start": 0.76,
+            "end": 0.94,
+            "probability": 0.717
+          },
+          {
+            "text": "吗",
+            "start": 0.94,
+            "end": 1.16,
+            "probability": 0.954
+          }
+        ],
+        "similarity": 1.0,
+        "sha256": "312bc7d10288c245212d10b063d732fa520f2e3cf3a153c23941049f60596137",
+        "scope": "Full final encoded standard MP4; the lite variant copies the identical AAC packet stream.",
+        "sourceAsr": "至于吗",
+        "interpretation": "Content aid only. Longer padded video can produce different short-line recognition; PCM correlation independently verifies that the entire specified source recording survives."
+      }
+    },
+    "nagisa-victory": {
+      "actor": "nagisa",
+      "scene": "victory",
+      "src": "/games/beach-volley/dubbed-v10/nagisa-victory-recording.mp4",
+      "bytes": 1265720,
+      "sha256": "19c7411bc07f2f2bd8952d17e8a1fad733aee36cbeb4932bf5b5770b261eed75",
+      "duration": 6.08,
+      "voiceSrc": "/games/beach-volley/audio-v6/nagisa-victory-1.mp3",
+      "voiceSha256": "0dbb13a005bf0fd9fb9c81de68564041164e401e9084704c125efc0db88b5aaf",
+      "voiceStart": 0.1,
+      "voiceEnd": 1.86,
+      "text": "嗯，我真是个天才！",
+      "voiceProvenance": "docs/beach-volley-nagisa-recording-delivery.json",
+      "originalSrc": "/games/beach-volley/variety-v5/video-nagisa-victory-2.mp4",
+      "originalSha256": "3ff711cffc94114459f459e0ad87d8eba26fa605e02ca5854575ef56e1df9a55",
+      "originalDialogue": {
+        "source": "native",
+        "text": "这就是，我找到的答案。谢谢你。"
+      },
+      "imageStreamCopied": true,
+      "originalSoundtrackRemoved": true,
+      "rmsDb": -25.082,
+      "peak": 0.566819,
+      "validation": {
+        "standard": {
+          "imageStreamSha256": "24252ad6f677b2cf17cc9eed8ef4e2ab34da8a3088ce015fa8a455c9a287320d",
+          "originalImageStreamSha256": "24252ad6f677b2cf17cc9eed8ef4e2ab34da8a3088ce015fa8a455c9a287320d",
+          "audioPacketSha256": "b5776dd257a0ff7e2baa15f76a1e4a1c402443f3058114d9f0c7be5cb713d994",
+          "audioSourceCorrelation": 0.997495,
+          "voiceOffsetSeconds": 0.1,
+          "outsideVoiceRms": 0.0,
+          "peak": 0.566819,
+          "rmsDb": -25.082,
+          "duration": 6.08,
+          "faststart": true
+        },
+        "lite": {
+          "imageStreamSha256": "b86643708f93d17bccf57a29eb0ce0322cca16ad959bc7c8c03c45793cb2fb94",
+          "originalImageStreamSha256": "b86643708f93d17bccf57a29eb0ce0322cca16ad959bc7c8c03c45793cb2fb94",
+          "audioPacketSha256": "b5776dd257a0ff7e2baa15f76a1e4a1c402443f3058114d9f0c7be5cb713d994",
+          "audioSourceCorrelation": 0.997495,
+          "voiceOffsetSeconds": 0.1,
+          "outsideVoiceRms": 0.0,
+          "peak": 0.566819,
+          "rmsDb": -25.082,
+          "duration": 6.08,
+          "faststart": true
+        }
+      },
+      "lite": {
+        "src": "/games/beach-volley/lite-v10/nagisa-victory-recording.mp4",
+        "bytes": 266451,
+        "sha256": "ca09ea352bcee65e1c8b5d6811d9e26c030fd0709291933d12390b87de9400d9",
+        "originalSrc": "/games/beach-volley/lite-v5/video-nagisa-victory-2.mp4",
+        "originalSha256": "d5e012b47a4d394f3904d99164c537873ec063ddae54697b0445bad1e73b1122",
+        "imageStreamCopied": true,
+        "audioStreamCopiedFromStandard": true
+      },
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "initialPrompt": null,
+        "transcript": "嗯我真是个天才",
+        "expected": "嗯，我真是个天才！",
+        "words": [
+          {
+            "text": "嗯",
+            "start": 0.0,
+            "end": 0.64,
+            "probability": 0.731
+          },
+          {
+            "text": "我",
+            "start": 0.64,
+            "end": 0.92,
+            "probability": 0.916
+          },
+          {
+            "text": "真",
+            "start": 0.92,
+            "end": 1.06,
+            "probability": 0.712
+          },
+          {
+            "text": "是",
+            "start": 1.06,
+            "end": 1.24,
+            "probability": 0.996
+          },
+          {
+            "text": "个",
+            "start": 1.24,
+            "end": 1.36,
+            "probability": 0.977
+          },
+          {
+            "text": "天",
+            "start": 1.36,
+            "end": 1.52,
+            "probability": 1.0
+          },
+          {
+            "text": "才",
+            "start": 1.52,
+            "end": 1.82,
+            "probability": 0.998
+          }
+        ],
+        "similarity": 1.0,
+        "sha256": "19c7411bc07f2f2bd8952d17e8a1fad733aee36cbeb4932bf5b5770b261eed75",
+        "scope": "Full final encoded standard MP4; the lite variant copies the identical AAC packet stream.",
+        "sourceAsr": "嗯我真是个天才",
+        "interpretation": "Content aid only. Longer padded video can produce different short-line recognition; PCM correlation independently verifies that the entire specified source recording survives."
+      }
+    },
+    "nagisa-defeat": {
+      "actor": "nagisa",
+      "scene": "defeat",
+      "src": "/games/beach-volley/dubbed-v10/nagisa-defeat-recording.mp4",
+      "bytes": 1061291,
+      "sha256": "0d3c411f8692b8a1f4abce39bd09470457dbdb114755027163ff58dd7657fe69",
+      "duration": 6.08,
+      "voiceSrc": "/games/beach-volley/audio-v6/nagisa-defeat-1.mp3",
+      "voiceSha256": "ee5738c6b8df87605c6f3c13ea791a72a478634f8614c205d1c27bf6a097464c",
+      "voiceStart": 0.1,
+      "voiceEnd": 1.5,
+      "text": "不太可能吧？",
+      "voiceProvenance": "docs/beach-volley-nagisa-recording-delivery.json",
+      "originalSrc": "/games/beach-volley/variety-v5/video-nagisa-defeat-2.mp4",
+      "originalSha256": "66ed5ecfea91261e365a5f85f708fdbbc1dc7c95b53c5b3dcc425c38a60c3f33",
+      "originalDialogue": {
+        "source": "native",
+        "text": "还有新的可能。下次，我会更强。"
+      },
+      "imageStreamCopied": true,
+      "originalSoundtrackRemoved": true,
+      "rmsDb": -25.872,
+      "peak": 0.496555,
+      "validation": {
+        "standard": {
+          "imageStreamSha256": "fcfd3c095644dbd63d55c935106f9a0ab417bbf42d4c523b7574af6529fb1f02",
+          "originalImageStreamSha256": "fcfd3c095644dbd63d55c935106f9a0ab417bbf42d4c523b7574af6529fb1f02",
+          "audioPacketSha256": "025a115b02cf87a8a16d57d754578519859f0c9a4f067c880b085f14e2743e4a",
+          "audioSourceCorrelation": 0.999838,
+          "voiceOffsetSeconds": 0.1,
+          "outsideVoiceRms": 0.0,
+          "peak": 0.496555,
+          "rmsDb": -25.872,
+          "duration": 6.08,
+          "faststart": true
+        },
+        "lite": {
+          "imageStreamSha256": "3e335d790ce12bcc72734b914172924e77abd5cd69ad54c16b135a6915a74cd0",
+          "originalImageStreamSha256": "3e335d790ce12bcc72734b914172924e77abd5cd69ad54c16b135a6915a74cd0",
+          "audioPacketSha256": "025a115b02cf87a8a16d57d754578519859f0c9a4f067c880b085f14e2743e4a",
+          "audioSourceCorrelation": 0.999838,
+          "voiceOffsetSeconds": 0.1,
+          "outsideVoiceRms": 0.0,
+          "peak": 0.496555,
+          "rmsDb": -25.872,
+          "duration": 6.08,
+          "faststart": true
+        }
+      },
+      "lite": {
+        "src": "/games/beach-volley/lite-v10/nagisa-defeat-recording.mp4",
+        "bytes": 236877,
+        "sha256": "d1fa95ba8243071c4f503aa9d45f974acf93681f67593973c10eb3d18f59f600",
+        "originalSrc": "/games/beach-volley/lite-v5/video-nagisa-defeat-2.mp4",
+        "originalSha256": "caded73ce67b5bd59f275df2aab188c34fffd82af2a9f022200a6da17adeff48",
+        "imageStreamCopied": true,
+        "audioStreamCopiedFromStandard": true
+      },
+      "asr": {
+        "model": "faster-whisper-large-v3-turbo",
+        "initialPrompt": null,
+        "transcript": "不大可能吧",
+        "expected": "不太可能吧？",
+        "words": [
+          {
+            "text": "不",
+            "start": 0.0,
+            "end": 0.58,
+            "probability": 0.984
+          },
+          {
+            "text": "大",
+            "start": 0.58,
+            "end": 0.7,
+            "probability": 0.91
+          },
+          {
+            "text": "可能",
+            "start": 0.7,
+            "end": 1.06,
+            "probability": 0.999
+          },
+          {
+            "text": "吧",
+            "start": 1.06,
+            "end": 1.34,
+            "probability": 0.905
+          }
+        ],
+        "similarity": 0.8,
+        "sha256": "0d3c411f8692b8a1f4abce39bd09470457dbdb114755027163ff58dd7657fe69",
+        "scope": "Full final encoded standard MP4; the lite variant copies the identical AAC packet stream.",
+        "sourceAsr": "不大可能吧",
+        "interpretation": "Content aid only. Longer padded video can produce different short-line recognition; PCM correlation independently verifies that the entire specified source recording survives."
+      }
+    }
+  },
+  "retiredGeneratedVideos": [
+    {
+      "src": "/games/beach-volley/rally-v7/nagisa-special-2.mp4",
+      "sha256": "e3a85533aa19f8c25e9662cafdc71536df5545894cae7748de5e2066452d120a",
+      "reason": "User requested Nagisa recordings instead of the retained generated dialogue."
+    },
+    {
+      "src": "/games/beach-volley/lite-v7/nagisa-special-2.mp4",
+      "sha256": "c03dd39d536329e78e27bf938ff785d337873a8d8a5a0b79fa31d6c501cddc14",
+      "reason": "User requested Nagisa recordings instead of the retained generated dialogue."
+    },
+    {
+      "src": "/games/beach-volley/variety-v5/video-nagisa-pointWin-2.mp4",
+      "sha256": "7437ac5763f607a87ec678d5e40f7d300b555c4b932e89ac91faf755f5506f11",
+      "reason": "User requested Nagisa recordings instead of the retained generated dialogue."
+    },
+    {
+      "src": "/games/beach-volley/lite-v5/video-nagisa-pointWin-2.mp4",
+      "sha256": "b9faa29b8eb8f60051a7c4c0872f23985c337a4c40c219338d6b0cbcf59d57d4",
+      "reason": "User requested Nagisa recordings instead of the retained generated dialogue."
+    },
+    {
+      "src": "/games/beach-volley/variety-v5/video-nagisa-pointLose-2.mp4",
+      "sha256": "fa12f1b0641bece5eabfbb77014d3047c3ab00204d79420453970d11791ee790",
+      "reason": "User requested Nagisa recordings instead of the retained generated dialogue."
+    },
+    {
+      "src": "/games/beach-volley/lite-v5/video-nagisa-pointLose-2.mp4",
+      "sha256": "2ab251aae51cd12cdb6b0e51302aad07349352f6fd228380b498131ee4555f74",
+      "reason": "User requested Nagisa recordings instead of the retained generated dialogue."
+    },
+    {
+      "src": "/games/beach-volley/variety-v5/video-nagisa-victory-2.mp4",
+      "sha256": "3ff711cffc94114459f459e0ad87d8eba26fa605e02ca5854575ef56e1df9a55",
+      "reason": "User requested Nagisa recordings instead of the retained generated dialogue."
+    },
+    {
+      "src": "/games/beach-volley/lite-v5/video-nagisa-victory-2.mp4",
+      "sha256": "d5e012b47a4d394f3904d99164c537873ec063ddae54697b0445bad1e73b1122",
+      "reason": "User requested Nagisa recordings instead of the retained generated dialogue."
+    },
+    {
+      "src": "/games/beach-volley/variety-v5/video-nagisa-defeat-2.mp4",
+      "sha256": "66ed5ecfea91261e365a5f85f708fdbbc1dc7c95b53c5b3dcc425c38a60c3f33",
+      "reason": "User requested Nagisa recordings instead of the retained generated dialogue."
+    },
+    {
+      "src": "/games/beach-volley/lite-v5/video-nagisa-defeat-2.mp4",
+      "sha256": "caded73ce67b5bd59f275df2aab188c34fffd82af2a9f022200a6da17adeff48",
+      "reason": "User requested Nagisa recordings instead of the retained generated dialogue."
+    }
+  ],
+  "retainedSilentVideos": [
+    {
+      "src": "/games/beach-volley/intro-nagisa-v3.mp4",
+      "sha256": "e49aca1816299396d801bb1957fa7c79e42d5b1aeb703bd9b8dcc820991a2765",
+      "bytes": 2179475
+    },
+    {
+      "src": "/games/beach-volley/lite-v4/intro-nagisa-v3.mp4",
+      "sha256": "525cd9e2cc277294b1b3442d80c789231fa9b2513d9ee32e9c58edfaaf761b89",
+      "bytes": 295925
+    },
+    {
+      "src": "/games/beach-volley/rally-v7/nagisa-special-1.mp4",
+      "sha256": "fc92738698920f837face71d1910cafc3264ad5031b2e10978d1d679dadd4207",
+      "bytes": 819067
+    },
+    {
+      "src": "/games/beach-volley/lite-v7/nagisa-special-1.mp4",
+      "sha256": "be01a0253abe96ae8fdc7d4d1dce18fc52b0e4d1c064e9b999cb276039ba47d6",
+      "bytes": 139298
+    },
+    {
+      "src": "/games/beach-volley/point-nagisa-win-v3.mp4",
+      "sha256": "aaea95b1c774c7de7f18050935384b83928e62f10d9343586fd71e765ece0b9d",
+      "bytes": 1426262
+    },
+    {
+      "src": "/games/beach-volley/lite-v4/point-nagisa-win-v3.mp4",
+      "sha256": "138be39043b06c8ef2b29a882fdc5fe3efa0596b7ed1caff4f3d643b0ec782b8",
+      "bytes": 202032
+    },
+    {
+      "src": "/games/beach-volley/point-nagisa-lose-v3.mp4",
+      "sha256": "27f12816d818225b4fd52a42e18f00166a0aae248c943abbb0c789244b827ace",
+      "bytes": 1442099
+    },
+    {
+      "src": "/games/beach-volley/lite-v4/point-nagisa-lose-v3.mp4",
+      "sha256": "d3a96df1b3e72eed7a74428f817646cb6fd1111192f16e9cefc92b376786c801",
+      "bytes": 192499
+    },
+    {
+      "src": "/games/beach-volley/result-nagisa-win-v3.mp4",
+      "sha256": "538a729742af72d39c2684067f5614cc3314443dd38579914687fc8671ff65ea",
+      "bytes": 3603158
+    },
+    {
+      "src": "/games/beach-volley/lite-v4/result-nagisa-win-v3.mp4",
+      "sha256": "032fdf3eea1dca103c7580f1359c93ffeef0e8d03f81171b492bcd52154759f7",
+      "bytes": 502763
+    },
+    {
+      "src": "/games/beach-volley/result-nagisa-lose-v3.mp4",
+      "sha256": "9efba13a19dd89e85e6b5c6c251981cf7b34865febe2fbde11ce0026478cef2b",
+      "bytes": 2615157
+    },
+    {
+      "src": "/games/beach-volley/lite-v4/result-nagisa-lose-v3.mp4",
+      "sha256": "b9ab5fba4461f66dbedde3e11896e6dfeaa7616f2d1342339e4935f787923db3",
+      "bytes": 361002
+    }
+  ],
+  "byteTotal": 6103482
+}

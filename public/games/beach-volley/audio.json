@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "music": {
     "menu": {
       "src": "/games/beach-volley/audio-v1/music-menu.mp3",
@@ -202,8 +202,8 @@
     "nagisa": {
       "intro": [
         {
-          "src": "/games/beach-volley/audio-v6/nagisa-intro-1.mp3",
-          "bytes": 20780,
+          "src": "/games/beach-volley/audio-v7/nagisa-intro-1.mp3",
+          "bytes": 20781,
           "duration": 2.5,
           "text": "来吧，看看这个是什么！"
         },
@@ -222,8 +222,8 @@
           "text": "不要欺米太甚！"
         },
         {
-          "src": "/games/beach-volley/audio-v6/nagisa-special-2.mp3",
-          "bytes": 20780,
+          "src": "/games/beach-volley/audio-v7/nagisa-special-2.mp3",
+          "bytes": 20781,
           "duration": 2.5,
           "text": "来吧，看看这个是什么！"
         }
