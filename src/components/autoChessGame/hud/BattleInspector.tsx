@@ -24,6 +24,7 @@ export function BattleInspector({ engine, fid, onSelect, labels }: {
   const target = fighters.find(unit => unit.fid === fighter.targetFid);
   const statuses = [
     fighter.stun > 0 ? `眩晕 ${fighter.stun.toFixed(1)}s` : "",
+    fighter.mindControlTime > 0 ? `脑控 ${fighter.mindControlTime.toFixed(1)}s · 反打队友` : "",
     fighter.fearTime > 0 ? `恐惧 ${fighter.fearTime.toFixed(1)}s` : "",
     fighter.tauntTime > 0 ? `嘲讽 ${fighter.tauntTime.toFixed(1)}s` : "",
     fighter.burnTime > 0 ? `灼烧 ${fighter.burnTime.toFixed(1)}s` : "",

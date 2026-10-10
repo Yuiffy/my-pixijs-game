@@ -323,6 +323,7 @@ export class FighterViewRenderer {
       .setAlpha(towerHackVisible ? (fighter.towerHackBuffed ? 0.34 : 0.18) : fighter.syncAvDirection === 0 ? 0 : 0.12 + fighter.syncAvStrength * 0.32);
     burn.setAlpha(fighter.burnTime > 0 ? 0.9 : 0).setScale(1 + Math.sin(this.host.bridge.engine.state.visualTime * 10) * 0.35);
     const statusBadges = [
+      fighter.mindControlTime > 0 ? "脑控" : "",
       fighter.weakenTime > 0 ? "🦑" : "",
       fighter.slowTime > 0 ? "🐌" : "",
       fighter.fearTime > 0 ? "惧" : "",
@@ -350,6 +351,7 @@ export class FighterViewRenderer {
       fighter.enraged ? "!" : "",
     ].filter(Boolean);
     const compactStatus = [
+      fighter.mindControlTime > 0 ? "脑控" : "",
       fighter.stun > 0 ? "✦" : "",
       fighter.fearTime > 0 ? "惧" : "",
       fighter.tauntTime > 0 ? "嘲" : "",

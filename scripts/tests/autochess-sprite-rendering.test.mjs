@@ -1005,7 +1005,7 @@ test("备战界面可从桌面和移动端查看双方真实部署且详情高�
   assert.match(bridge, /interface:\s*\{[\s\S]*?enemyFormationOpen:/);
   assert.match(hud, /function EnemyFormationOverlay/);
   assert.match(hud, /playerFormationPosition\(index\)/);
-  assert.match(hud, /enemyFormationPosition\(index, wave\.units\.length\)/);
+  assert.match(hud, /enemyFormationPosition\(waveUnit\.formationIndex \?\? index, wave\.units\.length\)/);
   assert.match(hud, /data-team=\{unit\.team\}/);
   assert.match(hud, /role="dialog" aria-modal="true"/);
   assert.match(hud, /rift-enemy-formation-unit/);

@@ -1,8 +1,9 @@
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getLiverConfig } from './liver-config.js';
-import { correctedSongName } from './sync-songs.mjs';
+import { correctedSongName, songDetailsFor } from './sync-songs.mjs';
 import { getIndexLiverDir } from './stream-shards.mjs';
 import { parseStreamArtifact, copyFileIfChanged } from './stream-sync-helpers.mjs';
 
@@ -117,7 +118,7 @@ function uniqueItems(items) {
   });
 }
 
-export function buildStreamRecap(summary, { liverId, plan, songs, publications = new Map(), games = [] } = {}) {
+export function buildStreamRecap(summary, { liverId, plan, songs, songDetails = new Map(), publications = new Map(), games = [] } = {}) {
   if (summary?.status !== 'success' || !summary.content || typeof summary.content.overview !== 'string') return null;
   const content = summary.content;
   const events = Array.isArray(plan?.events) ? plan.events : summary.activityTimeline?.events || [];
@@ -126,7 +127,7 @@ export function buildStreamRecap(summary, { liverId, plan, songs, publications =
   const songEvents = Array.isArray(songs?.songs) ? songs.songs.map(song => ({ ...song, id: song.activityId })) : events.filter(event => event.kind === 'song');
   for (const event of songEvents.filter(validRange)) {
     const published = publications.get(event.id);
-    const name = (liverId === 'sui' ? correctedSongName(songs?.sessionId || plan?.sessionId, { ...event, activityId: event.id }) : event.name) || published?.name || '未识别歌名';
+    const name = (liverId === 'sui' ? correctedSongName(songs?.sessionId || plan?.sessionId, { ...event, activityId: event.id }) : event.name) || songDetails.get(event.id)?.name || published?.name || '未识别歌名';
     recap.songs.push({ name, start: event.start, end: event.end, ...(published ? { clips: [published.clip] } : {}) });
   }
   if (!songEvents.length) recap.songs = names(content.songs).map(name => ({ name }));
@@ -208,16 +209,32 @@ export function enrichStreamRecaps(streams, { sourceDirs, liverId }) {
     const game = findSessionPlan(record.directory, 'stream_game_clips', stream.id);
     const plan = activity?.plan;
     if (plan?.summary?.path) {
-      const summaryFile = sessionPath(record.directory, plan.summary.path);
+      let summaryFile;
+      try {
+        summaryFile = sessionPath(record.directory, plan.summary.path);
+      } catch (error) {
+        // Reviewed repairs may live outside the recording tree. Only accept the
+        // exact JSON bytes bound into this plan, never an arbitrary external file.
+        summaryFile = path.resolve(plan.summary.path);
+        if (!/^[a-f0-9]{64}$/.test(plan.summary.sha256 || '')) throw error;
+        if (fs.existsSync(summaryFile)
+          && createHash('sha256').update(fs.readFileSync(summaryFile)).digest('hex') !== plan.summary.sha256) {
+          throw new Error(`Reviewed summary checksum mismatch: ${summaryFile}`);
+        }
+      }
       // PLAN may use the recording's original summary or its reviewed SUMMARY.
       if (fs.existsSync(summaryFile)) summary = read(summaryFile);
     }
     const songsFile = activity && path.join(activity.directory, 'SONGS.json');
     const songRecord = songsFile && fs.existsSync(songsFile) ? read(songsFile) : undefined;
     const songs = songRecord?.sessionId === plan?.sessionId && songRecord?.sessionId ? songRecord : undefined;
+    const songDetails = activity && liverId === 'sui' ? songDetailsFor(activity.directory, songs || {
+      sessionId: plan.sessionId, source: plan.source,
+      songs: (plan.events || []).filter(event => event.kind === 'song').map(event => ({ ...event, activityId: event.id })),
+    }) : new Map();
     const publications = activity ? activityPublications(activity.directory, plan) : new Map();
     const games = game ? gamePublications(game.directory, game.plan) : [];
-    const recap = buildStreamRecap(summary, { liverId, plan, songs, publications, games });
+    const recap = buildStreamRecap(summary, { liverId, plan, songs, songDetails, publications, games });
     return recap ? { ...stream, recap } : stream;
   });
 }

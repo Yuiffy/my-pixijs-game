@@ -107,7 +107,7 @@ const FORMATION_PROFILES = {
   human_recorded: {
     rei: 23,
     units: {
-      yua: [4],
+      sumi: [4],
       lian: [5],
       sui_bird: [9],
       yukisyo: [10],

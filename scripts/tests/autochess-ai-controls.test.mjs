@@ -376,7 +376,7 @@ test("后期目标采用真人长期连胜十人阵容并全部追三星", () =>
     "grove_mender",
     "lian",
     "rei",
-    "yua",
+    "sumi",
     "cinder_ram",
     "spark_mage",
     "sui_flower",
@@ -387,7 +387,7 @@ test("后期目标采用真人长期连胜十人阵容并全部追三星", () =>
   assert.equal(new Set(AUTOPILOT_LATE_GAME_TARGET_IDS).size, 10);
   assert.deepEqual(new Set(AUTOPILOT_TERMINAL_TARGET_IDS), new Set([
     "rei",
-    "yua",
+    "sumi",
     "sui_flower",
     "lian",
     "grove_mender",
@@ -1117,7 +1117,7 @@ test("满候补或余额不足时不会因商店目标牌跳过工坊", () => {
   state.board.fill(null);
   state.bench.fill(null);
   state.board[0] = { uid: 771302, id: "grove_mender", star: 2 };
-  ["lian", "rei", "yua", "cinder_ram", "spark_mage", "sui_flower", "xuehui", "sui_bird", "yukisyo"]
+  ["lian", "rei", "sumi", "cinder_ram", "spark_mage", "sui_flower", "xuehui", "sui_bird", "yukisyo"]
     .forEach((id, index) => {
       state.board[index + 1] = { uid: 771310 + index, id, star: 2 };
     });
@@ -1382,7 +1382,7 @@ test("满棋盘满候补时仍可购买会立即合成的商店棋", () => {
   const state = bridge.engine.state;
   state.gold = 500;
   state.bench.fill(null);
-  ["lian", "rei", "yua", "cinder_ram", "spark_mage", "sui_flower"]
+  ["lian", "rei", "sumi", "cinder_ram", "spark_mage", "sui_flower"]
     .forEach((id, index) => {
       state.bench[index] = { uid: 771400 + index, id, star: 1 };
     });
@@ -1770,7 +1770,7 @@ test("学习型托管以规范站位为种子并让优胜阵容逐代变异", ()
     { unit: { uid: 1, id: "rei", star: 1 }, location: { zone: "board", index: 0 } },
     { unit: { uid: 2, id: "rift_brawler", star: 1 }, location: { zone: "board", index: 1 } },
     { unit: { uid: 3, id: "shiori", star: 1 }, location: { zone: "board", index: 2 } },
-    { unit: { uid: 4, id: "yua", star: 1 }, location: { zone: "bench", index: 0 } },
+    { unit: { uid: 4, id: "sumi", star: 1 }, location: { zone: "bench", index: 0 } },
     { unit: { uid: 5, id: "yukisyo", star: 1 }, location: { zone: "bench", index: 1 } },
   ];
   autopilot.targetLineup = () => roster.slice(0, 3);
@@ -1784,7 +1784,7 @@ test("学习型托管以规范站位为种子并让优胜阵容逐代变异", ()
   const evolved = autopilot.rolloutTargetLineup(roster);
   assert.deepEqual(evolved.map((entry) => entry.unit.uid).sort(), [3, 4, 5]);
   assert.equal(autopilot.plannedFormation, "go_canonical");
-  assert.deepEqual(autopilot.lineageUnitIds.sort(), ["shiori", "yua", "yukisyo"]);
+  assert.deepEqual(autopilot.lineageUnitIds.sort(), ["shiori", "sumi", "yukisyo"]);
 
   bridge.engine.state.round = 2;
   const nextGeneration = autopilot.rolloutTargetLineup(roster);
@@ -1794,7 +1794,7 @@ test("学习型托管以规范站位为种子并让优胜阵容逐代变异", ()
   const simulation = new EngineBridge(13029).engine;
   autopilot.setSimulationLineup(simulation, [roster[0], roster[1], roster[2], roster[3]], "human_midline");
   assert.equal(simulation.state.board.findIndex((unit) => unit?.id === "rei"), 23);
-  assert.equal(simulation.state.board.findIndex((unit) => unit?.id === "yua"), 10);
+  assert.equal(simulation.state.board.findIndex((unit) => unit?.id === "sumi"), 10);
   assert.ok(simulation.state.board.slice(0, 3).every((unit) => unit === null));
 });
 
@@ -2959,7 +2959,7 @@ test("均衡残血且候补席满时会出售已有高星终局棋的低星重�
   bridge.engine.state.board.fill(null);
   bridge.engine.state.bench.fill(null);
   const boardIds = [
-    "sui_flower", "xuehui", "sui_bird", "lian", "yua", "grove_mender", "spark_mage", "rei", "meme", "biscuit_sui",
+    "sui_flower", "xuehui", "sui_bird", "lian", "sumi", "grove_mender", "spark_mage", "rei", "meme", "biscuit_sui",
   ];
   boardIds.forEach((id, index) => {
     bridge.engine.state.board[index] = {
@@ -2968,7 +2968,7 @@ test("均衡残血且候补席满时会出售已有高星终局棋的低星重�
       star: index < 4 ? 2 : 1,
     };
   });
-  const benchIds = ["sui_flower", "xuehui", "sui_bird", "lian", "yua", "grove_mender", "biscuit_sui", "meme"];
+  const benchIds = ["sui_flower", "xuehui", "sui_bird", "lian", "sumi", "grove_mender", "biscuit_sui", "meme"];
   benchIds.forEach((id, index) => {
     bridge.engine.state.bench[index] = { uid: 1302840 + index, id, star: 1 };
   });

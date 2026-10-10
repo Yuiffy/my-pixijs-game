@@ -3228,7 +3228,7 @@ test("早期败局最多只按两名敌方存活者追加核心伤害", () => {
   assert.equal(engine.state.hp, 16);
 });
 
-test("弥希双声道与初濑蝙蝠夜歌会完成控制和团队治疗", () => {
+test("弥希脑控最高攻击敌人并恐惧近邻，初濑蝙蝠夜歌完成团队治疗", () => {
   const mikiEngine = createEngine(18);
   mikiEngine.state.board.fill(null);
   mikiEngine.state.board[0] = { uid: 1, id: "miki_guest", star: 1 };
@@ -3241,10 +3241,16 @@ test("弥希双声道与初濑蝙蝠夜歌会完成控制和团队治疗", () =>
     fighter.hp = fighter.maxHp = 2_000;
   });
   const mikiEnemyHp = mikiBattle.enemy.map((fighter) => fighter.hp);
+  mikiBattle.enemy[0].attack = 100;
   mikiEngine["castAbility"](miki, mikiBattle.enemy);
   mikiBattle.enemy.forEach((fighter, index) => {
-    assert.ok(fighter.hp < mikiEnemyHp[index]);
-    assert.ok(fighter.stun >= 0.62);
+    if (index === 0) {
+      assert.ok(fighter.hp < mikiEnemyHp[index]);
+      assert.equal(fighter.mindControlTime, 1.8);
+    } else {
+      assert.equal(fighter.hp, mikiEnemyHp[index]);
+      assert.ok(fighter.fearTime >= 0.6);
+    }
   });
 
   const hatsuseEngine = createEngine(19);
@@ -3278,7 +3284,7 @@ test("二星七海与三星饼干岁可帮助高存款七人阵容通过后段�
     ["youyi", 2],
     ["grove_mender", 2],
     ["biscuit_sui", 3],
-    ["yua", 1],
+    ["sumi", 1],
   ];
   const prepareScreenshotLineup = (engine, round) => {
     engine.state.round = round;
@@ -3364,7 +3370,7 @@ test("我方天赋不会成为敌方的隐藏天赋加成", () => {
     "united_front",
   ]);
 
-  assert.equal(JSON.parse(plain.renderTextState()).wave.formationTheme, "时停合唱团");
+  assert.equal(JSON.parse(plain.renderTextState()).wave.formationTheme, "悠亚Yua");
   assert.deepEqual(
     augmented.state.battle.enemy.map(({ unitId, star, maxHp, attack, armor }) => ({
       unitId,
@@ -3383,7 +3389,7 @@ test("我方天赋不会成为敌方的隐藏天赋加成", () => {
   );
 });
 
-test("十名三星高费阵容会在三十二战后遇到终局压力", () => {
+test("十名三星高费阵容可撑过普通无限中段，但地狱无限仍有终局压力", () => {
   const slots = [0, 4, 5, 6, 10, 11, 12, 16, 17, 23];
   const fiveCostLineup = [
     "grove_mender",
@@ -3418,14 +3424,14 @@ test("十名三星高费阵容会在三十二战后遇到终局压力", () => {
     return engine;
   };
 
-  const round32 = fightRound(32);
-  assert.equal(round32.state.result.won, true);
+  const round28 = fightRound(28);
+  assert.equal(round28.state.result.won, true);
   const round42 = fightRound(42);
   assert.equal(round42.state.result.won, false);
   assert.ok(round42.state.battle.enemy.some((unit) => unit.alive));
 });
 
-test("通过精英关的阵容可以连续三场普通关攒钱", () => {
+test("通过初濑精英关后保留三场普通储蓄关，三星毕业首领留到无限", () => {
   const slots = [4, 5, 10, 11, 16, 17, 22];
   const lineup = [
     "spark_mage",
@@ -3434,7 +3440,7 @@ test("通过精英关的阵容可以连续三场普通关攒钱", () => {
     "youyi",
     "grove_mender",
     "mumu",
-    "yua",
+    "sumi",
   ];
 
   [12, 13, 14, 15].forEach((round) => {
@@ -3450,7 +3456,7 @@ test("通过精英关的阵容可以连续三场普通关攒钱", () => {
     for (let tick = 0; tick < 600 && engine.state.phase === "battle"; tick += 1) {
       engine.update(0.05);
     }
-    assert.equal(engine.state.result.won, true, `round ${round} should not require another spend`);
+    assert.equal(engine.state.result.won, true, `round ${round}: 主线不提前放入悠亚与弥希的三星检查`);
   });
 });
 

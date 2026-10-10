@@ -1034,20 +1034,43 @@ export class AbilitySystem {
         break;
       }
       case "miki_guest": {
-        const center = densest(targets);
-        if (!center) break;
+        const target = [...targets]
+          .filter((candidate) => !candidate.abilityMotion && !candidate.jumpPending && candidate.jumpTime <= 0)
+          .sort((left, right) => right.attack - left.attack || left.fid.localeCompare(right.fid))[0];
+        if (!target) break;
+        const duration = abilityStatForStar(def, source.star, "controlDuration", 1.8);
+        const radius = abilityStatForStar(def, source.star, "fearRadius", 120);
+        const fearDuration = abilityStatForStar(def, source.star, "fearDuration", 0.6);
+        deal(target, abilityStatForStar(def, source.star, "damageMultiplier", 0.65));
+        if (target.alive) {
+          target.mindControlTime = duration;
+          target.mindControlSourceFid = source.fid;
+          target.targetFid = null;
+          target.targetLock = 0;
+          target.tauntedByFid = null;
+          target.tauntTime = 0;
+          target.fearTime = 0;
+          target.jumpPending = false;
+          target.jumpTime = 0;
+          target.vanguardJumpAdvancing = false;
+          target.channelTime = 0;
+          target.channelTargetFid = null;
+          target.applePieShotsRemaining = 0;
+          target.sekiChargeActive = false;
+          target.stealthTime = 0;
+          target.sumiDragonReady = false;
+        }
         targets
-          .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) <= 138)
-          .forEach((target) => {
-            deal(target, 0.82);
-            if (target.alive) {
-              deal(target, 0.58);
-              target.stun = Math.max(target.stun, 0.62);
-            }
+          .filter((other) => other !== target && Math.hypot(other.x - target.x, other.y - target.y) <= radius)
+          .forEach((other) => {
+            other.fearTime = Math.max(other.fearTime, fearDuration);
+            other.fearSourceX = target.x;
+            other.fearSourceY = target.y;
           });
-        this.host.addEffect({ kind: "line", x: source.x, y: source.y - 8, x2: center.x, y2: center.y - 18, color: "#b9a8ff", life: 0.52, size: 5 });
-        this.host.addEffect({ kind: "line", x: source.x, y: source.y + 8, x2: center.x, y2: center.y + 18, color: "#ffabd8", life: 0.52, size: 5 });
-        this.host.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.78, size: 148 });
+        this.host.addEffect({ kind: "line", x: source.x, y: source.y, x2: target.x, y2: target.y, color: def.accent, life: 0.65, size: 5 });
+        this.host.addEffect({ kind: "ring", x: target.x, y: target.y, color: "#f4eeff", life: 0.8, size: radius });
+        this.host.addEffect({ kind: "emoji_burst", x: target.x, y: target.y - 42, color: "#ffffff", text: "👻", emoji: true, life: 0.85, size: 32 });
+        this.host.addEffect({ kind: "text", x: target.x, y: target.y - 62, color: def.accent, text: "妖女脑控", life: 1, size: 14 });
         break;
       }
       case "hatsuse_guest": {

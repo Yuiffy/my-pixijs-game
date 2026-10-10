@@ -18,18 +18,17 @@ const recordingKey = file => portableBase(file).replace(/\.[^.]+$/, '');
 
 // Only the active plan's manifest can identify a publication. Historical revisions
 // can reuse activity-1 for completely different content.
-export function publicationsFor(directory, record) {
+export function songDetailsFor(directory, record) {
   const planFile = path.join(directory, 'PLAN.json');
   if (!fs.existsSync(planFile)) return new Map();
   const plan = read(planFile);
-  if (plan.sessionId !== record.sessionId || !plan.uploadManifestPath) return new Map();
+  if (!plan.signature || plan.sessionId !== record.sessionId || !plan.uploadManifestPath) return new Map();
   const manifestFile = path.resolve(plan.uploadManifestPath);
   const relative = path.relative(directory, manifestFile);
   if (relative.startsWith('..') || path.isAbsolute(relative)) throw new Error('Activity manifest is outside its session');
   const manifest = read(manifestFile);
   const stateFile = path.join(path.dirname(manifestFile), 'upload_state.json');
-  if (!fs.existsSync(stateFile)) return new Map();
-  const state = read(stateFile);
+  const state = fs.existsSync(stateFile) ? read(stateFile) : {};
   const result = new Map();
   for (const clip of manifest.clips || []) {
     const metadataFile = path.join(path.dirname(manifestFile), portableBase(clip.metadataPath));
@@ -38,19 +37,36 @@ export function publicationsFor(directory, record) {
       || metadata.planSignature !== plan.signature
       || recordingKey(metadata.source?.mediaPath) !== recordingKey(record.source?.mediaPath)) continue;
     const uploaded = state.done?.[String(clip.reviewIndex)];
-    if (!/^BV[0-9A-Za-z]{10}$/.test(uploaded?.bvid || '')) continue;
     for (const song of record.songs || []) {
       const activity = metadata.activities?.find(event => event.id === song.activityId
         && event.start === song.start && event.end === song.end);
       const partIndex = metadata.output?.parts?.findIndex(part => part.activityId === song.activityId);
       if (!activity || !(partIndex >= 0)) continue;
-      result.set(song.activityId, {
+      const part = metadata.output.parts[partIndex];
+      const review = metadata.activityReview;
+      const event = plan.events?.find(item => item.id === song.activityId && item.kind === 'song'
+        && item.start === song.start && item.end === song.end);
+      const evidence = metadata.presentation?.titleEvidence?.items?.filter(item => item.activityId === song.activityId) || [];
+      const title = typeof part.name === 'string' ? part.name.trim() : evidence[0]?.name?.trim();
+      const reviewed = metadata.uploadReady === true && review?.status === 'approved'
+        && (review.authority === 'human' || (review.authority === 'automatic' && review.checks?.titles === true));
+      const name = reviewed && event && activity.kind === 'song' && record.source?.mediaPath
+        && recordingKey(plan.source?.mediaPath) === recordingKey(record.source.mediaPath)
+        && evidence.every(item => item.name === title) && title ? title : null;
+      const clip = /^BV[0-9A-Za-z]{10}$/.test(uploaded?.bvid || '') ? {
         bvid: uploaded.bvid, part: partIndex + 1,
         url: `https://www.bilibili.com/video/${uploaded.bvid}/?p=${partIndex + 1}`,
-      });
+      } : null;
+      result.set(song.activityId, { name, clip });
     }
   }
   return result;
+}
+
+// Preserve the publication-only API; a reviewed name is available before upload.
+export function publicationsFor(directory, record) {
+  return new Map([...songDetailsFor(directory, record)].filter(([, value]) => value.clip)
+    .map(([id, value]) => [id, value.clip]));
 }
 
 export function collectSongFiles(sourceDirs) {
@@ -89,7 +105,7 @@ export function buildSongCatalog(files, generatedAt = new Date().toISOString()) 
     const complete = record.coverage?.status === 'complete' && ['planned', 'rendered'].includes(record.status);
     const title = recordingKey(record.source?.mediaPath).replace(/^录制-\d+-\d{8}-\d{6}-\d+-/, '');
     sessions.push({ id: record.sessionId, recordedAt: record.recordedAt, title, complete });
-    const publications = publicationsFor(path.dirname(file), record);
+    const details = songDetailsFor(path.dirname(file), record);
     for (const song of record.songs) {
       if (!song.activityId || !Number.isFinite(song.start) || song.start < 0
         || !Number.isFinite(song.end) || song.end <= song.start
@@ -98,10 +114,10 @@ export function buildSongCatalog(files, generatedAt = new Date().toISOString()) 
         && !(song.reviewIssues || []).some(issue => ['media_verification_unconfirmed', 'source_transcript_timing_unreliable'].includes(issue));
       performances.push({
         id: `${record.sessionId}:${song.activityId}`, sessionId: record.sessionId,
-        name: correctedSongName(record.sessionId, song),
+        name: correctedSongName(record.sessionId, song) || details.get(song.activityId)?.name || null,
         start: song.start, end: song.end, performance: song.performance,
         confirmed, boundariesConfirmed: song.startObserved === true && song.endObserved === true,
-        clip: publications.get(song.activityId) || null,
+        clip: details.get(song.activityId)?.clip || null,
       });
     }
   }

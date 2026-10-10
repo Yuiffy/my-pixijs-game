@@ -49,7 +49,6 @@ export const SHOP_UNIT_IDS = [
   // 3 费
   "sui_bird",
   "sui_flower",
-  "yua",
   "mitsuri",
   "guangyi",
   "youyi",
@@ -79,6 +78,7 @@ export type ShopUnitId = (typeof SHOP_UNIT_IDS)[number];
 // 秋凛子暂时隐藏，但保留完整单位类型以兼容已有数据和战斗逻辑。
 export type UnitId =
   | ShopUnitId
+  | "yua"
   | "akirinco"
   | "miki_guest"
   | "hatsuse_guest"
@@ -384,6 +384,8 @@ export interface AugmentDefinition {
 export interface WaveUnit {
   id: UnitId;
   star?: 1 | 2 | 3;
+  /** 固定关使用敌方部署格：十人内每列三格，超过十人每列五格，从后排向前编号。 */
+  formationIndex?: number;
 }
 
 export interface WaveDefinition {

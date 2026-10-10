@@ -11,7 +11,7 @@ export const AUTOPILOT_LATE_GAME_TARGETS: readonly LateGameTarget[] = [
   { id: "grove_mender", priority: 100, desiredStar: 3, role: "terminal" },
   { id: "lian", priority: 96, desiredStar: 3, role: "terminal" },
   { id: "rei", priority: 92, desiredStar: 3, role: "terminal" },
-  { id: "yua", priority: 88, desiredStar: 3, role: "terminal" },
+  { id: "sumi", priority: 88, desiredStar: 3, role: "terminal" },
   { id: "cinder_ram", priority: 84, desiredStar: 3, role: "terminal" },
   { id: "spark_mage", priority: 80, desiredStar: 3, role: "terminal" },
   { id: "sui_flower", priority: 76, desiredStar: 3, role: "terminal" },

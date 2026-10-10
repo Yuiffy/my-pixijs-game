@@ -108,7 +108,7 @@ test("Go级会提前追逐九十次刷新后才能完成的机会项目", () => 
     "grove_mender",
     "lian",
     "rei",
-    "yua",
+    "sumi",
     "cinder_ram",
     "spark_mage",
     "sui_flower",
@@ -303,7 +303,7 @@ test("Go级满候补席会释放低进度旧项目并买入新机会项目", () 
     "grove_mender",
     "lian",
     "rei",
-    "yua",
+    "sumi",
     "cinder_ram",
     "spark_mage",
     "sui_flower",
@@ -362,7 +362,7 @@ test("Go级会同时保留多个未来终局项目，避免后段卖掉关键替
     "grove_mender",
     "lian",
     "rei",
-    "yua",
+    "sumi",
     "cinder_ram",
     "spark_mage",
     "sui_flower",
@@ -400,7 +400,7 @@ test("Go级在核心阵容成熟前不拆阵追全棋池机会", () => {
     "grove_mender",
     "lian",
     "rei",
-    "yua",
+    "sumi",
     "cinder_ram",
     "spark_mage",
     "sui_flower",
@@ -531,7 +531,7 @@ test("Go级用神经模型扩展候选并只真实复核 Top-K", () => {
     "grove_mender",
     "lian",
     "rei",
-    "yua",
+    "sumi",
     "cinder_ram",
     "spark_mage",
     "sui_flower",
@@ -584,7 +584,7 @@ test("Go级真实复核候选按棋种与星级去重", () => {
   bridge.engine.state.playerLevel = 3;
   bridge.engine.state.board.fill(null);
   bridge.engine.state.bench.fill(null);
-  ["spark_mage", "cog_scribe", "yua"].forEach((id, index) => {
+  ["spark_mage", "cog_scribe", "sumi"].forEach((id, index) => {
     bridge.engine.state.board[index] = { uid: 1621140 + index, id, star: 2 };
   });
   bridge.engine.state.bench[0] = { uid: 1621150, id: "spark_mage", star: 2 };
@@ -624,7 +624,7 @@ test("Go级残血时会用60Hz覆盖复核被低频误判的启发式候选", ()
   [
     "grove_mender",
     "lian",
-    "yua",
+    "sumi",
     "cinder_ram",
     "spark_mage",
     "sui_flower",
@@ -676,7 +676,7 @@ test("Go级规范站位不依赖 UID、购买顺序或当前棋盘顺序", () =>
     ["cinder_ram", 3],
     ["spark_mage", 1],
     ["grove_mender", 2],
-    ["yua", 3],
+    ["sumi", 3],
   ];
   const makeLineup = (ordered, uidBase) => ordered.map(([id, star], index) => ({
     unit: { uid: uidBase + index * 17, id, star },
@@ -706,7 +706,7 @@ test("稳健与搏上限使用 Go v4 模型和规范站位但不读取未来信�
     "cinder_ram",
     "spark_mage",
     "grove_mender",
-    "yua",
+    "sumi",
     "xuehui",
     "yukisyo",
   ];
@@ -1137,7 +1137,7 @@ test("Go级开战棋盘必须逐格等于冠军评估时的规范站位", () => 
   bridge.engine.state.board.fill(null);
   bridge.engine.state.bench.fill(null);
   const ids = [
-    "yua",
+    "sumi",
     "cog_scribe",
     "cinder_ram",
     "lian",
@@ -1338,7 +1338,7 @@ test("Go级低血量预测败局会提前用60Hz复核直接单换", () => {
   bridge.engine.state.playerLevel = 3;
   bridge.engine.state.board.fill(null);
   bridge.engine.state.bench.fill(null);
-  ["spark_mage", "cog_scribe", "yua"].forEach((id, index) => {
+  ["spark_mage", "cog_scribe", "sumi"].forEach((id, index) => {
     bridge.engine.state.board[[10, 16, 9][index]] = {
       uid: 1621150 + index,
       id,

@@ -302,6 +302,8 @@ export class CombatSetupSystem {
         burnDamageKind: "attack",
         tauntedByFid: null,
         tauntTime: 0,
+        mindControlTime: 0,
+        mindControlSourceFid: null,
         lifesteal:
           TRAFFIC_MEMBER_LIFESTEAL[trafficLevel] +
           TRAFFIC_TEAM_LIFESTEAL[globalTrafficLevel] +
@@ -441,7 +443,7 @@ export class CombatSetupSystem {
     const enemy = wave.units.map((waveUnit, index) => {
       const def = UNIT_DEFS[waveUnit.id];
       const star = waveUnit.star || 1;
-      const spawn = enemyFormationPosition(index, wave.units.length);
+      const spawn = enemyFormationPosition(waveUnit.formationIndex ?? index, wave.units.length);
       const stats = this.calculatePlayerCombatStats(
         { id: waveUnit.id, star },
         enemyTraitCounts,
@@ -510,6 +512,8 @@ export class CombatSetupSystem {
         burnDamageKind: "attack",
         tauntedByFid: null,
         tauntTime: 0,
+        mindControlTime: 0,
+        mindControlSourceFid: null,
         lifesteal:
           TRAFFIC_MEMBER_LIFESTEAL[trafficLevel] +
           TRAFFIC_TEAM_LIFESTEAL[globalTrafficLevel],

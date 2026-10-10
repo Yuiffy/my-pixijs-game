@@ -68,7 +68,7 @@ test("看穿2计划完成后仍会清理满候补并购买当前终局目标牌"
     { uid: 1520050, id: "grove_mender", star: 3 },
     { uid: 1520051, id: "lian", star: 3 },
     { uid: 1520052, id: "rei", star: 3 },
-    { uid: 1520053, id: "yua", star: 3 },
+    { uid: 1520053, id: "sumi", star: 3 },
     { uid: 1520054, id: "cinder_ram", star: 3 },
     { uid: 1520055, id: "spark_mage", star: 2 },
     { uid: 1520056, id: "sui_flower", star: 2 },
@@ -83,13 +83,13 @@ test("看穿2计划完成后仍会清理满候补并购买当前终局目标牌"
     { uid: 1520063, id: "sui_cat", star: 1 },
     { uid: 1520064, id: "mitsuri", star: 1 },
     { uid: 1520065, id: "biscuit_sui", star: 1 },
-    { uid: 1520066, id: "yua", star: 1 },
+    { uid: 1520066, id: "sumi", star: 1 },
     { uid: 1520067, id: "sui_bird", star: 1 },
   ];
 
   const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "seer2", "oracle", 20);
   const action = autopilot.seerEndgameInvestmentAction(autopilot.ownedEntries());
-  assert.deepEqual(action, { type: "sell", location: { zone: "bench", index: 5 } });
+  assert.deepEqual(action, { type: "sell", location: { zone: "bench", index: 3 } });
 
   bridge.dispatch(action);
   const purchase = autopilot.seerEndgameInvestmentAction(autopilot.ownedEntries());
@@ -107,7 +107,7 @@ test("看穿2终局池由十二张三星目标和四条主变化组成", () => {
       "grove_mender",
       "lian",
       "rei",
-      "yua",
+      "sumi",
       "cinder_ram",
       "spark_mage",
       "sui_flower",

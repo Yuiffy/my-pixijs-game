@@ -220,6 +220,7 @@ public buyShopUnit(index: number) {
     const id = this.state.shop[index];
     if (!id) return;
     const def = UNIT_DEFS[id];
+    if (!def.shop) return;
     if (this.state.gold < def.cost) {
       this.setToast(`还差 ${def.cost - this.state.gold} 金币。`, "bad");
       return;

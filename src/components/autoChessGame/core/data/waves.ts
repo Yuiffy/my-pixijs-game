@@ -144,7 +144,66 @@ const HELL_NAMES = [
 
 const STAR_COPY_VALUE = [0, 1, 3, 9] as const;
 
-export const ENEMY_GUEST_IDS = ["miki_guest", "hatsuse_guest"] as const;
+export const ENEMY_GUEST_IDS = ["yua", "hatsuse_guest", "miki_guest"] as const;
+
+// 毕业角色只在自己的固定关登场；两位三星核心留到无限首领，按该阶段预算缩放。
+export const FIXED_GUEST_WAVES: WaveDefinition[] = [
+  {
+    round: 21,
+    name: "悠亚Yua · 外星歼灭阵",
+    tag: "boss",
+    description: `${BOSS_WARNING_TEXT} 三星邪恶外星人坐镇后排中央，九名两星护卫以舞带救援、技能盾和前排续航护送连续贯穿光线；分散后排、错开射线，并从侧翼切入悠亚。`,
+    modifier: 1,
+    units: [
+      { id: "yua", star: 3, formationIndex: 1 },
+      { id: "sumi", star: 2, formationIndex: 0 },
+      { id: "mumu", star: 2, formationIndex: 2 },
+      { id: "sun_guard", star: 2, formationIndex: 7 },
+      { id: "gale_archer", star: 2, formationIndex: 6 },
+      { id: "shiori", star: 2, formationIndex: 8 },
+      { id: "yukisyo", star: 2, formationIndex: 4 },
+      { id: "nori", star: 2, formationIndex: 5 },
+      { id: "biscuit_sui", star: 2, formationIndex: 3 },
+      { id: "mossback", star: 2, formationIndex: 9 },
+    ],
+  },
+  {
+    round: 12,
+    name: "初濑Hatsuse · 蝙蝠夜歌",
+    tag: "elite",
+    description: "精英预警：两星初濑在后排中央以蝙蝠夜歌吸血治疗，火热与月之帮卫队拖长战斗；侧翼切入初濑可打断续航链。",
+    modifier: Math.sqrt(81 / 34),
+    units: [
+      { id: "hatsuse_guest", star: 2, formationIndex: 1 },
+      { id: "rift_brawler", star: 2, formationIndex: 7 },
+      { id: "shiori", formationIndex: 6 },
+      { id: "cinder_ram", formationIndex: 4 },
+      { id: "nightin", formationIndex: 0 },
+      { id: "sui_flower", formationIndex: 2 },
+    ],
+  },
+  {
+    round: 26,
+    name: "弥希Miki · 白衣妖女",
+    tag: "boss",
+    description: `${BOSS_WARNING_TEXT} 三星弥希由十一名两星护盾前排和法术卫队保护，妖女脑控会让高攻击棋子反打队友，白衣惊魂驱散附近队友；分散主力并尽快击倒弥希可解除脑控。`,
+    modifier: 1,
+    units: [
+      { id: "miki_guest", star: 3, formationIndex: 2 },
+      { id: "nagisa", star: 2, formationIndex: 12 },
+      { id: "sun_guard", star: 2, formationIndex: 10 },
+      { id: "gale_archer", star: 2, formationIndex: 14 },
+      { id: "spark_mage", star: 2, formationIndex: 1 },
+      { id: "mumu", star: 2, formationIndex: 8 },
+      { id: "yukisyo", star: 2, formationIndex: 7 },
+      { id: "shiori", star: 2, formationIndex: 11 },
+      { id: "mossback", star: 2, formationIndex: 13 },
+      { id: "nightin", star: 2, formationIndex: 3 },
+      { id: "cinder_ram", star: 2, formationIndex: 0 },
+      { id: "sui_flower", star: 2, formationIndex: 4 },
+    ],
+  },
+];
 
 const ENEMY_SQUADS: ReadonlyArray<{
   name: string;
@@ -193,13 +252,6 @@ const enemySquadForRound = (round: number, seed = 0) => {
     return ENDLESS_BOSS_SQUADS[bossIndex % ENDLESS_BOSS_SQUADS.length];
   }
   return ENEMY_SQUADS[Math.abs(round * 7 + seed * 11) % ENEMY_SQUADS.length];
-};
-
-const enemyGuestForRound = (round: number, seed = 0): UnitId | null => {
-  if (round <= WAVES.length) return null;
-  const guestChance = round > CAMPAIGN_ROUNDS ? 2 : 1;
-  if (Math.abs(round * 31 + seed * 17) % 7 > guestChance) return null;
-  return ENEMY_GUEST_IDS[Math.abs(round + seed) % ENEMY_GUEST_IDS.length];
 };
 
 export const waveCompositionValue = (wave: Pick<WaveDefinition, "units">) => wave.units.reduce(
@@ -285,9 +337,6 @@ const buildBudgetedUnits = (
       star: 1,
     };
   });
-  const guest = enemyGuestForRound(round, seed);
-  if (guest && units.length > 1) units[units.length - 1] = { id: guest, star: 1 };
-
   const maxStar: 1 | 2 | 3 = round < 15 ? 2 : 3;
   let remaining = Math.max(0, budget - waveCompositionValue({ units }));
   for (let guard = 0; guard < units.length * 2; guard += 1) {
@@ -319,7 +368,10 @@ const buildBudgetedUnits = (
 
 const bountyForUnits = (units: readonly WaveUnit[]) => units.reduce((total, waveUnit) => total + (waveUnit.star ?? 1), 0);
 
-const projectedBountyForGeneratedRound = (round: number, budget: number) => bountyForUnits(buildBudgetedUnits(round, tagForRound(round), budget));
+const projectedBountyForGeneratedRound = (round: number, budget: number) => {
+  const guestWave = FIXED_GUEST_WAVES.find((wave) => wave.round === round);
+  return bountyForUnits(guestWave?.units ?? buildBudgetedUnits(round, tagForRound(round), budget));
+};
 
 export const projectedIncomeAfterRound = (round: number) => {
   const safeRound = Math.max(CAMPAIGN_ROUNDS + 1, Math.floor(round));
@@ -342,6 +394,11 @@ export const projectedIncomeAfterRound = (round: number) => {
 
 export const waveForRound = (round: number, seed = 0): WaveDefinition => {
   if (round <= WAVES.length) return WAVES[Math.max(0, round - 1)];
+  const guestWave = FIXED_GUEST_WAVES.find((wave) => wave.round === round);
+  if (guestWave) return {
+    ...guestWave,
+    modifier: Math.sqrt(enemyBudgetForRound(round) / waveCompositionValue(guestWave)),
+  };
 
   const mode = progressionModeForRound(round);
   const tag = tagForRound(round);

@@ -1016,6 +1016,8 @@ export class AutoChessEngine {
       stun: Number(fighter.stun.toFixed(2)),
       tauntTime: Number(fighter.tauntTime.toFixed(1)),
       fearTime: Number(fighter.fearTime.toFixed(2)),
+      mindControlTime: Number(fighter.mindControlTime.toFixed(2)),
+      mindControlSourceFid: fighter.mindControlSourceFid,
       burnTime: Number(Math.max(0, fighter.burnTime).toFixed(2)),
       slowTime: Number(fighter.slowTime.toFixed(2)),
       slowMultiplier: Number(fighter.slowMultiplier.toFixed(2)),
@@ -3412,6 +3414,15 @@ export class AutoChessEngine {
       fighter.stun = Math.max(0, fighter.stun - dt);
       fighter.tauntTime = Math.max(0, fighter.tauntTime - dt);
       if (fighter.tauntTime <= 0) fighter.tauntedByFid = null;
+      if (fighter.mindControlTime > 0) {
+        const controller = fighters.find((other) => other.fid === fighter.mindControlSourceFid && other.alive);
+        fighter.mindControlTime = controller ? Math.max(0, fighter.mindControlTime - dt) : 0;
+        if (fighter.mindControlTime <= 0) {
+          fighter.mindControlSourceFid = null;
+          fighter.targetFid = null;
+          fighter.targetLock = 0;
+        }
+      }
       fighter.abilityShieldTime = Math.max(0, fighter.abilityShieldTime - dt);
       if (fighter.abilityShieldTime <= 0 && fighter.abilityShield > 0) {
         fighter.abilityShield = 0;
@@ -3656,6 +3667,24 @@ export class AutoChessEngine {
         this.heal(fighter, fighter, fighter.maxHp * healPerSecond * manquActiveTime, false);
       }
       if (fighter.stun > 0) return;
+      if (fighter.mindControlTime > 0) {
+        const target = this.resolveCombatTarget(fighter, this.living(fighter.team).filter((other) => other !== fighter), dt);
+        if (!target) return;
+        if (Math.hypot(target.x - fighter.x, target.y - fighter.y) > this.combatAttackRange(fighter, target)) {
+          this.moveTowardCombatTarget(fighter, target, fighters, dt, movementIntents);
+        } else if (fighter.cooldown <= 0) {
+          // 脑控只结算一次普通攻击，避免触发原棋子的范围技能或月之帮协攻。
+          this.faceTowardX(fighter, target.x);
+          fighter.cooldown = fighter.attackInterval;
+          fighter.attackPulse = 0.22;
+          fighter.attackTargetX = target.x;
+          fighter.attackTargetY = target.y;
+          const dealt = this.damage(fighter, target, fighter.attack);
+          if (dealt > 0) this.addDamageText(target, dealt);
+          this.addEffect({ kind: "line", x: fighter.x, y: fighter.y, x2: target.x, y2: target.y, color: "#c6b4ff", life: 0.22, size: 3 });
+        }
+        return;
+      }
       if (fighter.fearTime > 0) {
         this.updateFearEscape(fighter, dt, movementIntents);
         return;
@@ -4224,6 +4253,8 @@ export class AutoChessEngine {
       stun: 0,
       tauntedByFid: null,
       tauntTime: 0,
+      mindControlTime: 0,
+      mindControlSourceFid: null,
       fearTime: 0,
       fearSourceX: 0,
       fearSourceY: 0,

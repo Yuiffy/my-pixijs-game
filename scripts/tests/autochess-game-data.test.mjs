@@ -167,6 +167,8 @@ test("主线普通关保留储蓄空间，精英关与首领集中检查战力",
   [4, 8, 12, 16].forEach((round) => {
     assert.ok(data.enemyBudgetForRound(round) > data.enemyBudgetForRound(round - 1) * 1.4);
   });
+  assert.ok(data.enemyBudgetForRound(16) > data.enemyBudgetForRound(15));
+  assert.ok(data.enemyBudgetForRound(15) > data.enemyBudgetForRound(14));
   [9, 13].forEach((round) => {
     assert.ok(data.enemyBudgetForRound(round) < data.enemyBudgetForRound(round - 1));
   });
@@ -186,7 +188,7 @@ test("普通无限与地狱无限按完整回合收入递推敌军总价值", ()
   assert.equal(normal.units.length, 10);
   assert.equal(normal.description, "敌人会持续变强，请继续强化阵容。");
   assert.equal(elite.description, data.ELITE_WARNING_TEXT);
-  assert.equal(boss.description, data.BOSS_WARNING_TEXT);
+  assert.ok(boss.description.startsWith(data.BOSS_WARNING_TEXT));
   assert.equal(hell.description, "地狱无限：敌人会越来越强，请不断强化阵容。");
   [normal, elite, boss, hell].forEach((wave) => {
     assert.doesNotMatch(wave.description, /利息|连胜|赏金|复投|总价值/);
@@ -227,13 +229,19 @@ test("无限后段提前突破十人并以可见人口持续加压", () => {
   assert.ok(data.waveForRound(60).units.length > data.waveForRound(40).units.length);
 });
 
-test("无限首领轮换时停、续航与高费压制主题编队", () => {
-  const control = data.waveForRound(21, 4);
-  const sustain = data.waveForRound(26, 4);
+test("无限前两首领为三星悠亚与弥希，后续轮换时停、续航与高费编队", () => {
+  const yua = data.waveForRound(21, 4);
+  const miki = data.waveForRound(26, 4);
+  const control = data.waveForRound(36, 4);
+  const sustain = data.waveForRound(41, 4);
   const highCost = data.waveForRound(31, 4);
 
+  assert.match(yua.name, /^悠亚Yua/);
+  assert.match(miki.name, /^弥希Miki/);
+  assert.deepEqual([yua.units[0].id, yua.units[0].star], ["yua", 3]);
+  assert.deepEqual([miki.units[0].id, miki.units[0].star], ["miki_guest", 3]);
   assert.match(control.name, /^时停合唱团/);
-  assert.equal(control.units.filter(({ id }) => id === "spark_mage").length, 2);
+  assert.ok(control.units.filter(({ id }) => id === "spark_mage").length >= 2);
   assert.match(sustain.name, /^终场续航团/);
   assert.ok(sustain.units.filter(({ id }) => id === "cinder_ram").length >= 4);
   assert.match(highCost.name, /^高费压制团/);
@@ -242,9 +250,16 @@ test("无限首领轮换时停、续航与高费压制主题编队", () => {
     assert.equal(wave.units[0].id, "rift_tyrant");
     assert.ok(data.enemyTraitActivations(wave.units).length > 0);
   });
+  [yua, miki].forEach((wave) => {
+    assert.equal(wave.tag, "boss");
+    assert.ok(data.enemyTraitActivations(wave.units).length > 0);
+    const income = data.projectedIncomeAfterRound(wave.round);
+    assert.equal(income.bounty, wave.units.reduce((sum, unit) => sum + unit.star, 0));
+    assert.equal(data.enemyBudgetForRound(wave.round + 1) - data.enemyBudgetForRound(wave.round), income.total);
+  });
 });
 
-test("敌方阵容始终组成羁绊，特殊角色偶尔出现但不进入商店", async () => {
+test("敌方阵容始终组成羁绊，毕业角色固定出现但不进入商店", async () => {
   for (let round = 1; round <= 40; round += 1) {
     const wave = data.waveForRound(round, 3);
     assert.ok(data.enemyTraitActivations(wave.units).length > 0, `round ${round} should activate an enemy trait`);
@@ -440,7 +455,7 @@ test("非岁己角色收敛为低费代表，岁己保留多种形态", () => {
   const retained = [
     "sun_guard", "ember_blade", "gale_archer", "rift_stalker", "cog_scribe", "mossback",
     "rift_brawler", "shiori", "spark_mage", "clock_gunner", "dawn_duelist", "grove_mender",
-    "cinder_ram", "yua", "mitsuri", "nagisa",
+    "cinder_ram", "mitsuri", "nagisa",
   ];
   const removed = [
     "brass_colossus", "ash_dancer", "thorn_brute", "void_oracle", "gear_sniper", "shade_reaver",
@@ -718,7 +733,7 @@ test("北欧魔法师升为三费并提供能量驱动的三档时停", () => {
     [1, 2, 3, 4, 5].map(
       (tier) => data.SHOP_UNITS.filter((id) => data.UNIT_DEFS[id].tier === tier).length,
     ),
-    [7, 8, 11, 10, 6],
+    [7, 8, 11, 9, 6],
   );
   assert.equal(data.abilityDescriptionForStar(data.UNIT_DEFS.gale_archer, 3), data.UNIT_DEFS.gale_archer.abilityDescription);
 });
@@ -797,7 +812,7 @@ test("沐霂改为后排单体救援且不再造成范围伤害或群盾", () =>
 test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.equal(new Set(data.SHOP_UNITS).size, data.SHOP_UNITS.length);
   assert.ok(data.SHOP_UNITS.includes("mitsuri"));
-  assert.equal(data.SHOP_UNITS.length, 42);
+  assert.equal(data.SHOP_UNITS.length, 41);
   ["nori", "meme", "kioi", "nightin", "guangyi", "lovely", "rei", "rutice", "komichi"].forEach((id) => assert.ok(data.SHOP_UNITS.includes(id)));
   assert.equal(data.SHOP_UNITS.includes("akirinco"), false);
   ["aza", "ayana", "yy", "haruka"].forEach((id) => {

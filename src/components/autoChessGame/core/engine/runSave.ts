@@ -12,6 +12,7 @@ export type RunStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 export type RunCheckpoint = {
   savedAt: number;
   resumeBattle: boolean;
+  retiredRefund?: number;
   snapshot: AutoChessEngineSnapshot;
 };
 export type RunSaveInfo = {
@@ -29,7 +30,8 @@ const isNumber = (value: unknown): value is number => (
   typeof value === "number" && Number.isFinite(value) && value >= 0
 );
 const isInteger = (value: unknown): value is number => isNumber(value) && Number.isSafeInteger(value);
-const unitIds = new Set<string>(SHOP_UNITS);
+// 接受旧版存档中的悠亚，再在验证通过后移出己方并按完整合成份数退款。
+const unitIds = new Set<string>([...SHOP_UNITS, "yua"]);
 const starterIds = new Set<string>(STARTERS.map(({ id }) => id));
 const augmentIds = new Set<string>(AUGMENTS.map(({ id }) => id));
 
@@ -150,6 +152,25 @@ export class RunSaveStore {
       if (typeof envelope.payload !== "string" || checksum(envelope.payload) !== envelope.checksum) throw new Error("Invalid checksum");
       const save: unknown = JSON.parse(envelope.payload);
       if (!validCheckpoint(save)) throw new Error("Invalid checkpoint");
+      const { state } = save.snapshot;
+      let refund = 0;
+      const retireYua = (slots: typeof state.board) => slots.map((unit) => {
+        if (unit?.id !== "yua") return unit;
+        refund += UNIT_DEFS.yua.cost * [0, 1, 3, 9][unit.star];
+        return null;
+      });
+      state.board = retireYua(state.board);
+      state.bench = retireYua(state.bench);
+      state.shop = state.shop.map((id) => (id === "yua" ? null : id));
+      state.gold += refund;
+      if (refund > 0) save.retiredRefund = refund;
+      if (state.battle) {
+        state.battle.player = state.battle.player.filter((fighter) => fighter.unitId !== "yua");
+        [...state.battle.player, ...state.battle.enemy].forEach((fighter) => {
+          fighter.mindControlTime ??= 0;
+          fighter.mindControlSourceFid ??= null;
+        });
+      }
       this.issue = null;
       return save;
     } catch {

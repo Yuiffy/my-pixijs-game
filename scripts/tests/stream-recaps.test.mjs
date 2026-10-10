@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -143,6 +144,23 @@ test('another liver retains categories and has no fabricated publication links',
   assert.deepEqual(stream, { id });
   assert.deepEqual(buildStreamRecap(summary, { liverId: 'shiori' }).songs, [{ name: '夜曲' }]);
   assert.deepEqual(buildStreamRecap(summary, { liverId: 'shiori' }).games, [{ name: '空洞骑士' }]);
+});
+
+test('external reviewed summary requires plan checksum and cannot corrupt an existing index', t => {
+  const f = fixture(t);
+  const repaired = f.save(path.join(f.root, 'repairs', 'SUMMARY.json'), { ...f.summary, content: { ...f.summary.content, overview: '修订梗概' } });
+  f.plan.summary = { path: repaired, sha256: createHash('sha256').update(fs.readFileSync(repaired)).digest('hex') };
+  f.save(path.join(f.directory, 'PLAN.json'), f.plan);
+  const index = f.save(path.join(f.root, 'streams.json'), [{ id }]);
+  syncStreamRecaps({ sourceDirs: [f.root], liverId: 'sui', index });
+  const before = fs.readFileSync(index, 'utf8');
+  assert.equal(JSON.parse(before)[0].recap.overview, '修订梗概');
+  f.save(repaired, f.summary);
+  assert.throws(() => syncStreamRecaps({ sourceDirs: [f.root], liverId: 'sui', index }), /checksum mismatch/);
+  assert.equal(fs.readFileSync(index, 'utf8'), before);
+  delete f.plan.summary.sha256; f.save(path.join(f.directory, 'PLAN.json'), f.plan);
+  assert.throws(() => syncStreamRecaps({ sourceDirs: [f.root], liverId: 'sui', index }), /outside its session/);
+  assert.equal(fs.readFileSync(index, 'utf8'), before);
 });
 
 test('saved recaps cover index rollout delays, then accept newer remote summaries', () => {

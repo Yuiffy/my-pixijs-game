@@ -117,12 +117,12 @@ export const renderTextState = (context: TextStateContext) => {
             enemyCount: currentWave.units.length,
             formationTheme: currentWave.name.split(" · ")[0],
             potentialBounty: context.potentialBounty,
-            units: currentWave.units.map(({ id, star = 1 }, index) => ({
+            units: currentWave.units.map(({ id, star = 1, formationIndex }, index) => ({
               id,
               name: UNIT_DEFS[id].name,
               cost: UNIT_DEFS[id].cost,
               star,
-              formation: enemyFormationPosition(index, currentWave.units.length),
+              formation: enemyFormationPosition(formationIndex ?? index, currentWave.units.length),
             })),
             enemyTraits: enemyTraitActivations(currentWave.units).map(
               ({ id, count, level }) => ({

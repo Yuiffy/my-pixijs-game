@@ -214,6 +214,9 @@ export interface Fighter {
   /** 被嘲讽时只能以指定单位为攻击目标 */
   tauntedByFid: string | null;
   tauntTime: number;
+  /** 弥希脑控期间阵营不变，只用普攻攻击原阵营的其他棋子。 */
+  mindControlTime: number;
+  mindControlSourceFid: string | null;
   burnTime: number;
   burnDps: number;
   burnSourceFid: string | null;

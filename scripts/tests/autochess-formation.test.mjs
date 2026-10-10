@@ -18,7 +18,7 @@ const unitSpecs = [
   ["youyi", 2],
   ["spark_mage", 1],
   ["spark_mage", 1],
-  ["yua", 3],
+  ["sumi", 3],
   ["tiandou", 2],
 ];
 
@@ -107,7 +107,7 @@ test("战斗阶段不会执行推荐站位", () => {
   state.phase = "battle";
   state.board.fill(null);
   state.board[0] = { uid: 92001, id: "mossback", star: 2 };
-  state.board[23] = { uid: 92002, id: "yua", star: 2 };
+  state.board[23] = { uid: 92002, id: "sumi", star: 2 };
   const before = structuredClone(state.board);
 
   assert.equal(bridge.engine.autoArrangeBoard(), false);

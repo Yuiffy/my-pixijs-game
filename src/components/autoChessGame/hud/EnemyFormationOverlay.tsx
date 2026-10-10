@@ -43,7 +43,7 @@ owned: null }];
     team: "enemy" as const,
     unitId: waveUnit.id,
     star: waveUnit.star ?? 1,
-    position: enemyFormationPosition(index, wave.units.length),
+    position: enemyFormationPosition(waveUnit.formationIndex ?? index, wave.units.length),
     owned: null,
   }));
   const formationUnits = [...playerUnits, ...enemyUnits];

@@ -337,7 +337,10 @@ export class EngineBridge {
         engine.state.bestScore = Math.max(bestScore, engine.state.bestScore);
         if (save.resumeBattle) {
           engine.startBattle();
-          this.battlePaused = true;
+          this.battlePaused = Boolean(engine.state.battle);
+        }
+        if (save.retiredRefund) {
+          engine.state.toast = { text: `悠亚已移至敌方关卡，返还 ${save.retiredRefund} 金币。`, tone: "info", time: 5 };
         }
         break;
       }
