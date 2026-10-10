@@ -6,7 +6,7 @@ import {
   PLAYER_LEVELS,
   UNIT_DEFS,
   enemyTraitActivations,
-  enemyBudgetForRound,
+  waveEffectiveValue,
   waveForRound,
   type PlayerLevel,
   type UnitId,
@@ -157,6 +157,7 @@ const waveForecastForRound = (round: number, seed: number): SeerWaveForecast => 
   const cached = waveForecastCache.get(key);
   if (cached) return cached;
   const wave = waveForRound(round, seed);
+  const budget = waveEffectiveValue(wave);
   const units = wave.units.map((unit) => ({
     id: unit.id,
     star: (unit.star || 1) as 1 | 2 | 3,
@@ -169,8 +170,8 @@ const waveForecastForRound = (round: number, seed: number): SeerWaveForecast => 
   const forecast = {
     round,
     tag: wave.tag,
-    budget: enemyBudgetForRound(round),
-    threat: enemyBudgetForRound(round) * 12 + traitPressure + tagPressure,
+    budget,
+    threat: budget * 12 + traitPressure + tagPressure,
     units,
   } satisfies SeerWaveForecast;
   waveForecastCache.set(key, forecast);

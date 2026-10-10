@@ -146,11 +146,11 @@ const STAR_COPY_VALUE = [0, 1, 3, 9] as const;
 
 export const ENEMY_GUEST_IDS = ["yua", "hatsuse_guest", "miki_guest"] as const;
 
-// 毕业角色只在自己的固定关登场；两位三星核心留到无限首领，按该阶段预算缩放。
+// 毕业角色只在自己的固定关登场，悠亚与弥希留到无限首领。
 export const FIXED_GUEST_WAVES: WaveDefinition[] = [
   {
     round: 21,
-    name: "悠亚Yua · 外星歼灭阵",
+    name: "邪恶外星人",
     tag: "boss",
     description: `${BOSS_WARNING_TEXT} 三星邪恶外星人坐镇后排中央，九名两星护卫以舞带救援、技能盾和前排续航护送连续贯穿光线；分散后排、错开射线，并从侧翼切入悠亚。`,
     modifier: 1,
@@ -169,7 +169,7 @@ export const FIXED_GUEST_WAVES: WaveDefinition[] = [
   },
   {
     round: 12,
-    name: "初濑Hatsuse · 蝙蝠夜歌",
+    name: "蝙蝠夜歌",
     tag: "elite",
     description: "精英预警：两星初濑在后排中央以蝙蝠夜歌吸血治疗，火热与月之帮卫队拖长战斗；侧翼切入初濑可打断续航链。",
     modifier: Math.sqrt(81 / 34),
@@ -184,12 +184,12 @@ export const FIXED_GUEST_WAVES: WaveDefinition[] = [
   },
   {
     round: 26,
-    name: "弥希Miki · 白衣妖女",
+    name: "肾虚萌音脑控",
     tag: "boss",
-    description: `${BOSS_WARNING_TEXT} 三星弥希由十一名两星护盾前排和法术卫队保护，妖女脑控会让高攻击棋子反打队友，白衣惊魂驱散附近队友；分散主力并尽快击倒弥希可解除脑控。`,
+    description: `${BOSS_WARNING_TEXT} 两星弥希由十一名两星护卫保护，缓慢蓄能后以萌音脑控高攻击棋子反打队友 1.6 秒；分散主力，趁蓄能间隙切入弥希，击倒她可解除脑控。`,
     modifier: 1,
     units: [
-      { id: "miki_guest", star: 3, formationIndex: 2 },
+      { id: "miki_guest", star: 2, formationIndex: 2 },
       { id: "nagisa", star: 2, formationIndex: 12 },
       { id: "sun_guard", star: 2, formationIndex: 10 },
       { id: "gale_archer", star: 2, formationIndex: 14 },
@@ -204,6 +204,9 @@ export const FIXED_GUEST_WAVES: WaveDefinition[] = [
     ],
   },
 ];
+
+// 多档护盾与开场能量叠加使弥希关超出同预算强度；降星后也不把差额补给护卫。
+const FIXED_GUEST_STAT_SCALES: Readonly<Partial<Record<number, number>>> = { 26: 0.86 };
 
 const ENEMY_SQUADS: ReadonlyArray<{
   name: string;
@@ -258,6 +261,8 @@ export const waveCompositionValue = (wave: Pick<WaveDefinition, "units">) => wav
     (total, waveUnit) => total + UNIT_DEFS[waveUnit.id].cost * STAR_COPY_VALUE[waveUnit.star ?? 1],
     0,
   );
+
+export const waveEffectiveValue = (wave: Pick<WaveDefinition, "units" | "modifier">) => Math.round(waveCompositionValue(wave) * wave.modifier ** 2);
 
 export const enemyTraitActivations = (
   units: readonly WaveUnit[],
@@ -397,7 +402,7 @@ export const waveForRound = (round: number, seed = 0): WaveDefinition => {
   const guestWave = FIXED_GUEST_WAVES.find((wave) => wave.round === round);
   if (guestWave) return {
     ...guestWave,
-    modifier: Math.sqrt(enemyBudgetForRound(round) / waveCompositionValue(guestWave)),
+    modifier: Math.sqrt(enemyBudgetForRound(round) / waveCompositionValue(guestWave)) * (FIXED_GUEST_STAT_SCALES[round] ?? 1),
   };
 
   const mode = progressionModeForRound(round);

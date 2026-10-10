@@ -11,7 +11,7 @@ import {
   TRAITS,
   UNIT_DEFS,
   abilityDescriptionForStar,
-  enemyBudgetForRound,
+  waveEffectiveValue,
 } from "../core/gameData";
 import { UnitPortrait } from "./shared";
 
@@ -79,7 +79,7 @@ owned: null }];
           <div className="rift-enemy-formation-summary">
             <span>我方 <b>{playerUnits.length}</b></span>
             <span>{enemyBoard ? "上轮阵容" : "敌军"} <b>{enemyUnits.length}</b></span>
-            {!enemyBoard && <span>价值 <b>{enemyBudgetForRound(engine.state.round)}</b></span>}
+            {!enemyBoard && <span>价值 <b>{waveEffectiveValue(wave)}</b></span>}
           </div>
           <button type="button" className="rift-enemy-formation-close" onClick={onClose} aria-label="关闭敌方部署图" title="关闭">
             <span aria-hidden="true">×</span>

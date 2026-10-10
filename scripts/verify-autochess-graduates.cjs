@@ -43,7 +43,7 @@ mkdirSync(output, { recursive: true });
     await page.waitForFunction(() => window.autoChessAI?.bridge && window.render_game_to_text, undefined, { timeout: 60000 });
     await page.locator('.rift-dom-choice').first().click();
     await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).phase === 'preparation');
-    for (const [round, leader, stars] of [[12, 'hatsuse_guest', 2], [21, 'yua', 3], [26, 'miki_guest', 3]]) {
+    for (const [round, leader, stars, name] of [[12, 'hatsuse_guest', 2, '蝙蝠夜歌'], [21, 'yua', 3, '邪恶外星人'], [26, 'miki_guest', 2, '肾虚萌音脑控']]) {
       await page.evaluate((roundNumber) => {
         const bridge = window.autoChessAI.bridge;
         bridge.setBattlePaused(false);
@@ -61,15 +61,21 @@ mkdirSync(output, { recursive: true });
         const specs = [['mossback', 2, 5], ['shiori', 2, 11], ['sui_bird', 2, 17], ['rei', 2, 18], ['sumi', 2, 0], ['spark_mage', 2, 6], ['sui_flower', 2, 12], ['cog_scribe', 2, 1]];
         if (roundNumber > 16) specs.push(['lian', 3, 19], ['cinder_ram', 2, 7]);
         if (roundNumber > 16) specs.forEach((spec) => { if (['sumi', 'spark_mage', 'sui_bird'].includes(spec[0])) spec[1] = 3; });
-        // The later boss fixture needs enough investment to keep the controlled unit alive for a real attack.
-        if (roundNumber === 26) specs.forEach((spec) => { spec[1] = 3; });
         specs.forEach(([id, star, slot], index) => { engine.state.board[slot] = { uid: index + 20, id, star }; });
         bridge.dispatch({ type: 'clearSelection' });
       }, round);
       const preview = await state();
+      assert.equal(preview.wave.name, name);
       assert.equal(preview.wave.units[0].id, leader);
       assert.equal(preview.wave.units[0].star, stars);
       assert.ok(!preview.shop.some(({ id }) => ['yua', 'hatsuse_guest', 'miki_guest'].includes(id)));
+      if (round === 26) {
+        const brief = await page.locator('.rift-mobile-brief').textContent();
+        assert.match(brief, /肾虚萌音脑控/);
+        assert.match(brief, /价值约 315/);
+        await page.waitForTimeout(160);
+        await capture('miki-preparation');
+      }
       await page.keyboard.press('e');
       const leaderButton = page.locator(`.rift-enemy-formation-unit[data-team="enemy"][data-unit-id="${leader}"]`);
       await leaderButton.click();
@@ -84,6 +90,8 @@ mkdirSync(output, { recursive: true });
       }
       if (round === 26) {
         assert.match(await page.locator('.rift-enemy-detail-skill').innerText(), /妖女脑控.*反打队友/s);
+        assert.match(await page.locator('.rift-enemy-detail-skill').innerText(), /1\.6 秒/);
+        assert.equal(preview.wave.enemyBudget, 315);
         await page.setViewportSize({ width: 390, height: 844 });
         await page.waitForTimeout(250);
         await capture('miki-formation-mobile');
@@ -135,17 +143,19 @@ mkdirSync(output, { recursive: true });
       if (round === 26) {
         // Advance the real battle until Miki casts naturally; freeze the frame for visual evidence.
         let controlled;
-        for (let index = 0; index < 500; index += 1) {
+        for (let index = 0; index < 900; index += 1) {
           controlled = await page.evaluate(() => {
             const bridge = window.autoChessAI.bridge;
             bridge.engine.update(1 / 60);
             const fighter = bridge.engine.state.battle?.player.find((unit) => unit.alive && unit.mindControlTime > 0);
-            return fighter ? { fid: fighter.fid, id: fighter.unitId, team: fighter.team, timer: fighter.mindControlTime } : null;
+            return fighter ? { fid: fighter.fid, id: fighter.unitId, team: fighter.team, timer: fighter.mindControlTime, elapsed: bridge.engine.state.battle.elapsed } : null;
           });
           if (controlled) break;
         }
         assert.ok(controlled, 'Miki must cast brain control during actual combat');
         assert.equal(controlled.team, 'player');
+        assert.ok(controlled.timer <= 1.6);
+        assert.ok(controlled.elapsed >= 3, 'Miki must allow an opening charge window');
         await page.evaluate((fid) => window.autoChessAI.bridge.dispatch({ type: 'inspectFighter', fid }), controlled.fid);
         await page.waitForTimeout(160);
         await capture('miki-brain-control');

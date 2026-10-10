@@ -2079,6 +2079,7 @@ test("看穿会一次建立第1至第60战的敌方时间表并规划完整前�
   assert.equal(waves.at(-1).round, 60);
   assert.equal(waves[15].tag, "boss");
   assert.equal(waves[30].tag, "boss");
+  assert.equal(waves[25].budget, 315, "弥希关预测应采用削弱后的实际阵容价值");
   assert.ok(waves.every((wave) => wave.units.length > 0 && wave.threat > 0));
 
   const emptyShop = [null, null, null, null, null];

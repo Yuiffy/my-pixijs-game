@@ -8,8 +8,8 @@ const { RunSaveStore, RUN_SAVE_KEY, createRunCheckpoint } = await loadTypescript
 const { AUTOPILOT_TERMINAL_TARGET_IDS } = await loadTypescriptModule("src/components/autoChessGame/ai/lateGamePlan.ts");
 const { SEER2_PRINCIPAL_VARIATIONS, SEER2_TERMINAL_TARGET_IDS } = await loadTypescriptModule("src/components/autoChessGame/ai/seer2Strategy.ts");
 
-const create = (round = 26) => {
-  const bridge = new EngineBridge(101015);
+const create = (round = 26, seed = 101015) => {
+  const bridge = new EngineBridge(seed);
   bridge.setConsoleLogging(false);
   const engine = bridge.engine;
   engine.state.starterChoices = ["bastion"];
@@ -20,7 +20,8 @@ const create = (round = 26) => {
 };
 
 test("三位毕业核心只在各自固定关出现，所有种子有相同星级、阵容和站位", () => {
-  const leaders = new Map([[21, ["yua", 3]], [12, ["hatsuse_guest", 2]], [26, ["miki_guest", 3]]]);
+  const leaders = new Map([[21, ["yua", 3]], [12, ["hatsuse_guest", 2]], [26, ["miki_guest", 2]]]);
+  const names = new Map([[21, "邪恶外星人"], [12, "蝙蝠夜歌"], [26, "肾虚萌音脑控"]]);
   for (let round = 1; round <= 64; round += 1) {
     for (const seed of [0, 1, 3, 152100, 152102, -17]) {
       const wave = data.waveForRound(round, seed);
@@ -29,11 +30,11 @@ test("三位毕业核心只在各自固定关出现，所有种子有相同星�
       assert.deepEqual(guests.map(({ id, star }) => [id, star]), leader ? [leader] : []);
       if (!leader) continue;
       assert.deepEqual(wave, data.waveForRound(round, 0));
-      assert.match(wave.name, new RegExp(data.UNIT_DEFS[leader[0]].title.split(" · ")[0]));
+      assert.equal(wave.name, names.get(round));
       assert.ok(guests[0].formationIndex < 3, "核心应位于后排");
       assert.equal(new Set(wave.units.map(({ formationIndex }) => formationIndex)).size, wave.units.length);
       assert.ok(data.enemyTraitActivations(wave.units).length >= 2);
-      assert.equal(Math.round(data.waveCompositionValue(wave) * wave.modifier ** 2), data.enemyBudgetForRound(round));
+      assert.equal(data.waveEffectiveValue(wave), round === 26 ? 315 : data.enemyBudgetForRound(round));
       assert.ok(wave.units.every(({ id, star = 1 }) => id === leader[0] || star <= 2));
     }
   }
@@ -65,6 +66,7 @@ test("固定关的预览站位与实战出生点完全一致，核心星级和�
   for (const round of [12, 21, 26]) {
     const { engine } = create(round);
     const preview = JSON.parse(engine.renderTextState()).wave;
+    assert.equal(preview.enemyBudget, data.waveEffectiveValue(engine.currentWave));
     engine.startBattle();
     engine.state.battle.enemy.forEach((fighter, index) => {
       assert.equal(fighter.x, preview.units[index].formation.x);
@@ -74,6 +76,39 @@ test("固定关的预览站位与实战出生点完全一致，核心星级和�
     const [leader, ...guards] = engine.state.battle.enemy;
     assert.ok(guards.every((guard) => leader.star >= guard.star));
     assert.ok(guards.every((guard) => leader.attack > guard.attack));
+  }
+});
+
+test("两星弥希留出蓄能与恢复窗口，混星阵容可通关且护卫不因降星增强", () => {
+  const wave = data.waveForRound(26);
+  const originalComposition = data.waveCompositionValue({ units: wave.units.map((unit) => unit.id === "miki_guest" ? { ...unit, star: 3 } : unit) });
+  assert.ok(wave.modifier < Math.sqrt(data.enemyBudgetForRound(26) / originalComposition), "护卫属性不应超过原三星首领版本");
+  for (const seed of [1, 77, 101015]) {
+    const { engine } = create(26, seed);
+    engine.state.playerLevel = 10;
+    engine.state.board.fill(null);
+    const specs = [["mossback", 5], ["shiori", 11], ["sui_bird", 17], ["sumi", 0], ["spark_mage", 6], ["sui_flower", 12], ["rei", 18], ["cog_scribe", 1], ["lian", 19], ["cinder_ram", 7]];
+    specs.forEach(([id, slot], index) => { engine.state.board[slot] = { id, star: ["sumi", "sui_bird", "spark_mage", "lian"].includes(id) ? 3 : 2, uid: index + 1 }; });
+    engine.state.augments = ["tempered", "execution", "precision", "second_wind", "overclock", "sharp_edge"];
+    engine.startBattle();
+    const miki = engine.state.battle.enemy[0];
+    assert.ok(miki.energy < miki.maxEnergy, "开场羁绊能量不应直接填满脑控");
+    const casts = [];
+    const castAbility = engine.castAbility.bind(engine);
+    engine.castAbility = (source, targets, ...args) => {
+      const result = castAbility(source, targets, ...args);
+      if (source === miki) {
+        casts.push(engine.state.battle.elapsed);
+        targets.filter((target) => target.mindControlSourceFid === miki.fid).forEach((target) => assert.ok(target.mindControlTime <= 1.6));
+      }
+      return result;
+    };
+    for (let tick = 0; tick < 1800 && engine.state.phase === "battle"; tick += 1) engine.update(1 / 60);
+    assert.equal(engine.state.phase, "result");
+    assert.equal(engine.state.result.won, true, `seed ${seed}: 无需全队三星`);
+    assert.ok(casts.length >= 1 && casts.length <= 2, "保留脑控特色但不连续压制");
+    assert.ok(casts[0] >= 3, "玩家应有几秒时间接战或切入核心");
+    assert.ok(casts.slice(1).every((time, index) => time - casts[index] > 1.6), "两次脑控之间应有恢复窗口");
   }
 });
 

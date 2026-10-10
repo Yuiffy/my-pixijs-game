@@ -3246,7 +3246,7 @@ test("弥希脑控最高攻击敌人并恐惧近邻，初濑蝙蝠夜歌完成�
   mikiBattle.enemy.forEach((fighter, index) => {
     if (index === 0) {
       assert.ok(fighter.hp < mikiEnemyHp[index]);
-      assert.equal(fighter.mindControlTime, 1.8);
+      assert.equal(fighter.mindControlTime, 1.2);
     } else {
       assert.equal(fighter.hp, mikiEnemyHp[index]);
       assert.ok(fighter.fearTime >= 0.6);
@@ -3370,7 +3370,7 @@ test("我方天赋不会成为敌方的隐藏天赋加成", () => {
     "united_front",
   ]);
 
-  assert.equal(JSON.parse(plain.renderTextState()).wave.formationTheme, "悠亚Yua");
+  assert.equal(JSON.parse(plain.renderTextState()).wave.formationTheme, "邪恶外星人");
   assert.deepEqual(
     augmented.state.battle.enemy.map(({ unitId, star, maxHp, attack, armor }) => ({
       unitId,

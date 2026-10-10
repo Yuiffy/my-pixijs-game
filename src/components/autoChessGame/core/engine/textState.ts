@@ -9,11 +9,11 @@ import {
   type TraitId,
   type WaveDefinition,
   bookLevelForPlayerLevel,
-  enemyBudgetForRound,
   enemyTraitActivations,
   progressionModeForRound,
   tierOddsForLevel,
   upgradeCostForLevel,
+  waveEffectiveValue,
 } from "../gameData";
 import {
   enemyFormationPosition,
@@ -113,7 +113,7 @@ export const renderTextState = (context: TextStateContext) => {
             name: currentWave.name,
             tag: currentWave.tag,
             description: currentWave.description,
-            enemyBudget: enemyBudgetForRound(context.state.round),
+            enemyBudget: waveEffectiveValue(currentWave),
             enemyCount: currentWave.units.length,
             formationTheme: currentWave.name.split(" · ")[0],
             potentialBounty: context.potentialBounty,

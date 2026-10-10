@@ -229,17 +229,17 @@ test("无限后段提前突破十人并以可见人口持续加压", () => {
   assert.ok(data.waveForRound(60).units.length > data.waveForRound(40).units.length);
 });
 
-test("无限前两首领为三星悠亚与弥希，后续轮换时停、续航与高费编队", () => {
+test("无限前两首领为三星外星人与两星萌音脑控，后续轮换时停、续航与高费编队", () => {
   const yua = data.waveForRound(21, 4);
   const miki = data.waveForRound(26, 4);
   const control = data.waveForRound(36, 4);
   const sustain = data.waveForRound(41, 4);
   const highCost = data.waveForRound(31, 4);
 
-  assert.match(yua.name, /^悠亚Yua/);
-  assert.match(miki.name, /^弥希Miki/);
+  assert.equal(yua.name, "邪恶外星人");
+  assert.equal(miki.name, "肾虚萌音脑控");
   assert.deepEqual([yua.units[0].id, yua.units[0].star], ["yua", 3]);
-  assert.deepEqual([miki.units[0].id, miki.units[0].star], ["miki_guest", 3]);
+  assert.deepEqual([miki.units[0].id, miki.units[0].star], ["miki_guest", 2]);
   assert.match(control.name, /^时停合唱团/);
   assert.ok(control.units.filter(({ id }) => id === "spark_mage").length >= 2);
   assert.match(sustain.name, /^终场续航团/);

@@ -22,7 +22,7 @@ import {
   TRAITS,
   UNIT_DEFS,
   bookLevelForPlayerLevel,
-  enemyBudgetForRound,
+  waveEffectiveValue,
   enemyTraitActivations,
   tierOddsForLevel,
 } from "./core/gameData";
@@ -182,6 +182,7 @@ export default function RiftHud({
     : null;
   const ownedStars = (unitId: string) => countOwnedStars([...state.board, ...state.bench], unitId);
   const wave = engine.currentWave;
+  const enemyValue = waveEffectiveValue(wave);
   const enemyTraits = enemyTraitActivations(wave.units)
     .map(({ id, level }) => `${TRAITS[id].name}${STAR_LABEL[level]}`)
     .join(" · ");
@@ -390,7 +391,7 @@ export default function RiftHud({
           </div>
           <section className={`rift-mobile-brief ${wave.tag === "normal" ? "" : `is-${wave.tag}`}`}>
             <div><span className="rift-eyebrow">{wave.tag === "boss" ? "BOSS WARNING" : wave.tag === "elite" ? "ELITE WARNING" : `ROUND ${String(state.round).padStart(2, "0")} / QUICK READ`}</span><strong>{wave.name}</strong></div>
-            <p>{multiplayer ? `${multiplayer.me.ready ? "已准备 · 可取消准备" : `备战剩余 ${multiplayer.seconds} 秒`}。${multiplayer.match.mode === "versus" ? "敌方展示上一轮阵容，可查看部署详情。" : "守住防线后，存活棋子可为漏怪队友救援一轮。"}` : <>{engine.boardCount < engine.boardCap ? `还可上阵 ${engine.boardCap - engine.boardCount} 名单位。敌军 ${wave.units.length} 人，价值约 ${enemyBudgetForRound(state.round)}，本战结算 ${engine.potentialBounty} 金。` : `人口已满。敌军 ${wave.units.length} 人，价值约 ${enemyBudgetForRound(state.round)}，本战结算 ${engine.potentialBounty} 金。`} 无论胜负都会发放结算金。敌方羁绊：{enemyTraits || "未成型"}。</>}</p>
+            <p>{multiplayer ? `${multiplayer.me.ready ? "已准备 · 可取消准备" : `备战剩余 ${multiplayer.seconds} 秒`}。${multiplayer.match.mode === "versus" ? "敌方展示上一轮阵容，可查看部署详情。" : "守住防线后，存活棋子可为漏怪队友救援一轮。"}` : <>{engine.boardCount < engine.boardCap ? `还可上阵 ${engine.boardCap - engine.boardCount} 名单位。敌军 ${wave.units.length} 人，价值约 ${enemyValue}，本战结算 ${engine.potentialBounty} 金。` : `人口已满。敌军 ${wave.units.length} 人，价值约 ${enemyValue}，本战结算 ${engine.potentialBounty} 金。`} 无论胜负都会发放结算金。敌方羁绊：{enemyTraits || "未成型"}。</>}</p>
             <button onClick={() => setSheet("traits")}>查看羁绊 <b>↗</b></button>
           </section>
           <nav className="rift-dom-mobile-actions" aria-label="移动端战术操作"><ActionButton onClick={() => setSheet("shop")}><span className="rift-mobile-action-icon">◈</span><span>商店</span><b>{state.shop.filter(Boolean).length}</b></ActionButton><ActionButton onClick={() => setSheet("bench")}><span className="rift-mobile-action-icon">▦</span><span>备战席</span><b>{state.bench.filter(Boolean).length}/{state.bench.length}</b></ActionButton><ActionButton className="rift-auto-arrange-button" aria-label="推荐站位" aria-keyshortcuts="A" title="推荐站位 (A)" onClick={() => dispatch({ type: "autoArrange" })} disabled={!engine.boardCount}><AppstoreOutlined className="rift-mobile-action-icon" aria-hidden="true" /><span>推荐站位</span><b>A</b></ActionButton><ActionButton tone="danger" onClick={() => dispatch({ type: "sell" })} disabled={!selected}><span className="rift-mobile-action-icon">¥</span><span>出售</span><b>{selected ? `+${engine.getUnitSellValue(selected)}` : "—"}</b></ActionButton><ActionButton tone="confirm" onClick={() => dispatch({ type: "battle" })} disabled={multiplayer ? multiplayer.busy || multiplayer.me.hp <= 0 : !engine.boardCount}><span>{multiplayer ? multiplayer.readyLabel : "开战"}</span><b>SPACE</b></ActionButton></nav>

@@ -18,7 +18,7 @@ import {
   augmentTierForRound,
   describeAbilityStarGrowth,
   bookLevelForPlayerLevel,
-  enemyBudgetForRound,
+  waveEffectiveValue,
   enemyTraitActivations,
   progressionModeForRound,
 } from "../core/gameData";
@@ -747,7 +747,7 @@ export class RiftLineScene extends Phaser.Scene {
     description.setPosition(48, 158);
     this.phaseLayer.add(description);
     if (!compact) {
-      const pressureLabel = this.bridge.preparationPressure ?? `敌军 ${currentWave.units.length} 人 · 价值约 ${enemyBudgetForRound(state.round)}`;
+      const pressureLabel = this.bridge.preparationPressure ?? `敌军 ${currentWave.units.length} 人 · 价值约 ${waveEffectiveValue(currentWave)}`;
       this.phaseLayer.add(this.text(536, 124, pressureLabel, 9, currentWave.tag === "normal" ? "#e89aaa" : waveColor, { fontStyle: "bold" }));
       this.button(682, 112, 74, 25, "▦ 站位", undefined, {
         tone: currentWave.tag === "normal" ? "neutral" : "danger",
@@ -829,7 +829,7 @@ export class RiftLineScene extends Phaser.Scene {
     const waveLabel = currentWave.tag === "boss" ? "BOSS WARNING" : currentWave.tag === "elite" ? "ELITE WARNING" : mode === "hell" ? `HELL ${currentWave.round}` : `WAVE ${currentWave.round}`;
     const waveColor = currentWave.tag === "boss" ? "#ff8ba7" : currentWave.tag === "elite" ? "#ffc35b" : "#72d8ff";
     this.phaseLayer.add(this.text(16, 108, `${waveLabel} · ${this.truncateText(currentWave.name, 242, 14, { fontStyle: "bold" })}`, 14, waveColor, { fontStyle: "bold" }));
-    this.phaseLayer.add(this.text(338, 108, this.bridge.preparationPressure ? "" : `敌军 ${currentWave.units.length} · 价值 ${enemyBudgetForRound(state.round)}`, 11, waveColor, { fontStyle: "bold" }).setOrigin(1, 0));
+    this.phaseLayer.add(this.text(338, 108, this.bridge.preparationPressure ? "" : `敌军 ${currentWave.units.length} · 价值 ${waveEffectiveValue(currentWave)}`, 11, waveColor, { fontStyle: "bold" }).setOrigin(1, 0));
     this.button(354, 96, 110, 26, "▦ 敌方站位", undefined, {
       tone: currentWave.tag === "normal" ? "neutral" : "danger",
     }, DEPTH.ui, () => this.bridge.setEnemyFormationOpen(true)).setName("enemy-formation-trigger-mobile");
