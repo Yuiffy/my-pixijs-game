@@ -1,5 +1,13 @@
 # 项目进度
 
+## 2026-10-10 · 自走棋 2K 商店不必要滚动
+
+Original prompt: 怎么 2K 分辨率浏览器 100% 放大率，右边会需要上下拉呢，是不是最近改错了。
+
+定位到 10 月 7 日 bb94cda 新增商店 max-height 后，紧凑规则仅在 HUD 容器高度 ≤520px 生效；游戏自身最高 125% 放大叠加窗口实际可用高度，2048×960 CSS 视口下五张卡片需要 380px，列表只有 348px，第五张被截。新增 ≤760px 的紧凑间距／内边距／经济栏规则，≤700px 减小卡片和精灵头像；保留全部羁绊、购买按钮、原字体和矮窗口列表滚动。
+
+在 verify-autochess.cjs 中增加 AUTOCHESS_SHOP_LAYOUT=1 专项入口，新增 scripts/verify-autochess-shop-layout.cjs；原验证入口补上静音浏览器和 speechSynthesis stub。开发版系统 Chrome 通过 2048×960、2560×1200、1440×900 无列表溢出，2048×760／1280×620 滚动可抵第五张且操作区可见，以及第五张悬浮详情／真实购买扣金／锁店切换／390px 商店。8 张最终截图通过 sanity、文本状态、DOM、画布及错误交叉检查，逐张打开目检，页面／控制台／HTTP 错误为空。CJS 不在原 ESLint TSConfig 范围，直接 ESLint 返回范围错误，node --check 和实际浏览器验证通过。完整 check → build 顺序通过，保留构建 ESLint，临时 tsconfig 引用已恢复。本机 http://127.0.0.1:4052/game/autochess 已切换到独立 .next-autochess-shop-layout-build；HTTP 200，生产公开操作重跑同一专项通过，8 张生产截图亦全部打开目检，错误为空。最终报告 .tmp/autochess/shop-layout-report.json，开发报告 .tmp/autochess/shop-layout-dev-report.json；4053 临时开发服务已停止。其他工作区修改保留，未提交或部署，无待处理验收项。
+
 ## 2026-10-07 · 晴海双打：米汀去 BGM 与视频本人配音（已验收）
 
 Original prompt: 米汀「来吧，看看这个是什么」混入 BGM，去掉或换一句；米汀视频带语音的也改成本人语音。沿用提交 master 授权。

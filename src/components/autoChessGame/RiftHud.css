@@ -179,6 +179,17 @@
 .rift-dom-shop-desktop { display: flex; flex-direction: column; max-height: calc(100cqh - 104px); }
 .rift-dom-shop-desktop > * { flex-shrink: 0; }
 .rift-dom-shop-desktop > .rift-shop-list { flex-shrink: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 2px 4px 2px 2px; margin: -2px -4px -2px -2px; }
+/* The HUD's own 125% scale reduces available CSS height even on a 2K screen. */
+@container (max-height: 760px) {
+  .rift-dom-shop-desktop { gap: 4px; padding: 8px; }
+  .rift-dom-shop-desktop .rift-shop-heading strong { margin-top: 0; }
+  .rift-dom-shop-desktop .rift-shop-economy { padding-block: 3px; }
+  .rift-dom-shop-desktop footer { min-height: 0; }
+}
+@container (max-height: 700px) {
+  .rift-dom-shop-desktop .rift-dom-shop-card { min-height: 64px; }
+  .rift-dom-shop-desktop .rift-dom-portrait.is-sprite { width: 52px; height: 52px; }
+}
 @container (max-height: 520px) {
   .rift-dom-shop-desktop { gap: 4px; padding: 8px; }
   .rift-dom-shop-desktop .rift-shop-heading .rift-eyebrow,

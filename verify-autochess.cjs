@@ -55,7 +55,11 @@ const closeBrowser = async () => {
   browserContext = await chromium.launchPersistentContext(browserProfile, {
     channel: 'chrome',
     headless: process.env.AUTOCHESS_HEADED !== '1',
+    args: ['--mute-audio'],
     viewport: { width: 1440, height: 900 },
+  });
+  await browserContext.addInitScript(() => {
+    if (window.speechSynthesis) window.speechSynthesis.speak = () => {};
   });
   const page = browserContext.pages()[0] || await browserContext.newPage();
   const errors = [];
@@ -148,6 +152,12 @@ const closeBrowser = async () => {
     }
     throw new Error(`截图 ${name} 连续失败: ${lastError instanceof Error ? lastError.message : String(lastError)}`);
   };
+
+  if (process.env.AUTOCHESS_SHOP_LAYOUT === '1') {
+    await require('./scripts/verify-autochess-shop-layout.cjs')({ page, state, capture, screenshots, errors, failedResponses });
+    await closeBrowser();
+    return;
+  }
 
   await page.waitForFunction(() => {
     const portraits = [...document.querySelectorAll('.rift-dom-choice img')];
