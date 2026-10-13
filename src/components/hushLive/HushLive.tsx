@@ -1,5 +1,6 @@
 "use client";
 
+import { endingScene } from "./endings";
 import { beforeStream } from "./outings";
 import { earnedCgs, type CgId } from "./cg";
 import CgGallery from "./CgGallery";
@@ -27,6 +28,7 @@ import { FIRST_STEPS, objective } from "./guide";
 import {
   advance3D,
   clearControls,
+  continueNight,
   createRuntime,
   go3D,
   lookPoint,
@@ -483,7 +485,7 @@ export default function HushLive() {
         </SceneBoundary>
       </div>
       {(ready || result || g.phase === "paused" || sceneError) && (
-        <div className={styles.veil} />
+        <div className={`${styles.veil} ${result && g.won ? styles.endingVeil : ""}`} />
       )}
       <nav className={styles.nav}>
         <Link href="/demos">← 实验室</Link>
@@ -672,11 +674,11 @@ onRestart={() => startPractice(mini.kind)} />
           </p>
         </section>
       ) : result ? (
-        <section className={styles.menu}>
+        <section className={`${styles.menu} ${g.won ? styles.endingMenu : ""}`} aria-label="今晚的结局" data-ending={endingScene(g)?.id}>
           <p className={styles.eyebrow}>
             {g.won ? "OFF AIR / 现在，只属于我们" : "今晚的小插曲"}
           </p>
-          <h1 className={styles.resultTitle}>{g.daily && g.won ? "普通的夜晚，也想和你一起。" : ending(g)}</h1>
+          <h1 className={styles.resultTitle}>{g.won ? endingScene(g)?.title : ending(g)}</h1>
           <div className={styles.score}>
             {g.totalScore}
             <small>分</small>
@@ -713,11 +715,10 @@ onRestart={() => startPractice(mini.kind)} />
           <button
             className={styles.primary}
             onClick={() => {
-              if (g.won) selectNight(
-                  Math.min(5, g.level + 1),
-                  g.level === 5 ? (g.seed + 7919) % 4294967296 : g.seed,
-                );
-              else {
+              if (g.won) {
+                unlock();
+                if (continueNight(r)) { seed.current = r.game.seed; setShareText(""); start(); }
+              } else {
                 selectNight(g.level, g.seed);
                 start();
               }
@@ -730,8 +731,9 @@ onRestart={() => startPractice(mini.kind)} />
               : "再试一次 →"}
           </button>
           <button className={styles.albumButton} onClick={openGallery}>回忆相册 · {save.cgs.length}/5</button>
+          <button className={styles.textButton} onClick={() => selectNight(g.level, g.seed)}>换角色 / 选择夜晚</button>
           <div className={styles.resultButtons}>
-            <button onClick={() => selectNight(g.level, g.seed)}>
+            <button onClick={() => { selectNight(g.level, g.seed); start(); }}>
               重玩本晚
             </button>
             <button

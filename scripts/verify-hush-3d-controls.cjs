@@ -16,7 +16,7 @@ async function choose(page, name) {
   const phase = (await state(page)).phase;
   if (phase === 'playing') await page.keyboard.press('p');
   if ((await state(page)).phase === 'paused') await page.getByRole('button', { name: '放弃本晚，返回准备' }).click();
-  else if (phase === 'result') await page.getByRole('button', { name: '重玩本晚' }).click();
+  else if (phase === 'result') await page.getByRole('button', { name: '换角色 / 选择夜晚' }).click();
   const summary = page.getByText('选择夜晚与角色', { exact: true });
   if (!await page.getByLabel('玩家身份', { exact: true }).isVisible()) await summary.click();
   await page.getByRole('button', { name: new RegExp(name) }).click();
@@ -47,8 +47,8 @@ async function main() {
     await follow(page); assert.equal((await state(page)).focus, 'shelf'); await solve(page);
     checks.push('camera-relative WASD, keyboard turning, mouse drag, pointer lock, pause and gaze-gated interactions');
     // Unlock through actual play, then verify profile and seeded challenge sharing.
-    for (let level = 1; level < 5; level++) { await page.getByRole('button', { name: '下一个夜晚 →' }).click(); await page.locator('#hush-start').click(); await solve(page); }
-    await page.getByRole('button', { name: '再开一个加班夜 →' }).click(); await page.locator('#hush-start').click(); await solve(page);
+    for (let level = 1; level < 5; level++) { await page.getByRole('button', { name: '下一个夜晚 →' }).click(); assert.equal((await state(page)).phase,'playing'); await solve(page); }
+    await page.getByRole('button', { name: '再开一个加班夜 →' }).click(); assert.equal((await state(page)).phase,'playing'); await solve(page);
     await page.getByRole('button', { name: '复制成绩分享' }).click();
     assert.match(await page.getByLabel('成绩分享文案').inputValue(), /3D.*加班夜/s);
     const shared = await page.evaluate(() => navigator.clipboard.readText()); assert.match(shared, /seed=/);

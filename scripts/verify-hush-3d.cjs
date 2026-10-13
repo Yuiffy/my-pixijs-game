@@ -148,8 +148,8 @@ async function main() {
     await advance(page, 0); assert.equal(await page.getByText('NEW · 同居日常').count(), 0); await capture(page, 'ready');
     await page.locator('#hush-start').click(); await capture(page, 'first-person');
     for (let level = 0; level < 6; level++) {
-      await solve(page, true); assert.equal((await state(page)).progression.unlocked, Math.min(5, level + 1)); if (level === 4) await capture(page, 'chapter-result');
-      if (level < 5) { await page.getByRole('button', { name: level === 4 ? '再开一个加班夜 →' : '下一个夜晚 →' }).click(); await page.locator('#hush-start').click(); }
+      await solve(page, true); assert.equal((await state(page)).progression.unlocked, Math.min(5, level + 1)); if (level === 0) await capture(page, 'tutorial-result'); if (level === 4) await capture(page, 'chapter-result');
+      if (level < 5) { await page.getByRole('button', { name: level === 4 ? '再开一个加班夜 →' : '下一个夜晚 →' }).click(); assert.equal((await state(page)).phase, 'playing'); }
     }
     fs.writeFileSync(path.join(out, 'report.json'), JSON.stringify({ images, errors, results }, null, 2));
     console.log(JSON.stringify({ results, screenshots: images.map(i => i.file), errors }, null, 2));

@@ -1,3 +1,4 @@
+import { endingScene } from "./endings";
 import { skinOf } from "./skins";
 import { dailyModal } from "./daily";
 import { BATHROOM, CAT_BOWL, CAT_LITTER, householdStatus } from "./household";
@@ -85,6 +86,19 @@ export const createRuntime = (save: Save): Runtime3D => ({
   fps: 60,
   renderer: { type: "loading", calls: 0, triangles: 0, width: 0, height: 0 },
 });
+/** Continue the same household without routing back through the setup menu. */
+export function continueNight(r: Runtime3D) {
+  if (!r.webglReady || r.game.phase !== "result" || !r.game.won) return false;
+  const previous = r.game;
+  const level = Math.min(5, previous.level + 1);
+  const seed = previous.level === 5 ? (previous.seed + 7919) % 4294967296 : previous.seed;
+  clearControls(r);
+  r.game = createGame(level, seed, r.save.unlocked, r.save.skin);
+  r.game.phase = "playing";
+  r.yaw = r.game.daily?.arrival !== "done" && r.game.daily ? 0 : -1.25;
+  r.pitch = -0.04; r.focus = null;
+  return true;
+}
 export function lookPoint(r: Runtime3D, spot: Spot) {
   const point =
     spot === "cat" && r.game.daily ? { ...r.game.daily.household.cat, height: 0.25 }
@@ -200,6 +214,7 @@ export function text3D(r: Runtime3D) {
   const [x, z] = worldPoint(r.game.player);
   return {
     ...r.game,
+    endingScene: endingScene(r.game),
     householdStatus: householdStatus(r.game),
     view: "first-person-3d",
     world: { x, y: 1.55, z, units: "metres; +Y up, +X east, +Z south" },

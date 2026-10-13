@@ -959,3 +959,16 @@ Original prompt: 开锁转盘缺少震动反馈、无聊而且半天进不去看
 证据 tmp/hush-entry-{production,journey}/report.json、tmp/hush-entry-shared/；门禁 tmp/hush-entry-{rules,check,build}.log。只清理本任务临时类型路径，开发服务停止；新版生产试玩保留 http://127.0.0.1:4089/game/hush-live，不改其他线程服务。本次改动未提交／未部署，无待办；移动端仅Chrome模拟。
 
 后续用户授权「提交远端」。沿用本轮已通过的顺序 check／build 与规则／浏览器验收，只提交本次 Hush 进门调整的源文件、脚本及文档，推送 origin/master。
+
+
+## 2026-10-13 · Hush 连续下一晚与六种日常结局
+
+Original prompt: 每晚重新选角色不连贯，直接进入下一晚；结尾不要总是两个人坐沙发，多做合适的结局画面。
+
+下一晚和重玩直接进入 playing，沿用角色、称呼、装备解锁及 CG 收藏，清理按住/摇杆输入并复位机位；无限夜正常换种子。主动“换角色 / 选择夜晚”仍可返回准备。Daily 保存实际 endingChoice，六种选择分别进入共吃一碗饭、厨房接过锅铲、床边温水、擦头发、烧鹅热汤小摊、月光牵手的专用 3D 场景，使用当前角色的原有模型；教程保留留灯沙发。场景跟随实际剧情选择，结果机位优先于出门机位，正常房间在成功时隐藏、继续后恢复；手机角色与结算上下分布。
+
+74/74 Hush 规则、修改源 ESLint、完整 check 后顺序 build 通过，保留 Next 构建 ESLint。修正旧 TS 目标不支持 ArrayIterator 的遍历写法。静音系统 Chrome 开发六种结局和连续流程 14 张、生产同组 14 张及完整教程至无限夜 2 张、通用冒烟 1 张全部逐张打开目检；像素 sanity、文本状态、DOM、画布与错误交叉核对通过，最终错误为空。生产额外验证桌面/320px 相册关闭保留结局、重玩直接开始、主动返回准备保留角色、继续后暂停。新脚本首跑比较了重玩之前的历史最高分，重玩正常刷新最高分导致断言失败；改为从当前结局读取存档后再核对下一晚，重跑通过，无游戏运行时错误。
+
+证据 tmp/hush-endings-{dev-final,production,journey}/report.json 与 tmp/hush-endings-shared/；门禁 tmp/hush-endings-{rules,check,build}.log。React 核对：钩子顺序稳定、通过模拟状态/refs 更新场景，不在帧循环 setState；使用原生可键盘/触摸按钮，保留相册原生 dialog。仅停止本任务 4090 开发服务并移除自己的两条 tsconfig 类型路径；其他服务和配置保留。新版生产预览 http://127.0.0.1:4091/game/hush-live，旧 4089 为进门更新版本。详见 docs/hush-life-update.md。当前请求已完成，无待办；本次新改动尚未提交/推送/部署。移动端仅 Chrome 模拟。
+
+后续用户试玩后授权“上传”。沿用本轮已经通过的 74 项规则、顺序 check / build 和生产浏览器验收，提交本次连续夜晚、六种结局及相关脚本/文档并推送 origin/master。

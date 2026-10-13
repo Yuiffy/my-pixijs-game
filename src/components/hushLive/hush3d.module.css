@@ -930,3 +930,16 @@
 @media (max-width: 400px) { .skinPicker > div { gap: 4px; } .skinPicker button { padding: 4px 2px 7px; } .skinPicker span { font-size: 11px; white-space: nowrap; } }
 
 .albumButton { display:block; min-height:44px; padding:10px 14px; margin:14px 0; color:#48694f; border:1px solid #aab39a; border-radius:8px; background:#e1e8d980; cursor:pointer; touch-action:manipulation; }
+
+.endingMenu .textButton { margin-top: 12px; }
+@media (max-width: 600px) {
+  .endingVeil { background: linear-gradient(180deg, transparent 0%, transparent 40%, #f7f0deee 52%, #f7f0de 100%); }
+  .menu.endingMenu { top: 46%; bottom: 10px; left: 16px; width: calc(100% - 32px); max-height: none; padding: 14px 8px 14px 0; }
+  .endingMenu .eyebrow { margin-bottom: 8px; }
+  .endingMenu .resultTitle { font-size: 25px; margin-bottom: 8px; }
+  .endingMenu .score { font-size: 32px; margin-top: 0; }
+  .endingMenu .stars { font-size: 14px; margin: 5px 0 8px; }
+  .endingMenu .resultStory { font-size: 12px; line-height: 1.6; margin: 8px 0; }
+  .endingMenu .resultStats { margin: 8px 0; }
+  .endingMenu .instructions, .endingMenu .reward { margin: 8px 0; }
+}

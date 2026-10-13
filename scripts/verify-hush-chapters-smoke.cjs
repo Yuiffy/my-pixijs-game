@@ -15,7 +15,7 @@ async function run() {
     await page.waitForFunction(()=>window.render_game_to_text && JSON.parse(window.render_game_to_text()).webglReady);
     assert.equal(await page.getByText('NEW · 同居日常').count(),0);
     for (let level=0;level<2;level++) {
-      assert.equal((await state(page)).level,level); await page.locator('#hush-start').click();
+      assert.equal((await state(page)).level,level); if((await state(page)).phase==='ready')await page.locator('#hush-start').click();
       for(let n=0;n<20;n++) {
         const s=await state(page);
         if(s.phase==='result') { assert.ok(s.won); break; }

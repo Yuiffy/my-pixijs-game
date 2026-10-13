@@ -1,5 +1,7 @@
 "use client";
 
+import { endingScene, endingCamera } from "./endings";
+import EndingScene, { EndingHandProp } from "./EndingScene";
 import { beforeStream } from "./outings";
 
 import { memo, useEffect, useMemo, useRef } from "react";
@@ -265,15 +267,17 @@ function Partner({
     lastAnimationTime.current = r.elapsedFrame;
     if (headphones.current) headphones.current.visible = !beforeStream(r.game) && !offAir(r.game) && !onBreak(r.game);
     if (towel.current) towel.current.visible = !player && offAir(r.game) && r.game.daily?.after === "shower";
+    const final = endingScene(r.game);
+    const pose = final ? player ? final.player : final.partner : null;
     const tripArrival = beforeStream(r.game) && r.game.daily?.outing.stage === "arrival";
-    const goingOut = r.game.daily?.after === "supper" && ["outing", "complete"].includes(r.game.daily.stage);
+    const goingOut = !r.game.won && r.game.daily?.after === "supper" && ["outing", "complete"].includes(r.game.daily.stage);
     rig.current.visible = (!player || r.game.won || tripArrival || goingOut) && (r.game.won || !onBreak(r.game) || r.game.daily?.household.rest.stage !== "inside");
     const pos = goingOut ? { x: player ? 120 : 158, y: 477 + (r.game.daily?.outing.exitClock ?? 0) * 22 } : tripArrival && player ? r.game.player : r.game.won
       ? { x: player ? 209 : 259, y: 327 }
       : partnerPose(r.game);
     const [x, z] = worldPoint(pos);
-    const stand = tripArrival || goingOut ? 1 : player || r.game.won ? 0 : partnerPose(r.game).stand;
-    rig.current.position.set(x, stand * 0.24, z);
+    const stand = pose?.stand ?? (tripArrival || goingOut ? 1 : player || r.game.won ? 0 : partnerPose(r.game).stand);
+    rig.current.position.set(pose?.x ?? x, stand * 0.24, pose?.z ?? z);
     if (seatedLegs.current) seatedLegs.current.visible = stand < 0.1;
     if (standingLegs.current) {
       standingLegs.current.visible = stand >= 0.1;
@@ -293,7 +297,7 @@ function Partner({
       ["hug", "kiss", "bonus"].includes(r.game.actionKey) &&
       r.game.actionProgress > 0 &&
       !r.game.busy;
-    const wanted = goingOut ? 0 : beforeStream(r.game) && r.game.daily ? r.game.daily.outing.yaw : r.game.won
+    const wanted = pose ? pose.yaw : goingOut ? 0 : beforeStream(r.game) && r.game.daily ? r.game.daily.outing.yaw : r.game.won
       ? Math.atan2(-2.7 - x, 1.74 - z)
       : onBreak(r.game) && r.game.daily ? r.game.daily.household.rest.yaw
       : near && (behavior.peek || romantic || offAir(r.game) || !!r.game.daily?.events.nap.active)
@@ -304,6 +308,7 @@ function Partner({
       mouth.current.scale.set(1, 0.2 + behavior.mouth, 0.14);
       smile.current.visible = !mouth.current.visible;
     }
+    if (pose) rig.current.rotation.y = pose.yaw;
     rig.current.rotation.y +=
       Math.atan2(
         Math.sin(wanted - rig.current.rotation.y),
@@ -311,8 +316,8 @@ function Partner({
       ) * Math.min(1, motionDt * 4);
     if (head.current) {
       head.current.rotation.z =
-        r.game.won && !player
-          ? 0.14
+        pose
+          ? pose.lean
           : near
             ? Math.sin(r.game.pulse * 0.25) * 0.055
             : 0.02;
@@ -327,9 +332,21 @@ function Partner({
         (t) => ["hug", "kiss"].includes(t) && !r.game.done.includes(t),
       ) ||
         r.game.affection > 0);
-    for (const arm of [left.current, right.current]) if (arm) arm.rotation.x +=
-          ((r.game.daily?.events.nap.active && r.game.daily.events.nap.reaction >= 2 ? -1.2 + Math.sin(r.game.daily.events.nap.clock * 8) * 0.18 : offAir(r.game) && r.game.daily?.after === "rice" ? -0.6 + Math.sin(r.game.daily.clock * 4) * 0.2 : hugging ? -1.45 : invitation ? -0.8 : -0.3) - arm.rotation.x) *
-          Math.min(1, motionDt * 6);
+    [left.current, right.current].forEach((arm, i) => {
+      if (!arm) return;
+      if (pose) {
+        arm.rotation.x = pose.arms[i];
+        arm.rotation.z = final?.id === "night-walk" ? (i === 0 ? -0.22 : 0.22) : (i === 0 ? -0.15 : 0.15);
+      } else {
+        arm.rotation.z = i === 0 ? -0.15 : 0.15;
+        const target = r.game.daily?.events.nap.active && r.game.daily.events.nap.reaction >= 2
+          ? -1.2 + Math.sin(r.game.daily.events.nap.clock * 8) * 0.18
+          : offAir(r.game) && r.game.daily?.after === "rice"
+            ? -0.6 + Math.sin(r.game.daily.clock * 4) * 0.2
+            : hugging ? -1.45 : invitation ? -0.8 : -0.3;
+        arm.rotation.x += (target - arm.rotation.x) * Math.min(1, motionDt * 6);
+      }
+    });
     if (eyes.current) eyes.current.scale.y = r.game.daily?.events.nap.active && r.game.daily.events.nap.reaction > 0 ? 0.5 : Math.sin(r.game.pulse * 0.37) > 0.99 ? 0.15 : 1;
     if (!player) {
       r.tracking.yaw = rig.current.rotation.y;
@@ -541,6 +558,7 @@ function Partner({
             radius={0.05}
             color="#edc4a5"
           />
+          <EndingHandProp runtime={r} player={player} right={sign > 0} />
           <Ball
             at={[0, -0.48, 0.035]}
             radius={0.058}
@@ -582,6 +600,7 @@ function Room({
     }),
     [],
   );
+  const liveRoom = useRef<THREE.Group>(null);
   const door = useRef<THREE.Group>(null);
   const frontDoor = useRef<THREE.Group>(null);
   const bag = useRef<THREE.Group>(null);
@@ -600,6 +619,7 @@ function Room({
     [textures],
   );
   useFrame((_, dt) => {
+    if (liveRoom.current) liveRoom.current.visible = !r.game.won;
     const { tracking } = r;
     const offline = offAir(r.game);
     if (roomLight.current) roomLight.current.intensity = offline ? 0.72 : 1.15;
@@ -688,8 +708,7 @@ function Room({
   const coffee = furniture("coffee");
   const entry = furniture("entryTable");
   return (
-    <>
-      <color attach="background" args={["#b9c3bd"]} />
+    <group ref={liveRoom}>
       <hemisphereLight ref={roomLight} args={["#fff4dc", "#b6b5a0", 1.15]} />
       <ambientLight intensity={0.5} />
       <directionalLight
@@ -1017,8 +1036,6 @@ function Room({
           />
         ))}
       </group>
-      <Partner runtime={r} appearance={appearance} />
-      <Partner runtime={r} appearance={appearance} player />
       {/* Bed and the charger drawer at its foot. */}
       <group position={bed.at} userData={{ spot: "bed" }}>
         <Box at={[0, 0.22, 0]} size={[bed.w, 0.4, bed.d]} color="#b59d85" />
@@ -1076,7 +1093,7 @@ function Room({
       <OutingScene runtime={r} />
       <Hands runtime={r} />
       <GoalMarker runtime={r} />
-    </>
+    </group>
   );
 }
 function Hands({
@@ -1223,7 +1240,12 @@ function CameraRig({
   }, [camera, size.width, size.height]);
   const probe = () => {
     const [x, z] = worldPoint(r.game.player);
-    if ((beforeStream(r.game) && r.game.daily?.outing.stage === "arrival") || (r.game.daily?.after === "supper" && ["outing", "complete"].includes(r.game.daily.stage))) {
+    const final = endingScene(r.game);
+    if (scene.background instanceof THREE.Color) scene.background.set(final?.mood ?? "#b9c3bd");
+    if (final) {
+      const shot = endingCamera(r.game, size.width < size.height);
+      camera.position.set(...shot.position); camera.lookAt(...shot.target);
+    } else if ((beforeStream(r.game) && r.game.daily?.outing.stage === "arrival") || (r.game.daily?.after === "supper" && ["outing", "complete"].includes(r.game.daily.stage))) {
       camera.position.set(-4.95, 1.8, 6.3);
       camera.lookAt(size.width < size.height ? -4.65 : -4.1, 1.0, 3.65);
     } else if (r.game.daily?.after === "supper" && r.game.daily.panel === "story") {
@@ -1346,7 +1368,11 @@ function Apartment({
         onReady={onReady}
         onLost={onLost}
       />
+      <color attach="background" args={["#b9c3bd"]} />
       <Room runtime={runtime} appearance={appearance} />
+      <EndingScene runtime={runtime} />
+      <Partner runtime={runtime} appearance={appearance} />
+      <Partner runtime={runtime} appearance={appearance} player />
     </Canvas>
   );
 }

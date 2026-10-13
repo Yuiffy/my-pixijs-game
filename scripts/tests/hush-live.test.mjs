@@ -7,6 +7,7 @@ const e = await loadTypescriptModule("src/components/hushLive/engine.ts");
 const { objective } = await loadTypescriptModule('src/components/hushLive/guide.ts');
 const life = await loadTypescriptModule("src/components/hushLive/lifeEvents.ts");
 const daily = await loadTypescriptModule('src/components/hushLive/daily.ts');
+const endings = await loadTypescriptModule('src/components/hushLive/endings.ts');
 const {
   step,
   emptyInput,
@@ -649,4 +650,37 @@ test('one click always enters, the visible window rewards quiet timing once, and
     advance(s,.45);assert.equal(s.daily.arrival,'done');assert.equal(s.player.y,500);assert.ok(nav.walkable(s.player,false));
   }
   const idle=e.createGame(4,2,5);idle.phase='playing';advance(idle,3.2);assert.equal(idle.daily.arrival,'done');assert.equal(idle.daily.panel,null);
+});
+
+test('six daily endings follow the actual choice, with different poses, props and framing',()=>{
+  const ids=new Set();
+  for(const after of ['rice','shower','supper'])for(const choice of ['together','care']){
+    const s=e.createGame(4,1,5,'mizuki');s.phase='playing';s.daily.arrival='done';s.daily.stage='goodnight';s.daily.after=after;
+    assert.equal(endings.endingScene(s),null);daily.chooseGoodnight(s,choice);assert.equal(s.daily.endingChoice,choice);
+    if(after==='supper')advance(s,4.1);else advance(s,.1);
+    assert.equal(s.won,true);const scene=endings.endingScene(s);ids.add(scene.id);
+    assert.notEqual(scene.id,'lamp');assert.ok(scene.title.length>5);assert.notEqual(scene.player.x,scene.partner.x);
+    assert.notDeepEqual(endings.endingCamera(s,false),endings.endingCamera(s,true));
+    const stable=structuredClone(scene);daily.chooseGoodnight(s,choice==='care'?'together':'care');assert.deepEqual(endings.endingScene(s),stable);
+    assert.equal(s.skin,'mizuki');
+  }
+  assert.equal(ids.size,6);
+  const tutorial=e.createGame(0,1,5);tutorial.won=true;assert.equal(endings.endingScene(tutorial).id,'lamp');tutorial.won=false;assert.equal(endings.endingScene(tutorial),null);
+});
+
+test('continuing enters the next night immediately with the same household, progression and cleared controls',()=>{
+  for(const skin of ['host','sui','nana7mi','shiori','mizuki']){
+    const r=runtime3d.createRuntime({...e.freshSave(),skin});r.webglReady=true;
+    for(let level=0;level<=5;level++){
+      r.game=e.createGame(level,4294967290,5,skin);r.game.phase='result';r.game.won=true;
+      r.save=e.record({...r.save,cgs:['sui-repair']},r.game);
+      const saved=structuredClone(r.save);r.keys.add('e');r.held=true;r.pressed=true;r.assist='sofa';r.stick={x:1,y:1};r.pitch=.9;
+      assert.equal(runtime3d.continueNight(r),true);assert.equal(r.game.phase,'playing');assert.equal(r.game.level,Math.min(5,level+1));assert.equal(r.game.skin,skin);
+      assert.equal(r.game.seed,level===5?(4294967290+7919)%4294967296:4294967290);
+      assert.deepEqual(r.save,saved);assert.equal(r.keys.size,0);assert.equal(r.held,false);assert.equal(r.pressed,false);assert.deepEqual(r.stick,{x:0,y:0});assert.equal(r.assist,null);assert.equal(r.pitch,-.04);
+      assert.equal(runtime3d.continueNight(r),false,'one result cannot advance twice');
+    }
+  }
+  const r=runtime3d.createRuntime(e.freshSave());r.webglReady=true;r.game.phase='result';assert.equal(runtime3d.continueNight(r),false);
+  r.game.won=true;r.webglReady=false;assert.equal(runtime3d.continueNight(r),false);
 });

@@ -82,6 +82,7 @@ export type Daily = {
   messages: { from: "partner" | "我"; text: string }[];
   after: "rice" | "shower" | "supper";
   memory: string;
+  endingChoice: "together" | "care" | null;
 };
 export const mealOf = (s: Game) => MEALS.find((m) => m.id === s.daily?.meal) ?? MEALS[3];
 export const offAir = (s: Game) => !!s.daily && s.daily.stage !== "home";
@@ -128,6 +129,7 @@ export function beginDaily(s: Game) {
     ],
     after: s.level === 5 && nightRoll(s.seed, 66) < 0.25 ? "supper" : s.level === 5 ? nightRoll(s.seed, 16) < 0.5 ? "rice" : "shower" : (s.seed + s.level) % 2 ? "rice" : "shower",
     memory: "",
+    endingChoice: null,
   };
   s.message = household.arrival === "trip" ? `旅行回家啦！你和${skinOf(s.skin).name}一人拖着一只箱子，TA说：“我先进去开播，行李等会儿一起收。”` : entryLock ? `下班到家，门里传来${skinOf(s.skin).name}和观众聊天的声音。门锁有点涩，轻转一下就好。` : household.arrival === "outside" ? `你已经轻轻进屋，晚饭放在玄关。${skinOf(s.skin).name}还在直播，先看看今晚的小计划。` : household.arrival === "sofa" ? `今晚一直在家。你从沙发上伸个懒腰，${skinOf(s.skin).name}还在隔壁直播，小猫在脚边打盹。` : `你刚结束一局游戏，摘下耳机。${skinOf(s.skin).name}在直播，先看看家里有什么需要帮忙的。`;
 }
@@ -229,6 +231,7 @@ export function discoverDaily(s: Game) {
 export function chooseGoodnight(s: Game, choice: "together" | "care") {
   const d = s.daily;
   if (s.phase !== "playing" || !d || d.stage !== "goodnight") return;
+  d.endingChoice = choice;
   d.memory =
     d.after === "supper" ? choice === "together" ? `关掉直播灯，你和${skinOf(s.skin).name}并肩出门。街角小摊还亮着，一份烧鹅双拼、两碗热汤。TA把脆皮那块夹给你：“今晚轮到我照顾你。”` : `你给${skinOf(s.skin).name}披好外套，一起下楼买宵夜。夜风里，TA悄悄牵住你的手：“不用压低声音了，想吃什么就说。”` : d.after === "rice"
       ? choice === "together"
