@@ -368,6 +368,9 @@ test("首批统一棋子形象使用 512px 透明全身精灵", async () => {
     sun_guard: "/images/autochess/portraits/sun-guard.png",
     sui: "/images/autochess/portraits/sui.png",
     mossback: "/images/autochess/portraits/mossback.png",
+    viridis: "/images/autochess/portraits/viridis.png",
+    sumire: "/images/autochess/portraits/sumire.png",
+    chu2u: "/images/autochess/portraits/chu2u.png",
   };
   await Promise.all(Object.entries(expected).map(async ([id, portraitPath]) => {
     const unit = data.UNIT_DEFS[id];

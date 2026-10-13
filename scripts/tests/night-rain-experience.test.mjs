@@ -50,6 +50,46 @@ test('both ambushers are on usable ground, blocked by real cover, and engage aft
   }
 });
 
+test('touching the correct face opens the door with the same permission shown by the prompt', () => {
+  for (const id of ['shortcut', 'temple-gate', 'weaver-gate', 'cistern-gate', 'names-gate', 'sky-return']) {
+    const s = fresh(); const gate = engine.closedDoor(s, id);
+    const axis = ['east', 'west'].includes(gate.side) ? 'x' : 'z';
+    const sign = ['east', 'south'].includes(gate.side) ? 1 : -1;
+    // 0.68m is a legal standing position just outside the 0.35m face plus
+    // the 0.32m player radius; the old 0.7m side margin rejected it.
+    const p = { x: gate.x, y: gate.y, z: gate.z, [axis]: gate[axis] + sign * 0.68 };
+    assert.ok(world.canOccupy(p.x, p.z, p.y, s), id);
+    place(s, p); step(s, 10); assert.equal(s.nearbyId, id);
+    assert.doesNotMatch(s.prompt, /无法从这一侧打开/);
+    engine.interact(s); assert.equal(engine.closedDoor(s, id), undefined, id);
+  }
+});
+
+test('a reachable remote winch opens from its whole interaction area regardless of the distant door plane', () => {
+  const s = fresh(); const id = 'royal-gate';
+  // East of the physical gate plane, but on the upper floor beside its winch.
+  const p = { x: -110.8, y: 24, z: -223.6 };
+  assert.ok(world.canOccupy(p.x, p.z, p.y, s));
+  place(s, p); step(s, 10); assert.equal(s.nearbyId, id);
+  assert.equal(s.prompt, world.LANDMARKS.find(l => l.id === id).label);
+  engine.interact(s); assert.equal(engine.closedDoor(s, id), undefined);
+  const restored = engine.loadGame(engine.saveGame(s)); assert.ok(restored);
+  assert.equal(engine.closedDoor(restored, id), undefined);
+  engine.respawn(restored); assert.equal(engine.closedDoor(restored, id), undefined);
+});
+
+test('the remote winch exception requires actual range and the same floor', () => {
+  for (const p of [
+    { x: -110, y: 24, z: -223.6 }, // Out of range.
+    { x: -110.8, y: 12, z: -223.6 }, // Wrong floor.
+  ]) {
+    const s = fresh(); place(s, p);
+    const id = 'royal-gate';
+    assert.ok(engine.wrongDoorSide(s, id));
+    engine.interact(s); assert.ok(engine.closedDoor(s, id));
+  }
+});
+
 test('every closed one-sided door advertises refusal on its wrong face and cannot open there', () => {
   for (const l of world.LANDMARKS.filter(l => l.kind === 'shortcut')) {
     const s = fresh(); const door = engine.closedDoor(s, l.id); assert.ok(door, l.id);

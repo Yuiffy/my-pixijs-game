@@ -1,10 +1,25 @@
-export const AUTOCHESS_VERSION = "0.11.2";
+export const AUTOCHESS_VERSION = "0.12.0";
 export const AUTOCHESS_RELEASE_DATE = "2026-10-13";
 
 export const AUTOCHESS_RELEASE_HISTORY = [
   {
     version: AUTOCHESS_VERSION,
     date: AUTOCHESS_RELEASE_DATE,
+    title: "287 全身棋子形象",
+    summary: "小松绿、枝堇、羽啾补齐极简与细节两套透明全身 Q 版，商店、图鉴与战场统一展示。",
+    sections: [
+      {
+        title: "三位新形象",
+        items: [
+          "小松绿保留绿发、煎蛋花帽与粉瞳，害羞抱着盆栽；枝堇保留紫发、堇花与蕾丝衣装，手持藤蔓书；羽啾保留星星发夹、耳麦与白青衣装，手持三张观测卡。",
+          "极简和细节画风分别使用独立生成的透明全身棋子，尺寸与现有棋子统一；棋子画风保留本人原头像。商店、图鉴、备战与战斗随设置同步切换。",
+        ],
+      },
+    ],
+  },
+  {
+    version: "0.11.2",
+    date: "2026-10-13",
     title: "九人合唱",
     summary: "歌势更名为合唱，成员收紧为九位；小红帽代表岁己加入，克罗雅与笙歌入列。",
     sections: [

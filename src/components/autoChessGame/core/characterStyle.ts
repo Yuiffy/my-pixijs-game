@@ -16,6 +16,9 @@ let activeStyle: CharacterStyle = "minimal";
 let storageRead = false;
 
 const CLASSIC_OVERRIDES: Partial<Record<UnitId, ResolvedUnitPortrait>> = {
+  viridis: { portrait: "/images/livers/viridis.jpg", portraitFocus: "center", portraitStyle: "round" },
+  sumire: { portrait: "/images/livers/sumire.jpg", portraitFocus: "center", portraitStyle: "round" },
+  chu2u: { portrait: "/images/livers/chu2u.jpg", portraitFocus: "center", portraitStyle: "round" },
   sun_guard: { portrait: "/images/livers/hazel.png", portraitFocus: "top", portraitStyle: "round" },
   ember_blade: { portrait: "/images/livers/liko.png", portraitFocus: "top", portraitStyle: "round" },
   gale_archer: { portrait: "/images/livers/izayoi.png", portraitFocus: "top", portraitStyle: "round" },
@@ -111,8 +114,6 @@ export const resolveUnitPortrait = (
     portraitStyle: definition.portraitStyle || "round",
   };
   if (!base.portrait) return base;
-  // 新同期沿用已收录的本人头像；所有画风都有真实资源可用。
-  if (["viridis", "sumire", "chu2u"].includes(unitId)) return base;
   if (unitId === "komichi" && style === "detail") {
     return {
       portrait: "/images/autochess/portraits/minimal/komichi.png",

@@ -449,8 +449,8 @@ test("角色样式以极简为默认并在所有界面共用三档资源解析",
     import.meta.url,
   ))).sort();
   const expectedMinimal = detailFiles.filter((filename) => filename !== "rift-tyrant.png");
-  assert.equal(detailFiles.length, 45);
-  assert.equal(minimalFiles.length, 46);
+  assert.equal(detailFiles.length, 48);
+  assert.equal(minimalFiles.length, 49);
   assert.equal(classicFiles.length, 13);
   assert.deepEqual(
     minimalFiles,

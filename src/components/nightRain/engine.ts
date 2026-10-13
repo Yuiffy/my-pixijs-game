@@ -18,7 +18,7 @@ import { enemyAttack, enemyTiming, ENEMY_STRIKE_TIME, ENEMY_CONTACT_TIME } from 
 import { bossDefense, bossLeapHeight, castBossSkill, frozenByBoss, interruptBossChannel, snaredByBoss, updateBossFields, validBossFields } from './bossFields';
 import { FAN_ENEMIES, fanOf } from './fanEnemies';
 import { BOSS_ROSTER } from './bossRoster';
-import { BUILDING_SOLIDS, BUILDING_SURFACES } from './overhaulWorld';
+import { BUILDING_SOLIDS, BUILDING_SURFACES, REMOTE_LEVERS } from './overhaulWorld';
 import { WEAPONS, chargeCredit, chargeTime, weaponAttack, weaponUnlocked } from './weapons';
 
 import { ATTACKS, BUFFER_TIME, DASH_HOLD_TIME, PARRY_WINDOW, cancelAt } from './combat';
@@ -564,15 +564,22 @@ export function closedDoor(s: GameState, id: string) {
 }
 export function wrongDoorSide(s: GameState, id: string): boolean {
   const gate = closedDoor(s, id); const p = s.player;
-  return !!gate && ((gate.side === 'north' && p.z > gate.z - 0.7) || (gate.side === 'south' && p.z < gate.z + 0.7) || (gate.side === 'west' && p.x > gate.x - 0.7) || (gate.side === 'east' && p.x < gate.x + 0.7));
+  const lever = REMOTE_LEVERS[id];
+  if (lever && nearControl(s, lever, id)) return false;
+  // The gate plane separates its faces. A clearance margin wrongly rejects
+  // players standing beside the handle, especially near the end post.
+  return !!gate && ((gate.side === 'north' && p.z >= gate.z) || (gate.side === 'south' && p.z <= gate.z) || (gate.side === 'west' && p.x >= gate.x) || (gate.side === 'east' && p.x <= gate.x));
+}
+function nearControl(s: GameState, point: Vec3, id: string): boolean {
+  return distance(point, s.player) < 2.05 && Math.abs(point.y - s.player.y) < 0.8 && lineClear(s.player, point, s, id);
 }
 function nearLandmark(s: GameState, l: typeof LANDMARKS[number]): boolean {
   const door = closedDoor(s, l.id);
-  if (!door) return distance(l, s.player) < 2.05 && Math.abs(l.y - s.player.y) < 0.8 && lineClear(s.player, l, s, l.id);
+  if (!door) return nearControl(s, l, l.id);
   // Interact with the visible door from either face, including its full width.
   const point = { x: Math.max(door.x - door.w / 2, Math.min(door.x + door.w / 2, s.player.x)), y: door.y, z: Math.max(door.z - door.d / 2, Math.min(door.z + door.d / 2, s.player.z)) };
-  const access = { ...s, shortcut: s.shortcut || l.id === 'shortcut', templeGate: s.templeGate || l.id === 'temple-gate', harborGate: s.harborGate || l.id === 'harbor-gate', chapterGates: [...s.chapterGates, l.id], valleyGates: [...s.valleyGates, l.id], haven: { ...s.haven, gates: [...s.haven.gates, l.id] } };
-  return (distance(l, s.player) < 2.05 && Math.abs(l.y - s.player.y) < 0.8 && lineClear(s.player, l, s, l.id)) || (distance(point, s.player) < 2.6 && Math.abs(door.y - s.player.y) < 0.8 && lineClear(s.player, point, access));
+  const access = { ...s, shortcut: s.shortcut || l.id === 'shortcut', templeGate: s.templeGate || l.id === 'temple-gate', harborGate: s.harborGate || l.id === 'harbor-gate', chapterGates: [...s.chapterGates, l.id], valleyGates: [...s.valleyGates, l.id], skyGates: [...s.skyGates, l.id], haven: { ...s.haven, gates: [...s.haven.gates, l.id] } };
+  return nearControl(s, l, l.id) || (distance(point, s.player) < 2.6 && Math.abs(door.y - s.player.y) < 0.8 && lineClear(s.player, point, access));
 }
 
 function updatePrompt(s: GameState): void {
@@ -684,7 +691,6 @@ export function interact(s: GameState): void {
     effect(s, landmark, 'reward'); say(s, '刻露瓶 · 药瓶上限 +1', 5, 'event', `现在可以带 ${maxFlasks(s)} 瓶回血药了。回雨灯免费休息就能补满，R／手柄X喝药。`);
   } else if (VALLEY_GATES.some(g => g.id === landmark.id)) {
     const gate = VALLEY_GATES.find(g => g.id === landmark.id)!;
-    if ((gate.side === 'north' && s.player.z > gate.z - 0.7) || (gate.side === 'south' && s.player.z < gate.z + 0.7) || (gate.side === 'west' && s.player.x > gate.x - 0.7)) { say(s, '门闩在另一侧，先沿两岸前行。'); return; }
     if (gate.id === 'valley-entry' && !s.chapterComplete) { say(s, '归夜钟响，后山门才迎归人。', 6, 'lore', '先完成第一关：击败瑞娅、吃过晚饭，再敲响旁边的归夜钟。'); return; }
     if (gate.id === 'river-door' && riverSeals(s) < 2) { say(s, `双流尚未汇合 · 已开水闸 ${riverSeals(s)} / 2`, 6, 'lore', '西岸镐筑潮庭、东岸终场歌庭各有一个水闸。击败守闸者后，需要亲手转动机关。'); return; }
     if (!s.valleyGates.includes(gate.id)) s.valleyGates.push(gate.id);
@@ -715,18 +721,14 @@ export function interact(s: GameState): void {
     const [lore, hint] = VALLEY_LORE[landmark.id]; say(s, lore, 8, 'lore', hint);
   } else if (CHAPTER_GATES.some(g => g.id === landmark.id)) {
     const gate = CHAPTER_GATES.find(g => g.id === landmark.id)!;
-    if ((gate.side === 'north' && s.player.z > gate.z - 0.7) || (gate.side === 'south' && s.player.z < gate.z + 0.7) || (gate.side === 'west' && s.player.x > gate.x - 0.7) || (gate.side === 'east' && s.player.x < gate.x + 0.7)) { say(s, '机关在门的另一侧。'); return; }
     if (gate.id === 'archive-door' && !s.defeatedGuests.includes('gate-captain')) { say(s, '铜门上留着双象的印痕。', 5, 'lore', '需要栞栞的象纹铜印。高墙西侧的蓄水院是可选支路。'); return; }
     if (!s.chapterGates.includes(gate.id)) s.chapterGates.push(gate.id);
     effect(s, landmark, 'reward'); say(s, `${gate.name}已开`, 5, 'event', '通路会一直保留，死亡和休息不会重新关门。');
   } else if (landmark.id === 'harbor-gate') {
-    if (s.player.z > -8.8) return;
     s.harborGate = true; effect(s, landmark, 'reward'); say(s, '归灯长桥已开', 4, 'event', '长桥直通中庭，重试潮门不用绕夜市了。');
   } else if (landmark.id === 'temple-gate') {
-    if (s.player.z > -6.7) { say(s, '水向低处流，门向归人开。', 5, 'lore', '门闩在寺院一侧。先从高处的悬钟桥进雨寺，再沿石阶下到门后。'); return; }
     s.templeGate = true; effect(s, landmark, 'reward'); say(s, '闭水门已开', 4, 'event', '门外就是晾衣暗巷！雨寺和中庭连起来了，补给后可以直接回去。');
   } else if (landmark.kind === 'shortcut') {
-    if (s.player.z > -8.8) { say(s, '门的另一面，铁仍记得手的温度。', 5, 'lore', '门闩在另一侧，我们得先走西边的高阶绕到夜市，再从里面开门。'); return; }
     s.shortcut = true; effect(s, landmark, 'reward', '捷径开启'); say(s, '侧门升起', 4, 'event', '近路通啦！沿运河回中庭就能补给，重试花礼不用再爬屋脊。');
   } else if (landmark.kind === 'food') {
     if (!s.bossDefeated) { say(s, '伞不收，炉不迎客。', 5, 'lore', '摊主要我们先打败守街的花礼，赢了再来点餐。'); return; }
@@ -870,7 +872,6 @@ function interactHaven(s: GameState, id: string): boolean {
   }
   const gate = HAVEN_GATES.find(g => g.id === id);
   if (gate) {
-    if ((gate.side === 'west' && s.player.x > gate.x - 0.7) || (gate.side === 'north' && s.player.z > gate.z - 0.7) || (gate.side === 'south' && s.player.z < gate.z + 0.7)) { say(s, '门闩在归路的另一侧。'); return true; }
     if (id === 'well-door' && s.haven.echoes !== 3) { say(s, '钟、水与名字，还没有一起响起。', 7, 'lore', '邀请弥音与温叔归庭，完成雾河归水灯，再按名册顺序回应庭南三座灯台。'); return true; }
     if (!s.haven.gates.includes(id)) s.haven.gates.push(id);
     say(s, `${gate.name}已开`, 6, 'event', id === 'well-door' ? '潮阶下的无名灯库可以进入了；准备好补给，再往深处走。' : '这条近路会在休息与死亡后保留。'); return true;
@@ -1110,7 +1111,6 @@ function interactSky(s: GameState, id: string): boolean {
   const gate = SKY_GATES.find(g => g.id === id);
   if (gate) {
     if (gate.id === 'sky-entry' && !s.valleyComplete) { say(s, '先让归水灯照亮旧渠。', 6, 'lore', '击败悠亚后，亲手放出沉殿后方的第一盏归水灯。'); return true; }
-    if (gate.id === 'sky-return' && s.player.z > gate.z - 0.7) { say(s, '门闩在测星台这一侧。绕过盐池，再从悬廊下来。'); return true; }
     if (gate.id === 'sky-door' && skyPrisms(s) < 2) { say(s, `两道光尚未相遇 · 折光镜 ${skyPrisms(s)} / 2`, 8, 'lore', '霞镜在落霞盐阶东端，月镜在镜湖外庭东端。转动后光路永久保留。'); return true; }
     if (!s.skyGates.includes(id)) s.skyGates.push(id);
     say(s, `${gate.name}已开启`, 7, 'event', gate.id === 'sky-entry' ? '第三关 · 天镜原。旧渠尽头的芦苇随风倾向山口，金环正在更高处等你。' : '通路永久保留；归灯之间可以自由行旅。'); return true;

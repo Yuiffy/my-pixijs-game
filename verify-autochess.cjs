@@ -165,6 +165,12 @@ const closeBrowser = async () => {
     return;
   }
 
+  if (process.env.AUTOCHESS_287_ART === '1') {
+    await require('./scripts/verify-autochess-287-art.cjs')({ page, state, capture, screenshots, errors, failedResponses });
+    await closeBrowser();
+    return;
+  }
+
   if (process.env.AUTOCHESS_287 === '1') {
     await require('./scripts/verify-autochess-287.cjs')({ page, state, capture, screenshots, errors, failedResponses });
     await closeBrowser();
