@@ -972,3 +972,31 @@ Original prompt: 每晚重新选角色不连贯，直接进入下一晚；结尾
 证据 tmp/hush-endings-{dev-final,production,journey}/report.json 与 tmp/hush-endings-shared/；门禁 tmp/hush-endings-{rules,check,build}.log。React 核对：钩子顺序稳定、通过模拟状态/refs 更新场景，不在帧循环 setState；使用原生可键盘/触摸按钮，保留相册原生 dialog。仅停止本任务 4090 开发服务并移除自己的两条 tsconfig 类型路径；其他服务和配置保留。新版生产预览 http://127.0.0.1:4091/game/hush-live，旧 4089 为进门更新版本。详见 docs/hush-life-update.md。当前请求已完成，无待办；本次新改动尚未提交/推送/部署。移动端仅 Chrome 模拟。
 
 后续用户试玩后授权“上传”。沿用本轮已经通过的 74 项规则、顺序 check / build 和生产浏览器验收，提交本次连续夜晚、六种结局及相关脚本/文档并推送 origin/master。
+
+## 2026-10-14 · Hush 音乐、真实人声与三维音源
+
+Original prompt: 增加音乐和语音，主播聊天/唱歌时实际出声；使用本机 TTS 或变声器素材，由策划、开发、音乐和音效设计并实施。追加：说话、唱歌听不清也可以，主要听个动静；必须从主播那里发出，做 3D 音源。
+
+完成五角色独立聊天/七秒原创旋律演唱/轻声素材、检修/闭麦/离席/旅行/小睡/下播与七种结尾对白。IndexTTS 2.5 离线生成连续原句，WORLD 明确音高与时长重合成演唱，输出 153 段 MP3、6,387,948 字节、哈希与口型包络；歌声单声道与两段立体声伴奏分离，人声/音乐/音效三路独立且保存音量。配乐涵盖直播日常、留灯、床边、夜行和失败，日常加入脚步、门、餐盘、手机、水壶、小游戏、呼噜与故障材质。运行游戏不需要模型或语音服务，不使用浏览器 TTS。
+
+HRTF 声源读取角色实际嘴部世界坐标，听者读取真正的摄像机位置、朝向和上方向；涵盖正常走动、转头、小睡、旅行及结局镜头。距离衰减和开/关门低通同时生效。私人对白替换直播人声，下播后排队接私人话语，暂停/静音/失焦/相册/练习/上下文丢失停止声音，跨夜复用缓存/上下文且不叠音，结局对白单次演出。缺失素材只显示简短状态并保持游戏可玩。
+
+79/79 规则、源 ESLint、完整 check 后顺序 build 通过，Next 构建 ESLint 启用。五角色真实声能/口型/聊天唱歌轻声、三路音量/保存、六条普通操作结局/下播/相册/连续跨夜、三类修复/离席/旅行/小睡及缺失素材回退均通过；专项验证实际 PannerNode/AudioListener 的嘴部和镜头位置，普通键盘转身使同一人声左右声能比 0.626 → 1.613，距离三倍后声能约 44%，歌声与伴奏独立控制通过。10 段演唱均通过独立音高检测；不再以 ASR 逐字准确率作为门禁。最终 11 张截图逐张目检，PNG sanity/状态/DOM/画布/错误交叉核对，报告错误为空。浏览器使用静音系统 Chrome，不占用用户指针。
+
+证据 tmp/hush-audio-{live,story,events,spatial}-final/report.json、tmp/hush-audio-shared-final/、tmp/hush-audio-bake/pitch-final.json；制作来源、统计与限制见 docs/hush-audio-design.md 和 docs/hush-audio-delivery.json。只停止本任务 4090 开发服务并更新自己的 4095 生产服务；只移除本任务临时 tsconfig 类型路径，保留其他线程配置/服务。新版本地预览 http://127.0.0.1:4095/game/hush-live，旧 4091 保留。先前连续夜晚上传为 04e399984f6de3282b7d0c77797ee0abb876a24e；本轮音频未提交/推送/部署。实体手机、Safari 和人工听辨未验证，音色和趣味需试玩反馈。
+
+收尾清理声音文件空白格式后再次顺序通过完整 check / build，日志 tmp/hush-audio-{check,build}-clean.log；4095 重启为 .next-hush-audio-clean，三维定位/转身/距离衰减/独立人声与伴奏复测通过，tmp/hush-audio-spatial-clean/report.json 对应截图已打开目检。自己的临时类型路径已移除，git diff --check 通过。本轮目标完成，无实现待办。
+
+## 2026-10-14 · Hush 共用卡通拟声替换真人语音
+
+Original prompt: 五个人说话和唱歌都很难听、奇怪；用动森口音或哔哔滴滴代替，五个人先用同一个声音，降低开发成本。
+
+上一版真人语音/演唱方向已撤回。五角色统一读取 voice/ 共用音色，聊天短音分句并留停顿，轻声降低音高/响度，唱歌按原创旋律发长短拟声。全部由正弦和少量谐波、平滑起落本地生成，无 TTS、语音参考、变声器或歌词对齐。保留口型、主播嘴部 HRTF 声源、真实镜头听者、距离衰减/隔门、独立拟声/伴奏/音效音量以及所有剧情触发和静音机制。
+
+新 public/games/hush-live/audio-v2 共 49 段：26 共用拟声 + 23 原有公共配乐/音效，2,556,044 字节，比旧 153 段/6.39 MB 减少约 60%。script package-hush-blips.py 仅依赖 numpy/soundfile/ffmpeg，重复制作无需模型；旧 v1 素材与五个制作/审核脚本移到 tmp/hush-audio-retired-v1，不再进入游戏资源。新版制作统计与方法覆盖 docs/hush-audio-delivery.json，设计 docs/hush-audio-design.md 已按当前方案重写。
+
+79/79 规则、修改源 ESLint、顺序完整 check / build 通过，保留 Next 构建 ESLint。静音 Chrome 五角色聊天/旋律/轻声/口型/同一素材/暂停静音失焦、音量保存、六种结局/下播/跨夜/相册、三类检修/闭麦/离席/旅行/小睡/素材缺失均通过，错误为空。专项转身左右声道比 0.710 → 1.426，双耳到达时间 -23 → +23 样本，距离三倍后声能约 44%；独立拟声/伴奏控制通过。事件测试首次恰在旅行句间停顿取样，改为跨停顿窗口检测后复测通过。采用的 11 张截图逐张目检，像素 sanity/文字状态/DOM/画布/错误交叉核对通过。
+
+证据 tmp/hush-blips-{live,story,events,spatial}/report.json、tmp/hush-blips-shared/；门禁 tmp/hush-blips-{rules,eslint,check,build}.log。4095 已重启使用 .next-hush-blips-release，刷新即可试听新版；只移除自己的临时 tsconfig 类型路径，未更改其他服务或配置。当前改动未提交/推送/部署；未作人工听感评测，手机仍为 Chrome 模拟。实现已完成，无待办。
+
+后续用户试玩后授权“可以，提交远端”。沿用本轮已通过的 79 项规则、修改源 ESLint、顺序完整 check / build 和静音浏览器验收，重新核对全部 49 段音频哈希与四份浏览器报告；仅提交当前共用拟声、音乐/音效、三维音源及相关素材/脚本/文档，推送 origin/master。未采用的 TTS 素材与制作记录留在 tmp，不纳入提交。

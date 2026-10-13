@@ -40,6 +40,8 @@ export const AIM_POINTS: Record<
   door: { x: 520, y: 410, height: 1.27 },
 };
 export type Runtime3D = {
+  audioSpatial: { emitter: [number, number, number]; listener: [number, number, number]; forward: [number, number, number]; up: [number, number, number] };
+  audio: { enabled: boolean; loaded: number; pending: number; errors: string[]; mode: string; voice: string | null; music: string | null; mouth: number; rms: number; offset: number; text: string; wallHz: number; context: string };
   tracking: { yaw: number; pitch: number; roll: number; mouth: number; blink: number; stand: number; chairYaw: number; avatarYaw: number; avatarMouth: number; avatarBlink: number; avatarUpdates: number };
   game: Game;
   save: Save;
@@ -67,6 +69,8 @@ export type Runtime3D = {
   };
 };
 export const createRuntime = (save: Save): Runtime3D => ({
+  audioSpatial: { emitter: [3.3, 1.31, -0.41], listener: [0, 1.55, 0], forward: [0, 0, -1], up: [0, 1, 0] },
+  audio: { enabled: true, loaded: 0, pending: 0, errors: [], mode: "silent", voice: null, music: null, mouth: 0, rms: 0, offset: 0, text: "", wallHz: 6500, context: "unstarted" },
   tracking: { yaw: Math.PI, pitch: 0, roll: 0, mouth: 0, blink: 1, stand: 0, chairYaw: Math.PI, avatarYaw: 0, avatarMouth: 0, avatarBlink: 1, avatarUpdates: 0 },
   game: createGame(0, 1, save.unlocked, save.skin),
   save,
@@ -230,5 +234,7 @@ export function text3D(r: Runtime3D) {
     progression: r.save,
     partner: { name: skinOf(r.game.skin).name, skin: r.game.skin, ...partnerPose(r.game), ...partnerBehavior(r.game) },
     tracking: { ...r.tracking },
+    audio: { ...r.audio },
+    audioSpatial: r.audioSpatial,
   };
 }

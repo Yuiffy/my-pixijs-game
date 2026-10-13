@@ -252,6 +252,7 @@ function Partner({
   const seatedLegs = useRef<THREE.Group>(null);
   const standingLegs = useRef<THREE.Group>(null);
   const lastAnimationTime = useRef(r.elapsedFrame);
+  const voicePosition = useMemo(() => new THREE.Vector3(), []);
   const skin = skinOf(appearance.skin);
   const longHair = player
     ? appearance.player === "女友"
@@ -293,6 +294,7 @@ function Partner({
     const [px, pz] = worldPoint(r.game.player);
     const near = Math.hypot(px - x, pz - z) < 2.2 || !!r.game.daily?.events.nap.active;
     const behavior = partnerBehavior(r.game);
+    const mouthOpen = r.audio.enabled ? r.audio.mouth : behavior.speaking ? behavior.mouth : 0;
     const romantic =
       ["hug", "kiss", "bonus"].includes(r.game.actionKey) &&
       r.game.actionProgress > 0 &&
@@ -304,8 +306,8 @@ function Partner({
         ? Math.atan2(px - x, pz - z)
         : Math.PI;
     if (mouth.current && smile.current) {
-      mouth.current.visible = !player && behavior.speaking && !romantic;
-      mouth.current.scale.set(1, 0.2 + behavior.mouth, 0.14);
+      mouth.current.visible = !player && mouthOpen > 0.06 && !romantic;
+      mouth.current.scale.set(1, 0.2 + mouthOpen, 0.14);
       smile.current.visible = !mouth.current.visible;
     }
     if (pose) rig.current.rotation.y = pose.yaw;
@@ -349,10 +351,14 @@ function Partner({
     });
     if (eyes.current) eyes.current.scale.y = r.game.daily?.events.nap.active && r.game.daily.events.nap.reaction > 0 ? 0.5 : Math.sin(r.game.pulse * 0.37) > 0.99 ? 0.15 : 1;
     if (!player) {
+      if (mouth.current) {
+        mouth.current.getWorldPosition(voicePosition);
+        voicePosition.toArray(r.audioSpatial.emitter);
+      }
       r.tracking.yaw = rig.current.rotation.y;
       r.tracking.pitch = head.current?.rotation.x ?? 0;
       r.tracking.roll = head.current?.rotation.z ?? 0;
-      r.tracking.mouth = mouth.current?.visible ? 0.2 + behavior.mouth : 0;
+      r.tracking.mouth = mouth.current?.visible ? 0.2 + mouthOpen : 0;
       r.tracking.blink = eyes.current?.scale.y ?? 1;
       r.tracking.stand = stand;
     }
@@ -1232,6 +1238,8 @@ function CameraRig({
   const { camera, scene, gl, size } = useThree();
   const ray = useMemo(() => new THREE.Raycaster(), []);
   const center = useMemo(() => new THREE.Vector2(), []);
+  const audioForward = useMemo(() => new THREE.Vector3(), []);
+  const audioUp = useMemo(() => new THREE.Vector3(), []);
   useEffect(() => {
     if (camera instanceof THREE.PerspectiveCamera) {
       camera.fov = size.width < size.height ? 78 : 68;
@@ -1280,6 +1288,9 @@ function CameraRig({
       camera.rotation.set(r.pitch, r.yaw, 0, "YXZ");
     }
     camera.updateMatrixWorld();
+    camera.position.toArray(r.audioSpatial.listener);
+    camera.getWorldDirection(audioForward).toArray(r.audioSpatial.forward);
+    audioUp.set(0, 1, 0).applyQuaternion(camera.quaternion).toArray(r.audioSpatial.up);
     scene.updateMatrixWorld(true);
     ray.setFromCamera(center, camera);
     ray.far = 1.75;

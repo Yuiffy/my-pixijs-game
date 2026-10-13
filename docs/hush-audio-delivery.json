@@ -1,0 +1,350 @@
+{
+  "method": "One original procedural cartoon blip voice shared by all five characters; no TTS or voice references",
+  "clips": {
+    "music/apartment": {
+      "bytes": 241100,
+      "sha256": "93cae585f0320ae5c3e6403fbb074ad3f91f5e88fe805a3b212d3456cceb6b72",
+      "seconds": 20.0,
+      "rms": 0.07234065979719162,
+      "peak": 0.23684701323509216
+    },
+    "music/lamplight": {
+      "bytes": 308204,
+      "sha256": "4f775bca3ee8f7bad1f7feadf5678678c448bb7253bc27a34aa75d51899ec472",
+      "seconds": 25.6,
+      "rms": 0.07236313819885254,
+      "peak": 0.24927839636802673
+    },
+    "music/bedside": {
+      "bytes": 385100,
+      "sha256": "b147662f8b656df066960c833ea500adacbb82abdc6150e9dfbe3de154d04f33",
+      "seconds": 32.0,
+      "rms": 0.07233154773712158,
+      "peak": 0.3497868776321411
+    },
+    "music/night-walk": {
+      "bytes": 212300,
+      "sha256": "985f7fca2760b7e4a7d9f9388e062703436ab2c1e26e15aec7eade07e9cdf2a4",
+      "seconds": 17.6,
+      "rms": 0.07239394634962082,
+      "peak": 0.2729416489601135
+    },
+    "music/setback": {
+      "bytes": 49004,
+      "sha256": "eb76ac800aafe218126e15abe5f1960591a794ac6034bed4490485ad3bf71916",
+      "seconds": 4.0,
+      "rms": 0.08061106503009796,
+      "peak": 0.5368985533714294
+    },
+    "ambience/room": {
+      "bytes": 96620,
+      "sha256": "1b6a721a3ff9ed31446872d4dde07df477fac3e6fe917f37a5e5089a21b3c191",
+      "seconds": 12.0,
+      "rms": 0.01709895394742489,
+      "peak": 0.07727891951799393
+    },
+    "ambience/street": {
+      "bytes": 96620,
+      "sha256": "eb266362595f4584f3bbd0f090a304e1babb60580b4763793929d185a6066a15",
+      "seconds": 12.0,
+      "rms": 0.017138876020908356,
+      "peak": 0.07837912440299988
+    },
+    "sfx/foot-soft": {
+      "bytes": 2348,
+      "sha256": "58faa170e66193124eb2cfbe2dce66c1e137eae5c984d2cc73fa8234a3b1119b",
+      "seconds": 0.2,
+      "rms": 0.0428541824221611,
+      "peak": 0.3787146210670471
+    },
+    "sfx/foot-normal": {
+      "bytes": 2540,
+      "sha256": "b1c850936f146e0bf2e31075fee95c65d2eb036bdf4ddf093ab12e472142cd26",
+      "seconds": 0.24,
+      "rms": 0.09344155341386795,
+      "peak": 0.7877402901649475
+    },
+    "sfx/door": {
+      "bytes": 4652,
+      "sha256": "3845d27615c882a0ea0b9696828436062fc37bfac2d33d6f1eb474a56a0c848e",
+      "seconds": 0.5,
+      "rms": 0.08080840110778809,
+      "peak": 0.50469970703125
+    },
+    "sfx/task": {
+      "bytes": 5420,
+      "sha256": "f68e078d412596dcc5fa57c34afb8b0a303e505e759c7efb13525d14049793c8",
+      "seconds": 0.6,
+      "rms": 0.08076466619968414,
+      "peak": 0.27456676959991455
+    },
+    "sfx/phone": {
+      "bytes": 5996,
+      "sha256": "e27e6b46eb4a1c0901fa65f7fa8a7af4b86f63591887cf6096665e0052ecd7fb",
+      "seconds": 0.65,
+      "rms": 0.08074697107076645,
+      "peak": 0.3152282238006592
+    },
+    "sfx/dish": {
+      "bytes": 4652,
+      "sha256": "9a95a32c278a9e304ad65a2d4ffeabca38a94277d5a7d6bf793de00015176f61",
+      "seconds": 0.5,
+      "rms": 0.08062401413917542,
+      "peak": 0.5554617643356323
+    },
+    "sfx/kettle": {
+      "bytes": 6764,
+      "sha256": "4b2ee84db16df84a925525bb5bff4e1d6cb6c862aafc377344ee6f186f76bf10",
+      "seconds": 0.75,
+      "rms": 0.0807325690984726,
+      "peak": 0.5290374755859375
+    },
+    "sfx/key": {
+      "bytes": 3500,
+      "sha256": "fea639b58a1c6925de4db0b21428343f6493184cd7a20ab6d022bf076c5f84d5",
+      "seconds": 0.35,
+      "rms": 0.08038756996393204,
+      "peak": 0.6306838989257812
+    },
+    "sfx/hit": {
+      "bytes": 2540,
+      "sha256": "9754550577fe6e21bcd36db0c0ee39904997d2c70e42d69c45c978a4e8060f9d",
+      "seconds": 0.22,
+      "rms": 0.08061451464891434,
+      "peak": 0.3488699495792389
+    },
+    "sfx/miss": {
+      "bytes": 2732,
+      "sha256": "f292425e16853f192605ab9f9ec01cc27c9820e5999f153b0de6ff997c383aae",
+      "seconds": 0.25,
+      "rms": 0.0805506706237793,
+      "peak": 0.379575252532959
+    },
+    "sfx/shot": {
+      "bytes": 1964,
+      "sha256": "53f92cf0a3e0da638f2660749315334177f1cbcc90dcc8b0bb12934bcb62d94e",
+      "seconds": 0.15,
+      "rms": 0.08101627230644226,
+      "peak": 0.5889564156532288
+    },
+    "sfx/snore": {
+      "bytes": 9836,
+      "sha256": "76f72e5058c15fcda9d7d1d53df28f927b76a34ca403fee09bdc1951437197bf",
+      "seconds": 1.15,
+      "rms": 0.07681231945753098,
+      "peak": 0.7870622873306274
+    },
+    "sfx/fault": {
+      "bytes": 4268,
+      "sha256": "73ad3184aa383f7f4f3096f9b8d1468cc8c0477b8754d951511af744f648c337",
+      "seconds": 0.45,
+      "rms": 0.0810241550207138,
+      "peak": 0.5358219146728516
+    },
+    "sfx/restore": {
+      "bytes": 5996,
+      "sha256": "e24143a26886c221d01b2b6c8ee5f15b5aad79e9ee2c9768e0785b159b61613c",
+      "seconds": 0.65,
+      "rms": 0.08073703199625015,
+      "peak": 0.285665899515152
+    },
+    "music/song-0": {
+      "bytes": 85004,
+      "sha256": "83c317bc293a452fb5d869213f4bb37e6cab308870b8c85ca0e16ac9b25cf191",
+      "seconds": 7.0,
+      "rms": 0.059198834002017975,
+      "peak": 0.20071786642074585
+    },
+    "music/song-1": {
+      "bytes": 85004,
+      "sha256": "100b5efb476405cc7ca7f9a16ce8a140eec7f03b17a4cbc7200bdc8a349e933d",
+      "seconds": 7.0,
+      "rms": 0.059193577617406845,
+      "peak": 0.20290637016296387
+    },
+    "voice/private-mute": {
+      "bytes": 22124,
+      "sha256": "68cd72b79a16e13575ce67efd8ddc972cd47b82c7e5781bfb9d1387e294aac58",
+      "seconds": 2.68,
+      "rms": 0.02956760674715042,
+      "peak": 0.11113503575325012
+    },
+    "voice/trip": {
+      "bytes": 31532,
+      "sha256": "7387df777c78cd758c836f55c5ab65c0ab9b392bda7ae80add9a42b23f138a88",
+      "seconds": 3.85,
+      "rms": 0.028400950133800507,
+      "peak": 0.11102636158466339
+    },
+    "voice/break-out": {
+      "bytes": 28268,
+      "sha256": "0aabc83aa1208f093cca219edf2f4f0d7eb9ec1fbc457e045d3cb8e38ceb17a0",
+      "seconds": 3.44,
+      "rms": 0.030129121616482735,
+      "peak": 0.11106738448143005
+    },
+    "voice/break-back": {
+      "bytes": 23084,
+      "sha256": "e3524d80986e8d81b10279d98bdea51f98a1a794f1e6875990c0439ab0d82075",
+      "seconds": 2.79,
+      "rms": 0.025701487436890602,
+      "peak": 0.11119150370359421
+    },
+    "voice/repair": {
+      "bytes": 33260,
+      "sha256": "c691cb5981db6db30bd9a53c62f1a3886b56933b772112208930f44fdc3002b4",
+      "seconds": 4.08,
+      "rms": 0.027262171730399132,
+      "peak": 0.1111714094877243
+    },
+    "voice/food": {
+      "bytes": 26348,
+      "sha256": "d76c1df6d6a95bd776d107a55baee118ff3a6dbbe866121e9195b4f6fd752d3d",
+      "seconds": 3.2,
+      "rms": 0.02992383763194084,
+      "peak": 0.11102644354104996
+    },
+    "voice/hug": {
+      "bytes": 17708,
+      "sha256": "8e02f157cdde3c2aa24c663e66c0f44963494669a8df2da1812f3446d9177ae3",
+      "seconds": 2.12,
+      "rms": 0.029082661494612694,
+      "peak": 0.11115562915802002
+    },
+    "voice/nap": {
+      "bytes": 32300,
+      "sha256": "48303ab6ee93363be8cc79178901d09798d2a7b40b55ba440fdeb479d315dc99",
+      "seconds": 3.94,
+      "rms": 0.029425375163555145,
+      "peak": 0.11116914451122284
+    },
+    "voice/off-air": {
+      "bytes": 32300,
+      "sha256": "0ed146e9a41a70922d54a007c53d8cd1400bf6fc832668860a4c16fa47b27550",
+      "seconds": 3.95,
+      "rms": 0.027100685983896255,
+      "peak": 0.11106976866722107
+    },
+    "voice/after-rice": {
+      "bytes": 24620,
+      "sha256": "30fcb5e06886609b8e5f8605d033bb81ce56e90ab4c7b6a21f93e3c748e57e86",
+      "seconds": 2.99,
+      "rms": 0.016720762476325035,
+      "peak": 0.06441490352153778
+    },
+    "voice/after-shower": {
+      "bytes": 28844,
+      "sha256": "b3d69c57bead38058b30ee4884d233a4df5dfb77a82cb670729029c27e3fa02d",
+      "seconds": 3.52,
+      "rms": 0.016776068136096,
+      "peak": 0.06441576778888702
+    },
+    "voice/after-supper": {
+      "bytes": 21164,
+      "sha256": "5c1ba5694491ff6b3305519280cc0f02a0757b89b76401ffbe0d2cae214154a5",
+      "seconds": 2.55,
+      "rms": 0.016187289729714394,
+      "peak": 0.0641336664557457
+    },
+    "voice/ending-lamp": {
+      "bytes": 20588,
+      "sha256": "650278f192bc8846514fd9801ee0c313cd50149a4ac0792026aef89fc1617c83",
+      "seconds": 2.49,
+      "rms": 0.016613619402050972,
+      "peak": 0.0644172877073288
+    },
+    "voice/ending-rice-share": {
+      "bytes": 21740,
+      "sha256": "9aeb09d6190853743d077fc6b25032c6bcabe1be3f7789c7b11f161fc8d0caee",
+      "seconds": 2.62,
+      "rms": 0.017229223623871803,
+      "peak": 0.06442651152610779
+    },
+    "voice/ending-kitchen-care": {
+      "bytes": 22316,
+      "sha256": "8d565502c8d65ead742ee191f660eb0bc0a3f4c61403808aac295bd8577f14b8",
+      "seconds": 2.69,
+      "rms": 0.016464708372950554,
+      "peak": 0.06430702656507492
+    },
+    "voice/ending-warm-water": {
+      "bytes": 27692,
+      "sha256": "cf603029e1b7e159bab857fb2a09bbd73c32044393a95254767a4e8463580acc",
+      "seconds": 3.38,
+      "rms": 0.016741422936320305,
+      "peak": 0.06444850564002991
+    },
+    "voice/ending-dry-hair": {
+      "bytes": 19052,
+      "sha256": "ca53ab71a22fd657854bd84b09aff3b8153be7d2ad67e941609e905986a0c9be",
+      "seconds": 2.3,
+      "rms": 0.017193205654621124,
+      "peak": 0.06445310264825821
+    },
+    "voice/ending-supper-table": {
+      "bytes": 26540,
+      "sha256": "93c4ae71b3d29e65c8418bbfe217db7dafd27964fcfce2b2f840704f7c1f2bde",
+      "seconds": 3.23,
+      "rms": 0.01683596335351467,
+      "peak": 0.06445347517728806
+    },
+    "voice/ending-night-walk": {
+      "bytes": 21932,
+      "sha256": "11ea8a9575cde7a710e7695ec77c24513c28f44256dcce4406268f70466f0ac7",
+      "seconds": 2.66,
+      "rms": 0.017311710864305496,
+      "peak": 0.06445663422346115
+    },
+    "voice/talk-0": {
+      "bytes": 96620,
+      "sha256": "9bf9410f641164d66dae1574909fdc41da5efcab6b46c2962b039d48a72cdcf3",
+      "seconds": 12.0,
+      "rms": 0.028453852981328964,
+      "peak": 0.11112987995147705
+    },
+    "voice/talk-1": {
+      "bytes": 96620,
+      "sha256": "57e88455491bc571bd40946dc7ad2dba84fc23915aac66fcfe4bf35570cbd497",
+      "seconds": 12.0,
+      "rms": 0.028559086844325066,
+      "peak": 0.1111690104007721
+    },
+    "voice/talk-2": {
+      "bytes": 96620,
+      "sha256": "f0f7ff584e670b61695cd0454b74284279ba39652a2d6ca983db9ea198c226f4",
+      "seconds": 12.0,
+      "rms": 0.029210830107331276,
+      "peak": 0.11113551259040833
+    },
+    "voice/whisper-0": {
+      "bytes": 24620,
+      "sha256": "2d0c0c1d7f21a04002241ff50f889f3d49026873dd37fc342c9d05542df07934",
+      "seconds": 3.0,
+      "rms": 0.01701214537024498,
+      "peak": 0.06438632309436798
+    },
+    "voice/whisper-1": {
+      "bytes": 24620,
+      "sha256": "2efb552e5008fa055dbc61a1455f8332c7890d20eeaff270ea051e3d114d2a08",
+      "seconds": 3.0,
+      "rms": 0.015522556379437447,
+      "peak": 0.06441694498062134
+    },
+    "voice/song-0": {
+      "bytes": 56684,
+      "sha256": "ffe3017988bd236192ee7f12ac6e82d12550258d52b748fb8a9ac81f9eb21cdb",
+      "seconds": 7.0,
+      "rms": 0.05083597078919411,
+      "peak": 0.1251576542854309
+    },
+    "voice/song-1": {
+      "bytes": 56684,
+      "sha256": "708b00884c03b27f911f316e2e3e43286747f2893f5a5c3c3c9bbb814d665125",
+      "seconds": 7.0,
+      "rms": 0.05083567276597023,
+      "peak": 0.12516042590141296
+    }
+  },
+  "total_bytes": 2556044,
+  "human_listening_review": false
+}

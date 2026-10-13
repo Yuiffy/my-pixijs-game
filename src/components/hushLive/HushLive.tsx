@@ -39,6 +39,7 @@ import {
 } from "./runtime3d";
 import { worldPoint } from "./navigation";
 import { ApartmentSound } from "./sound3d";
+import { DEFAULT_MIX, parseAudioMix, type AudioMix } from "./audioPlan";
 import styles from "./hush3d.module.css";
 import DeltaGame from "./DeltaGame";
 import { SkinPortrait } from "./SkinDetails";
@@ -53,6 +54,7 @@ import { householdStatus, onBreak } from "./household";
 
 const Apartment = dynamic(() => import("./Apartment"), { ssr: false });
 const STORAGE = "hush-live-v1";
+const AUDIO_STORAGE = "hush-live-audio-v1";
 type GameWindow = Window & {
   render_game_to_text?: () => string;
   advanceTime?: (ms: number) => void;
@@ -91,6 +93,10 @@ export default function HushLive() {
   const [sceneVersion, setSceneVersion] = useState(0);
   const [sound, setSound] = useState(true);
   const soundRef = useRef(true);
+  const audioFocused = useRef(true);
+  const [mix, setMix] = useState(DEFAULT_MIX);
+  const mixRef = useRef(DEFAULT_MIX);
+  const [soundSettings, setSoundSettings] = useState(false);
   const audio = useRef<ApartmentSound | null>(null);
   const [note, setNote] = useState("");
   const [shareText, setShareText] = useState("");
@@ -131,8 +137,9 @@ export default function HushLive() {
   const tick = useCallback(
     (dt: number) => {
       const { current } = runtime;
-      if (galleryRef.current) return;
+      if (galleryRef.current) { audio.current?.update(current, soundRef.current, mixRef.current, true); return; }
       if (practice.current) {
+        audio.current?.update(current, soundRef.current, mixRef.current, true);
         if (!practicePaused.current) stepMini(practice.current, dt);
         if (current.manual || performance.now() - lastPaint.current > 70) {
           refresh(); lastPaint.current = performance.now();
@@ -161,7 +168,7 @@ export default function HushLive() {
           galleryRef.current = first; setGallery(first); setNewMemory(true);
         }
       }
-      audio.current?.update(current, soundRef.current);
+      audio.current?.update(current, soundRef.current, mixRef.current, !!galleryRef.current || !audioFocused.current);
       const now = performance.now();
       if (
         current.manual ||
@@ -182,12 +189,14 @@ export default function HushLive() {
   const onLost = useCallback(() => {
     if (practice.current) { practice.current.held = false; practice.current.tiltX = 0; practice.current.tiltZ = 0; practicePaused.current = true; }
     pause3D(runtime.current);
+    audio.current?.update(runtime.current, soundRef.current, mixRef.current, true);
     setSceneError(true);
     setSceneReady(false);
     refresh();
   }, [refresh]);
   const pause = useCallback(() => {
     const { current } = runtime;
+    audioFocused.current = true;
     if (practice.current) {
       practice.current.held = false; practice.current.tiltX = 0; practice.current.tiltZ = 0;
       practicePaused.current = !practicePaused.current;
@@ -197,7 +206,11 @@ export default function HushLive() {
     if (current.game.phase === "playing") {
       pause3D(current);
       if (document.pointerLockElement) document.exitPointerLock();
-    } else if (current.game.phase === "paused" && current.webglReady) current.game.phase = "playing";
+    } else if (current.game.phase === "paused" && current.webglReady) {
+      current.game.phase = "playing";
+      audio.current?.resume().catch(() => {});
+    }
+    audio.current?.update(current, soundRef.current, mixRef.current, !!practice.current);
     setKnob({ x: 0, y: 0 });
     setJournal(false);
     refresh();
@@ -213,6 +226,9 @@ export default function HushLive() {
     const { current } = runtime;
     try {
       current.save = parseSave(localStorage.getItem(STORAGE));
+      const settings = JSON.parse(localStorage.getItem(AUDIO_STORAGE) ?? "null");
+      mixRef.current = parseAudioMix(settings?.mix); setMix(mixRef.current);
+      soundRef.current = settings?.enabled !== false; setSound(soundRef.current);
     } catch {
       setNote("浏览器未允许保存；本次仍能完整游玩。");
     }
@@ -238,6 +254,7 @@ export default function HushLive() {
         practice: practice.current,
         practicePaused: practicePaused.current,
         cg: galleryRef.current,
+        audioMix: { ...mixRef.current },
         objective: objective(current.game),
         broadcast: broadcast(current.game),
       });
@@ -246,8 +263,10 @@ export default function HushLive() {
       if (Number.isFinite(ms) && ms >= 0 && ms <= 300000) tick(ms / 1000);
     };
     const blur = () => {
+      audioFocused.current = false;
       if (practice.current) { practice.current.held = false; practice.current.tiltX = 0; practice.current.tiltZ = 0; practicePaused.current = true; }
       pause3D(current);
+      audio.current?.update(current, soundRef.current, mixRef.current, true);
       lookDrag.current = null;
       stickPointer.current = null;
       actionPointer.current = null;
@@ -257,6 +276,7 @@ export default function HushLive() {
     const visibility = () => {
       if (document.hidden) blur();
     };
+    const focus = () => { audioFocused.current = true; };
     const lockChange = () => {
       const wasLocked = current.pointerLocked;
       current.pointerLocked = document.pointerLockElement === viewport.current?.querySelector("canvas");
@@ -320,6 +340,7 @@ export default function HushLive() {
       if (lookDrag.current?.id === event.pointerId) lookDrag.current = null;
     };
     window.addEventListener("blur", blur);
+    window.addEventListener("focus", focus);
     document.addEventListener("visibilitychange", visibility);
     document.addEventListener("pointerlockchange", lockChange);
     document.addEventListener("mousemove", mouseMove);
@@ -329,6 +350,7 @@ export default function HushLive() {
     window.addEventListener("pointercancel", release, true);
     return () => {
       window.removeEventListener("blur", blur);
+      window.removeEventListener("focus", focus);
       document.removeEventListener("visibilitychange", visibility);
       document.removeEventListener("pointerlockchange", lockChange);
       document.removeEventListener("mousemove", mouseMove);
@@ -339,12 +361,14 @@ export default function HushLive() {
       delete target.render_game_to_text;
       delete target.advanceTime;
       audio.current?.close();
+      audio.current = null;
     };
   }, [refresh, tick, pause, muteSignal]);
 
   const start = () => {
     if (!r.webglReady) return;
     clearControls(r);
+    audioFocused.current = true;
     r.game.phase = "playing";
     setJournal(false);
     if (!audio.current) audio.current = new ApartmentSound();
@@ -354,17 +378,20 @@ export default function HushLive() {
   const closeGallery = () => {
     galleryRef.current = null; setGallery(null); setNewMemory(false);
     if (resumeGallery.current && r.game.phase === "paused" && r.webglReady) r.game.phase = "playing";
+    audio.current?.resume().catch(() => {});
     resumeGallery.current = false; refresh();
   };
   const openGallery = () => {
     resumeGallery.current = r.game.phase === "playing";
     if (resumeGallery.current) pause3D(r);
+    audio.current?.update(r, soundRef.current, mixRef.current, true);
     unlock(); galleryRef.current = "album"; setGallery("album"); setNewMemory(false); refresh();
   };
   const selectNight = (level: number, nextSeed = seed.current) => {
     clearControls(r);
     unlock();
     r.game = createGame(level, nextSeed, r.save.unlocked, r.save.skin);
+    audio.current?.update(r, soundRef.current, mixRef.current, true);
     r.yaw = r.game.daily?.arrival !== undefined && r.game.daily.arrival !== "done" ? 0 : -1.25;
     r.pitch = -0.04;
     r.focus = null;
@@ -378,6 +405,7 @@ export default function HushLive() {
     unlock();
     practiceSeed.current += 1;
     practice.current = createMini(kind, practiceSeed.current);
+    audio.current?.update(r, soundRef.current, mixRef.current, true);
     practicePaused.current = false;
     refresh();
   };
@@ -391,6 +419,12 @@ export default function HushLive() {
   const goGoal = () => {
     go3D(r, objective(r.game).spot);
     refresh();
+  };
+  const changeMix = (key: keyof AudioMix, value: number) => {
+    const next = parseAudioMix({ ...mixRef.current, [key]: value });
+    mixRef.current = next; setMix(next);
+    audio.current?.update(r, soundRef.current, next, !!galleryRef.current || !!practice.current);
+    try { localStorage.setItem(AUDIO_STORAGE, JSON.stringify({ enabled: soundRef.current, mix: next })); } catch { setNote("音量本次生效，浏览器未允许保存。"); }
   };
   const selectSkin = (skin: SkinId) => {
     const next = { ...save, skin, partner: skin === "host" ? save.partner : "她" as const };
@@ -499,13 +533,36 @@ export default function HushLive() {
               const enabled = !sound;
               soundRef.current = enabled;
               setSound(enabled);
+              if (enabled) audio.current?.resume().catch(() => {});
+              audio.current?.update(r, enabled, mixRef.current, !!galleryRef.current || !!practice.current);
+              try { localStorage.setItem(AUDIO_STORAGE, JSON.stringify({ enabled, mix: mixRef.current })); } catch { setNote("声音设置本次生效，浏览器未允许保存。"); }
             }}
           >
             声音 {sound ? "开" : "关"}
           </button>
+          <button
+            aria-expanded={soundSettings}
+            aria-controls="hush-audio-settings"
+            onClick={() => {
+              if (!soundSettings && r.game.phase === "playing") pause();
+              setSoundSettings(!soundSettings);
+            }}
+          >音量</button>
           {(playing || mini) && <button onClick={pause}>{mini && practicePaused.current ? "继续练习 ▶" : "暂停 Ⅱ"}</button>}
         </div>
       </nav>
+      {r.audio.errors.length > 0 && <p className={styles.audioNotice} role="status">部分声音暂时未加载，仍可继续游玩。</p>}
+      {soundSettings && (
+        <section id="hush-audio-settings" className={styles.audioSettings} aria-label="音量设置">
+          {(["voice", "music", "effects"] as const).map(key => (
+            <label key={key} htmlFor={`hush-volume-${key}`}>
+              <span>{key === "voice" ? "人声" : key === "music" ? "音乐" : "音效"} <output>{Math.round(mix[key] * 100)}%</output></span>
+              <input id={`hush-volume-${key}`} aria-label={key === "voice" ? "人声音量" : key === "music" ? "音乐音量" : "音效音量"} type="range" min="0" max="100" value={Math.round(mix[key] * 100)} onChange={event => changeMix(key, Number(event.target.value) / 100)} />
+            </label>
+          ))}
+          <button onClick={() => setSoundSettings(false)}>收起</button>
+        </section>
+      )}
       {sceneError ? (
         <section className={styles.menu}>
           <p className={styles.eyebrow}>稍等一下</p>

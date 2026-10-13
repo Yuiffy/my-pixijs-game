@@ -943,3 +943,20 @@
   .endingMenu .resultStats { margin: 8px 0; }
   .endingMenu .instructions, .endingMenu .reward { margin: 8px 0; }
 }
+.audioSettings {
+  position: absolute;
+  right: 16px;
+  top: 64px;
+  z-index: 40;
+  width: min(260px, calc(100% - 32px));
+  padding: 16px;
+  border: 1px solid #5b5550;
+  border-radius: 14px;
+  background: #262522f5;
+  box-shadow: 0 12px 32px #0006;
+}
+.audioSettings label { display: grid; gap: 6px; margin-bottom: 12px; }
+.audioSettings span { display: flex; justify-content: space-between; font-size: 13px; color: #eee2ce; }
+.audioSettings input { width: 100%; accent-color: #d7b68a; min-height: 24px; }
+.audioSettings button { background: #eee2ce; color: #35483b; padding: 7px 14px; border-radius: 6px; }
+.audioNotice { position: absolute; right: 16px; top: 58px; z-index: 20; max-width: calc(100% - 32px); padding: 8px 12px; background: #262522ee; border-radius: 8px; color: #eee2ce; font-size: 12px; }
