@@ -1,12 +1,18 @@
 import type { GameState, Landmark } from './types';
 
-export type DiscoveryModel = 'paper' | 'book' | 'rubbing' | 'sign' | 'stele' | 'seal' | 'bell' | 'wheel' | 'winch' | 'lantern' | 'basin' | 'name-lamp' | 'laptop' | 'spent-lamp';
+export type DiscoveryModel = 'paper' | 'book' | 'rubbing' | 'sign' | 'stele' | 'seal' | 'bell' | 'wheel' | 'winch' | 'lantern' | 'basin' | 'name-lamp' | 'laptop' | 'spent-lamp' | 'mirror';
 export type DiscoveryRole = 'lore' | 'clue' | 'mechanism';
 type Presentation = { model: DiscoveryModel; role: DiscoveryRole; height: number; offset: number };
 const note = (model: DiscoveryModel, role: DiscoveryRole = 'lore', height = 2.1): Presentation => ({ model, role, height, offset: -0.85 });
 
 // Keep the original progress IDs and note kind: existing saves remain readable.
 export const NOTE_PRESENTATIONS: Record<string, Presentation> = {
+  'sky-note': note('stele'),
+  'sky-boss-note': note('book', 'clue'),
+  'sky-prism-rose': { ...note('mirror', 'mechanism', 3.1), offset: 0 },
+  'sky-prism-moon': { ...note('mirror', 'mechanism', 3.1), offset: 0 },
+  'sky-heart': note('lantern', 'mechanism', 4.2),
+  'nana-blueprint': note('paper', 'clue'),
   laptop: note('laptop'),
   'rooftop-note': note('paper'),
   'temple-note': note('stele'),
@@ -53,7 +59,7 @@ export function discoveryPhase(s: GameState, id: string): DiscoveryPhase {
     return s.haven.recruits.length === 2 && s.valleyComplete ? 'ready' : 'sealed';
   }
   if (s.collected.includes(id)) return 'complete';
-  const guardian = id === 'mill-sluice' || id === 'ferry-winch' ? 'drowned-warden' : id === 'monastery-sluice' ? 'silent-abbot' : id === 'river-heart' ? 'river-serpent' : id === 'chapter-bell' ? 'rain-regent' : id === 'dawn-bell' ? 'nana-tide' : null;
+  const guardian = id === 'sky-heart' ? 'sky-astronomer' : id === 'mill-sluice' || id === 'ferry-winch' ? 'drowned-warden' : id === 'monastery-sluice' ? 'silent-abbot' : id === 'river-heart' ? 'river-serpent' : id === 'chapter-bell' ? 'rain-regent' : id === 'dawn-bell' ? 'nana-tide' : null;
   if (guardian && !s.defeatedGuests.includes(guardian)) return 'sealed';
   if (id === 'chapter-bell' && !s.collected.includes('food')) return 'sealed';
   return 'ready';

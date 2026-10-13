@@ -16,7 +16,7 @@ export const VALLEY_SURFACES: Surface[] = [
   { id: 'salt-bridge', name: '盐仓小桥', x1: -234, x2: -210, z1: -350, z2: -342, y: 2, color: '#8e987d' },
   { id: 'salt-store', name: '旧盐仓', x1: -246, x2: -233, z1: -358, z2: -336, y: 2, color: '#a19376' },
   { id: 'mill-bank', name: '水车沿岸', x1: -208, x2: -200, z1: -388, z2: -363, y: 2, color: '#819589' },
-  { id: 'mill-court', name: '沉舟水车院', x1: -216, x2: -188, z1: -416, z2: -388, y: 2, color: '#889d93' },
+  { id: 'mill-court', name: '镐筑潮庭', x1: -216, x2: -188, z1: -416, z2: -388, y: 2, color: '#889d93' },
   { id: 'mill-pier', name: '水车渡埠', x1: -188, x2: -180, z1: -405, z2: -393, y: 2, color: '#92846e' },
   { id: 'mill-ascent', name: '白沫石阶', x1: -206, x2: -198, z1: -440, z2: -416, y: 8, endY: 2, color: '#a0aa96' },
   { id: 'west-aqueduct', name: '西岸引水桥', x1: -206, x2: -150, z1: -448, z2: -440, y: 8, color: '#a3a993' },
@@ -29,7 +29,7 @@ export const VALLEY_SURFACES: Surface[] = [
   { id: 'cliff-return-stairs', name: '渡村后阶', x1: -120, x2: -112, z1: -372, z2: -356, y: 10, endY: 2, color: '#9b9e83' },
   { id: 'cliff-return-foot', name: '采茶人归门', x1: -120, x2: -112, z1: -356, z2: -344, y: 2, color: '#9c987f' },
   { id: 'monastery-ascent', name: '无声寺百阶', x1: -82, x2: -74, z1: -405, z2: -380, y: 18, endY: 10, color: '#b1ac94' },
-  { id: 'monastery', name: '无声山寺', x1: -107, x2: -74, z1: -426, z2: -405, y: 18, color: '#ae9c82' },
+  { id: 'monastery', name: '终场歌庭', x1: -107, x2: -74, z1: -426, z2: -405, y: 18, color: '#ae9c82' },
   { id: 'monastery-refuge', name: '竹寺雨灯', x1: -74, x2: -64, z1: -417, z2: -407, y: 18, color: '#bca888' },
   { id: 'monastery-descent', name: '流经下山阶', x1: -108, x2: -100, z1: -447, z2: -426, y: 8, endY: 18, color: '#a8ab92' },
   { id: 'east-aqueduct', name: '东岸引水桥', x1: -144, x2: -100, z1: -453, z2: -445, y: 8, color: '#9ba997' },
@@ -70,7 +70,7 @@ export const VALLEY_LANDMARKS: Landmark[] = [
   { id: 'river-heart', kind: 'note', label: '放出第一盏归水灯', x: -150, y: 8, z: -534 },
   { id: 'ferry-city', kind: 'ferry', label: '乘渡船前往雾河渡村', x: 17, y: 0, z: -31.5 },
   { id: 'ferry-village-city', kind: 'ferry', label: '乘渡船返回旧城摆渡庵', x: -133, y: 2, z: -360 },
-  { id: 'ferry-village-mill', kind: 'ferry', label: '乘渡船前往沉舟水车院', x: -127, y: 2, z: -360 },
+  { id: 'ferry-village-mill', kind: 'ferry', label: '乘渡船前往镐筑潮庭', x: -127, y: 2, z: -360 },
   { id: 'ferry-mill', kind: 'ferry', label: '乘渡船返回雾河渡村', x: -183, y: 2, z: -396 },
 ];
 
@@ -82,7 +82,7 @@ export const VALLEY_REST_POINTS: Record<string, Vec3> = {
 export const FERRY_DESTINATIONS: Record<string, { label: string; position: Vec3 }> = {
   'ferry-city': { label: '雾河渡村', position: { x: -133, y: 2, z: -358.5 } },
   'ferry-village-city': { label: '旧城摆渡庵', position: { x: 17, y: 0, z: -28.8 } },
-  'ferry-village-mill': { label: '沉舟水车院', position: { x: -185, y: 2, z: -396 } },
+  'ferry-village-mill': { label: '镐筑潮庭', position: { x: -185, y: 2, z: -396 } },
   'ferry-mill': { label: '雾河渡村', position: { x: -128, y: 2, z: -358.5 } },
 };
 export const VALLEY_BOSSES = ['drowned-warden', 'silent-abbot', 'river-serpent'];
@@ -106,7 +106,7 @@ export const VALLEY_ENEMIES: (Vec3 & { id: string; kind: EnemyKind; name: string
   { id: 'salt-monk', kind: 'monk', name: '旧仓行脚僧', x: -239, y: 2, z: -347, facing: 1.57 },
   { id: 'mill-bank-reaver', kind: 'reaver', name: '水车收网客', x: -204, y: 2, z: -377, facing: 0 },
   { id: 'mill-lancer', kind: 'lancer', name: '沉舟守院人', x: -211, y: 2, z: -391, facing: 0 },
-  { id: 'drowned-warden', kind: 'warden', name: '花礼 · 沉舟花渡', x: -202, y: 2, z: -404, facing: 0 },
+  { id: 'drowned-warden', kind: 'warden', name: '七海 · 镐筑潮庭', x: -202, y: 2, z: -404, facing: 0 },
   { id: 'aqueduct-reaver', kind: 'reaver', name: '白沫钩镰客', x: -202, y: 8, z: -443, facing: 0 },
   { id: 'aqueduct-monk', kind: 'monk', name: '引水桥行僧', x: -176, y: 8, z: -444, facing: -1.57 },
   { id: 'mountain-monk', kind: 'monk', name: '竹影拦路僧', x: -96, y: 2, z: -337, facing: -1.57 },
@@ -114,7 +114,7 @@ export const VALLEY_ENEMIES: (Vec3 & { id: string; kind: EnemyKind; name: string
   { id: 'garden-monk', kind: 'monk', name: '灵露守竹人', x: -67, y: 10, z: -375, facing: -1.57 },
   { id: 'monastery-lancer', kind: 'lancer', name: '百阶执枪僧', x: -78, y: 14.8, z: -395, facing: 0 },
   { id: 'monastery-monk', kind: 'monk', name: '山寺迎客僧', x: -79, y: 18, z: -408, facing: 0 },
-  { id: 'silent-abbot', kind: 'abbot', name: '瑞娅 · 霜钟听澜', x: -96, y: 18, z: -417, facing: 1.57 },
+  { id: 'silent-abbot', kind: 'abbot', name: '阿梓 · 终场歌庭', x: -96, y: 18, z: -417, facing: 1.57 },
   { id: 'east-monk', kind: 'monk', name: '流经行脚僧', x: -119, y: 8, z: -449, facing: 1.57 },
   { id: 'reed-reaver', kind: 'reaver', name: '芦苇藏钩客', x: -147, y: 2, z: -390, facing: Math.PI },
   { id: 'bridge-monk', kind: 'monk', name: '锁桥护灯僧', x: -151, y: 8, z: -487, facing: 0 },
@@ -144,7 +144,7 @@ export const VALLEY_HOUSES: House[] = [
 
 export const VALLEY_LORE: Record<string, [string, string]> = {
   'valley-note': ['钟送归城人，水载未归灯。山河两岸，终汇一流。', '第二关「雾河回响」。沿下山阶到渡村；西边水路、东边山道均可先走。两岸各有一座水闸，开启后才能进入河心神殿。'],
-  'village-note': ['渡船缆断在旧水车，归城的灯却还亮着。', '西行穿过盐市，击败花礼后修好系缆，渡船就能往返渡村、水车院与第一关的摆渡庵。东边竹关背后也有一扇回村近门。'],
+  'village-note': ['渡船缆断在旧水车，归城的灯却还亮着。', '西行穿过盐市，击败七海后修好系缆，渡船就能往返渡村、水车院与第一关的摆渡庵。东边竹关背后也有一扇回村近门。'],
   'bamboo-note': ['采茶人走后阶，行脚人循钟上山。', '西边的采茶栈桥下行能开回渡村的近路；向北登百阶是无声寺。东侧竹园藏着增强回血量的灵竹露。'],
-  'river-note': ['双流归一，锁不认铜印，只认两岸的水声。', '西岸水车院与东岸无声寺的水闸都要亲手转动。汇灯台南边芦苇径可返回渡村，北面是悠亚守着的那伽沉殿。星杖直刺可以弹反，红色环流用跳跃或闪避。'],
+  'river-note': ['双流归一，锁不认铜印，只认两岸的水声。', '西岸水车院与东岸无声寺的水闸都要亲手转动。汇灯台南边芦苇径可返回渡村，北面是悠亚守着的那伽沉殿。星杖直刺可以弹反；贯穿光线锁定方向后向侧面走，跳跃不能躲过。'],
 };

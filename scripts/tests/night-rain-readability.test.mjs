@@ -32,18 +32,18 @@ test('all enemy styles raise quickly into distinct loaded silhouettes, then sett
 });
 
 test('delayed attacks hold their silhouette and never suggest parrying during the long hold', () => {
-  const e = { ...fresh().enemies.find(e => e.kind === 'boss'), phase: 2, attackIndex: 1, action: 'windup', hitDone: false };
+  const e = { ...fresh().enemies.find(e => e.kind === 'warden'), phase: 2, attackIndex: 2, action: 'windup', hitDone: false };
   const spec = motion.enemyAttack(e); const timing = motion.enemyTiming(e);
   assert.ok(spec.windup - timing.raise - timing.commit > 1);
   for (const timer of [1.4, .7, .35]) {
     const tell = motion.enemyTell({ ...e, timer });
     assert.equal(tell.stage, 'hold'); assert.equal(tell.parryNow, false); assert.equal(tell.committed, false);
-    assert.ok(motion.enemyMotion({ ...e, timer }).ax > -.5);
+    assert.ok(motion.enemyMotion({ ...e, timer }).ax < -2);
   }
   const imminent = motion.enemyTell({ ...e, timer: .12 });
   assert.equal(imminent.stage, 'release'); assert.equal(imminent.parryNow, true);
   assert.ok(imminent.toImpact < PARRY_WINDOW);
-  const sweep = { ...e, attackIndex: 2, timer: .08 };
+  const sweep = { ...e, attackIndex: 1, timer: .08 };
   assert.equal(motion.enemyTell(sweep).dangerous, true); assert.equal(motion.enemyTell(sweep).parryNow, false);
 });
 

@@ -1,3 +1,5 @@
+import { SKY_SURFACES, SKY_OBSTACLES, SKY_LANDMARKS, SKY_ENEMIES, SKY_REST_POINTS } from './skyplain';
+import { BUILDING_SURFACES, BUILDING_LANDMARKS, BUILDING_REST_POINTS, REMOTE_LEVERS } from './overhaulWorld';
 import { architectureBlocked, architectureSupport, architectureIntervals } from './architecture';
 import type { EnemyKind, Landmark, Obstacle, Surface, Vec3, WorldAccess } from './types';
 import { CHAPTER_ENEMIES, CHAPTER_LANDMARKS, CHAPTER_OBSTACLES, CHAPTER_REST_POINTS, CHAPTER_SURFACES } from './chapter';
@@ -35,7 +37,7 @@ export const SURFACES: Surface[] = [
   { id: 'tide-bridge', name: '潮桥', x1: 21, x2: 32, z1: -32, z2: -28, y: 0, color: '#777f77' },
   { id: 'harbor', name: '潮汐港 · 灯市', x1: 30, x2: 46, z1: -38, z2: -22, y: 0, color: '#657c82' },
   { id: 'tide-stairs', name: '听潮长阶', x1: 40, x2: 46, z1: -54, z2: -38, y: 6, endY: 0, color: '#94a6a7' },
-  { id: 'tide-arena', name: '七重潮门', x1: 30, x2: 50, z1: -68, z2: -54, y: 6, color: '#5d8197' },
+  { id: 'tide-arena', name: '双象潮门', x1: 30, x2: 50, z1: -68, z2: -54, y: 6, color: '#5d8197' },
   { id: 'bell-stairs', name: '晨钟台阶', x1: 31, x2: 36, z1: -77, z2: -68, y: 10, endY: 6, color: '#a7aa9d' },
   { id: 'dawn-bell', name: '黎明钟台', x1: 30, x2: 42, z1: -83, z2: -77, y: 10, color: '#a99a7a' },
   // South gallery loops clockwise and drops four metres onto the arrival square.
@@ -44,17 +46,19 @@ export const SURFACES: Surface[] = [
   { id: 'net-roof', name: '风铃屋顶', x1: 30, x2: 34, z1: -26, z2: -10, y: 4, color: '#a37a60', openEdges: [2] },
   // East branch climbs to the frog stage; its low quay rejoins the harbor.
   { id: 'frog-stairs', name: '苔灯支阶', x1: 46, x2: 51, z1: -47, z2: -35, y: 3, endY: 0, color: '#808d73' },
-  { id: 'frog-stage', name: '苔灯戏台', x1: 46, x2: 63, z1: -54, z2: -47, y: 3, color: '#74836b', openEdges: [3] },
+  { id: 'frog-stage', name: '苔灯工坊', x1: 46, x2: 63, z1: -54, z2: -47, y: 3, color: '#74836b', openEdges: [3] },
   { id: 'frog-drop', name: '落雨檐', x1: 54, x2: 59, z1: -47, z2: -42, y: 3, color: '#92956d', openEdges: [3] },
   { id: 'low-quay', name: '回潮低埠', x1: 45, x2: 63, z1: -42, z2: -32, y: 0, color: '#577b75' },
   // Return bridge shortens retries to the sole courtyard lamp after the inside winch.
   { id: 'harbor-return', name: '归灯水巷', x1: 27, x2: 31, z1: -28, z2: -1, y: 0, color: '#668078' },
   { id: 'return-bridge', name: '归灯长桥', x1: 12, x2: 31, z1: -5, z2: -1, y: 0, color: '#849083' },
+  ...BUILDING_SURFACES,
   ...CHAPTER_SURFACES,
   ...VALLEY_SURFACES,
   ...HAVEN_SURFACES,
   ...DUNGEON_SURFACES,
   ...DUNGEON_FOYERS,
+  ...SKY_SURFACES,
 ];
 
 export const OBSTACLES: Obstacle[] = [
@@ -80,10 +84,12 @@ export const OBSTACLES: Obstacle[] = [
   { x: 47, z: -64, w: 1.2, d: 1.2, y: 6, h: 2.4, kind: 'pillar' },
   { x: 31.8, z: -18, w: 0.95, d: 0.65, y: 4, h: 0.65, kind: 'chest' },
   { x: 61, z: -51, w: 0.95, d: 0.65, y: 3, h: 0.65, kind: 'chest' },
+  ...BUILDING_LANDMARKS.filter(l => l.kind === 'rest').map(l => ({ x: l.x, y: l.y, z: l.z, w: 0.9, d: 0.9, h: 2.8, kind: 'shrine' as const, landmarkId: l.id })),
   ...CHAPTER_OBSTACLES,
   ...VALLEY_OBSTACLES,
   ...HAVEN_OBSTACLES,
   ...DUNGEON_OBSTACLES,
+  ...SKY_OBSTACLES,
 ];
 
 export const LANDMARKS: Landmark[] = [
@@ -106,14 +112,16 @@ export const LANDMARKS: Landmark[] = [
   { id: 'harbor-gate', kind: 'shortcut', label: '转动归灯绞盘', x: 30.3, y: 0, z: -9.5 },
   { id: 'net-cache', kind: 'cache', label: '打开风铃木匣', x: 31.8, y: 4, z: -17 },
   { id: 'drop-note', kind: 'note', label: '读风铃下的残笺', x: 31.8, y: 4, z: -24.5 },
-  { id: 'frog-cache', kind: 'cache', label: '打开苔灯戏匣', x: 61, y: 3, z: -50 },
-  { id: 'tide-seal', kind: 'note', label: '端详七重潮门', x: 40, y: 6, z: -66 },
+  { id: 'frog-cache', kind: 'cache', label: '打开机巧零件匣', x: 61, y: 3, z: -50 },
+  { id: 'tide-seal', kind: 'note', label: '端详双象潮门', x: 40, y: 6, z: -66 },
   { id: 'dawn-bell', kind: 'note', label: '叩响黎明钟', x: 35, y: 10, z: -80 },
+  ...BUILDING_LANDMARKS,
   ...CHAPTER_LANDMARKS,
   ...VALLEY_LANDMARKS,
   ...HAVEN_LANDMARKS,
   ...DUNGEON_LANDMARKS,
-];
+  ...SKY_LANDMARKS,
+].map(l => ({ ...l, ...(REMOTE_LEVERS[l.id] ?? {}) })) as Landmark[];
 
 export const AMBUSH_ENEMIES: (Vec3 & { id: string; kind: EnemyKind; name: string; facing: number })[] = [
   { id: 'alley-ambusher', kind: 'prowler', name: '箱后伏伞客', x: -17, y: 0, z: -0.4, facing: 0 },
@@ -125,19 +133,20 @@ export const ENEMY_SPAWNS: (Vec3 & { id: string; kind: EnemyKind; name: string; 
   { id: 'stair-prowler', kind: 'prowler', name: '高阶伏兵', x: -15.5, y: 3, z: -13, facing: 0 },
   { id: 'roof-duelist', kind: 'duelist', name: '屋脊刀客', x: -5, y: 6, z: -22.5, facing: -1.57 },
   { id: 'canal-guard', kind: 'guard', name: '侧廊看守', x: 12, y: 0, z: -22, facing: Math.PI },
-  { id: 'market-boss', kind: 'boss', name: '栞栞 · 雨切守街', x: 4, y: 0, z: -41, facing: 0 },
+  { id: 'market-boss', kind: 'boss', name: '花礼 · 夜市迎客', x: 4, y: 0, z: -41, facing: 0 },
   { id: 'temple-duelist', kind: 'duelist', name: '守钟客', x: -31.5, y: 6, z: -27, facing: Math.PI / 2 },
   { id: 'temple-prowler', kind: 'prowler', name: '石阶拾灯人', x: -32, y: 3.6, z: -18, facing: Math.PI },
   { id: 'harbor-prowler', kind: 'prowler', name: '提灯收网人', x: 38, y: 0, z: -29, facing: Math.PI / 2 },
   { id: 'tide-guard', kind: 'guard', name: '听潮守阶人', x: 43, y: 3, z: -46, facing: 0 },
   { id: 'net-duelist', kind: 'duelist', name: '晒网刀客', x: 38, y: 4, z: -8, facing: Math.PI / 2 },
-  { id: 'nana-tide', kind: 'nana', name: '七海 · 七重潮声', x: 40, y: 6, z: -61, facing: 0 },
-  { id: 'azi-stage', kind: 'azi', name: '阿梓 · 苔灯夜曲', x: 57, y: 3, z: -50, facing: 0 },
+  { id: 'nana-tide', kind: 'nana', name: '米汀 · 双象守潮', x: 40, y: 6, z: -61, facing: 0 },
+  { id: 'azi-stage', kind: 'azi', name: '弥月 · 苔灯机巧', x: 57, y: 3, z: -50, facing: 0 },
   ...CHAPTER_ENEMIES,
   ...VALLEY_ENEMIES,
   ...HAVEN_ENEMIES,
   ...AMBUSH_ENEMIES,
   ...DUNGEON_ENEMIES,
+  ...SKY_ENEMIES,
 ];
 
 export const SPAWN: Vec3 = { x: 1.8, y: 6, z: 15.5 };
@@ -146,10 +155,12 @@ export const CHECKPOINT: Vec3 = { x: -1, y: 0, z: 8.2 };
 export const REST_POINTS: Record<string, Vec3> = {
   room: SPAWN,
   courtyard: CHECKPOINT,
-  ...CHAPTER_REST_POINTS,
+  ...BUILDING_REST_POINTS,
+...CHAPTER_REST_POINTS,
   ...VALLEY_REST_POINTS,
   ...HAVEN_REST_POINTS,
   ...DUNGEON_REST_POINTS,
+  ...SKY_REST_POINTS,
 };
 // A guide stops beside a solid shrine; interaction itself is allowed from any clear side.
 export function interactionPoint(l: Landmark): Vec3 {
@@ -161,11 +172,11 @@ export function interactionPoint(l: Landmark): Vec3 {
 }
 
 export function gateOpen(o: Obstacle, access: WorldAccess): boolean {
-  if (o.kind === 'gate' && o.gateId && !['harbor', 'temple'].includes(o.gateId)) return typeof access !== 'boolean' && (!!access.chapterGates?.includes(o.gateId) || !!access.valleyGates?.includes(o.gateId) || !!access.haven?.gates.includes(o.gateId));
+  if (o.kind === 'gate' && o.gateId && !['harbor', 'temple'].includes(o.gateId)) return typeof access !== 'boolean' && (!!access.skyGates?.includes(o.gateId) || !!access.chapterGates?.includes(o.gateId) || !!access.valleyGates?.includes(o.gateId) || !!access.haven?.gates.includes(o.gateId));
   return o.kind === 'gate' && (o.gateId === 'harbor' ? typeof access !== 'boolean' && !!access.harborGate : o.gateId === 'temple' ? typeof access !== 'boolean' && access.templeGate : typeof access === 'boolean' ? access : access.shortcut);
 }
 
-export const WORLD_BOUNDS = { x1: -295, x2: 130, z1: -545, z2: 163, minY: -46, maxY: 50 };
+export const WORLD_BOUNDS = { x1: -295, x2: 130, z1: -735, z2: 163, minY: -46, maxY: 50 };
 
 function spatialIndex<T>(items: T[], bounds: (item: T) => { x1: number; x2: number; z1: number; z2: number }) {
   const buckets = new Map<string, T[]>();

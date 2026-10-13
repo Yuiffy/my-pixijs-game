@@ -37,12 +37,12 @@ const route = (s, targets) => {
   }
 };
 
-test('authentic v6 save migrates with all previous progress and six new living enemies', () => {
+test('authentic v6 save migrates with all previous progress and new living enemies without replacing historic encounters', () => {
   const before = JSON.parse(fixture); const s = fresh();
-  assert.equal(s.worldVersion, 10); assert.deepEqual(s.player, before.player);
+  assert.equal(s.worldVersion, 12); assert.deepEqual(s.player, before.player);
   assert.deepEqual(s.enemies.slice(0, before.enemies.length), expectedLegacyEnemies(before.enemies));
   for (const key of ['rice', 'bankedRice', 'level', 'litLamps', 'checkpoint', 'collected', 'chapterGates', 'valleyGates', 'valleyComplete', 'defeatedGuests', 'deaths']) assert.deepEqual(s[key], before[key], key);
-  assert.equal(s.enemies.length - before.enemies.length, 16);
+  assert.equal(s.enemies.length - before.enemies.length, 24);
   assert.ok(s.enemies.slice(-6).every(e => e.hp === e.maxHp && !e.aggro));
   assert.deepEqual(s.haven, haven.freshHaven());
 });
@@ -155,18 +155,18 @@ test('haven ferry unlocks after recruitment and lighting, preserves resources an
   const x = s.player.x; engine.interact(s); assert.equal(s.player.x, x); assert.match(s.message, /追兵/);
 });
 
-test('the last guardian has a delayed strike and an unparryable jumpable sweep in phase two', () => {
-  const setup = () => {
-    const s = ready(); s.haven.echoes = 3; s.haven.gates.push('well-door'); const e = s.enemies.find(e => e.id === 'last-lamplighter');
-    place(s, { x: e.x, y: e.y, z: e.z + 2 }); s.player.facing = Math.PI;
-    Object.assign(e, { hp: e.maxHp / 2 - 1, action: 'recover', timer: 2, aggro: true, facing: 0 });
-    engine.stepGame(s, 20); assert.equal(e.phase, 2); Object.assign(e, { action: 'windup', timer: .12, attackIndex: 2 }); return { s, e };
-  };
-  const a = setup(); const hp = a.s.player.hp; engine.stepGame(a.s, 400, { x: 0, z: 0, parry: true }); assert.ok(a.s.player.hp < hp);
-  const b = setup(); engine.stepGame(b.s, 400, { x: 0, z: 0, jump: true }); assert.equal(b.s.player.hp, hp);
-  b.e.attackIndex = 1; const delay = engine.enemyAttack(b.e); b.e.attackIndex = 0;
-  assert.ok(delay.windup > engine.enemyAttack(b.e).windup + .8);
+test('Sumi channels an air dragon, shifts sideways under cloak and then releases a visible bolt', () => {
+  const s=ready();s.haven.echoes=3;s.haven.gates.push('well-door');const e=s.enemies.find(e=>e.id==='last-lamplighter');
+  place(s,{x:e.x,y:e.y,z:e.z+3});s.player.facing=Math.PI;
+  Object.assign(e,{hp:e.maxHp/2-1,action:'recover',timer:2,aggro:true,facing:0});
+  engine.stepGame(s,20);assert.equal(e.phase,2);
+  Object.assign(e,{action:'windup',timer:.12,attackIndex:1});
+  engine.stepGame(s,400);assert.equal(s.bossFields[0].kind,'dragon');
+  const x=e.x;engine.stepGame(s,1000);assert.ok(e.x>x);assert.equal(s.player.hp,engine.maxHp(s));
+  engine.stepGame(s,600);assert.ok(s.projectiles.some(b=>b.owner===e.id));
+  assert.ok(engine.enemyAttack({...e,attackIndex:2}).windup>1.5);
 });
+
 
 test('malformed haven progress cannot fabricate invitations, clues, keys, endings or funds', () => {
   for (const change of [

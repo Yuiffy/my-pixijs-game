@@ -113,7 +113,7 @@ export class ActionControls {
   private playing() { const s = this.host.state(); return s.mode === 'playing' && !s.paused && !this.host.panel() && !this.host.confirming(); }
   private look(x: number, y: number) {
     this.host.camera.current.yaw -= x;
-    this.host.camera.current.pitch = Math.max(0.14, Math.min(1.15, this.host.camera.current.pitch + y * (this.lookSettings.invertY ? -1 : 1)));
+    this.host.camera.current.pitch = Math.max(-0.35, Math.min(1.15, this.host.camera.current.pitch + y * (this.lookSettings.invertY ? -1 : 1)));
   }
   setLook(settings: Partial<typeof this.lookSettings>) {
     this.lookSettings = { ...this.lookSettings, ...settings };

@@ -38,12 +38,35 @@ export function chooseInput(s, destination, { parryOnly = false } = {}) {
   if (!s.lockedId) input.lock = true;
   const attack = enemyAttack(enemy); const sweep = !attack.parryable;
   if (p.action !== 'idle') return input;
+  const hazard = s.bossFields?.find(f => {
+    if(Math.abs(f.y-p.y)>=1) return false;
+    if(['pine','freeze','leap','starfall'].includes(f.kind)) return gap(f,p)<f.radius+0.5;
+    if(f.kind==='beam') {const x=p.x-f.x,z=p.z-f.z;return x*Math.sin(f.facing)+z*Math.cos(f.facing)>0 && Math.abs(x*Math.cos(f.facing)-z*Math.sin(f.facing))<f.radius+0.5;}
+    return false;
+  });
+  if(hazard) {
+    const away=gap(hazard,p);
+    const lateral=hazard.kind==='beam'||away<.1;
+    input.x=lateral?Math.cos(hazard.facing):(p.x-hazard.x)/away;
+    input.z=lateral?-Math.sin(hazard.facing):(p.z-hazard.z)/away;
+    return input;
+  }
+  const starcards=s.bossFields?.find(f=>f.owner===enemy.id&&f.kind==='starcards'&&f.age<f.delay+f.duration);
+  if(starcards) { const back=d<3.5?1:0; input.x=dz-dx*back;input.z=-dx-dz*back;return input; }
+  const stance=s.bossFields?.find(f=>f.owner===enemy.id&&['counter','shield'].includes(f.kind)&&f.age<f.delay+f.duration);
+  if(stance?.kind==='counter') {
+    const front=Math.abs(Math.atan2(Math.sin(Math.atan2(p.x-enemy.x,p.z-enemy.z)-enemy.facing),Math.cos(Math.atan2(p.x-enemy.x,p.z-enemy.z)-enemy.facing)))<1.5;
+    if(front){input.x=dz;input.z=-dx;return input;}
+  }
+  const channel=s.bossFields?.find(f=>f.owner===enemy.id&&['song','drones'].includes(f.kind)&&f.age<f.delay+f.duration);
+  if((channel||stance?.kind==='shield')&&d<2.6&&p.stamina>45){input.heavy=true;return input;}
+
   if (enemy.action === 'stagger') {
     if (d < 2.35) input.light = true;
     else { input.x = dx; input.z = dz; }
-  } else if (s.projectiles?.some(b => gap(b, p) < 1.6 && Math.abs(b.y - (p.y + 1)) < 0.9)) {
+  } else if (s.projectiles?.some(b => { const speed2=b.vx*b.vx+b.vz*b.vz; const t=((p.x-b.x)*b.vx+(p.z-b.z)*b.vz)/speed2; return t>=0&&t<.16&&Math.hypot(b.x+b.vx*t-p.x,b.z+b.vz*t-p.z)<.45&&Math.abs(b.y-(p.y+1))<.9; })) {
     input.parry = true;
-  } else if (!attack.projectile && enemy.action === 'windup' && enemy.timer <= 0.14) {
+  } else if (!attack.skill && !attack.support && !attack.projectile && enemy.action === 'windup' && enemy.timer <= 0.14) {
     if (sweep) { input.dodge = true; input.x = -dx; input.z = -dz; }
     else input.parry = true;
   } else if (p.hp <= 48 && p.flasks > 0 && enemy.action === 'recover' && enemy.timer > 0.8) {

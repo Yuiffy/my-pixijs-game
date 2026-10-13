@@ -8,7 +8,7 @@ import { dungeonFoyer, dungeonPoint, undergroundId } from './dungeons';
 import { ferryStatus } from './ferries';
 
 const VIEWS = [
-  { name: '全城', box: '-298 -551 430 720' },
+  { name: '全城', box: '-298 -740 430 909' },
   { name: '旧城与潮港', box: '-40 -88 108 112' },
   { name: '织坊与高墙', box: '-131 -187 141 151' },
   { name: '藏经院与王寺', box: '-155 -302 115 174' },
@@ -19,17 +19,19 @@ const VIEWS = [
   { name: '弃铃书房', box: '-73 -43 48 55' },
   { name: '弃灯墓地', box: '-53 -31.5 36 67' },
   { name: '风息洞窟', box: '-165 -324 48 66' },
+  { name: '天镜原', box: '-163 -739 159 216' },
 ];
 const labels = [
   { x: 96, z: 17, text: '弃灯墓地' }, { x: 101, z: 78, text: '露缇 · 独一遗物' }, { x: 100, z: 91, text: '风息洞窟' }, { x: 103, z: 150, text: '沐石 · 独一遗物' },
+  { x: -110, z: -547, text: '苇光隘口' }, { x: -89, z: -573, text: '落霞盐阶' }, { x: -141, z: -606, text: '玫瑰盐池' }, { x: -141, z: -640, text: '旧测星台' }, { x: -67, z: -614, text: '折光桥' }, { x: -41, z: -671, text: '环星观测院' }, { x: -43, z: -731, text: '天镜归航台' },
   { x: -8, z: 38, text: '归灯庭' }, { x: -8, z: 108, text: '无名灯库' }, { x: -8, z: 156, text: '末灯' },
   { x: -277, z: -368, text: '沉灯船坞' }, { x: -59, z: -39, text: '弃铃书房' },
   { x: -122, z: -289, text: '望乡台 · 王寺 ↑' }, { x: -124, z: -330, text: '雾河渡村' },
   { x: -198, z: -329, text: '水上盐市' }, { x: -239, z: -334, text: '旧盐仓' },
   { x: -202, z: -408, text: '西闸 · 沉舟水车' }, { x: -85, z: -363, text: '风铃竹关' },
-  { x: -86, z: -430, text: '东闸 · 无声山寺' }, { x: -146, z: -458, text: '汇灯台' },
+  { x: -86, z: -430, text: '东闸 · 终场歌庭' }, { x: -146, z: -458, text: '汇灯台' },
   { x: -150, z: -515, text: '那伽沉殿' }, { x: -150, z: -542, text: '归水灯' },
-  { x: 36, z: -85, text: '黎明钟' }, { x: 42, z: -71, text: '七重潮门' },
+  { x: 36, z: -85, text: '黎明钟' }, { x: 42, z: -71, text: '双象潮门' },
   { x: 44, z: -24, text: '潮汐港' }, { x: 4, z: -52, text: '夜市' },
   { x: -31, z: -36, text: '残钟雨寺' }, { x: -7, z: -18, text: '金塔屋脊' },
   { x: 1, z: 3, text: '雨灯中庭' }, { x: 4, z: 22, text: '旅馆' },
@@ -41,15 +43,15 @@ const labels = [
 ];
 
 export default function WorldMap({ state }: { state: GameState }) {
-  const locate = () => { const dungeon = undergroundId(state.player) ?? dungeonFoyer(state.player); return dungeon ? dungeon === 'crypt' ? 9 : 10 : state.player.z > 27 ? 6 : state.player.x < -249 ? 7 : state.player.x < -42 && state.player.z > -40 ? 8 : state.player.z < -435 ? 5 : state.player.z < -278 ? 4 : state.player.z < -185 ? 3 : state.player.x < -42 || state.player.z < -110 ? 2 : 1; };
+  const locate = () => { const dungeon = undergroundId(state.player) ?? dungeonFoyer(state.player); return dungeon ? dungeon === 'crypt' ? 9 : 10 : state.player.z > 27 ? 6 : state.player.x < -249 ? 7 : state.player.x < -42 && state.player.z > -40 ? 8 : state.player.z < -530 ? 11 : state.player.z < -435 ? 5 : state.player.z < -278 ? 4 : state.player.z < -185 ? 3 : state.player.x < -42 || state.player.z < -110 ? 2 : 1; };
   const [view, setView] = useState(locate);
   const scale = view === 0 ? 2.4 : 1;
-  const onLayer = (p: { y: number; z: number }) => (view >= 9 ? p.y < -10 && (p.z < -200) === (view === 10) : p.y >= -10);
-  const atEntrance = view >= 9 && dungeonFoyer(state.player) === (view === 9 ? 'crypt' : 'cave');
+  const onLayer = (p: { y: number; z: number }) => ((view === 9 || view === 10) ? p.y < -10 && (p.z < -200) === (view === 10) : p.y >= -10);
+  const atEntrance = (view === 9 || view === 10) && dungeonFoyer(state.player) === (view === 9 ? 'crypt' : 'cave');
   return (
     <>
       <div className={styles.mapTabs} aria-label="地图区域">
-        {VIEWS.map((v, i) => (i < 9 || state.discoveredDungeons.includes(i === 9 ? 'crypt' : 'cave') ? <button key={v.name} aria-pressed={view === i} onClick={() => setView(i)}>{v.name}</button> : null))}
+        {VIEWS.map((v, i) => (i === 11 || i < 9 || state.discoveredDungeons.includes(i === 9 ? 'crypt' : 'cave') ? <button key={v.name} aria-pressed={view === i} onClick={() => setView(i)}>{v.name}</button> : null))}
         <button onClick={() => setView(locate())}>定位自己</button>
       </div>
       <svg viewBox={VIEWS[view].box} className={styles.map} role="img" aria-label={`${VIEWS[view].name}手绘地图：白色箭头为当前位置，金色菱形为归灯，红线为未开启的门`}>

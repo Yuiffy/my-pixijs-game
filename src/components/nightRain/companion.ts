@@ -1,3 +1,4 @@
+import { SKY_LANDMARKS, SKY_GATES, skyTarget } from './skyplain';
 import type { GameState, Vec3, WorldAccess } from './types';
 import { canOccupy, playerBlocked, supportAt, interactionPoint, LANDMARKS } from './world';
 import { CHAPTER_GATES, CHAPTER_LANDMARKS } from './chapter';
@@ -36,12 +37,13 @@ routeAt: -100,
 const distance = (a: Vec3, b: Vec3) => Math.hypot(a.x - b.x, a.z - b.z, a.y - b.y);
 const labels: Record<string, string> = {
   room: '旅馆',
-  'drowned-warden': '沉舟水车院 · 花礼',
-  'silent-abbot': '无声山寺 · 瑞娅',
+  'drowned-warden': '镐筑潮庭 · 七海',
+  'silent-abbot': '终场歌庭 · 阿梓',
+  'sky-astronomer': '环星观测院 · 羽啾',
   'river-serpent': '那伽沉殿 · 悠亚',
-  'gate-captain': '双象门楼 · 米汀',
-  'rain-regent': '雨冠大殿 · 弥月',
-  ...Object.fromEntries([...CHAPTER_LANDMARKS, ...VALLEY_LANDMARKS, ...HAVEN_LANDMARKS, ...DUNGEON_LANDMARKS].map(l => [l.id, l.label.replace(/^(读|打开|收下|拾取|使用)/, '')])),
+  'gate-captain': '双象门楼 · 栞栞',
+  'rain-regent': '雨冠大殿 · 瑞娅',
+  ...Object.fromEntries([...SKY_LANDMARKS, ...CHAPTER_LANDMARKS, ...VALLEY_LANDMARKS, ...HAVEN_LANDMARKS, ...DUNGEON_LANDMARKS].map(l => [l.id, l.label.replace(/^(读|打开|收下|拾取|使用)/, '')])),
   'crypt-colossus': '弃灯墓地 · 露缇',
 'cave-sentinel': '风息洞窟 · 沐石',
   'temple-lamp': '莲池旧灯',
@@ -54,8 +56,8 @@ const labels: Record<string, string> = {
 'harbor-gate': '归灯长桥绞盘',
 'net-cache': '风铃木匣',
 'drop-note': '风铃残笺',
-'frog-cache': '苔灯戏匣',
-'tide-seal': '七重潮门',
+'frog-cache': '机巧零件匣',
+'tide-seal': '双象潮门',
 'dawn-bell': '黎明钟',
   laptop: '旅馆的笔记本',
 courtyard: '中庭雨灯',
@@ -64,13 +66,21 @@ courtyard: '中庭雨灯',
 'rooftop-note': '屋脊上的便签',
   'cloister-cache': '回廊宝箱',
 'lookout-cache': '望台宝箱',
-shortcut: '侧门门闩',
+shortcut: '夜市侧门绞盘',
+'mill-lamp': '镐庭雨灯',
+'nana-blueprint': '七海施工图',
+'nana-pickaxe': '方屋顶矿镐（需跳跃）',
 food: '深夜食堂',
-boss: '栞栞守着的夜市入口',
+boss: '花礼守着的夜市入口',
 };
 export const targetLabel = (id: string | null) => (id ? labels[id] ?? id : '下一处发现');
 export function guideTargets(s: GameState) {
   return LANDMARKS.filter(l => {
+    if (SKY_LANDMARKS.some(h => h.id === l.id)) {
+      if (!s.valleyComplete) return false;
+      if (SKY_GATES.some(g => g.id === l.id)) return !s.skyGates.includes(l.id);
+    }
+    if (l.id === 'nana-pickaxe') return false; // Manual jump branch; guide to its blueprint first.
     if (navigationLayer(s.player) !== navigationLayer(l)) return false;
     if (l.id === 'cave-entrance' && !s.chapterComplete) return false;
     if (!havenAvailable(s, l.id)) return false;
@@ -105,6 +115,7 @@ export function mainTarget(s: GameState): string {
   const dungeon = undergroundId(s.player);
   if (dungeon) return dungeon === 'cave' ? !s.defeatedGuests.includes('cave-sentinel') ? 'cave-sentinel' : !s.collected.includes('stone-maul') ? 'stone-maul' : 'cave-exit' : !s.defeatedGuests.includes('crypt-colossus') ? 'crypt-colossus' : !s.collected.includes('grave-spear') ? 'grave-spear' : 'crypt-exit';
   const foyer = dungeonFoyer(s.player); if (foyer) return `${foyer}-entrance`;
+  if (s.valleyComplete && s.player.z < -490 && !s.skyComplete) return skyTarget(s);
   if (s.valleyComplete) return havenTarget(s);
   if (s.chapterComplete && !s.valleyComplete) {
     if (!s.valleyGates.includes('valley-entry')) return 'valley-entry';
@@ -218,6 +229,7 @@ function destinationFor(id: string): Vec3 | undefined {
   if (guardian) return { x: guardian.x, y: guardian.y, z: guardian.z - 3 };
   if (id === 'drowned-warden') return { x: -202, y: 2, z: -399 };
   if (id === 'silent-abbot') return { x: -92, y: 18, z: -414 };
+  if (id === 'sky-astronomer') return { x: -40, y: 32, z: -668 };
   if (id === 'river-serpent') return { x: -150, y: 8, z: -506 };
   if (id === 'gate-captain') return { x: -53, y: 12, z: -127 };
   if (id === 'rain-regent') return { x: -133, y: 24, z: -235 };
@@ -251,7 +263,7 @@ export function updateCompanion(c: Companion, s: GameState, dt: number) {
     const seen = c.seen[l.id] ?? { nearest: Infinity, stage: 0 };
     seen.nearest = Math.min(seen.nearest, distance(p, l)); c.seen[l.id] = seen;
   }
-  if (c.targetId && (s.collected.includes(c.targetId) || s.defeatedGuests.includes(c.targetId) || s.valleyGates.includes(c.targetId))) { c.targetId = null; c.path = []; c.status = 'following'; speak(c, s, '拿到了！每一段绕路，都藏着一点小惊喜。'); }
+  if (c.targetId && (s.collected.includes(c.targetId) || s.defeatedGuests.includes(c.targetId) || s.valleyGates.includes(c.targetId) || s.skyGates.includes(c.targetId))) { c.targetId = null; c.path = []; c.status = 'following'; speak(c, s, '拿到了！每一段绕路，都藏着一点小惊喜。'); }
   if (c.targetId && c.status !== 'arrived') {
     if (danger) {
       if (c.status !== 'danger') speak(c, s, '先别急着跟我！前面有人，Q 锁定，等起手后再弹反或闪开。');
@@ -276,7 +288,7 @@ export function updateCompanion(c: Companion, s: GameState, dt: number) {
         } else if (!walkSegment(p, c.position, s, 0.6) && s.time - c.routeAt > 2) leadTo(c, s, c.targetId);
         else c.status = 'waiting';
       } else {
-        c.status = 'arrived'; speak(c, s, c.targetId === 'tide-note' ? '这就是潮汐港的潮桥！沿桥向东走进灯市，暖灯长阶通往七海。' : ['boss', 'gate-captain', 'rain-regent', 'drowned-warden', 'silent-abbot', 'river-serpent', 'crypt-colossus', 'cave-sentinel'].includes(c.targetId) ? '前面就是守路人。留一点体力，我陪你慢慢试。' : `到了，${targetLabel(c.targetId)}就在这里。靠近后按 E 试试。`, 9);
+        c.status = 'arrived'; speak(c, s, c.targetId === 'tide-note' ? '这就是潮汐港的潮桥！沿桥向东走进灯市，暖灯长阶通往米汀。' : ['boss', 'gate-captain', 'rain-regent', 'drowned-warden', 'silent-abbot', 'river-serpent', 'crypt-colossus', 'cave-sentinel', 'sky-astronomer'].includes(c.targetId) ? '前面就是守路人。留一点体力，我陪你慢慢试。' : `到了，${targetLabel(c.targetId)}就在这里。靠近后按 E 试试。`, 9);
       }
     }
   } else if (!c.targetId) {

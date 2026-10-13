@@ -4,6 +4,7 @@ export type CharacterAppearance = {
   eye: string; rightEye?: string; boots: string; leg: string; skin: string; accent: string;
 };
 export const CHARACTER_APPEARANCES = {
+  chu2u: { name: '羽啾', reference: '/images/livers/chu2u.jpg', hair: '#f2e9d2', coat: '#e2eef4', trim: '#82bad5', eye: '#5acde4', boots: '#e5eaf2', leg: '#adc9dd', skin: '#f4ddce', accent: '#f2ce63' },
   sui: { name: '岁己', reference: '/images/livers/sui.png', hair: '#d9dbe8', coat: '#a28ac7', trim: '#34303e', eye: '#e95839', boots: '#282330', leg: '#7c7183', skin: '#f0d7c8', accent: '#c8a3e8' },
   shiori: { name: '栞栞', reference: '/images/livers/shiori.png', hair: '#eee0c1', coat: '#e7d5ae', trim: '#705438', eye: '#6a9fd9', boots: '#594134', leg: '#584a4b', skin: '#f4dccd', accent: '#fff8e8' },
   nagisa: { name: '米汀', reference: '/images/livers/nagisa.png', hair: '#bcc9d8', coat: '#eee7dd', trim: '#343643', eye: '#7a9bb0', boots: '#242936', leg: '#edcdb8', skin: '#f4dccd', accent: '#b9a078' },

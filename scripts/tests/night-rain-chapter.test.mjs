@@ -32,7 +32,7 @@ test('version four saves add the northern city without healing, respawning or lo
   const raw = JSON.parse(engine.saveGame(s)); raw.worldVersion = 4; raw.enemies = raw.enemies.slice(0, 13); delete raw.chapterGates; delete raw.chapterComplete;
   const loaded = engine.loadGame(JSON.stringify(raw)); assert.ok(loaded);
   assert.deepEqual(loaded.player, s.player); assert.deepEqual(loaded.enemies.slice(0, 13), raw.enemies);
-  assert.equal(loaded.worldVersion, 10); assert.equal(loaded.enemies.length, world.ENEMY_SPAWNS.length);
+  assert.equal(loaded.worldVersion, 12); assert.equal(loaded.enemies.length, world.ENEMY_SPAWNS.length);
   for (const corrupt of [s => s.chapterGates.push('archive-door'), s => s.chapterComplete = true, s => s.chapterGates.push('missing')]) { const bad = fresh(); corrupt(bad); assert.equal(engine.loadGame(engine.saveGame(bad)), null); }
 });
 
@@ -121,19 +121,16 @@ test('each new lamp survives an actual combat death and respawns without closing
   }
 });
 
-test('the rain regent enters phase two and its sweep punishes parry but permits a timed jump', () => {
-  const setup = () => {
-    const s = fresh(); const e = s.enemies.find(e => e.id === 'rain-regent');
-    place(s, { x: e.x, y: e.y, z: e.z + 2 }); s.player.facing = Math.PI;
-    Object.assign(e, { hp: e.maxHp / 2 - 1, action: 'recover', timer: 2, aggro: true, facing: 0 });
-    step(s, 20); assert.equal(e.phase, 2);
-    Object.assign(e, { action: 'windup', attackIndex: 2, timer: .12, hitDone: false }); return { s, e };
-  };
-  const parry = setup(); step(parry.s, 400, { parry: true }); assert.equal(parry.s.parries, 0); assert.ok(parry.s.player.hp < engine.maxHp(parry.s));
-  const jump = setup(); step(jump.s, 400, { jump: true }); assert.equal(jump.s.player.hp, engine.maxHp(jump.s));
-  jump.e.attackIndex = 1; const delayed = engine.enemyAttack(jump.e); jump.e.attackIndex = 0;
-  assert.ok(delayed.windup > engine.enemyAttack(jump.e).windup + .8);
+test('Rhea enters phase two and warns before symmetric time stop instead of an invisible sweep', () => {
+  const s=fresh();const e=s.enemies.find(e=>e.id==='rain-regent');place(s,{x:e.x,y:e.y,z:e.z+2});
+  Object.assign(e,{hp:e.maxHp/2-1,action:'recover',timer:2,aggro:true,facing:0});
+  step(s,20);assert.equal(e.phase,2);
+  Object.assign(e,{action:'windup',attackIndex:1,timer:.12,hitDone:false});step(s,400);
+  assert.equal(s.bossFields[0].kind,'freeze');assert.equal(s.player.hp,engine.maxHp(s));
+  step(s,1200);const timer=e.timer;const x=s.player.x;step(s,300,{x:1});
+  assert.equal(e.timer,timer);assert.equal(s.player.x,x);
 });
+
 
 test('the final bell needs both the defeated regent and dinner, completes once, and preserves free exploration', () => {
   const s = fresh(); atLandmark(s, 'chapter-bell'); engine.interact(s); assert.equal(s.chapterComplete, false);

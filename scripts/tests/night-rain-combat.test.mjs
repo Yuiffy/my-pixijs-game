@@ -109,8 +109,8 @@ test('guard break stuns, cannot be cancelled by attack or pause, and held input 
   e.timer=4; step(s,1000,{guardHeld:true}); assert.equal(s.player.action,'idle'); step(s,1000,{guardHeld:true}); assert.equal(s.player.action,'idle'); step(s,20,{parry:true,guardHeld:true}); assert.equal(s.player.action,'parry');
 });
 test('red boss sweep cannot be guarded; defensive movement is slow and preserves facing', () => {
-  const s=fresh(); const e=s.enemies.find(e=>e.kind==='boss'); Object.assign(s.player,{x:e.x,y:e.y,z:e.z+1.5,facing:Math.PI});
-  step(s,300,{parry:true,guardHeld:true}); Object.assign(e,{phase:2,attackIndex:2,action:'attack',timer:.17,hitDone:false,facing:0,aggro:true}); step(s,20,{guardHeld:true}); assert.equal(s.player.hp,64); assert.equal(s.player.action,'hurt');
+  const s=fresh(); const e=s.enemies.find(e=>e.kind==='captain'); Object.assign(s.player,{x:e.x,y:e.y,z:e.z+1.5,facing:Math.PI});
+  step(s,300,{parry:true,guardHeld:true}); Object.assign(e,{phase:2,attackIndex:2,action:'attack',timer:.17,hitDone:false,facing:0,aggro:true}); step(s,20,{guardHeld:true}); assert.equal(s.player.hp,70); assert.equal(s.player.action,'hurt');
   const slow=fresh(); step(slow,300,{parry:true,guardHeld:true}); const x=slow.player.x; const facing=slow.player.facing; step(slow,400,{x:1,guardHeld:true}); assert.ok(Math.abs(slow.player.x-x-.58)<.01); assert.equal(slow.player.facing,facing);
   step(slow,20,{light:true,guardHeld:true}); assert.equal(slow.player.action,'light');
 });

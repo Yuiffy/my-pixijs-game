@@ -13,7 +13,8 @@ export default function ReferencedBossStyle({ character }: { character: Characte
   const p = characterAppearance(character);
   return (
 <group name={`reference-${character}`}>
-    <Hair color={p.hair} long={character !== 'mizuki'} />
+    <Hair color={p.hair} long={character !== 'mizuki' && character !== 'chu2u'} />
+    {character === 'chu2u' && <group name="chu2u-star-clips">{[-1, 1].map(side => <group key={side} position={[side * 0.25, 1.74, 0.18]}><mesh rotation={[0, 0, 0.3]}><octahedronGeometry args={[0.1]} /><meshStandardMaterial color={p.accent} emissive={p.accent} emissiveIntensity={0.25} /></mesh><Box at={[side * 0.04, -0.18, -0.12]} size={[0.12, 0.22, 0.14]} color={p.trim} /></group>)}<Skirt color={p.coat} /><Ribbon at={[0, 1.23, 0.29]} color={p.trim} /></group>}
     {character === 'harei' && (
 <group name="harei-cat-ears-scarf">
       <Ball at={[0.3, 1.25, -0.22]} scale={[0.12, 0.5, 0.13]} color={p.hair} />

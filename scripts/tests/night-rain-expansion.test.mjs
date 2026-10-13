@@ -19,14 +19,15 @@ test('open ledges allow intentional walk-off, falls survive reload, and void dea
  const voidFall=fresh();place(voidFall,{x:31,y:6,z:-66});voidFall.rice=75;step(voidFall,400,{x:-1,jump:true});step(voidFall,3000,{x:-1});assert.equal(voidFall.mode,'dead');assert.equal(voidFall.bloodstain.rice,75);assert.ok(world.canOccupy(voidFall.bloodstain.x,voidFall.bloodstain.z,voidFall.bloodstain.y,voidFall));assert.ok(engine.loadGame(engine.saveGame(voidFall)));
  assert.equal(engine.fallDamage(3.5),0);assert.ok(engine.fallDamage(6)>engine.fallDamage(4));assert.ok(engine.fallDamage(10)>=100);
 });
-test('new guest patterns have distinct timings, silhouettes, punish windows and leapable danger attacks',()=>{
+test('early guests have distinct shield and drone patterns with punish windows',()=>{
  const s=fresh();const nana=s.enemies.find(e=>e.kind==='nana'),azi=s.enemies.find(e=>e.kind==='azi');
- for(const e of [nana,azi]){const names=[];for(let i=0;i<3;i++){e.attackIndex=i;const a=engine.enemyAttack(e);names.push(a.name);assert.ok(a.recovery>=.55);if(i===2)assert.equal(a.parryable,false);}assert.equal(new Set(names).size,3);}
+ for(const e of [nana,azi]){const names=[];for(let i=0;i<3;i++){e.attackIndex=i;const a=engine.enemyAttack(e);names.push(a.name);assert.ok(a.recovery>=.55);}assert.equal(new Set(names).size,3);}
+ assert.equal(engine.enemyAttack({...nana,attackIndex:1}).skill,'shield');assert.equal(engine.enemyAttack({...azi,attackIndex:2}).skill,'drones');
  assert.notEqual(engine.enemyAttack({...nana,attackIndex:1}).windup,engine.enemyAttack({...azi,attackIndex:1}).windup);
 });
 test('v3 progression migrates to expanded map without healing, resetting enemies or losing chosen skin',()=>{
  const s=fresh();s.worldVersion=3;s.enemies=s.enemies.slice(0,8);delete s.defeatedGuests;delete s.harborGate;s.playerSkin='nagisa';s.player.hp=43;s.player.flasks=1;s.enemies[0].hp=0;s.enemies[0].action='dead';
- const loaded=engine.loadGame(engine.saveGame(s));assert.ok(loaded);assert.equal(loaded.worldVersion,10);assert.equal(loaded.player.hp,43);assert.equal(loaded.player.flasks,1);assert.equal(loaded.playerSkin,'nagisa');assert.deepEqual(loaded.enemies.slice(0,8),s.enemies);assert.equal(loaded.enemies.length,world.ENEMY_SPAWNS.length);
+ const loaded=engine.loadGame(engine.saveGame(s));assert.ok(loaded);assert.equal(loaded.worldVersion,12);assert.equal(loaded.player.hp,43);assert.equal(loaded.player.flasks,1);assert.equal(loaded.playerSkin,'nagisa');assert.deepEqual(loaded.enemies.slice(0,8),s.enemies);assert.equal(loaded.enemies.length,world.ENEMY_SPAWNS.length);
 });
 test('complete old city then new main route, guest duels, side rewards, inside shortcut and free exploration with persistent guest victories',()=>{
  const {state:s}=playFirstLevel(engine);engine.continueExploring(s);

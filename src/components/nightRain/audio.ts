@@ -135,7 +135,7 @@ export class NightAudio {
   observe(s: GameState) {
     const quiet = s.paused || s.mode === 'title' || s.mode === 'dead';
     if (this.quiet !== quiet) { this.quiet = quiet; this.volumes(); if (quiet) this.cancelVoice(); }
-    const combat = s.enemies.some(e => e.hp > 0 && e.aggro && ['boss', 'nana', 'azi', 'captain', 'regent', 'warden', 'abbot', 'serpent', 'elegist', 'colossus', 'sentinel'].includes(e.kind));
+    const combat = s.enemies.some(e => e.hp > 0 && e.aggro && ['boss', 'nana', 'azi', 'captain', 'regent', 'warden', 'abbot', 'serpent', 'elegist', 'colossus', 'sentinel', 'astronomer'].includes(e.kind));
     this.music(combat ? 'boss' : s.mode === 'interlude' || s.region.includes('归灯庭') ? 'haven' : 'exploration');
     const { action } = s.player;
     if (action !== this.lastAction && ['dodge', 'heal'].includes(action)) this.sound(action);

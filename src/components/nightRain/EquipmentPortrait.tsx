@@ -11,6 +11,21 @@ const NAMES = { ...WEAPONS, ...ARMORS, ...TALISMANS };
 export default function EquipmentPortrait({ id }: { id: EquipmentId }) {
   let art;
   switch (id) {
+    case 'nanaPickaxe':
+      art = <><path d="M32 113 77 26" stroke="#956c48" strokeWidth="8" /><path d="M22 36Q59 10 103 46L83 41 62 30 35 46Z" fill="#c2dfe0" stroke="#edcf80" strokeWidth="3" /><path d="m32 97 12 6m-7-16 12 6" stroke="#e6c680" strokeWidth="4" /></>;
+      break;
+    case 'pineBadge':
+      art = <><circle cx="60" cy="68" r="38" fill="#dbc480" stroke="#fff0bf" strokeWidth="4" /><path d="m60 34-23 33h12L34 84h20v16h12V84h20L71 67h12Z" fill="#547f5b" /><circle cx="84" cy="45" r="6" fill="#f2dfa2" /></>;
+      break;
+    case 'droneCore':
+      art = <><path d="M34 65 29 18h14l8 47m19 0 9-47h14l-9 47" fill="#d6b5f1" /><rect x="28" y="60" width="62" height="42" rx="8" fill="#8c77ae" stroke="#ddc8ed" strokeWidth="3" /><circle cx="59" cy="81" r="12" fill="#ede0fa" /><path d="M59 107v12" stroke="#d4b784" strokeWidth="6" /></>;
+      break;
+    case 'frostClock':
+      art = <><path d="M52 22V13h16v9" stroke="#d4dfe3" strokeWidth="5" fill="none" /><circle cx="60" cy="70" r="38" fill="#54859b" stroke="#c3e6ee" strokeWidth="5" /><path d="M60 42v28l20 12M60 34v5m0 62v5M24 70h6m60 0h6" stroke="#f0e1b6" strokeWidth="4" /></>;
+      break;
+    case 'songScore':
+      art = <><path d="M25 22h66v88H25Z" fill="#d9d0aa" /><path d="M35 51h45M35 63h45M35 75h45M35 87h45" stroke="#877969" /><path d="M66 77V39l15 8" stroke="#6d825c" strokeWidth="5" fill="none" /><ellipse cx="59" cy="78" rx="11" ry="7" fill="#6d825c" /></>;
+      break;
     case 'umbrella':
       art = <><path d="M20 63Q38 21 75 28L91 36 20 63Z" fill="#b49d75" /><path d="M20 63 57 31 43 54M57 31 73 43M57 31 91 36" stroke="#efdab1" /><path d="m57 31 25 62q5 12-6 14" stroke="#c9b798" strokeWidth="4" /><path d="m24 67 4-8m8 4 4-9m8 4 4-9m8 3 4-9m9 3 3-8m10 1 2-6" stroke="#695b49" /></>;
       break;

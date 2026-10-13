@@ -18,7 +18,7 @@ test('navigation reaches every discovery from spawn with gate shut and with gate
     assert.ok(path.length > 1, `${landmark.id}, gate ${open}`);
     for (let i = 1; i < path.length; i++) assert.ok(guide.walkSegment(path[i - 1], path[i], access), landmark.id);
   }
-  const destination = world.LANDMARKS.find(l => l.id === 'shortcut');
+  const destination = {x:13.3,y:0,z:-9.5}; // Physical door route; the remote lever is now beside the main path.
   const closed = guide.findPath(world.CHECKPOINT, destination, false);
   const open = guide.findPath(world.CHECKPOINT, destination, true);
   assert.ok(pathLength(closed) > pathLength(open) * 2, 'Guide respects one-way locked shortcut');

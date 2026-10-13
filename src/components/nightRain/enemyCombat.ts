@@ -1,3 +1,6 @@
+import { bossAttack, type EnemyAttack } from './bossCombat';
+import { fanAttack } from './fanEnemies';
+import { bossCharacter } from './bossRoster';
 import type { Enemy } from './types';
 import type { Pose } from './combat';
 import { enemyRole } from './encounters';
@@ -18,6 +21,8 @@ function mix(a: EnemyPose, b: EnemyPose, amount: number, fast = false): EnemyPos
 }
 
 export function enemyStyle(e: Enemy): EnemyStyle {
+  const signature = bossAttack(e) ?? fanAttack(e);
+  if (signature?.style) return signature.style;
   const role = enemyRole(e);
   if (role === 'crossbow' || role === 'slinger') return e.attackIndex % 3 === 2 ? 'draw' : 'shot';
   if (e.kind === 'colossus' || e.kind === 'sentinel') return e.attackIndex % 3 === 2 ? 'sweep' : 'overhead';
@@ -44,9 +49,9 @@ export function enemyTell(e: Enemy) {
 
 export function enemyWeaponLength(e: Pick<Enemy, 'kind'>) {
   if (e.kind === 'lancer' || e.kind === 'monk') return 2.1;
-  if (e.kind === 'regent') return 1.7;
+  if (bossCharacter(e.kind) === 'mizuki') return 1.7;
   if (['warden', 'abbot', 'serpent', 'elegist'].includes(e.kind)) return 1.65;
-  return e.kind === 'boss' || e.kind === 'captain' || e.kind === 'duelist' ? 1.2 : 1.35;
+  return ['shiori', 'nagisa'].includes(bossCharacter(e.kind) ?? '') || e.kind === 'duelist' ? 1.2 : 1.35;
 }
 
 const KEYS: Record<EnemyStyle, [EnemyPose, EnemyPose]> = {
@@ -98,7 +103,9 @@ export function enemyMotion(e: Enemy): EnemyPose | null {
   return null;
 }
 
-export function enemyAttack(e: Enemy) {
+export function enemyAttack(e: Enemy): EnemyAttack {
+  const signature = bossAttack(e) ?? fanAttack(e);
+  if (signature) return signature;
   const index = e.attackIndex % 3;
   const role = enemyRole(e);
   if (e.kind === 'colossus' || e.kind === 'sentinel') {
@@ -110,26 +117,7 @@ export function enemyAttack(e: Enemy) {
     if (index === 2) return { name: '退步短刃', windup: 0.76, range: 2.7, arc: 0.9, damage: 18, recovery: 1.3, parryable: true, lunge: 0.35, projectile: false };
     return { name: role === 'crossbow' ? '绷弦 · 定向弩箭' : '举石 · 投石', windup: role === 'crossbow' ? 1.25 : 1.45, range: 12, arc: 0.28, damage: role === 'crossbow' ? 22 : 25, recovery: 1.65, parryable: true, lunge: 0, projectile: true };
   }
-  if (e.kind === 'elegist') {
-    if (index === 1) return { name: '礼墨 · 迟落墨笔', windup: e.phase === 2 ? 2.05 : 1.65, range: 3.7, arc: 0.8, damage: 50, recovery: 1.7, parryable: true, lunge: 1 };
-    if (index === 2) return { name: '危 · 千纸归灯', windup: e.phase === 2 ? 0.98 : 1.3, range: 4.4, arc: Math.PI, damage: 42, recovery: 1.4, parryable: false, lunge: 0 };
-    return { name: '墨笔点名', windup: e.phase === 2 ? 0.66 : 0.95, range: 3.4, arc: 0.5, damage: 38, recovery: 1.05, parryable: true, lunge: 1.6 };
-  }
-  if (e.kind === 'serpent') {
-    if (index === 1) return { name: '悠亚 · 迟落星杖', windup: e.phase === 2 ? 1.95 : 1.65, range: 4.1, arc: 0.7, damage: 55, recovery: 1.8, parryable: true, lunge: 1.2 };
-    if (index === 2) return { name: '危 · 天外环流', windup: e.phase === 2 ? 0.94 : 1.3, range: 5.1, arc: Math.PI, damage: 46, recovery: 1.55, parryable: false, lunge: 0 };
-    return { name: '星杖穿云', windup: e.phase === 2 ? 0.62 : 0.96, range: 3.7, arc: 0.45, damage: 42, recovery: e.phase === 2 ? 0.82 : 1.05, parryable: true, lunge: 2.1 };
-  }
-  if (e.kind === 'warden') {
-    if (index === 1) return { name: '花礼 · 落花重桨', windup: 1.8, range: 3.5, arc: 0.8, damage: 48, recovery: 1.8, parryable: true, lunge: 0.7 };
-    if (index === 2) return { name: '危 · 落花起浪', windup: e.phase === 2 ? 0.95 : 1.3, range: 4.2, arc: Math.PI, damage: 38, recovery: 1.4, parryable: false, lunge: 0 };
-    return { name: '花舟迎雨', windup: e.phase === 2 ? 0.78 : 1.08, range: 3.4, arc: 0.5, damage: 36, recovery: 1.1, parryable: true, lunge: 1.3 };
-  }
-  if (e.kind === 'abbot') {
-    if (index === 1) return { name: '瑞娅 · 迟落霜钟', windup: e.phase === 2 ? 1.9 : 1.55, range: 3.1, arc: 0.75, damage: 43, recovery: 1.5, parryable: true, lunge: 0.8 };
-    if (index === 2) return { name: '危 · 静界霜环', windup: 1.1, range: 3.8, arc: Math.PI, damage: 34, recovery: 1.25, parryable: false, lunge: 0 };
-    return { name: '霜杖凝雨', windup: e.phase === 2 ? 0.61 : 0.85, range: 3, arc: 0.5, damage: 33, recovery: 0.9, parryable: true, lunge: 1.5 };
-  }
+
   if (e.kind === 'monk') {
     if (index === 2) return { name: '危 · 扫叶杖', windup: 1.2, range: 3.1, arc: 2.5, damage: 28, recovery: 1.25, parryable: false, lunge: 0 };
     return { name: index === 1 ? '听雨迟杖' : '竹杖连云', windup: index === 1 ? 1.5 : 0.82, range: 2.8, arc: 0.8, damage: 32, recovery: 1.05, parryable: true, lunge: 0.6 };
@@ -138,33 +126,9 @@ export function enemyAttack(e: Enemy) {
     if (index === 2) return { name: '危 · 钩镰割苇', windup: 1.15, range: 3.3, arc: 2.8, damage: 30, recovery: 1.3, parryable: false, lunge: 0 };
     return { name: index === 1 ? '收网迟钩' : '钩镰探雨', windup: index === 1 ? 1.45 : 1, range: 3, arc: 0.6, damage: 32, recovery: 1.1, parryable: true, lunge: 0.85 };
   }
-  if (e.kind === 'regent') {
-    if (index === 1) return { name: '弥月 · 迟落双炮', windup: e.phase === 2 ? 1.85 : 1.55, range: 3.65, arc: 0.85, damage: 48, recovery: 1.65, parryable: true, lunge: 1.1 };
-    if (index === 2) return { name: '危 · 双月齐鸣', windup: e.phase === 2 ? 0.98 : 1.28, range: 4.5, arc: Math.PI, damage: 40, recovery: 1.5, parryable: false, lunge: 0 };
-    return { name: '兔耳 · 星火点射', windup: e.phase === 2 ? 0.66 : 0.96, range: 5.6, arc: 0.28, damage: 36, recovery: 1.1, parryable: true, lunge: 0 };
-  }
-  if (e.kind === 'captain') {
-    if (index === 1) return { name: '米汀 · 双刃迟切', windup: 1.5, range: 3.1, arc: 0.8, damage: 39, recovery: 1.45, parryable: true, lunge: 0.8 };
-    if (index === 2) return { name: '危 · 断潮换步', windup: 1.2, range: 3.65, arc: Math.PI, damage: 32, recovery: 1.25, parryable: false, lunge: 0 };
-    return { name: '双刀破潮', windup: e.phase === 2 ? 0.76 : 1.1, range: 3.2, arc: 0.5, damage: 30, recovery: 1.05, parryable: true, lunge: 1.2 };
-  }
+
   if (e.kind === 'lancer') return { name: index === 1 ? '沉枪迟刺' : index === 2 ? '拒马 · 踏步贯刺' : '长枪直刺', windup: index === 1 ? 1.45 : index === 2 ? 1.22 : 1, range: index === 2 ? 4.1 : 3.25, arc: 0.42, damage: 28, recovery: 1.15, parryable: true, lunge: index === 2 ? 2.4 : 0.75 };
-  if (e.kind === 'nana') {
-    if (index === 1) return { name: '沉镐 · 延迟落潮', windup: 1.65, range: 3.5, arc: 0.75, damage: 43, recovery: 1.4, parryable: true, lunge: 1.2 };
-    if (index === 2) return { name: '危 · 七重返潮', windup: e.phase === 2 ? 0.92 : 1.25, range: 4.0, arc: Math.PI, damage: 34, recovery: 1.35, parryable: false, lunge: 0 };
-    return { name: '破浪镐击', windup: e.phase === 2 ? 0.68 : 0.94, range: 3.1, arc: 0.6, damage: 31, recovery: e.phase === 2 ? 0.55 : 0.9, parryable: true, lunge: 1.7 };
-  }
-  if (e.kind === 'azi') {
-    if (index === 1) return { name: '休止符 · 迟落拍', windup: e.phase === 2 ? 1.8 : 1.4, range: 2.9, arc: 0.8, damage: 34, recovery: 1.35, parryable: true, lunge: 0.8 };
-    if (index === 2) return { name: '危 · 蛙鸣圆舞', windup: 1.12, range: 3.3, arc: Math.PI, damage: 27, recovery: 1.1, parryable: false, lunge: 0 };
-    return { name: '青杖切分', windup: 0.75, range: 2.65, arc: 1.3, damage: 25, recovery: 0.7, parryable: true, lunge: 0.7 };
-  }
-  if (e.kind === 'boss') {
-    if (index === 1) return { name: '栞铃 · 迟拍拔刀', windup: e.phase === 2 ? 1.9 : 1.58, range: 3.4, arc: 0.72, damage: 40, recovery: 1.45, parryable: true, lunge: 1.35 };
-    if (index === 2 && e.phase === 2) return { name: '危 · 花返横切', windup: 1.16, range: 3.9, arc: Math.PI, damage: 36, recovery: 1.5, parryable: false, lunge: 0 };
-    if (index === 2) return { name: '收伞 · 回身斩', windup: 1.02, range: 3.1, arc: 1.45, damage: 30, recovery: 1.15, parryable: true, lunge: 0.4 };
-    return { name: e.phase === 2 ? '雨切 · 穿花步' : '栞铃 · 点雨刺', windup: e.phase === 2 ? 0.72 : 0.94, range: 2.95, arc: 0.5, damage: 32, recovery: 0.95, parryable: true, lunge: e.phase === 2 ? 2 : 1.5 };
-  }
+
   if (e.kind === 'duelist') return { name: index === 1 ? '居合蓄斩' : index === 2 ? '踏影 · 突进拔刀' : '快刀横斩', windup: index === 1 ? 1.4 : index === 2 ? 1.05 : 0.7, range: index === 2 ? 3.6 : 2.35, arc: index === 2 ? 0.65 : 1.13, damage: 24, recovery: index === 2 ? 1.4 : 0.85, parryable: true, lunge: index === 2 ? 2.2 : 0.6 };
   if (e.kind === 'guard') return { name: index === 1 ? '架盾 · 迟落重棍' : index === 2 ? '顶盾追击' : '举棍重击', windup: index === 1 ? 1.65 : 1.06, range: index === 2 ? 2.8 : 2.3, arc: 0.9, damage: index === 1 ? 31 : 25, recovery: index === 1 ? 1.6 : 1.2, parryable: true, lunge: index === 2 ? 1.1 : 0.25 };
   return { name: index === 1 ? '收棍 · 延迟回敲' : index === 2 ? '抢步扑击' : '短棍挥打', windup: index === 1 ? 1.28 : index === 2 ? 1.03 : 0.88, range: index === 2 ? 3.1 : 1.95, arc: index === 2 ? 0.55 : 1.15, damage: 19, recovery: index === 2 ? 1.4 : 1.05, parryable: true, lunge: index === 2 ? 1.8 : 0.3 };

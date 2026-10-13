@@ -26,7 +26,7 @@ export function ferryStatus(s: GameState, id: string) {
     ready: false,
     label: '系缆未修复',
     message: '渡船系缆还未修复 · 先到水车院东侧转动系缆绞盘。',
-    hint: '从王寺后山进入雾河，击败西岸的花礼，在水车院东侧渡埠转动系缆绞盘。',
+    hint: '从王寺后山进入雾河，击败西岸的七海，在水车院东侧渡埠转动系缆绞盘。',
   };
   return { ready: true, label: '航线已开通', message: '', hint: '' };
 }

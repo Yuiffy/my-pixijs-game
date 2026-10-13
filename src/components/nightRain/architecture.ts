@@ -1,3 +1,5 @@
+import { SKY_STRUCTURES } from './skyplain';
+import { BUILDING_SOLIDS } from './overhaulWorld';
 import { CHAPTER_HOUSES, CHAPTER_STRUCTURES } from './chapter';
 import { HAVEN_HOUSES, HAVEN_STRUCTURES } from './haven';
 import { VALLEY_HOUSES, VALLEY_STRUCTURES } from './valley';
@@ -50,9 +52,11 @@ export const STRUCTURES:Solid[] = [
   { id: 'bell-foundation', position: [36, 3.7, -80], size: [11, 11.5, 5], color: '#697979' },
   ...[30.5, 49.5].map(x => ({ id: `tide-column-${x}`, position: [x, 9, -67] as Triple, size: [1, 6, 1] as Triple, color: '#b4b6a0' })),
   { id: 'tide-lintel', position: [40, 11.5, -67], size: [20, 1.1, 1.2], color: '#8aa5ab' },
+  ...BUILDING_SOLIDS,
   ...CHAPTER_STRUCTURES,
   ...VALLEY_STRUCTURES,
   ...HAVEN_STRUCTURES,
+  ...SKY_STRUCTURES,
 ];
 function worldPart(h:House, p:Solid):Solid {
  const yaw = h.rotation ?? 0; const c = Math.cos(yaw); const s = Math.sin(yaw); const [x, y, z] = p.position;

@@ -2,6 +2,7 @@ import { ATTACKS, CHARGE_TIME, RAIN_CUT_ATTACKS, type AttackSpec } from './comba
 import type { AttackId, GameState } from './types';
 
 export const WEAPONS = {
+  nanaPickaxe: { name: '七海 · 试作矿镐', item: 'nana-pickaxe', tier: 0, cost: 0, lightDamage: 7, heavyDamage: 18, posture: 1.15, range: 0.2, stamina: 5, guard: 1.1, color: '#f0cc7d', description: '七海留在方屋顶的试作镐。蓄满重击额外造成 50% 破架；起手慢、角度窄，适合等对手收招。' },
   umbrella: { name: '折雨伞', tier: 0, cost: 0, lightDamage: 0, heavyDamage: 0, posture: 1, range: 0, stamina: 0, guard: 1, color: '#ecd2ac', description: '来时的伞。重击先沉身提伞，落伞后需收势；留给敌人收招的空当。' },
   ironUmbrella: { name: '铁骨伞', tier: 1, cost: 80, lightDamage: 6, heavyDamage: 12, posture: 1.2, range: 0.1, stamina: 2, guard: 0.8, color: '#b6e0de', description: '加固伞骨。破架更强，防御少耗两成体力，攻击稍重。' },
   katana: { name: '雨切武士刀', tier: 2, cost: 160, lightDamage: 12, heavyDamage: 20, posture: 1.05, range: 0.4, stamina: -3, guard: 1.15, color: '#cfeaff', description: '收伞为鞘，拔骨成刃。解锁轻快的雨切重斩与回旋；硬接攻击更吃力。' },
@@ -13,11 +14,11 @@ export const WEAPONS = {
 export function weaponAttack(s: GameState, id: AttackId): AttackSpec {
   const base = (weaponMotion(s) === 'rainCut' ? RAIN_CUT_ATTACKS[id] : undefined) ?? ATTACKS[id]; const w = WEAPONS[s.weapon];
   const heavy = ['heavy', 'charged', 'sprintHeavy', 'airHeavy'].includes(id);
-  const speed = s.weapon === 'reedDaggers' ? 0.8 : s.weapon === 'stoneMaul' ? 1.3 : s.weapon === 'graveSpear' ? 1.1 : 1;
-  return { ...base, impact: base.impact * speed, active: base.active * speed, duration: base.duration * speed, cancel: base.cancel * speed, chain: base.chain === undefined ? undefined : base.chain * speed, arc: s.weapon === 'graveSpear' ? Math.min(base.arc, 0.48) : base.arc, turn: s.weapon === 'stoneMaul' ? base.turn * 0.65 : base.turn, damage: base.damage + (heavy ? w.heavyDamage : w.lightDamage), posture: base.posture * w.posture, range: base.range + w.range, cost: Math.max(1, base.cost + w.stamina), color: w.color };
+  const speed = s.weapon === 'reedDaggers' ? 0.8 : s.weapon === 'nanaPickaxe' ? 1.18 : s.weapon === 'stoneMaul' ? 1.3 : s.weapon === 'graveSpear' ? 1.1 : 1;
+  return { ...base, impact: base.impact * speed, active: base.active * speed, duration: base.duration * speed, cancel: base.cancel * speed, chain: base.chain === undefined ? undefined : base.chain * speed, arc: s.weapon === 'nanaPickaxe' ? Math.min(base.arc, 0.65) : s.weapon === 'graveSpear' ? Math.min(base.arc, 0.48) : base.arc, turn: s.weapon === 'stoneMaul' ? base.turn * 0.65 : base.turn, damage: base.damage + (heavy ? w.heavyDamage : w.lightDamage), posture: base.posture * w.posture * (s.weapon === 'nanaPickaxe' && id === 'charged' ? 1.5 : 1), range: base.range + w.range, cost: Math.max(1, base.cost + w.stamina), color: w.color };
 }
 export function weaponMotion(s: Pick<GameState, 'weapon'>) { return s.weapon === 'katana' ? 'rainCut' : 'grounded'; }
-export function chargeTime(s: GameState) { return s.weapon === 'katana' ? 0.75 : s.weapon === 'stoneMaul' ? 1.15 : s.weapon === 'graveSpear' ? 1.05 : s.weapon === 'reedDaggers' ? 0.8 : CHARGE_TIME; }
+export function chargeTime(s: GameState) { return s.weapon === 'katana' ? 0.75 : s.weapon === 'nanaPickaxe' ? 1.1 : s.weapon === 'stoneMaul' ? 1.15 : s.weapon === 'graveSpear' ? 1.05 : s.weapon === 'reedDaggers' ? 0.8 : CHARGE_TIME; }
 /** Charge preparation is credited at the same pose; at least 0.28s of release remains. */
 export function chargeCredit(s: GameState, held: number) { return s.weapon === 'katana' ? Math.min(0.35, held) : Math.min(1, held / chargeTime(s)) * Math.max(0, weaponAttack(s, 'heavy').impact - 0.28); }
 

@@ -28,11 +28,11 @@ test('all river spawns, shrines, mechanisms and ferry landings stand on connecte
 
 test('actual completed v5 save migrates without changing the player, inventory or any old enemy', () => {
   const old = JSON.parse(fixture); const s = fresh();
-  assert.equal(s.worldVersion, 10); assert.deepEqual(s.player, old.player);
+  assert.equal(s.worldVersion, 12); assert.deepEqual(s.player, old.player);
   assert.deepEqual(s.enemies.slice(0, old.enemies.length), expectedLegacyEnemies(old.enemies));
   for (const key of ['rice', 'level', 'bankedRice', 'defeatedGuests', 'litLamps', 'collected', 'chapterGates', 'chapterComplete']) assert.deepEqual(s[key], old[key], key);
   assert.equal(s.enemies.length, world.ENEMY_SPAWNS.length);
-  assert.equal(s.enemies.length - old.enemies.length, valley.VALLEY_ENEMIES.length + haven.HAVEN_ENEMIES.length + world.AMBUSH_ENEMIES.length + 8);
+  assert.equal(s.enemies.length - old.enemies.length, valley.VALLEY_ENEMIES.length + haven.HAVEN_ENEMIES.length + world.AMBUSH_ENEMIES.length + 16);
   assert.deepEqual(s.valleyGates, []); assert.equal(s.valleyComplete, false);
   assert.ok(engine.loadGame(engine.saveGame(s)));
 });
@@ -59,7 +59,7 @@ test('return doors resist wrong-side interaction and jumps, and shorten genuine 
     const g = valley.VALLEY_GATES.find(g => g.id === id);
     place(s, { x: g.x, y: g.y, z: g.z + 1.1 }); engine.interact(s); assert.equal(s.valleyGates.includes(id), false);
     engine.stepGame(s, 400, { x: 0, z: -1, jump: true }); engine.stepGame(s, 800, { x: 0, z: -1 }); assert.ok(s.player.z > g.z);
-    const origin = world.interactionPoint(world.LANDMARKS.find(l => l.id === id));
+    const origin = { x:g.x,y:g.y,z:g.z-1.4 }; // Measure the physical return route, separately from its relocated lever.
     const before = guide.findPath(origin, world.REST_POINTS['village-lamp'], s); assert.ok(before.length, id);
     at(s, id); engine.interact(s); assert.ok(s.valleyGates.includes(id));
     const after = guide.findPath(origin, world.REST_POINTS['village-lamp'], s); assert.ok(after.length);
@@ -96,18 +96,17 @@ test('three new checkpoints survive combat death and preserve opened mechanisms 
   }
 });
 
-test('new bosses change phase and distinguish parryable delays from jumpable dangerous sweeps', () => {
-  for (const id of valley.VALLEY_BOSSES) {
-    const setup = () => {
-      const s = fresh(); const e = s.enemies.find(e => e.id === id); place(s, { x: e.x, y: e.y, z: e.z + 2 }); s.player.facing = Math.PI;
-      Object.assign(e, { hp: e.maxHp / 2 - 1, action: 'recover', timer: 2, aggro: true, facing: 0 });
-      engine.stepGame(s, 20); assert.equal(e.phase, 2); Object.assign(e, { action: 'windup', timer: .12, attackIndex: 2 }); return { s, e };
-    };
-    const parry = setup(); const hp = parry.s.player.hp; engine.stepGame(parry.s, 400, { x: 0, z: 0, parry: true }); assert.ok(parry.s.player.hp < hp, id);
-    const jump = setup(); engine.stepGame(jump.s, 400, { x: 0, z: 0, jump: true }); assert.equal(jump.s.player.hp, hp, id);
-    jump.e.attackIndex = 1; const delay = engine.enemyAttack(jump.e); jump.e.attackIndex = 0; assert.ok(delay.windup > engine.enemyAttack(jump.e).windup + .8);
+test('valley bosses enter phase two and cast distinct counter, song and beam mechanics', () => {
+  for (const [id,skill] of [['drowned-warden','counter'],['silent-abbot','song'],['river-serpent','beam']]) {
+    const s=fresh();const e=s.enemies.find(e=>e.id===id);place(s,{x:e.x,y:e.y,z:e.z+2});
+    Object.assign(e,{hp:e.maxHp/2-1,action:'recover',timer:2,aggro:true,facing:0});
+    engine.stepGame(s,20);assert.equal(e.phase,2);
+    Object.assign(e,{action:'windup',timer:.12,attackIndex:1});engine.stepGame(s,400);
+    assert.ok(s.bossFields.some(f=>f.owner===id&&f.kind===skill),id);
+    assert.equal(s.player.hp,engine.maxHp(s));
   }
 });
+
 
 test('river rewards stack with old upgrades once, and completion requires the final guardian', () => {
   const s = fresh(); s.valleyGates.push('valley-entry');

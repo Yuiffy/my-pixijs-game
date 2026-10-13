@@ -127,14 +127,17 @@ test('all enemies, reward branches, shortcut loop, upgrade and dinner are comple
   const saved = loadGame(saveGame(s)); assert.ok(saved); assert.equal(saved.mode, 'interlude'); assert.equal(saved.rice, s.rice);
 });
 
-test('boss phase two offers a genuinely unparryable sweep and an intentionally delayed strike', () => {
-  const s = fresh(); const boss = s.enemies.find(e => e.kind === 'boss'); boss.phase = 2;
-  boss.attackIndex = 2; const sweep = engine.enemyAttack(boss); assert.equal(sweep.parryable, false); assert.ok(sweep.arc > 2);
-  boss.attackIndex = 1; const delayed = engine.enemyAttack(boss); boss.attackIndex = 0;
-  assert.ok(delayed.windup > engine.enemyAttack(boss).windup + 0.5);
-  Object.assign(s.player, { x: 4, y: 0, z: -39.5, facing: Math.PI }); Object.assign(boss, { attackIndex: 2, hp: 150, action: 'windup', timer: 0.12, aggro: true });
-  advance(s, 400, { ...neutral, parry: true }); assert.equal(s.parries, 0); assert.equal(s.player.hp, 64);
+test('Harei combines a parryable strike, visible badge projectile and delayed pine roots', () => {
+  const s = fresh(); const boss=s.enemies.find(e=>e.kind==='boss');boss.phase=2;
+  assert.equal(engine.enemyAttack(boss).parryable,true);
+  assert.equal(engine.enemyAttack({...boss,attackIndex:1}).projectile,true);
+  assert.equal(engine.enemyAttack({...boss,attackIndex:2}).skill,'pine');
+  Object.assign(s.player,{x:4,y:0,z:-39.5,facing:Math.PI});
+  Object.assign(boss,{attackIndex:2,hp:150,action:'windup',timer:0.12,aggro:true});
+  advance(s,400,{...neutral,parry:true});assert.equal(s.parries,0);assert.equal(s.player.hp,100);
+  advance(s,1000,neutral);assert.equal(s.player.hp,86);
 });
+
 
 test('death requires explicit respawn; a legal return retrieves the last bloodstain', () => {
   const s = fresh(); reachLamp(s); walkTo(engine, s, { x: -6, z: 2 }); assert.equal(s.rice, 18);

@@ -3,7 +3,7 @@ import type { Landmark } from './types';
 export type LootTier = 'common' | 'rare' | 'legendary';
 const RARE = new Set(['lookout-cache', 'net-cache', 'frog-cache', 'royal-cache', 'orchid-cache', 'boat-cache', 'ossuary-mail', 'reed-cape', 'cave-daggers']);
 export function lootTier(l: Pick<Landmark, 'id' | 'kind'>): LootTier {
-  if (l.kind === 'charm' || l.kind === 'flask' || ['bamboo-dew', 'grave-spear', 'stone-maul'].includes(l.id)) return 'legendary';
+  if (l.kind === 'charm' || l.kind === 'flask' || ['sky-dew', 'nana-pickaxe', 'bamboo-dew', 'grave-spear', 'stone-maul'].includes(l.id)) return 'legendary';
   return RARE.has(l.id) ? 'rare' : 'common';
 }
 export const LOOT_STYLE = {

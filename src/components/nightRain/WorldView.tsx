@@ -4,24 +4,32 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { memo, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import * as THREE from "three";
 import type { CameraControl, Enemy, EnemyKind, GameState, Surface } from "./types";
-import { enemyAttack, enemyMotion, enemyTell } from "./enemyCombat";
+import { enemyMotion } from "./enemyCombat";
 import EnemyStrike, { EnemyWeaponTell } from "./EnemyStrike";
+import GroundWarning from "./GroundWarningView";
 import { HOUSES, STRUCTURES, houseParts, architectureIntervals, type House } from './architecture';
 import { CharacterStyle, GuestStyle, GuestWeapon, PLAYER_SKINS } from './CharacterStyle';
 import ChapterView from "./ChapterView";
 import HavenView from "./HavenView";
 import { HAVEN_GATES } from "./haven";
+import SkyplainView, { SkyAtmosphere, skyBlend } from "./SkyplainView";
+import { SKY_GATES } from "./skyplain";
 import ValleyView from "./ValleyView";
 import { VALLEY_GATES } from "./valley";
 import GeometryBatch, { type StoneBox } from "./GeometryBatch";
 import { CHAPTER_GATES } from "./chapter";
+import { createSaltTexture } from './skyTexture';
 import { createStoneTexture } from './stoneTexture';
 import CompanionView from './CompanionView';
 import CombatTrail from './CombatTrail';
 import PlayerActor from './PlayerActor';
 import { characterAppearance, type CharacterAppearance } from './characterAppearance';
 import RainEffects, { ShrineWisps } from './RainEffects';
-import BossSignatures from './BossSignatures';
+import TerritoryView from './TerritoryView';
+import FanStyle from './FanStyle';
+import { fanOf, FAN_COLORS } from './fanEnemies';
+import BossFieldView from './BossFieldView';
+import { bossLeapHeight, bossCloaked } from './bossFields';
 import BossStyle, { BossWeapon } from './BossStyle';
 import { BOSS_ROSTER } from './bossRoster';
 import WeaponView, { Katana, ShioriBloom } from './WeaponView';
@@ -235,7 +243,8 @@ function Lantern({
 
 function Deck({ surface }: { surface: Surface }) {
   const { x1, x2, z1, z2, y, endY = y } = surface;
-  const stone = useMemo(createStoneTexture, []);
+  const salt = surface.id.startsWith('sky-');
+  const stone = useMemo(() => (salt ? createSaltTexture() : createStoneTexture()), [salt]);
   useEffect(() => () => stone.dispose(), [stone]);
   const geometry = useMemo(() => {
     const g = new THREE.BufferGeometry();
@@ -446,12 +455,12 @@ function TideDistrict() {
     {[[33, 6, -65], [47, 6, -65], [33, 6, -56], [47, 6, -56], [48, 3, -52], [61, 3, -52], [55, 3, -44], [58, 3, -44], [33, 4, -12], [38, 4, -8], [44, 4, -8], [32, 10, -81], [40, 10, -81]].map(([x, y, z], i) => <Pole key={`pile${i}`} position={[x, (y - 2) / 2, z]} height={y + 2} radius={0.22} color="#516d73" />)}
 
     <Sign text="潮汐港 →" subtext="WHERE RAIN MEETS THE TIDE" position={[24, 2.2, -31.7]} width={3.6} />
-    <Sign text="↑ 七重潮门" position={[40, 2.5, -37]} width={3.8} />
-    <Sign text="苔灯戏台 →" position={[48, 3, -37.5]} width={2.8} background="#42563d" />
+    <Sign text="↑ 双象潮门" position={[40, 2.5, -37]} width={3.8} />
+    <Sign text="苔灯工坊 →" position={[48, 3, -37.5]} width={2.8} background="#42563d" />
     <Sign text="归灯长桥" position={[28, 2.4, -23]} width={3.3} />
     <Sign text="晒网高廊" position={[44, 5.5, -8]} width={3} />
-    <Sign text="七重潮门" subtext="NANA7MI · THE SEVENTH TIDE" position={[40, 10.5, -67.5]} width={7} background="#284e69" />
-    <Sign text="苔灯夜曲" subtext="AZI · AN ENCORE IN THE RAIN" position={[56, 6.6, -53.8]} width={6} background="#465d37" />
+    <Sign text="双象潮门" subtext="NAGISA · TWIN TIDE" position={[40, 10.5, -67.5]} width={7} background="#284e69" />
+    <Sign text="苔灯机巧工坊" subtext="MIZUKI · RABBIT DRONES" position={[56, 6.6, -53.8]} width={6} background="#465d37" />
     {[[24, 0, -28.5], [31, 0, -29], [39, 0, -35], [40.5, 1.5, -42], [45.5, 3.5, -47], [40.5, 5.5, -52], [32, 6, -55], [48, 6, -66], [31, 10, -78]].map(([x, y, z], i) => <Lantern key={i} position={[x, y, z]} />)}
     {[48, 53, 60].map(x => <Lantern key={x} position={[x, 3, -53.5]} blue />)}
     {/* Buttresses flank the arena; DiscoveryView supplies the interactive copper bell. */}
@@ -555,7 +564,7 @@ function CityContent() {
       <Sign position={[-125.5, 27, -269]} text="雾河 →" subtext="第二关 · 后山门" width={3} />
       <Sign position={[-124, 5.2, -338]} text="← 水车院 · 山寺 →" subtext="两岸水闸 · 上游汇流" width={4.8} />
       <Sign position={[-128.5, 5, -355]} rotation={[0, Math.PI, 0]} text="← 旧城 · 水车院 →" subtext="修复系缆后乘船" width={4.5} />
-      <Sign position={[-95, 12.7, -381]} text="← 渡村近路" subtext="无声山寺 ↑" width={3} />
+      <Sign position={[-95, 12.7, -381]} text="← 渡村近路" subtext="终场歌庭 ↑" width={3} />
       <Sign position={[-152, 11, -466]} rotation={[0, Math.PI, 0]} text="双闸锁桥" subtext="西岸 · 东岸" width={3} />
       <Pole position={[-4.2, 2.1, -61]} height={4.2} radius={0.055} />
       <Sign position={[-4.2, 4, -61]} text="王城北路 ←" subtext="香料水街 · 织坊" width={2.2} />
@@ -834,7 +843,7 @@ function ObstacleArt({ stateRef }: { stateRef: StateRef }) {
       {OBSTACLES.map((o, i) => {
         if (o.kind === 'chest' || o.kind === 'shrine') return null;
         if (o.kind === "gate") {
-          const gate = [...CHAPTER_GATES, ...VALLEY_GATES, ...HAVEN_GATES].find(g => g.id === o.gateId);
+          const gate = [...CHAPTER_GATES, ...VALLEY_GATES, ...HAVEN_GATES, ...SKY_GATES].find(g => g.id === o.gateId);
           const yaw = gate?.side === 'west' ? Math.PI / 2 : gate?.side === 'east' ? -Math.PI / 2 : gate?.side === 'south' ? Math.PI : 0;
           const width = Math.max(o.w, o.d); const depth = Math.min(o.w, o.d);
           return (
@@ -1119,7 +1128,6 @@ function LegacyActor({
   const leftElbow = useRef<THREE.Group>(null);
   const chargeGlow = useRef<THREE.Mesh>(null);
   const heldWeapon = useRef<THREE.Group>(null); const medicine = useRef<THREE.Group>(null);
-  const telegraph = useRef<THREE.Mesh>(null);
   const slash = useRef<THREE.Mesh>(null);
   const marker = useRef<THREE.Group>(null);
   const health = useRef<THREE.Group>(null);
@@ -1131,13 +1139,14 @@ function LegacyActor({
   const kind: EnemyKind | "player" = enemyId
     ? (ENEMY_SPAWNS.find((e) => e.id === enemyId)?.kind ?? "prowler")
     : "player";
-  const boss = ["boss", "nana", "captain", "regent", "warden", "abbot", "serpent", "elegist"].includes(kind ?? "");
+  const boss = ["boss", "nana", "azi", "captain", "regent", "warden", "abbot", "serpent", "elegist", "colossus", "sentinel", "astronomer"].includes(kind ?? "");
   const lancer = !BOSS_ROSTER[kind as EnemyKind] && ["lancer", "captain", "regent", "monk", "abbot", "serpent", "elegist"].includes(kind ?? "");
   const namedBoss = kind === "player" ? undefined : BOSS_ROSTER[kind];
-  const shioriBoss = kind === "boss";
+  const shioriBoss = namedBoss?.character === 'shiori';
   const guest = kind === "nana" || kind === "azi" || !!namedBoss;
   const player = kind === "player";
   const characterPalette: CharacterAppearance | null = player ? PLAYER_SKINS[appearance] : namedBoss?.character ? characterAppearance(namedBoss.character) : kind === 'nana' || kind === 'azi' ? characterAppearance(kind) : null;
+  const fan = enemyId ? fanOf({ id: enemyId }) : undefined;
   const guard = kind === "guard";
   const role = enemyId ? enemyRole({ id: enemyId, kind: kind as EnemyKind }) : null;
   const ranged = role === 'crossbow' || role === 'slinger';
@@ -1146,7 +1155,7 @@ function LegacyActor({
   const mealClock = useRef(0);
   const coat = player
     ? PLAYER_SKINS[appearance].coat
-    : namedBoss ? namedBoss.coat : kind === 'elegist' ? '#897050' : kind === 'serpent' ? '#3d7c74' : kind === 'warden' ? '#536f81' : ['monk', 'abbot'].includes(kind ?? '') ? '#ae8651' : kind === 'reaver' ? '#667459' : kind === 'regent' ? '#673e48' : kind === 'captain' ? '#8a713f' : guest ? kind === "nana" ? "#303b49" : "#91a269" : boss
+    : fan ? FAN_COLORS[fan] : namedBoss ? namedBoss.coat : kind === 'elegist' ? '#897050' : kind === 'serpent' ? '#3d7c74' : kind === 'warden' ? '#536f81' : ['monk', 'abbot'].includes(kind ?? '') ? '#ae8651' : kind === 'reaver' ? '#667459' : kind === 'regent' ? '#673e48' : kind === 'captain' ? '#8a713f' : guest ? kind === "nana" ? "#303b49" : "#91a269" : boss
       ? "#335a63"
       : guard
         ? "#7c6653"
@@ -1155,29 +1164,6 @@ function LegacyActor({
           : "#697870";
   const skin = characterPalette?.skin ?? (player || guest ? "#ead0bd" : "#b0927b");
   const eye = player ? PLAYER_SKINS[appearance].eye : namedBoss ? namedBoss.eye : guest ? "#e5b855" : "#efcda0";
-  const attackShapes = useMemo(() => {
-    const enemy = stateRef.current.enemies.find((e) => e.id === enemyId);
-    if (!enemy) return [];
-    return Array.from({ length: 6 }, (_, i) => {
-      const attack = enemyAttack({
-        ...enemy,
-        attackIndex: i % 3,
-        phase: i < 3 ? 1 : 2,
-      });
-      return new THREE.RingGeometry(
-        0.55,
-        attack.range,
-        40,
-        1,
-        -Math.PI / 2 - attack.arc,
-        attack.arc * 2,
-      );
-    });
-  }, [stateRef, enemyId]);
-  useEffect(
-    () => () => attackShapes.forEach((g) => g.dispose()),
-    [attackShapes],
-  );
   useFrame(({ camera }, dt) => {
     const state = stateRef.current;
     if (player && appearance !== state.playerSkin)setAppearance(state.playerSkin);
@@ -1292,6 +1278,10 @@ function LegacyActor({
         armZ = -0.5;
       }
     }
+    if (enemy) {
+      body.current.position.y += bossLeapHeight(state, enemy);
+      body.current.visible = !bossCloaked(state, enemy) || Math.sin(state.time * 18) > 0.75;
+    }
     if (arm.current) {
       arm.current.rotation.x = armX;
       arm.current.rotation.z = armZ;
@@ -1315,17 +1305,6 @@ function LegacyActor({
         if (object.geometry.boundingBox) rollBounds.all.union(rollBounds.mesh.copy(object.geometry.boundingBox).applyMatrix4(object.matrixWorld));
       });
       body.current.position.y += Math.max(0, actor.y + state.player.jumpHeight + 0.02 - rollBounds.all.min.y);
-    }
-    if (telegraph.current && enemy) {
-      telegraph.current.visible = enemy.action === "windup" || (enemy.action === "attack" && !enemy.hitDone);
-      telegraph.current.geometry =
-        attackShapes[(enemy.phase === 2 ? 3 : 0) + (enemy.attackIndex % 3)];
-      telegraph.current.rotation.set(-Math.PI / 2, 0, enemy.facing);
-      const attack = enemyAttack(enemy);
-      const mat = telegraph.current.material as THREE.MeshBasicMaterial;
-      mat.color.set(attack.parryable ? "#ffc270" : "#ef655e");
-      const tell = enemyTell(enemy);
-      mat.opacity = tell.committed ? 0.42 : 0.13 + Math.min(1, 1 - enemy.timer / attack.windup) * 0.15;
     }
     if (player && state.mode === 'interlude' && !state.chapterComplete) {
       mealClock.current += Math.min(dt, 0.05); body.current.rotation.x = 0.06; body.current.position.y = -0.15;
@@ -1403,12 +1382,12 @@ function LegacyActor({
 )}
         {shioriBoss && enemyId && <ShioriBloom stateRef={stateRef} enemyId={enemyId} />}
         {shioriBoss && <Block position={[-0.27, 0.8, -0.16]} size={[0.06, 1.2, 0.06]} color="#69533f" rotation={[0, 0, -0.45]} />}
-        <mesh position={[0, 1.5, 0]} castShadow>
+        <mesh visible={!fan} position={[0, 1.5, 0]} castShadow>
           <sphereGeometry args={[0.245, 12, 10]} />
           <meshStandardMaterial color={skin} />
         </mesh>
         {[-1, 1].map((s) => (
-          <group key={s} position={[s * 0.088, 1.52, 0.225]}>
+          <group visible={!fan} key={s} position={[s * 0.088, 1.52, 0.225]}>
             <mesh scale={[0.027, 0.038, 0.013]}><sphereGeometry args={[1, 12, 10]} /><meshStandardMaterial color={s === 1 ? characterPalette?.rightEye ?? eye : eye} roughness={0.32} /></mesh>
             <mesh position={[-0.007, 0.012, 0.012]}><sphereGeometry args={[0.009, 8, 6]} /><meshBasicMaterial color="#fff8e9" /></mesh>
           </group>
@@ -1476,7 +1455,7 @@ function LegacyActor({
             </mesh>
           </group>
         )
-        ) : (namedBoss ? <BossStyle kind={kind as EnemyKind} /> : guest ? <GuestStyle kind={kind as "nana" | "azi"} /> : (
+        ) : (fan ? <FanStyle fan={fan} /> : namedBoss ? <BossStyle kind={kind as EnemyKind} /> : guest ? <GuestStyle kind={kind as "nana" | "azi"} /> : (
           <group>
             <mesh position={[0, 1.73, 0]} castShadow>
               <coneGeometry
@@ -1521,7 +1500,7 @@ function LegacyActor({
           <group ref={leftElbow} position={[0, -0.24, 0]}>
             <Pole position={[0, -0.1, 0]} radius={0.095} height={0.2} color={coat} />
             <mesh position={[0, -0.25, 0.02]}><sphereGeometry args={[0.1, 8, 6]} /><meshStandardMaterial color={skin} /></mesh>
-            {kind === 'captain' && <group position={[0, -0.22, 0.07]} rotation={[Math.PI / 2, 0, 0]}><Katana /></group>}
+            {namedBoss?.character === 'nagisa' && <group position={[0, -0.22, 0.07]} rotation={[Math.PI / 2, 0, 0]}><Katana /></group>}
           </group>
         </group>
         <group ref={arm} position={[0.36, 1.24, 0]}>
@@ -1533,7 +1512,7 @@ function LegacyActor({
           <group ref={heldWeapon} position={[0, -0.22, 0.07]} rotation={[Math.PI / 2, 0, 0]}>
             {player && <WeaponView stateRef={stateRef} />}
             {enemyId && <EnemyWeaponTell stateRef={stateRef} enemyId={enemyId} />}
-            {(shioriBoss || kind === 'captain') && <Katana />}
+            {(shioriBoss || namedBoss?.character === 'nagisa') && <Katana />}
             {namedBoss && <BossWeapon kind={kind as EnemyKind} />}
             {player && <mesh ref={chargeGlow} position={[0, 1.05, 0]} visible={false}><sphereGeometry args={[0.14, 12, 8]} /><meshBasicMaterial color="#ffe5a8" transparent opacity={0.6} depthWrite={false} /></mesh>}
             {ranged && <group><Block position={[0, 0.45, 0]} size={[0.12, 0.75, 0.12]} color="#775333" /><Block position={[0, 0.7, 0]} size={[0.85, 0.09, 0.1]} color="#d4c6a2" />{role === 'slinger' && <mesh position={[0, 0.82, 0]}><icosahedronGeometry args={[0.13, 0]} /><meshStandardMaterial color="#8c9e9a" /></mesh>}</group>}
@@ -1562,7 +1541,8 @@ function LegacyActor({
             {kind === 'reaver' && <mesh position={[0.19, 1.05, 0]} rotation={[0, 0, -0.6]}><torusGeometry args={[0.3, 0.05, 6, 12, Math.PI]} /><meshStandardMaterial color="#c1cdc3" metalness={0.6} /></mesh>}
             {!namedBoss && ['monk', 'abbot'].includes(kind ?? '') && <mesh position={[0, 1.9, 0]}><torusGeometry args={[0.2, 0.04, 6, 12]} /><meshStandardMaterial color="#d6ba7c" metalness={0.6} /></mesh>}
             {!namedBoss && guest && <GuestWeapon kind={kind as "nana" | "azi"} />}
-            {lancer && <group position={[0, 1.8, 0]}><mesh castShadow><coneGeometry args={[0.12, 0.6, 4]} /><meshStandardMaterial color={kind === 'regent' ? '#e5bd67' : '#cbd4cf'} metalness={0.65} roughness={0.32} /></mesh><Block position={[0, -0.25, 0]} size={[0.35, 0.045, 0.06]} color="#b9a16b" /></group>}
+            {fan === 'shark' && <GuestWeapon kind="nana" />}
+            {lancer && fan !== 'shark' && <group position={[0, 1.8, 0]}><mesh castShadow><coneGeometry args={[0.12, 0.6, 4]} /><meshStandardMaterial color={kind === 'regent' ? '#e5bd67' : '#cbd4cf'} metalness={0.65} roughness={0.32} /></mesh><Block position={[0, -0.25, 0]} size={[0.35, 0.045, 0.06]} color="#b9a16b" /></group>}
             {kind === "duelist" && (
               <Block
                 position={[0, 0.5, 0]}
@@ -1597,23 +1577,7 @@ function LegacyActor({
       </group>
       {player && <CombatTrail stateRef={stateRef} />}
       {enemyId && <EnemyStrike stateRef={stateRef} enemyId={enemyId} size={size} />}
-      {!player && (
-        <mesh
-          ref={telegraph}
-          geometry={attackShapes[0]}
-          rotation={[-Math.PI / 2, 0, 0]}
-          position={[0, 0.055, 0]}
-          visible={false}
-        >
-          <meshBasicMaterial
-            color="#ffc270"
-            transparent
-            opacity={0.25}
-            side={THREE.DoubleSide}
-            depthWrite={false}
-          />
-        </mesh>
-      )}
+      {enemyId && <GroundWarning stateRef={stateRef} enemyId={enemyId} />}
       <group ref={marker} position={[0, size * 2.22, 0]} visible={false}>
         <mesh>
           <octahedronGeometry args={[0.1]} />
@@ -1657,6 +1621,7 @@ function Weather({ stateRef }: { stateRef: StateRef }) {
     }
     if (lines.current) {
       lines.current.geometry.attributes.position.needsUpdate = true;
+      (lines.current.material as THREE.LineBasicMaterial).opacity = 0.21 * (1 - skyBlend(p.z) * 0.93);
     }
   });
   return (
@@ -1689,10 +1654,21 @@ function CameraRig({
   const desired = useMemo(() => new THREE.Vector3(), []);
   const first = useRef(true);
   const lastReset = useRef(-1);
+  const skyCinema = useRef(0);
+  const reducedMotion = useRef(false);
+  useEffect(() => { const preference = window.matchMedia('(prefers-reduced-motion: reduce)'); const update = () => { reducedMotion.current = preference.matches; }; update(); preference.addEventListener('change', update); return () => preference.removeEventListener('change', update); }, []);
   useFrame((_, dt) => {
     const state = stateRef.current;
     const p = state.player;
     const controls = cameraControl.current;
+    if (state.mode === 'interlude' && state.skyComplete) {
+      skyCinema.current += Math.min(dt, 0.05);
+      const t = reducedMotion.current ? 0 : THREE.MathUtils.smoothstep(skyCinema.current, 0, 11);
+      desired.set(-53 - t * 12, 49 + t * 3, -736 + t * 14);
+      target.set(-40 - t * 25, 61 - t * 31, -697 + t * 90);
+      camera.position.copy(desired); camera.lookAt(target); first.current = true; return;
+    }
+    skyCinema.current = 0;
     const locked = state.enemies.find(
       (e) => e.id === state.lockedId && e.hp > 0,
     );
@@ -1718,11 +1694,11 @@ function CameraRig({
     }
     if (state.mode === 'interlude') { yaw = state.chapterComplete ? 0.65 : 0.92; distance = state.chapterComplete ? 7.5 : 4; pitch = state.chapterComplete ? 0.35 : 0.22; }
     if (state.liftRide) { yaw = Math.PI / 4; distance = 4.2; pitch = 0.65; }
-    target.set(p.x, p.y + 1.3 + p.jumpHeight, p.z);
+    target.set(p.x, p.y + 1.3 + p.jumpHeight + Math.max(0, -Math.sin(pitch) * distance), p.z);
     if (locked) { target.x += (locked.x - p.x) * 0.38; target.z += (locked.z - p.z) * 0.38; target.y += (giantScale(locked.id) - 1) * 0.7; }
     desired.set(
       p.x + Math.sin(yaw) * Math.cos(pitch) * distance,
-      p.y + 1.3 + p.jumpHeight + Math.sin(pitch) * distance,
+      p.y + 1.3 + p.jumpHeight + Math.max(0, Math.sin(pitch)) * distance,
       p.z + Math.cos(yaw) * Math.cos(pitch) * distance,
     );
     // Keep the eye above real decks and shorten the boom before collision volumes.
@@ -1771,6 +1747,7 @@ function CameraRig({
 
 function Moonlight({ stateRef }: { stateRef: StateRef }) {
   const light = useRef<THREE.DirectionalLight>(null);
+  const colors = useMemo(() => ({ rain: new THREE.Color('#b9d2f1'), salt: new THREE.Color('#ffe0c3') }), []);
   const target = useMemo(() => new THREE.Object3D(), []);
   useFrame(() => {
     if (!light.current) return;
@@ -1781,6 +1758,7 @@ function Moonlight({ stateRef }: { stateRef: StateRef }) {
     const y = Math.round(p.y * 4) / 4;
     const z = Math.round(p.z * 4) / 4;
     light.current.position.set(x - 28, y + 44, z + 18);
+    light.current.color.copy(colors.rain).lerp(colors.salt, skyBlend(p.z));
     target.position.set(x, y, z);
     target.updateMatrixWorld();
   });
@@ -1828,10 +1806,19 @@ function Scene({ stateRef, cameraControl, onReady, onError, companionRef }: Worl
       <Moonlight stateRef={stateRef} />
       <City />
       <ValleyView stateRef={stateRef} />
+      <SkyplainView stateRef={stateRef} />
+      <SkyAtmosphere stateRef={stateRef} />
+      <Sign text="天镜原 →" subtext="循旧渠 · 看见金环" position={[-145, 11, -533]} width={3} />
+      <Sign text="盐池支路 ←   折光桥 →" subtext="霞镜在东 · 星盐在西" position={[-120, 20.6, -572]} width={3} />
+      <Sign text="环星观测院" subtext="两面折光镜 · 一条归途" position={[-40, 37.8, -657]} width={8} />
       <HavenView stateRef={stateRef} />
       <DungeonView stateRef={stateRef} />
       <ObstacleArt stateRef={stateRef} />
       <Landmarks stateRef={stateRef} />
+      <Sign text="镐筑潮庭" subtext="NANA · BLOCK BY BLOCK" position={[-214.4, 8, -400]} width={7} rotation={[0, Math.PI / 2, 0]} />
+      <Sign text="水闸 ↑   试作矿镐 ↗" subtext="WARM LAMPS / ROOFTOP BRANCH" position={[-196, 4.2, -389]} width={5} />
+      <Sign text="冲刺跳跃 · 断檐" subtext="LAND BELOW TO RETRY" position={[-195.7, 6.9, -400]} width={3} />
+      <Sign text="终场歌庭" subtext="AZI · LISTEN TO THE REST" position={[-97, 22, -425.5]} width={6} />
       <DiscoveryView stateRef={stateRef} />
       <InterludeView stateRef={stateRef} />
       <ProjectileView stateRef={stateRef} />
@@ -1842,7 +1829,8 @@ function Scene({ stateRef, cameraControl, onReady, onError, companionRef }: Worl
       ))}
       <Weather stateRef={stateRef} />
       <RainEffects stateRef={stateRef} />
-      <BossSignatures stateRef={stateRef} />
+      <BossFieldView stateRef={stateRef} />
+      <TerritoryView stateRef={stateRef} />
       <CameraRig stateRef={stateRef} cameraControl={cameraControl} />
     </>
   );
@@ -1853,7 +1841,7 @@ function WorldView(props: WorldProps) {
     <Canvas
       shadows
       dpr={[1, 1.5]}
-      camera={{ fov: 54, near: 0.08, far: 220, position: [2, 10, 24] }}
+      camera={{ fov: 54, near: 0.08, far: 650, position: [2, 10, 24] }}
       gl={{
         antialias: true,
         alpha: false,

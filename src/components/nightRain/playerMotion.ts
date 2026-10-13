@@ -78,7 +78,7 @@ export function weaponPoint(p: PlayerPose, length: number): [number, number, num
   const axis = rotateWeapon(0, length, 0, p);
   return [p.handX + axis[0], p.handY + axis[1], p.handZ + axis[2]];
 }
-export const WEAPON_LENGTHS: Record<GameState['weapon'], number> = { umbrella: 1.17, ironUmbrella: 1.17, katana: 1.26, graveSpear: 2.51, reedDaggers: 0.55, stoneMaul: 1.49 };
+export const WEAPON_LENGTHS: Record<GameState['weapon'], number> = { umbrella: 1.17, ironUmbrella: 1.17, katana: 1.26, graveSpear: 2.51, reedDaggers: 0.55, stoneMaul: 1.49, nanaPickaxe: 1.3 };
 
 /** All release/contact/recovery keys use the equipped weapon's real combat clock. */
 export function samplePlayerAttack(s: GameState, id: AttackId, time: number): PlayerPose {

@@ -1,5 +1,5 @@
 import { BOSS_ROSTER } from './bossRoster';
-import { CharacterStyle } from './CharacterStyle';
+import { CharacterStyle, GuestStyle, GuestWeapon } from './CharacterStyle';
 import ReferencedBossStyle from './ReferencedBossStyle';
 import type { EnemyKind } from './types';
 
@@ -9,7 +9,8 @@ function Gem({ at, size, color }: { at: [number, number, number]; size: [number,
 export default function BossStyle({ kind }: { kind: EnemyKind }) {
   const b = BOSS_ROSTER[kind];
   if (!b) return null;
-  if (kind === 'boss' || kind === 'captain') return <CharacterStyle skin={kind === 'boss' ? 'shiori' : 'nagisa'} />;
+  if (b.character === 'shiori' || b.character === 'nagisa') return <CharacterStyle skin={b.character} />;
+  if (b.character === 'nana' || b.character === 'azi') return <GuestStyle kind={b.character} />;
   if (b.character) return <ReferencedBossStyle character={b.character} />;
   return (
     <group name={`named-boss-${b.motif}`}>
@@ -26,15 +27,16 @@ export default function BossStyle({ kind }: { kind: EnemyKind }) {
 
 export function BossWeapon({ kind }: { kind: EnemyKind }) {
   const b = BOSS_ROSTER[kind];
-  if (!b || kind === 'boss' || kind === 'captain') return null;
+  if (!b || b.character === 'shiori' || b.character === 'nagisa') return null;
+  if (b.character === 'nana' || b.character === 'azi') return <GuestWeapon kind={b.character} />;
   return (
     <group>
       <mesh position={[0, 0.62, 0]}><cylinderGeometry args={[0.035, 0.04, 1.65, 8]} /><meshStandardMaterial color={b.trim} metalness={0.4} /></mesh>
-      {kind === 'regent' && <group position={[0, 1.45, 0]}>{[-1, 1].map(n => <mesh key={n} position={[n * 0.14, 0, 0]}><boxGeometry args={[0.13, 0.5, 0.16]} /><meshStandardMaterial color="#515967" emissive="#554363" emissiveIntensity={0.4} /></mesh>)}</group>}
-      {kind === 'warden' && <group position={[0, 1.2, 0]}><mesh><boxGeometry args={[0.5, 0.7, 0.09]} /><meshStandardMaterial color="#555b70" /></mesh>{[-1, 1].map(n => <Gem key={n} at={[n * 0.17, 0.26, 0.06]} size={[0.09, 0.14, 0.04]} color={b.trim} />)}</group>}
-      {kind === 'abbot' && <mesh position={[0, 1.4, 0]}><octahedronGeometry args={[0.25]} /><meshStandardMaterial color="#d4f1fb" metalness={0.5} roughness={0.15} /></mesh>}
-      {kind === 'serpent' && <group position={[0, 1.45, 0]}><mesh rotation={[0.3, 0, 0]}><torusGeometry args={[0.24, 0.035, 6, 20]} /><meshStandardMaterial color={b.trim} /></mesh><Gem at={[0, 0, 0]} size={[0.13, 0.13, 0.13]} color="#e0eefb" /></group>}
-      {kind === 'elegist' && <mesh position={[0, 1.53, 0]}><coneGeometry args={[0.14, 0.4, 8]} /><meshStandardMaterial color="#242436" /></mesh>}
+      {b.character === 'mizuki' && <group position={[0, 1.45, 0]}>{[-1, 1].map(n => <mesh key={n} position={[n * 0.14, 0, 0]}><boxGeometry args={[0.13, 0.5, 0.16]} /><meshStandardMaterial color="#515967" emissive="#554363" emissiveIntensity={0.4} /></mesh>)}</group>}
+      {b.character === 'harei' && <group position={[0, 1.2, 0]}><mesh><boxGeometry args={[0.5, 0.7, 0.09]} /><meshStandardMaterial color="#555b70" /></mesh>{[-1, 1].map(n => <Gem key={n} at={[n * 0.17, 0.26, 0.06]} size={[0.09, 0.14, 0.04]} color={b.trim} />)}</group>}
+      {b.character === 'rhea' && <mesh position={[0, 1.4, 0]}><octahedronGeometry args={[0.25]} /><meshStandardMaterial color="#d4f1fb" metalness={0.5} roughness={0.15} /></mesh>}
+      {(b.character === 'yua' || b.character === 'chu2u') && <group position={[0, 1.45, 0]}><mesh rotation={[0.3, 0, 0]}><torusGeometry args={[0.24, 0.035, 6, 20]} /><meshStandardMaterial color={b.trim} /></mesh><Gem at={[0, 0, 0]} size={[0.13, 0.13, 0.13]} color="#e0eefb" /></group>}
+      {b.character === 'sumi' && <mesh position={[0, 1.53, 0]}><coneGeometry args={[0.14, 0.4, 8]} /><meshStandardMaterial color="#242436" /></mesh>}
       {(kind === 'colossus' || kind === 'sentinel') && <mesh position={[0, 1.4, 0]}><boxGeometry args={[0.65, 0.5, 0.45]} /><meshStandardMaterial color={b.trim} roughness={0.8} /></mesh>}
     </group>
   );

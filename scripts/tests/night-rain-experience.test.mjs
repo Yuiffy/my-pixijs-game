@@ -98,20 +98,17 @@ test('weapon forms actually alter reach, damage, posture, stamina and guard rath
   assert.ok(strike('katana', 2.65).hp < 68);
 });
 
-test('all previously unnamed bosses are characters, with unique signatures and working special mechanics', () => {
+test('all bosses have unique identities and independently named attacks', () => {
   const s = fresh(); const characters = s.enemies.filter(e => BOSS_ROSTER[e.kind]);
-  assert.equal(characters.length, 9); assert.equal(new Set(characters.map(e => e.name)).size, 9);
-  assert.ok(characters.every(e => !e.name.includes('无名') && e.name === BOSS_ROSTER[e.kind].name));
-  const signatures = characters.map(e => [0, 1, 2].map(attackIndex => engine.enemyAttack({ ...e, attackIndex, phase: 2 }).name));
-  assert.equal(new Set(signatures.flat()).size, 27);
-  const gunner = s.enemies.find(e => e.kind === 'regent'); assert.equal(engine.enemyAttack(gunner).lunge, 0); assert.ok(engine.enemyAttack(gunner).range > 5);
-  const skipper = s.enemies.find(e => e.kind === 'captain');
-  Object.assign(skipper, { phase: 2, aggro: true, action: 'recover', timer: 0.9, facing: 0 }); place(s, { x: skipper.x, y: skipper.y, z: skipper.z + 2 });
-  const x = skipper.x; step(s, 120); assert.ok(skipper.x > x + 0.1);
-  const cold = fresh(); const mage = cold.enemies.find(e => e.kind === 'abbot');
-  Object.assign(mage, { phase: 2, aggro: true, action: 'recover', timer: 4 }); place(cold, { x: mage.x, y: mage.y, z: mage.z + 3 }); cold.player.stamina = 20;
-  step(cold, 1000); assert.ok(cold.player.stamina > 48 && cold.player.stamina < 52);
+  assert.equal(characters.length, 12); assert.equal(new Set(characters.map(e => e.name)).size, 12);
+  assert.ok(characters.every(e => e.name === BOSS_ROSTER[e.kind].name));
+  const signatures = characters.flatMap(e => [0,1,2].map(attackIndex => engine.enemyAttack({...e,attackIndex,phase:2}).name));
+  assert.equal(new Set(signatures).size, 36);
+  const gunner = characters.find(e => BOSS_ROSTER[e.kind].character === 'mizuki');
+  assert.ok(engine.enemyAttack(gunner).projectile);
+  assert.equal(engine.enemyAttack({...gunner,attackIndex:2}).skill,'drones');
 });
+
 
 test('authentic old saves retain combat and achievements, migrate named bosses, and add only two ambushers', () => {
   const raw = fs.readFileSync(new URL('./fixtures/night-rain-valley-v6.json', import.meta.url), 'utf8'); const old = JSON.parse(raw);
