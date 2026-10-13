@@ -1,7 +1,7 @@
 import { beforeStream } from "./outings";
 import { repairMuted } from "./lifeEvents";
-import { offAir } from "./daily";
-import { lockSignal, Mini } from "./minigames";
+import { entryKeyReady, offAir } from "./daily";
+import { Mini } from "./minigames";
 import { onBreak } from "./household";
 import { broadcast } from "./engine";
 import { worldPoint } from "./navigation";
@@ -95,7 +95,7 @@ export class ApartmentSound {
       if (m !== this.mini) {
         this.mini = m; this.miniCue = false; this.miniHits = 0; this.miniMisses = 0; this.miniShots = 0;
       }
-      const cue = s.daily.panel === "lock" && lockSignal(m) > 0.87;
+      const cue = s.daily.panel === "lock" && entryKeyReady(s.daily);
       if (cue && !this.miniCue) this.tone(1300, 0.05, 0.07, false, "triangle");
       if (m.score > this.miniHits && m.kind !== "recoil") this.tone(740, 0.05, 0.12, false);
       if (m.misses > this.miniMisses) this.tone(140, 0.035, 0.12, false, "triangle");

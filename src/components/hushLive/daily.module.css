@@ -248,3 +248,13 @@
 .minigame .tabs button[aria-pressed="true"] { background: #48694f; color: #fff8e4; }
 
 @media(max-width:600px) { .panel.napPanel { top:auto; bottom:12px; transform:none; max-height:43%; padding:14px; } .napPanel h2 { margin:6px 0; font-size:17px; } .napPanel .snore { display:none; } .napPanel > small:last-child { display:none; } .napPanel p { margin:6px 0; line-height:1.5; } .napPanel .primary { margin-top:8px; } }
+
+.entryKey { width: min(350px, 90%); }
+.keyTrack { position: relative; height: 48px; margin: 18px 8px; border-radius: 12px; background: #dddac9; }
+.keyTrack i { position: absolute; left: 27.08%; width: 41.67%; inset-block: 0; border-radius: 12px; background: #a6c9a5; }
+.keyTrack span { position: absolute; top: 10px; transform: translateX(-50%); font-size: 22px; color: #75603e; }
+.keyTrack[data-ready="true"] { outline: 3px solid #628f60; }
+.keyTrack[data-ready="true"] span { color: #31572f; }
+.entryKey > button { width: 100%; background: #48694f; color: #fff8e4; }
+.keyFootnote { display: block; margin-top: 12px; text-align: center; }
+@media (max-width: 600px) { .entryKey { width: auto; } }

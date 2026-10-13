@@ -14,7 +14,9 @@ async function activity(page,touch=false,onFrame=async()=>{},realtime=false){
   const tick=ms=>realtime?page.waitForTimeout(ms):advance(page,ms);
   const click=async loc=>{await loc.scrollIntoViewIfNeeded();if(touch){await page.waitForTimeout(150);await loc.tap();}else await loc.click();};
   let initial=await read(page);
-  if(!initial.practice&&initial.daily?.arrival==='intro')await click(page.getByRole('button',{name:'拿出钥匙，轻轻开锁',exact:true}));
+  if(!initial.practice&&initial.daily?.arrival==='intro')await click(page.getByRole('button',{name:'推门，一起回家',exact:true}));
+  if(!initial.practice&&initial.daily?.panel==='lock'){await tick(800);await onFrame(page,'entry-key');await click(page.getByRole('button',{name:'轻转钥匙，推门进屋',exact:true}));}
+  if(!initial.practice&&(await read(page)).daily?.arrival==='entering'){await tick(750);await onFrame(page,'arrival-inside');}
   const {nextTurn}=await import('../tests/helpers/hush-minigame-pilot.mjs');
   let cdp,down=false;
   const surface=page.locator('[data-mini-surface]');

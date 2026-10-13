@@ -69,7 +69,7 @@ export const LEVELS: {
   },
   {
     title: "外卖要趁热",
-    subtitle: "下班轻轻开门，把晚饭放上餐垫。拿回充电器后，在沙发小睡，等TA下播。",
+    subtitle: "已经到家，把玄关的晚饭放上餐垫。拿回充电器后，在沙发小睡，等TA下播。",
     tasks: ["food", "charger"],
     seconds: 330,
   },

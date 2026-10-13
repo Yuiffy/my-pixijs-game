@@ -37,8 +37,9 @@ export function encoreTasks(seed: number): Task[] {
   if (nightRoll(seed, 11) < 0.65) ordered.push("leisure");
   return ordered;
 }
+export const entryLockNight = (s: Game) => s.level === 4 || (s.level === 5 && !tripNight(s.level, s.seed) && nightRoll(s.seed, 67) < 0.08);
 export function createHousehold(s: Game): Household {
-  const arrival: Arrival = tripNight(s.level, s.seed) ? "trip" : s.level === 5 ? (["outside", "sofa", "computer"] as const)[Math.floor(nightRoll(s.seed, 1) * 3)] : "outside";
+  const arrival: Arrival = tripNight(s.level, s.seed) ? "trip" : entryLockNight(s) ? "outside" : s.level === 5 ? (["outside", "sofa", "computer"] as const)[Math.floor(nightRoll(s.seed, 1) * 3)] : "outside";
   return {
     arrival,
 noodles: "delivery",

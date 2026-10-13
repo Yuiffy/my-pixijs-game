@@ -243,7 +243,7 @@ test('following current objectives completes every integrated night and all afte
   const memories = new Set();
   for (let level = 1; level <= 5; level++) for (const seed of [1, 42, 99]) for (const choice of ['care', 'together']) {
     const s = e.createGame(level, seed, level); s.phase = 'playing';
-    assert.equal(s.daily.arrival, ['outside','trip'].includes(s.daily.household.arrival) ? 'intro' : 'done'); completeNight(s, choice);
+    assert.equal(s.daily.arrival, s.daily.entryLock ? 'locked' : s.daily.outing.trip ? 'intro' : 'done'); completeNight(s, choice);
     assert.equal(s.won, true, JSON.stringify(s)); memories.add(s.daily.memory);
     assert.ok(e.record(e.freshSave(), s).unlocked >= (level < 5 ? level + 1 : 0));
   }
@@ -423,13 +423,13 @@ function dailyStart(homemade = false, seed = 1) {
 }
 function timingWin(s) { solveActivity(s,daily,advance); }
 
-test('arrival minigames block movement, survive mistakes and freeze while paused', () => {
-  const s = dailyStart(); const start = {...s.player};
-  daily.activityInput(s,'press');
-  advance(s, .4, {...emptyInput(), x: 1, act: true}); assert.deepEqual(s.player, start);
-  e.togglePause(s); const mini = structuredClone(s.daily.mini); advance(s, 5); daily.activityInput(s,'turn',40); assert.deepEqual(s.daily.mini,mini);
-  e.togglePause(s); timingWin(s); assert.equal(s.phase, 'playing');
+test('late key interaction blocks movement and freezes while paused', () => {
+  const s = e.createGame(4,1,4);s.phase='playing';const start={...s.player};
+  advance(s,.4,{...emptyInput(),x:1,act:true});assert.deepEqual(s.player,start);
+  e.togglePause(s);const timer=s.daily.arrivalTime;advance(s,5);daily.arrivalAction(s);assert.equal(s.daily.arrivalTime,timer);assert.equal(s.daily.arrival,'locked');
+  e.togglePause(s);timingWin(s);assert.equal(s.daily.arrival,'done');assert.equal(s.phase,'playing');
 });
+
 test('all meals and homemade rice run from entry to after-stream choices using real routes', () => {
   const endings = new Set();
   for (const homemade of [false, true]) for (const [index, meal] of daily.MEALS.entries()) {
@@ -508,7 +508,7 @@ test('skin migration preserves old scores and defaults unknown costumes to host'
 test('each costume names the same partner throughout objectives and all aftermath choices', () => {
   for(const [skin,name] of [['host','主播酱'],['sui','岁己'],['nana7mi','七海']]) {
     for(const after of ['rice','shower']) for(const choice of ['care','together']) {
-      const s=e.createGame(1,1,1,skin);s.phase='playing';
+      const s=e.createGame(4,1,4,skin);s.phase='playing';
       assert.ok(s.message.includes(name));assert.ok(objective(s).title.includes(name));
       assert.equal(s.daily.messages[0].from,'partner');
       s.daily.stage='after';s.daily.after=after;s.daily.panel=null;s.daily.arrival='done';
@@ -530,8 +530,8 @@ test('encore independently varies home starts, varied deliveries, homemade meals
     const s = e.createGame(5,seed,5), d=s.daily;
     assert.deepEqual(s,e.createGame(5,seed,5));
     arrivals.set(d.household.arrival,(arrivals.get(d.household.arrival)||0)+1);
-    assert.equal(d.arrival,['outside','trip'].includes(d.household.arrival)?'intro':'done');
-    if(['outside','trip'].includes(d.household.arrival))assert.ok(s.player.y>532);else assert.ok(nav.walkable(s.player,false));
+    assert.equal(d.arrival,d.entryLock?'locked':d.outing.trip?'intro':'done');
+    if(d.arrival!=='done')assert.ok(s.player.y>532);else assert.ok(nav.walkable(s.player,false));
     if(d.homemade) homemade++; else meals.set(d.meal,(meals.get(d.meal)||0)+1);
     plans.add(s.tasks.join(','));
     assert.equal(new Set(s.tasks).size,s.tasks.length);
@@ -626,16 +626,27 @@ test('pause releases held minigame inputs and resume never fires by itself', () 
   daily.activityInput(r.game,'press');e.togglePause(r.game);daily.activityInput(r.game,'release');assert.equal(r.game.daily.mini.held,false);
 });
 
- test('homecoming stays outside until unlock, open, enter and close, and pause freezes entry',()=>{
- const s=dailyStart(); assert.equal(s.daily.arrival,'intro');assert.ok(s.player.y>532);
- daily.arrivalAction(s);assert.equal(s.daily.panel,'lock');daily.arrivalAction(s);assert.equal(s.daily.arrival,'locked');
- const m=s.daily.mini; for(let n=0;n<1000&&!m.won;n++){
- if(m.kind==='dial'){if(Math.abs(m.angle-m.targets[m.score])<=10&&m.travel>=10)daily.activityInput(s,'press');else daily.activityInput(s,'turn',m.direction*5);}
- else if(m.kind==='pick'){daily.activityInput(s,'release');daily.activityInput(s,'set',m.targets[m.score]);daily.activityInput(s,'press');advance(s,.7);}
- else {daily.activityInput(s,'set',m.targets[m.score]);daily.activityInput(s,'press');}advance(s,.025);
- }
- assert.equal(s.daily.arrival,'unlocked');assert.ok(s.player.y>532);advance(s,1,{...emptyInput(),y:-1});assert.ok(s.player.y>532);
- daily.arrivalAction(s);assert.equal(s.daily.arrival,'open');daily.arrivalAction(s);advance(s,.5);assert.ok(s.player.y<585&&s.player.y>500);
- e.togglePause(s);const y=s.player.y;advance(s,5);daily.arrivalAction(s);assert.equal(s.player.y,y);e.togglePause(s);
- advance(s,1);assert.equal(s.daily.arrival,'inside');assert.ok(nav.walkable(s.player,false));daily.arrivalAction(s);assert.equal(s.daily.arrival,'done');
- });
+test('early nights immediately reveal the room; only late and rare encore nights require a key',()=>{
+  for(let level=1;level<=3;level++)for(let seed=1;seed<=200;seed++){
+    const s=e.createGame(level,seed,5);assert.equal(s.daily.arrival,'done');assert.equal(s.daily.panel,null);assert.ok(nav.walkable(s.player,false));
+  }
+  assert.equal(e.createGame(4,1,5).daily.arrival,'locked');
+  let locks=0;
+  for(let seed=1;seed<=3000;seed++){
+    const s=e.createGame(5,seed,5);if(s.daily.entryLock){locks++;assert.equal(s.daily.household.arrival,'outside');assert.equal(s.daily.arrival,'locked');assert.equal(s.daily.outing.trip,false);}
+    else if(!s.daily.outing.trip)assert.equal(s.daily.arrival,'done');
+  }
+  assert.ok(locks>150&&locks<300,`rare locks: ${locks}/3000`);
+});
+test('one click always enters, the visible window rewards quiet timing once, and idle auto-entry never traps you',()=>{
+  for(const wait of [0,.85,2]){
+    const s=e.createGame(4,1,5);s.phase='playing';advance(s,wait);const love=s.love,suspicion=s.suspicion;
+    daily.arrivalAction(s);assert.equal(s.daily.arrival,'entering');assert.equal(s.daily.panel,null);
+    assert.equal(s.love-love,wait===.85?4:0);assert.equal(s.suspicion,suspicion);
+    daily.arrivalAction(s);assert.equal(s.love-love,wait===.85?4:0);
+    advance(s,.3);assert.ok(s.player.y<585&&s.player.y>500);
+    e.togglePause(s);const y=s.player.y;advance(s,5);assert.equal(s.player.y,y);e.togglePause(s);
+    advance(s,.45);assert.equal(s.daily.arrival,'done');assert.equal(s.player.y,500);assert.ok(nav.walkable(s.player,false));
+  }
+  const idle=e.createGame(4,2,5);idle.phase='playing';advance(idle,3.2);assert.equal(idle.daily.arrival,'done');assert.equal(idle.daily.panel,null);
+});

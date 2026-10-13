@@ -4,7 +4,7 @@ import { useLayoutEffect, useRef } from "react";
 import { skinOf } from "./skins";
 import { householdStatus } from "./household";
 import type { Game } from "./engine";
-import { arrivalAction, activityInput, restartPractice, chooseGoodnight, finishLeisure, replyQuietly } from "./daily";
+import { arrivalAction, entryKeyReady, activityInput, restartPractice, chooseGoodnight, finishLeisure, replyQuietly } from "./daily";
 import MiniGame from "./MiniGame";
 import TapButton from "./TapButton";
 import styles from "./daily.module.css";
@@ -18,6 +18,9 @@ export default function DailyPanel({
   onChange: () => void;
 }) {
   const cat = useRef<HTMLDivElement>(null);
+  const keyTrack = useRef<HTMLDivElement>(null);
+  const keyMarker = useRef<HTMLSpanElement>(null);
+  const keyHint = useRef<HTMLParagraphElement>(null);
   const d = s.daily;
   const panel = d?.panel;
   const stage = d?.stage;
@@ -30,6 +33,9 @@ export default function DailyPanel({
       const { daily } = s;
       if (daily && daily.clock !== lastClock) {
         lastClock = daily.clock;
+        if (keyTrack.current) keyTrack.current.dataset.ready = String(entryKeyReady(daily));
+        if (keyMarker.current) keyMarker.current.style.left = `${Math.min(100, (daily.arrivalTime / 2.4) * 100)}%`;
+        if (keyHint.current) keyHint.current.textContent = entryKeyReady(daily) ? "现在轻转，更安静 ✦" : "随时可以进门 · 等亮起再点有小奖励";
         // Read the simulation clock, including pause/reset/advanceTime. Never run a second animation clock.
         if (cat.current) cat.current.style.transform = `translateX(${Math.sin(daily.clock) * 42}px) rotate(${Math.sin(daily.clock * 2) * 8}deg)`;
       }
@@ -44,18 +50,27 @@ export default function DailyPanel({
     fn();
     onChange();
   };
-  if (d.arrival !== "done" && d.arrival !== "locked") {
-    const intro = d.arrival === "intro";
-    const { trip } = d.outing;
-    return (
-<section className={`${styles.arrival} ${trip ? styles.tripArrival : ""}`} aria-label="下班回家">
-      <small>{d.arrival === "inside" ? "21:36 / 家里的玄关" : "21:36 / 门外的走廊"}</small>
-      <h2>{intro ? trip ? "两只行李箱，一起回家。" : "刚下班回到家，悄悄进去…" : d.arrival === "unlocked" ? "锁开了，轻轻推开门。" : d.arrival === "open" ? "门开了，回家吧。" : d.arrival === "entering" ? "放轻脚步…" : "进屋了，别忘了轻轻关门。"}</h2>
-      <p>{intro && trip ? s.message : intro ? `门里传来${skinOf(s.skin).name}和观众聊天的声音。把钥匙拿稳，别惊动正在直播的TA。` : s.message}</p>
-      {d.arrival !== "entering" && <TapButton onActivate={() => change(() => arrivalAction(s))}>{intro ? "拿出钥匙，轻轻开锁" : d.arrival === "unlocked" ? "扶住门把，轻轻开门" : d.arrival === "open" ? "悄悄走进家里" : "轻轻关上大门"}</TapButton>}
+  if (d.arrival !== "done" && d.arrival !== "locked") return (
+    <section className={`${styles.arrival} ${styles.tripArrival}`} aria-label="下班回家">
+      <small>21:36 / 回家的玄关</small>
+      <h2>{d.arrival === "entering" ? "到家了…" : "两只行李箱，一起回家。"}</h2>
+      <p>{s.message}</p>
+      {d.arrival !== "entering" && <TapButton onActivate={() => change(() => arrivalAction(s))}>推门，一起回家</TapButton>}
     </section>
-);
-  }
+  );
+  if (d.panel === "lock") return (
+    <section className={`${styles.panel} ${styles.entryKey}`} aria-label="轻声开门小游戏">
+      <small>WELCOME HOME / 门锁有点涩</small>
+      <h2>轻转一下钥匙，就到家。</h2>
+      <p>亮起时点一下更安静。点早也能进门，不用重来。</p>
+      <div className={styles.keyTrack} ref={keyTrack} data-ready={entryKeyReady(d)} aria-hidden="true">
+        <i /><span ref={keyMarker}>◆</span>
+      </div>
+      <p ref={keyHint}>随时可以进门 · 等亮起再点有小奖励</p>
+      <TapButton onActivate={() => change(() => arrivalAction(s))}>轻转钥匙，推门进屋</TapButton>
+      <small className={styles.keyFootnote}>只需一次 · 稍等也会自动进屋</small>
+    </section>
+  );
   if (d.stage === "outing") return <section className={`${styles.arrival} ${styles.tripArrival}`} aria-label="一起出门吃宵夜"><small>02:18 / NIGHT WALK</small><h2>走吧，现在可以牵手了。</h2><p>{d.memory}</p></section>;
   if (d.stage === "sleep") return (
       <div className={styles.sleep} role="status">
@@ -91,15 +106,13 @@ export default function DailyPanel({
         </div>
       </section>
     );
-  if (d.panel === "lock" || d.panel === "cook") return (
+  if (d.panel === "cook") return (
       <section
-        className={`${styles.panel} ${d.panel === "cook" ? styles.cookingPanel : ""}`}
-        aria-label={d.panel === "cook" ? "厨房料理小游戏" : "轻声开门小游戏"}
+        className={`${styles.panel} ${styles.cookingPanel}`}
+        aria-label="厨房料理小游戏"
       >
         <small>
-          {d.panel === "cook"
-            ? "HOME KITCHEN / 为你做一顿饭"
-            : `WELCOME HOME / ${skinOf(s.skin).name}已经开播了`}
+          HOME KITCHEN / 为你做一顿饭
         </small>
         <MiniGame mini={d.mini} onInput={(input, x, y) => change(() => activityInput(s, input, x, y))} onRestart={() => change(() => restartPractice(s))} />
       </section>

@@ -16,6 +16,8 @@ export function nextTurn(m) {
 
 export function solveActivity(s, daily, advance) {
   if (s.daily?.arrival === 'intro') daily.arrivalAction(s);
+  if (s.daily?.panel === 'lock') { advance(s,.85); daily.arrivalAction(s); }
+  if (s.daily?.arrival === 'entering') advance(s,.75);
   for(let n=0;n<5000&&['lock','cook'].includes(s.daily?.panel);n++){
     const m=s.daily.mini;
     if(m.kind==='dial'){

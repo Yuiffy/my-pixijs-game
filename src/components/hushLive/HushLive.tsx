@@ -568,7 +568,7 @@ onRestart={() => startPractice(mini.kind)} />
               {g.level === 0
                 ? "走进直播间，拿回床尾的充电器，再回到沙发。别让麦克风听见你。"
                 : g.level === 5
-                  ? `${g.daily?.outing.trip ? "今晚旅行归来，两个人带着行李箱回家，TA随后开播。" : g.daily?.household.arrival === "outside" ? "今晚下班回家，先轻轻开门。" : g.daily?.household.arrival === "sofa" ? "今晚本来就在家，从沙发旁开始。" : "今晚在家打游戏，从电脑旁开始。"} 猫咪、晚饭和临时离席，每晚有不同的小事。`
+                  ? `${g.daily?.outing.trip ? "今晚旅行归来，两个人带着行李箱回家，TA随后开播。" : g.daily?.household.arrival === "outside" ? g.daily.entryLock ? "今晚门锁有点涩，轻转一次就能进屋。" : "今晚刚到家，晚饭放在玄关，直接开始屋内的小计划。" : g.daily?.household.arrival === "sofa" ? "今晚本来就在家，从沙发旁开始。" : "今晚在家打游戏，从电脑旁开始。"} 猫咪、晚饭和临时离席，每晚有不同的小事。`
                   : LEVELS[g.level].subtitle}
             </p>
             {g.daily && <small>今晚的晚饭：{`${g.daily.homemade ? "亲手做的" : ""}${mealOf(g).name}`} · 忙完回沙发，故事会继续。</small>}
@@ -592,7 +592,7 @@ onRestart={() => startPractice(mini.kind)} />
             className={styles.primary}
             onClick={start}
           >
-            {sceneReady ? g.daily && g.daily.household.arrival !== "outside" ? "开始今晚的日常 →" : "轻轻走进家门 →" : "正在点亮小公寓…"}
+            {sceneReady ? g.daily?.arrival === "done" ? "开始今晚的日常 →" : "轻轻走进家门 →" : "正在点亮小公寓…"}
           </button>
           <section className={styles.arcade} aria-label="单独玩小游戏">
             <h2>想先玩点什么？</h2>

@@ -71,7 +71,7 @@ async function main(){
   const {loadTypescriptModule}=await import('./tests/helpers/load-typescript-module.mjs');
   const e=await loadTypescriptModule('src/components/hushLive/engine.ts');
   const noodleSeed=Array.from({length:100},(_,i)=>i+1).find(seed=>e.createGame(1,seed,1).daily.meal==='noodles');
-  const p=await open(false,1,noodleSeed);await p.locator('#hush-start').click();assert.equal((await state(p)).daily.arrival,'intro');assert.ok((await state(p)).player.y>532);await capture(p,'arrival-outside');let lockCaptured=false;await activity(p,false,async(page,kind)=>{if(kind==='arrival-open'||kind==='arrival-inside'){await capture(page,kind);}else if(!lockCaptured){lockCaptured=true;assert.ok((await state(page)).player.y>532);await capture(page,'arrival-unlocking-outside');}});assert.equal((await state(p)).daily.arrival,'done');assert.equal((await state(p)).player.y,500);checks.push({arrivalOutside:true,unlockBeforeEntry:true,closeAfterEntry:true});
+  const p=await open(false,1,noodleSeed);await p.locator('#hush-start').click();assert.equal((await state(p)).daily.arrival,'done');assert.equal((await state(p)).player.y,500);await capture(p,'arrival-early-inside');checks.push({earlyNightStartsInside:true,noLockBeforeDinner:true});
   assert.equal((await state(p)).daily.meal,'noodles');
   for(let i=0;i<20&&(await state(p)).daily.household.noodles!=='steeping';i++){
    const s=await state(p);if(s.daily.household.noodles==='boiling'){await advance(p,12000);continue;}

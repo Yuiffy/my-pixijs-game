@@ -26,7 +26,7 @@ step: 4,
     destination: "轻声走过去",
 detail: "直播结束了，现在可以自在说话。靠近后轻按E。",
   };
-  else if (s.daily && s.daily.arrival !== "done") next = { spot: "entry", key: "unlock", title: s.daily.outing.trip ? "旅行回家，一起把箱子放到玄关" : `${skinOf(s.skin).name}在直播，轻轻开门`, destination: "玄关", detail: "观察门锁，按锁芯的提示慢慢解开。", step: 1 };
+  else if (s.daily && s.daily.arrival !== "done") next = { spot: "entry", key: "unlock", title: s.daily.outing.trip ? "旅行回家，一起把箱子放到玄关" : `${skinOf(s.skin).name}在直播，轻轻开门`, destination: "玄关", detail: s.daily.outing.trip ? "推门进屋，行李放在玄关。" : "点一下转钥匙就能进屋，亮起时点有小奖励。", step: 1 };
   else if (s.carry === "charger") next = {
       spot: "charging",
       key: "charger",

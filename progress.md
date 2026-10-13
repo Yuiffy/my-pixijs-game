@@ -946,3 +946,16 @@ Original prompt: 试玩后要求无需按住鼠标转视角、Shift 跑步，开
 发布前主工作区顺序通过 pnpm run check、pnpm run build，保留 Next 构建 ESLint。构建输出隔离到 .next-all-local-release；仅移除构建自动添加的临时 tsconfig include，恢复原配置。自走棋 490、Hush 71、风邮小镇 18 项，共 579/579 规则通过，自走棋 0.11.2 版本一致性通过。证据 tmp/all-local-{release-check,release-build,autochess-rules,hush-rules,wayfinder-rules,release-version}.log。
 
 沿用 GitHub Yuiffy/my-pixijs-game 的 master → 已关联 Vercel 项目 my-pixijs-game 的生产流程和现有域名，不创建新站点。发布结果以相同 Git SHA 的远程部署状态为准；浏览器自动测试不再捕获用户鼠标。
+
+
+## 2026-10-13 · Hush 进门缩短与低频安排
+
+Original prompt: 开锁转盘缺少震动反馈、无聊而且半天进不去看不到屋内；缩短或改玩法，安排后面的夜晚或无限关小概率。
+
+前期剧情直接从屋内玄关开始；第五夜「不公开的纪念日」和非旅行无限夜独立 8% 保留简短转钥匙（全无限夜约 7.3%）。替换剧情强制三段转盘／撬锁／排针，一次点击即可进屋；0.65–1.65秒可见亮区仅奖励4甜蜜度，任何时机成功、不罚／不重来；2.4秒自动开门 + 0.7秒真实进屋，自动合门，无多次确认。旅行只需一次推门，保留双行李、女主路径与走到桌前才开播。原锁小游戏仅在单独练习保留。声音、指示、暂停／失焦都读模拟时钟。同步菜单、指南和纯规则／浏览器玩法辅助，新增 verify-hush-entry.cjs。
+
+72/72 Hush规则、修改源ESLint、顺序完整check／build通过，Next构建ESLint启用。静音安装Chrome桌面／320px生产新流程10张、完整教程至无限夜结算1张、通用共享冒烟1张均逐张打开目检，PNG sanity／状态／DOM／画布与错误交叉检查通过，错误为空。自动进屋测试初次截图碰到React短暂未刷新，改为等待进门DOM消失并冻结再抓取，重新验证正常时钟通过。React检查保持钩子顺序稳定、原生可键盘／触摸按钮、瞬时指示refs、无第二套计时器。
+
+证据 tmp/hush-entry-{production,journey}/report.json、tmp/hush-entry-shared/；门禁 tmp/hush-entry-{rules,check,build}.log。只清理本任务临时类型路径，开发服务停止；新版生产试玩保留 http://127.0.0.1:4089/game/hush-live，不改其他线程服务。本次改动未提交／未部署，无待办；移动端仅Chrome模拟。
+
+后续用户授权「提交远端」。沿用本轮已通过的顺序 check／build 与规则／浏览器验收，只提交本次 Hush 进门调整的源文件、脚本及文档，推送 origin/master。

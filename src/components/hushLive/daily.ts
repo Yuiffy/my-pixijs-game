@@ -1,9 +1,9 @@
 import { createOuting, Outing, stepOuting } from "./outings";
 import { createLifeEvents, LifeEvents, stepLifeEvents } from "./lifeEvents";
-import { createMini, cookKind, lockKind, miniInput, stepMini, Mini, MiniInput } from "./minigames";
+import { createMini, cookKind, miniInput, stepMini, Mini, MiniInput } from "./minigames";
 import { skinOf } from "./skins";
 import type { Game } from "./engine";
-import { createHousehold, Household, nightRoll, onBreak, stepHousehold } from "./household";
+import { createHousehold, entryLockNight, Household, nightRoll, onBreak, stepHousehold } from "./household";
 
 export const MEALS = [
   {
@@ -59,6 +59,7 @@ export type Daily = {
   outing: Outing;
   arrival: "intro" | "locked" | "unlocked" | "open" | "entering" | "inside" | "done";
   arrivalTime: number;
+  entryLock: boolean;
   household: Household;
   mini: Mini;
   leisurePlace: "sofa" | "computer";
@@ -89,24 +90,26 @@ export function beginDaily(s: Game) {
   const homemade = s.tasks.includes("cook");
   const meal = MEALS[s.level === 5 ? Math.floor(nightRoll(s.seed, 3) * MEALS.length) : (s.seed + s.level - 2) % MEALS.length].id;
   const household = createHousehold(s);
-  const outside = ["outside", "trip"].includes(household.arrival);
-  s.player = outside ? { x: 139, y: 585 } : household.arrival === "sofa" ? { x: 220, y: 405 } : { x: 230, y: 220 };
+  const entryLock = entryLockNight(s);
+  const outside = entryLock || household.arrival === "trip";
+  s.player = outside ? { x: 139, y: 585 } : household.arrival === "outside" ? { x: 139, y: 500 } : household.arrival === "sofa" ? { x: 220, y: 405 } : { x: 230, y: 220 };
   s.daily = {
     events: createLifeEvents(s),
     outing: createOuting(s),
-    arrival: outside ? "intro" : "done",
+    arrival: entryLock ? "locked" : outside ? "intro" : "done",
+    entryLock,
     arrivalTime: 0,
     household,
-    mini: createMini(lockKind(s.seed), s.seed),
+    mini: createMini("pins", s.seed),
     leisurePlace: "sofa",
     meal: homemade ? cookKind(s.seed) === "toss" ? "beef" : "rice" : meal,
     homemade,
     stage: "home",
-    panel: null,
+    panel: entryLock ? "lock" : null,
     clock: 0,
     beats: 0,
     mistakes: 0,
-    feedback: "找到锁芯的卡点，轻轻转开门锁。",
+    feedback: "钥匙亮起时轻转一下，就能进屋。",
     cooldown: 0,
     volume: 70,
     entertainment: "video",
@@ -126,13 +129,14 @@ export function beginDaily(s: Game) {
     after: s.level === 5 && nightRoll(s.seed, 66) < 0.25 ? "supper" : s.level === 5 ? nightRoll(s.seed, 16) < 0.5 ? "rice" : "shower" : (s.seed + s.level) % 2 ? "rice" : "shower",
     memory: "",
   };
-  s.message = household.arrival === "trip" ? `旅行回家啦！你和${skinOf(s.skin).name}一人拖着一只箱子，TA说：“我先进去开播，行李等会儿一起收。”` : outside ? `下班到家，门里传来${skinOf(s.skin).name}和观众聊天的声音。先轻轻开门。` : household.arrival === "sofa" ? `今晚一直在家。你从沙发上伸个懒腰，${skinOf(s.skin).name}还在隔壁直播，小猫在脚边打盹。` : `你刚结束一局游戏，摘下耳机。${skinOf(s.skin).name}在直播，先看看家里有什么需要帮忙的。`;
+  s.message = household.arrival === "trip" ? `旅行回家啦！你和${skinOf(s.skin).name}一人拖着一只箱子，TA说：“我先进去开播，行李等会儿一起收。”` : entryLock ? `下班到家，门里传来${skinOf(s.skin).name}和观众聊天的声音。门锁有点涩，轻转一下就好。` : household.arrival === "outside" ? `你已经轻轻进屋，晚饭放在玄关。${skinOf(s.skin).name}还在直播，先看看今晚的小计划。` : household.arrival === "sofa" ? `今晚一直在家。你从沙发上伸个懒腰，${skinOf(s.skin).name}还在隔壁直播，小猫在脚边打盹。` : `你刚结束一局游戏，摘下耳机。${skinOf(s.skin).name}在直播，先看看家里有什么需要帮忙的。`;
 }
 export function activityInput(s: Game, input: MiniInput, x = 0, y = 0) {
   const d = s.daily;
   if (input === "release" && d) { d.mini.held = false; return; }
   if (s.phase !== "playing" || !d || !["lock", "cook", "leisure"].includes(d.panel ?? "")) return;
   if (d.panel === "leisure" && d.entertainment !== "game") return;
+  if (d.panel === "lock") { if (input === "press") arrivalAction(s); return; }
   const before = d.mini.misses;
   miniInput(d.mini, input, x, y);
   syncActivity(s, before);
@@ -146,20 +150,25 @@ function syncActivity(s: Game, previousMisses: number) {
     s.peak = Math.max(s.peak, s.suspicion);
   }
   if (!d.mini.won || d.panel === "leisure") return;
-  if (d.panel === "lock") {
-    d.arrival = "unlocked";
-    s.message = "咔哒，锁开了。你还站在门外，扶住门把轻轻推开。";
-    s.love += d.mini.misses === 0 ? 12 : 5;
-  } else if (d.panel === "cook" && !s.done.includes("cook")) {
+  if (d.panel === "cook" && !s.done.includes("cook")) {
     s.done.push("cook"); s.carry = "food"; s.love += 15;
     s.message = `${mealOf(s).name}装好了。把这份热乎的晚饭端到直播桌吧。`;
   }
   d.panel = null; s.requireRelease = true;
 }
+export const entryKeyReady = (d: Daily) => d.arrivalTime >= 0.65 && d.arrivalTime <= 1.65;
 export function arrivalAction(s: Game) {
   const d = s.daily;
   if (!d || s.phase !== "playing") return;
-  if (d.arrival === "intro") { d.arrival = "locked"; d.panel = "lock"; } else if (d.arrival === "unlocked") { d.arrival = "open"; s.message = "门开了一道缝。扶着门，悄悄走进去。"; } else if (d.arrival === "open") { d.arrival = "entering"; d.arrivalTime = 0; } else if (d.arrival === "inside") { d.arrival = "done"; s.requireRelease = true; s.message = d.outing.trip ? `${skinOf(s.skin).name}把行李靠在玄关：“我去开播，你先歇会儿。”` : `大门轻轻合上，终于到家了。${skinOf(s.skin).name}还在和观众说话。`; }
+  if (d.arrival === "locked" || d.arrival === "intro" || d.arrival === "unlocked" || d.arrival === "open") {
+    if (d.arrival === "locked") {
+      const quiet = entryKeyReady(d);
+      s.love += quiet ? 4 : 0;
+      s.message = quiet ? "咔哒，转得刚刚好。扶着门，轻轻进屋。" : "钥匙转开了，扶住门把就能进屋。";
+    }
+    d.arrival = "entering"; d.arrivalTime = 0; d.panel = null;
+    s.path = []; s.requireRelease = true;
+  }
 }
 export function openDailyPanel(s: Game, panel: "cook" | "leisure", computer = false) {
   const d = s.daily;
@@ -239,17 +248,24 @@ export function stepDaily(s: Game, dt: number): boolean {
   const d = s.daily;
   if (!d) return false;
   d.clock += dt;
+  if (d.arrival === "locked") {
+    d.arrivalTime += dt;
+    if (d.arrivalTime >= 2.4) arrivalAction(s);
+  }
   if (d.arrival === "entering") {
-    d.arrivalTime = Math.min(1.4, d.arrivalTime + dt);
-    const t = d.arrivalTime / 1.4;
+    d.arrivalTime = Math.min(0.7, d.arrivalTime + dt);
+    const t = d.arrivalTime / 0.7;
     s.player = { x: 139, y: 585 - 85 * (t * t * (3 - 2 * t)) };
-    if (t >= 1) d.arrival = "inside";
+    if (t >= 1) {
+      d.arrival = "done"; s.requireRelease = true;
+      s.message = d.outing.trip ? `${skinOf(s.skin).name}把行李靠在玄关：“我去开播，你先歇会儿。”` : `大门轻轻合上，到家了。${skinOf(s.skin).name}还在和观众说话。`;
+    }
   }
   stepOuting(s, dt);
   if (d.arrival === "done") stepHousehold(s, dt);
   stepLifeEvents(s, dt);
   d.cooldown = Math.max(0, d.cooldown - dt);
-  if (d.panel === "lock" || d.panel === "cook" || (d.panel === "leisure" && d.entertainment === "game")) {
+  if (d.panel === "cook" || (d.panel === "leisure" && d.entertainment === "game")) {
     const { misses } = d.mini;
     stepMini(d.mini, dt);
     syncActivity(s, misses);
