@@ -1,3 +1,5 @@
+import { beforeStream } from "./outings";
+import { repairMuted } from "./lifeEvents";
 import { offAir } from "./daily";
 import { lockSignal, Mini } from "./minigames";
 import { onBreak } from "./household";
@@ -15,6 +17,7 @@ export class ApartmentSound {
   private done = 0;
   private lastMessages = 0;
   private mediaBeat = -1;
+  private snoreBeat = -1;
   private reportHits = 0;
   private reportMisses = 0;
   private mini: Mini | null = null;
@@ -84,6 +87,10 @@ export class ApartmentSound {
     );
     if (!enabled || s.phase !== "playing") return;
     if (s.daily) {
+      const n = s.daily.events.nap;
+      const snore = n.active && n.clock > 2 ? Math.floor(n.clock / 1.8) : -1;
+      if (snore >= 0 && snore !== this.snoreBeat) { this.tone(76, 0.045, 0.7, false, "triangle"); this.tone(102, 0.018, 0.45, false); }
+      this.snoreBeat = snore;
       const m = s.daily.mini;
       if (m !== this.mini) {
         this.mini = m; this.miniCue = false; this.miniHits = 0; this.miniMisses = 0; this.miniShots = 0;
@@ -128,7 +135,7 @@ export class ApartmentSound {
     if (beat !== this.lastBeat) {
       this.lastBeat = beat;
       const { music } = broadcast(s);
-      if (s.muted <= 0 && !offAir(s) && !onBreak(s)) this.tone(
+      if (s.muted <= 0 && !beforeStream(s) && !offAir(s) && !onBreak(s) && !repairMuted(s)) this.tone(
           music
             ? [261.6, 329.6, 392, 440, 392, 329.6, 293.7, 329.6][beat % 8]
             : [174, 207, 196, 220][beat % 4],

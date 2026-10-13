@@ -32,7 +32,7 @@ async function main(){
      await p.keyboard.press('p');const frozen=(await state(p)).practice;await advance(p,1200);assert.deepEqual((await state(p)).practice,frozen);
      await p.getByRole('button',{name:'继续练习 ▶',exact:true}).last().click();
     }
-    if(kind!=='recoil'){let captured=false;await activity(p,touch,async()=>{if(!captured&&['eggs','dial'].includes(kind)){captured=true;await capture(p,`${touch?'mobile':'desktop'}-${kind}`);}});if(['toss','eggs'].includes(kind)){assert.equal(await p.locator('[data-cooking-canvas]').count(),1);await capture(p,`${touch?'mobile':'desktop'}-${kind}-done`);}}
+    if(kind!=='recoil'){let captured=false;await activity(p,touch,async()=>{if(!captured&&['eggs','dial','pick','pins'].includes(kind)){captured=true;await p.waitForTimeout(350);await capture(p,`${touch?'mobile':'desktop'}-${kind}`);}});if(['toss','eggs'].includes(kind)){assert.equal(await p.locator('[data-cooking-canvas]').count(),1);await capture(p,`${touch?'mobile':'desktop'}-${kind}-done`);}}
     else{
      const canvas=p.locator('[data-mini-surface]');await canvas.focus();
      const box=await canvas.boundingBox();let x=box.x+box.width*.5,y=box.y+box.height*.2;

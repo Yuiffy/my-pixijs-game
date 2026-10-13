@@ -1,7 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef, type HTMLAttributes } from "react";
-import { FACE_NAMES, dialReady, type Mini, type MiniInput } from "./minigames";
+import { FACE_NAMES, dialReady, lockSignal, nextFaceHint, type Mini, type MiniInput } from "./minigames";
 import { flick, type Stroke } from "./miniGestures";
 import { drawMini } from "./miniDrawing";
 import CookingGame3D from "./CookingGame3D";
@@ -21,7 +21,7 @@ const hints = {
   pins: "拖动当前弹子往上抬，白色缺口靠近金线时松手。前面的弹子会留在原位。",
   toss: "不用按键，左右移动鼠标带动锅；快速上下甩动翻前后面，斜向甩翻左右面。每面煎熟再翻，六面全熟出锅。",
   eggs: "不用按键，移动鼠标直接倾斜铁锅。缓缓绕圈，让米饭在锅里滑过蛋液，全部裹成金黄。触屏按住锅滑动。",
-  recoil: "按住画面开火，持续向下拖动压枪。键盘按住空格开火、方向键修正。",
+  recoil: "按住画面开火，持续向下拖动压枪；松开会回稳，试试短点射。键盘按住空格开火、方向键修正。",
 };
 export default function MiniGame({
   mini: m,
@@ -35,6 +35,7 @@ export default function MiniGame({
   const canvas = useRef<HTMLCanvasElement>(null);
   const drag = useRef<{ id: number; x: number; y: number } | null>(null);
   const stroke = useRef<Stroke | null>(null);
+  const tiltKeys = useRef(new Set<string>());
   const cooking = m.kind === "toss" || m.kind === "eggs";
   useLayoutEffect(() => {
     drag.current = null;
@@ -54,6 +55,8 @@ export default function MiniGame({
     drag.current = null;
     stroke.current = null;
     send("release");
+    tiltKeys.current.clear();
+    if (m.kind === "eggs") send("tilt", 0, 0);
   };
   const cookingMove = (x: number, y: number, time: number) => {
     send("pan", x, (50 - y) * 0.004);
@@ -143,8 +146,10 @@ export default function MiniGame({
       else if (m.kind === "pick") send("set", m.angle + dx * 5);
       else if (m.kind === "pins") send("set", m.lift - dy * 5);
       else if (m.kind === "recoil") send("aim", dx * 2, dy * 2);
-      else if (m.kind === "eggs") send("tilt", dx, dy);
-      else if (e.shiftKey) send("toss", 0.6, dx || (dy > 0 ? 2 : 0));
+      else if (m.kind === "eggs") {
+        tiltKeys.current.add(e.key);
+        send("tilt", Number(tiltKeys.current.has("ArrowRight")) - Number(tiltKeys.current.has("ArrowLeft")), Number(tiltKeys.current.has("ArrowDown")) - Number(tiltKeys.current.has("ArrowUp")));
+      } else if (e.shiftKey) send("toss", 0.6, dx || (dy > 0 ? 2 : 0));
       else send("pan", m.panTarget + dx * 5);
     },
     onKeyUp: (e) => {
@@ -152,7 +157,10 @@ export default function MiniGame({
         e.preventDefault();
         send("release");
       }
-      if (m.kind === "eggs") send("tilt", 0, 0);
+      if (m.kind === "eggs") {
+        tiltKeys.current.delete(e.key);
+        send("tilt", Number(tiltKeys.current.has("ArrowRight")) - Number(tiltKeys.current.has("ArrowLeft")), Number(tiltKeys.current.has("ArrowDown")) - Number(tiltKeys.current.has("ArrowUp")));
+      }
     },
   };
   return (
@@ -182,6 +190,11 @@ export default function MiniGame({
           aria-describedby={`mini-hint-${m.kind}`}
         />
       )}
+      <div className={styles.miniTelemetry} aria-label="玩法反馈">
+        <span>{m.kind === "recoil" ? `命中率 ${m.shots ? Math.round((m.score / m.shots) * 100) : 0}% · 连中 ${m.streak}` : m.kind === "toss" ? `稳接 ${m.precision} 次 · 连续接住 ${m.streak}` : m.kind === "eggs" ? `金黄米团 ${m.score}/6 · 缓缓绕锅更容易裹匀` : `锁舌 ${m.score}/3 · 精准卡点 ${m.precision}`}</span>
+        <span>{m.won ? m.kind === "recoil" ? `训练完成 · 靶心 ${m.precision} 发 · 最长连中 ${m.bestStreak}` : "完成啦，可以再来一局挑战更稳的操作" : m.kind === "toss" ? m.flight ? "移锅跟着影子，落点越居中越稳" : m.faces[m.face] >= 1 ? nextFaceHint(m) : "耐心煎到金黄，再翻面" : m.kind === "pick" ? m.held ? `张力 ${Math.round(m.stress * 100)}% · ${m.stress > 0.2 ? "松手减压" : "保持轻转"}` : `松动程度 ${Math.round(lockSignal(m) * 100)}%` : m.kind === "pins" ? Math.abs(m.lift - (m.targets[m.score] ?? 0)) <= 7 ? "缺口已对齐，松手锁住" : m.lift < m.targets[m.score] ? "再往上抬一点" : "稍微放低一点" : m.kind === "recoil" ? `靶心 ${m.precision} 发 · 最长连中 ${m.bestStreak}` : m.kind === "dial" ? dialReady(m) ? "进入卡点区，可以松手" : "沿箭头找下一格" : "白米团会逐渐变成金黄色"}</span>
+      </div>
+      {m.kind === "recoil" && <div className={styles.tabs}><button aria-pressed={!m.movingTarget} onClick={() => { if (m.movingTarget) send("mode"); }}>固定靶 · 练压枪</button><button aria-pressed={m.movingTarget} onClick={() => { if (!m.movingTarget) send("mode"); }}>移动靶 · 练跟枪</button></div>}
       {m.kind === "toss" && (
         <div className={styles.faceProgress} aria-label="六面熟度">
           {m.faces.map((heat, i) => (

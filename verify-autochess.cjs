@@ -159,6 +159,18 @@ const closeBrowser = async () => {
     return;
   }
 
+  if (process.env.AUTOCHESS_SINGING === '1') {
+    await require('./scripts/verify-autochess-singing.cjs')({ page, state, capture, screenshots, errors, failedResponses });
+    await closeBrowser();
+    return;
+  }
+
+  if (process.env.AUTOCHESS_287 === '1') {
+    await require('./scripts/verify-autochess-287.cjs')({ page, state, capture, screenshots, errors, failedResponses });
+    await closeBrowser();
+    return;
+  }
+
   await page.waitForFunction(() => {
     const portraits = [...document.querySelectorAll('.rift-dom-choice img')];
     return portraits.length === 3 && portraits.every((image) => image.complete && image.naturalWidth > 0);

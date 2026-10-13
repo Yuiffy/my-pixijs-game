@@ -11,6 +11,7 @@ const capturedActions = new Set();
 const state = page => page.evaluate(() => JSON.parse(window.render_game_to_text()));
 const advance = (page, ms) => page.evaluate(ms => window.advanceTime(ms), ms);
 async function capture(page, name) {
+  if (process.env.HUSH_CAPTURE_PATTERN && !new RegExp(process.env.HUSH_CAPTURE_PATTERN).test(name)) return;
   const file = path.join(out, `${name}.png`);
   const s = await state(page);
   const layout = await page.evaluate(() => ({ width: innerWidth, height: innerHeight, scrollWidth: document.documentElement.scrollWidth, canvas: [document.querySelector('canvas').width, document.querySelector('canvas').height] }));
@@ -65,16 +66,19 @@ async function timing(page, touch = false) {
 }
 async function activity(page, photos = false) {
   const s = await state(page), d = s.daily;
+  if (s.cg) { await page.getByRole('button', {name:'收好回忆，继续 →'}).click(); return true; }
   if (!d) return false;
   const photograph = async name => { if (photos && !capturedActions.has(name)) { await capture(page, name); capturedActions.add(name); } };
+  if (d.stage === 'outing') { await advance(page,4200); return true; }
+  if (d.panel === 'repair') { const {FAULTS}=await (await import('./tests/helpers/load-typescript-module.mjs')).loadTypescriptModule('src/components/hushLive/lifeEvents.ts'); if(d.events.repair.stage==='fault') await page.getByRole('button',{name:'给TA暗号：闭麦，切稍等画面'}).click(); if((await state(page)).daily.events.repair.stage==='isolated') await page.getByRole('button',{name:FAULTS[d.events.repair.kind].fix}).click(); await advance(page,3100);await page.getByRole('button',{name:'确认恢复，示意TA继续播'}).click();return true; }
   if (d.panel === 'lock' || d.panel === 'cook') {
     await photograph('activity-' + d.panel); await timing(page); return true;
   }
   if (d.panel === 'leisure') {
-    await advance(page, 3200); assert.ok((await state(page)).daily.unread);
-    await photograph('wechat'); await page.getByRole('button', {name:'回复：收到，戴耳机啦'}).click();
+    await advance(page, 3200);
+    if ((await state(page)).daily.unread) { await photograph('wechat'); await page.getByRole('button', {name:'回复：收到，戴耳机啦'}).click(); }
     await advance(page, 5000);
-    await page.getByRole('button', {name:'收起手机，在沙发上小睡 →'}).click(); return true;
+    await page.getByRole('button', {name:/^(收起手机|离开电脑|先起来走走)/}).click(); return true;
   }
   if (d.stage === 'sleep') {
     assert.ok(s.player.x < 506, 'sleep must happen in the living room');
@@ -83,7 +87,7 @@ async function activity(page, photos = false) {
   }
   if (d.panel === 'story') {
     await photograph('story-' + d.after);
-    await page.getByRole('button', {name: d.after === 'rice' ? '拿两把勺子，一起吃' : '拿干毛巾，帮你擦头发'}).click();
+    await page.getByRole('button', {name: d.after === 'supper' ? '一起去吃烧鹅和热汤' : d.after === 'rice' ? '拿两把勺子，一起吃' : '拿干毛巾，帮你擦头发'}).click();
     await advance(page, 100); return true;
   }
   return false;
@@ -115,6 +119,7 @@ async function solve(page, photos = false) {
   const photographed = new Set();
   for (let i = 0; i < 40; i++) {
     let s = await state(page);
+    if (s.cg) { await activity(page); s = await state(page); }
     if (s.phase === 'result') { assert.ok(s.won, JSON.stringify(s)); results.push({ level: s.level, seed: s.seed, score: s.totalScore, peak: s.peak, elapsed: s.elapsed }); return; }
     if (await activity(page, photos)) continue;
     const requested = s.objective.spot;

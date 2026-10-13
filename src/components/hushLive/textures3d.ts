@@ -90,7 +90,7 @@ export function paintTactical(texture: THREE.Texture, time: number, progress: nu
 export type AvatarPose = { yaw: number; pitch: number; roll: number; mouth: number; blink: number; stand: number };
 
 /** Paint the virtual character from the very pose currently displayed on the physical partner. */
-export function paintAvatar(texture: THREE.Texture, pose: AvatarPose, offAir = false, skinId: SkinId = "host") {
+export function paintAvatar(texture: THREE.Texture, pose: AvatarPose, offAir = false, skinId: SkinId = "host", technical = "") {
   const canvas = texture.image as HTMLCanvasElement;
   const c = canvas.getContext('2d');
   if (!c) return;
@@ -107,7 +107,7 @@ export function paintAvatar(texture: THREE.Texture, pose: AvatarPose, offAir = f
   c.rotate(-pose.roll);
   const ellipse = (x: number, y: number, rx: number, ry: number, color: string) => { c.fillStyle = color; c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); c.fill(); };
   ellipse(-turn * 9, -5, 66 + Math.abs(facing) * 9, 100, skin.hair);
-  if (skinId === "sui") for (const side of [-1, 1]) {
+  if (skinId === "sui" || skinId === "mizuki") for (const side of [-1, 1]) {
     for (let n = 0; n < 4; n++) ellipse(side * (74 + Math.sin(n) * 6), -30 + n * 26, 23 - n * 2, 30, skin.hair);
     ellipse(side * 74, -43, 27, 8, skin.dark);
   }
@@ -119,7 +119,7 @@ export function paintAvatar(texture: THREE.Texture, pose: AvatarPose, offAir = f
     ellipse(-2 - turn * 15, -56, 71, 34, skin.hair);
     for (const side of [-1, 1]) {
       const far = side * turn < 0; const eye = far ? Math.max(0.2, width) : 1;
-      ellipse(side * 22 + turn * 6, 0, 7 * eye, Math.max(1.5, 11 * pose.blink), skin.eyes);
+      ellipse(side * 22 + turn * 6, 0, 7 * eye, Math.max(1.5, 11 * pose.blink), skinId === "mizuki" && side > 0 ? "#d57eab" : skin.eyes);
       if (skinId !== "host" && pose.blink > 0.4) ellipse(side * 22 + turn * 6, 0, 3 * eye, 7 * pose.blink, '#392a39');
       if (pose.blink > 0.4) ellipse(side * 22 + turn * 6 - 2, -3, 2 * eye, 3, '#fff8ec');
       ellipse(side * 36, 18, 8, 3, '#e8a6a3');
@@ -147,6 +147,12 @@ export function paintAvatar(texture: THREE.Texture, pose: AvatarPose, offAir = f
     if (front) ellipse(turn * 7, -63, 83, 12, '#484158');
     c.strokeStyle = '#c7b47e'; c.lineWidth = 3; c.beginPath(); c.ellipse(-turn * 9, -143, 83, 13, -0.14, 0, Math.PI * 2); c.stroke();
   }
+  if (skinId === "shiori") {
+    c.strokeStyle = skin.dark; c.lineWidth = 15; c.beginPath(); c.ellipse(0, -5, 78, 104, 0, Math.PI, Math.PI * 2); c.stroke();
+    for (let n = 0; n < 5; n++) ellipse(65 + Math.sin(n * 2) * 5, 25 + n * 18, 16 - n, 17, skin.hair);
+    ellipse(73, -80, 22, 9, skin.accent);
+  }
+  if (skinId === "mizuki") for (const side of [-1, 1]) { ellipse(side * 74, -55, 28, 13, skin.dark); ellipse(side * 74, -55, 5, 23, skin.accent); }
   if (skinId === "nana7mi" && front) {
     c.fillStyle = '#eee9df'; c.beginPath(); c.moveTo(-37, 90); c.lineTo(0, 125); c.lineTo(37, 90); c.fill();
     ellipse(-16, 108, 21, 9, skin.accent); ellipse(16, 108, 21, 9, skin.accent);
@@ -155,6 +161,7 @@ export function paintAvatar(texture: THREE.Texture, pose: AvatarPose, offAir = f
   c.fillStyle = offAir ? '#cce3cb' : '#f1b1af'; c.textAlign = 'left'; c.font = 'bold 19px sans-serif'; c.fillText(offAir ? 'OFF AIR' : '● LIVE', 24, 32);
   c.font = '15px "Microsoft YaHei",sans-serif'; c.fillStyle = '#f9f0e2'; c.fillText(`${skin.name}的直播间`, 328, 68);
   for (let i = 0; i < 6; i++) { c.fillStyle = i % 2 ? '#bbb6ca' : '#d6c8d3'; c.fillRect(336, 100 + i * 28, 117 - (i % 3) * 15, 5); }
+  if (technical) { c.fillStyle = "#243b36"; c.fillRect(0, 275, 512, 45); c.fillStyle = "#f6d899"; c.font = "20px sans-serif"; c.fillText(technical, 24, 305); }
   texture.needsUpdate = true;
 }
 

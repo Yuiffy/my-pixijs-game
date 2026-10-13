@@ -1,3 +1,4 @@
+import { faultActive } from "./lifeEvents";
 import { skinOf } from "./skins";
 import { mealOf } from "./daily";
 import { householdStatus, noodlesWaiting, onBreak } from "./household";
@@ -21,11 +22,11 @@ export function objective(s: Game): Objective {
     spot: "partner",
 key: "discover",
 step: 4,
-    title: s.daily.stage === "sleep" ? "你睡着了，等一盏灯熄灭" : s.daily.after === "rice" ? `下播了，去看看厨房的${skinOf(s.skin).name}` : `${skinOf(s.skin).name}洗完澡，来沙发旁找你了`,
+    title: s.daily.stage === "sleep" ? "你睡着了，等一盏灯熄灭" : s.daily.after === "supper" ? "下播了，去玄关一起吃宵夜" : s.daily.after === "rice" ? `下播了，去看看厨房的${skinOf(s.skin).name}` : `${skinOf(s.skin).name}洗完澡，来沙发旁找你了`,
     destination: "轻声走过去",
 detail: "直播结束了，现在可以自在说话。靠近后轻按E。",
   };
-  else if (s.daily && s.daily.arrival !== "done") next = { spot: "entry", key: "unlock", title: `${skinOf(s.skin).name}在直播，轻轻开门`, destination: "玄关", detail: "观察门锁，按锁芯的提示慢慢解开。", step: 1 };
+  else if (s.daily && s.daily.arrival !== "done") next = { spot: "entry", key: "unlock", title: s.daily.outing.trip ? "旅行回家，一起把箱子放到玄关" : `${skinOf(s.skin).name}在直播，轻轻开门`, destination: "玄关", detail: "观察门锁，按锁芯的提示慢慢解开。", step: 1 };
   else if (s.carry === "charger") next = {
       spot: "charging",
       key: "charger",
@@ -53,6 +54,7 @@ key: s.daily.household.noodles === "hot" ? "pour-noodles" : "take-noodles",
 detail: s.daily.household.noodles === "hot" ? "轻按E撕盖、放调料、加水到刻度线并盖好。" : "轻按E拿起盖好的泡面和叉子，放到直播桌。焖好了TA会自己吃，不用等。",
 step: 2,
     };
+  else if (faultActive(s)) next = { spot: "equipment", key: "repair", title: "直播设备出状况了，悄悄帮TA修好", destination: "去直播桌右侧", detail: "靠近设备后轻按E，先闭麦，再按症状检查信号。", step: 2 };
   else {
     const task = s.tasks.find((t) => !s.done.includes(t) && !(t === "food" && noodlesWaiting(s)) && !(["hug", "kiss"].includes(t) && onBreak(s)));
     if (task === "cook") next = { spot: "kitchen", key: "cook", title: `${skinOf(s.skin).name}想吃你做的${mealOf(s).name}`, destination: "去料理台", detail: "食材都准备好了，轻按E开始做饭。", step: 2 };

@@ -126,6 +126,20 @@ export function MealModels({ runtime: r }: { runtime: Runtime3D }) {
                 </>
               )}
               {m.id === "beef" && [0, 1, 2, 3, 4].map(i => <Cube key={i} p={[Math.sin(i * 2.4) * 0.12, 0.105, Math.cos(i * 2.4) * 0.12]} size={[0.075, 0.075, 0.075]} color="#895036" />)}
+              {m.id === "goose" && (
+<>
+                <mesh position={[0, 0.07, 0]} scale={[1, 0.25, 1]}><sphereGeometry args={[0.18, 16, 10]} /><meshStandardMaterial color="#f2e1bb" /></mesh>
+                {[0, 1, 2, 3, 4].map(i => <group key={i} position={[-0.12 + i * 0.052, 0.12, -0.04]} rotation={[0, -0.2, 0]}><Cube p={[0, 0, 0]} size={[0.042, 0.045, 0.16]} color="#c09370" /><Cube p={[0, 0.026, 0]} size={[0.045, 0.016, 0.16]} color={i % 2 ? "#ad5023" : "#874223"} /></group>)}
+                <mesh position={[0.02, 0.1, 0.13]} scale={[1.8, 0.3, 0.7]}><sphereGeometry args={[0.065, 10, 8]} /><meshStandardMaterial color="#678146" /></mesh>
+              </>
+)}
+              {m.id === "dumplings" && [0, 1, 2, 3].map(i => <group key={i} position={[Math.sin(i * (Math.PI / 2)) * 0.11, 0.12, Math.cos(i * (Math.PI / 2)) * 0.11]} rotation={[0, i, 0]}><mesh scale={[1.2, 0.7, 0.75]}><sphereGeometry args={[0.07, 12, 8]} /><meshStandardMaterial color="#f3e7d7" /></mesh>{[-1, 0, 1].map(j => <Cube key={j} p={[j * 0.025, 0.045, 0]} size={[0.006, 0.018, 0.06]} color="#d9cab4" />)}</group>)}
+              {m.id === "soup" && (
+<>
+                <mesh position={[0, 0.09, 0]}><cylinderGeometry args={[0.185, 0.185, 0.02, 24]} /><meshStandardMaterial color="#d5a659" roughness={0.3} /></mesh>
+                {[-1, 1].map(i => <group key={i}><mesh position={[i * 0.075, 0.105, 0.03]} scale={[1, 0.25, 1]}><sphereGeometry args={[0.052, 12, 8]} /><meshStandardMaterial color="#887256" /></mesh><Cube p={[i * 0.04, 0.1, -0.07]} size={[0.05, 0.025, 0.075]} color="#e9d5a9" /></group>)}
+              </>
+)}
               {m.id === "bbq" &&
                 [0, 1, 2].map((i) => (
                   <group key={i} position={[0, 0.08, -0.11 + i * 0.11]}>

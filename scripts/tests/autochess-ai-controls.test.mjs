@@ -2966,7 +2966,7 @@ test("均衡残血且候补席满时会出售已有高星终局棋的低星重�
     bridge.engine.state.board[index] = {
       uid: 1302830 + index,
       id,
-      star: index < 4 ? 2 : 1,
+      star: 2,
     };
   });
   const benchIds = ["sui_flower", "xuehui", "sui_bird", "lian", "sumi", "grove_mender", "biscuit_sui", "meme"];
@@ -2983,7 +2983,8 @@ test("均衡残血且候补席满时会出售已有高星终局棋的低星重�
   const action = autopilot.tick(2000);
   assert.equal(action?.type, "sell");
   assert.equal(action?.location?.zone, "bench");
-  assert.ok(["sui_flower", "xuehui", "sui_bird", "lian"].includes(benchIds[action.location.index]));
+  const soldId = benchIds[action.location.index];
+  assert.ok(bridge.engine.state.board.some((unit) => unit?.id === soldId && unit.star === 2));
   assert.equal(bridge.engine.state.bench.filter(Boolean).length, 7);
 });
 

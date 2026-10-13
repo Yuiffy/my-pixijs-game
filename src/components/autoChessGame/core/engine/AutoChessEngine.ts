@@ -3190,7 +3190,7 @@ export class AutoChessEngine {
       zone.life = Math.max(0, zone.life - dt);
       zone.pulseTimer -= activeTime;
       while (zone.pulseTimer <= 0) {
-        zone.pulseTimer += PAKO_ANGEL_FISH_PULSE_INTERVAL;
+        zone.pulseTimer += zone.kind === "plant" ? 1 : PAKO_ANGEL_FISH_PULSE_INTERVAL;
         const source = [...battle.player, ...battle.enemy].find(
           (fighter) => fighter.fid === zone.sourceFid,
         ) || null;
@@ -3198,6 +3198,19 @@ export class AutoChessEngine {
           .filter((ally) => Math.hypot(ally.x - zone.x, ally.y - zone.y) <= zone.radius)
           .forEach((ally) => {
             if (!source) return;
+            if (zone.kind === "plant") {
+              const amount = ally.maxHp * (zone.healRatio ?? 0.03);
+              const missing = Math.max(0, ally.maxHp - ally.hp);
+              this.heal(source, ally, amount);
+              const excess = Math.max(0, amount - missing);
+              const multiplier = ally.team === "player" && this.state.starter
+                ? STARTER_EFFECTS[this.state.starter].shieldMultiplier || 1 : 1;
+              const room = Math.max(0, ally.maxHp * 0.18 - ally.shield);
+              if (excess > 0 && room > 0) {
+                this.grantShield(source, ally, Math.min(excess, room / multiplier), 0.18 / multiplier, battle);
+              }
+              return;
+            }
             this.heal(
               source,
               ally,

@@ -1,5 +1,25 @@
 # 项目进度
 
+## 2026-10-13 · 自走棋九人合唱（已验收）
+
+Original prompt: 歌势怎么有星汐哦，太多了，去掉星汐。其他的列举一下我看看。随后：那“歌势”改名为“合唱”吧，只保留阿梓、泽音、四时小路、东爱璃、弥月、七海、克罗雅，再从4个岁己里选一个加入。再加上笙歌。
+
+已严格收紧为九个 ID：cinder_ram／zeyin／komichi／lovely／clock_gunner／grove_mender／rift_brawler／sui／tower_god。按用户追加要求选人形小红帽代表岁己，小岁鸟及其他岁己不带合唱；移除所有其他旧歌势成员（包括敌方弥希／初濑），星汐不在名单。核对本人 title，弥月对应老弥，克罗雅对应雅吨，笙歌对应塔神；瑞娅 spark_mage 与轴伊 cog_scribe 均不参与。玩家可见歌势统一改名合唱，内部 singer ID 保留兼容。保留 2/4/6 原效果，更新 0.11.2 游戏日志／CHANGELOG／当前设计文档。
+
+490 项完整规则、定向 ESLint、版本一致性通过。复用独立依赖验收检出，最终 pnpm run check → pnpm run build 顺序通过，保留构建 ESLint；自走棋源文件与主目录 SHA256 一致，见 tmp/autochess-singing/chorus-source-hashes.json。安装版静音 Chrome 开发／生产各九张截图通过 PNG sanity、文本状态／DOM／画布／错误交叉核对，全部逐张打开目检；精确九人图鉴、手机、商店、人形小红帽与更新日志一致。固定第 16 回合样例约 9.2 秒自然接唱，实际治疗与三秒术盾通过，亦观察到小松绿受击施法；不代表普遍胜率。证据为 tmp/autochess-singing/chorus-development/、chorus-production/ 及 chorus-{rules,check-final,build-final}.log。当前开发页面 http://localhost:4074/game/autochess，生产复验 http://127.0.0.1:4075/game/autochess；未提交、推送或外部部署。
+
+## 2026-10-13 · 风邮小镇：找路冒险（本地验收）
+
+Original prompt: 调研并实现能逐步训练找路、不迷路、看地图和自主探索，又让人愿意玩的游戏，针对商场迷路与依赖导航等情况整合人脑、心理、学习和方向感资料。
+
+新增 `/game/wayfinder` 与游戏馆入口「风邮小镇」。暖色第一人称 3D 送信冒险，六封主线从海港地标、北向上纸地图、自选中途地标、定位尝试与方向回想，到封路返程、两层商场、楼梯维修与陌生路网。回信、可选邮票与旅记支持探索；无倒计时、扣命或求助惩罚，三层帮助与免费救援、舒适模式随时可用。每日/随机种子真实改变道路和地标，可分享同图；有本地存档、合法性校验、刷新续玩、键盘/触控、失焦暂停。回顾展示实际轨迹与可达最短路，定位/楼层/方向/帮助分别记录，不给智力评级。
+
+研究读取 GPS 与空间记忆、空间训练元分析、提取练习和游戏自我决定理论摘要，保留证据和限制，详见 docs/wayfinder-design.md。未宣称本游戏已被证明改善现实导航或持续游玩意愿，真人迁移与体验评估方案已记录。
+
+隔离托管工作树 C:/Users/yuiffy/.codex/worktrees/wayfinder/my-pixijs-game 完成实现和验收；13 项规则全部通过，包括六封合法往返、40 张陌生种子、楼层/封路/存档边界及独立最短路核对。完整 pnpm run check 后顺序 pnpm run build 成功，保留 Next ESLint。安装版静音 Chrome 生产版完成六封及游戏馆真实进入、键盘/触控/RAF、刷新/暂停/设置、存储禁用和种子分享；最终 17 张有效截图全部打开目检，像素/状态/DOM/画布交叉核对，页面/控制台错误为空。横屏整视口截图保留真实触控布局，320px 地图可滚动到操作按钮。手机是 Chrome 模拟，未验收实体 GPU/Safari。
+
+已将本任务 13 个文件同步主工作区并逐个核对 SHA256；126 个既有其他任务改动文件哈希保留，package 0.11.1 与其他脚本保留，主目录修改源文件 ESLint 通过。移除隔离检出的临时 tsconfig 引用。证据在 tmp/wayfinder-production/、tmp/wayfinder-{check-final,build-final}.log、tmp/wayfinder-integration.json；复现说明 docs/wayfinder-verification.md。本地生产试玩 http://127.0.0.1:4092/game/wayfinder；未提交、推送或外部部署。
+
 ## 2026-10-13 · 今天也要动：四种直播美食敌人（已验收）
 
 Original prompt: 可以增加更多敌人类型，具体参考岁己直播中提到的想吃的或者吃了的食物。
@@ -11,6 +31,18 @@ Original prompt: 可以增加更多敌人类型，具体参考岁己直播中提
 31 项规则（6 新增）通过，原 63 条通关路线通过；180 条三天赋／20 种子／每帧、100ms、200ms 决策路线全达标，组均 196–206 秒，非真人胜率。静音 Chrome 生产完整回归 19 张＋新敌人专项 8 张，全部逐张目检并核对 state／DOM／1100×700 canvas／PNG sanity，无页面／控制台错误。专项以公开输入自然捕获四敌、分裂、破壳和火锅预警／喷汽，390px 展开图鉴全名单可读；最终仅整理缩进，重建并重跑专项。
 
 沿用托管检出 C:/Users/yuiffy/.codex/worktrees/fitness-refresh/my-pixijs-game，只同步健身源码；最终 pnpm run check → pnpm run build 顺序通过，构建 ESLint 保留，源文件 SHA256 与主目录一致。证据 tmp/fitness-foods/（source-hashes、balance、regression、browser、check-final、build-final）。主目录其他功能改动保留。本机最终试玩 http://localhost:4087/game/sui-fitness，dist `.next-fitness-foods-final`。追加：用户确认 commit，合并提交两轮健身更新；未推送或远端部署。
+
+## 2026-10-13 · 自走棋裸子植物与歌势（已验收）
+
+Original prompt: 小松绿咋能主持呢，很社恐的。技能改为“裸子植物”，具体什么梗你自己去搜搜。另外给各个唱歌比较好的人增加“歌势”羁绊吧，具体效果好好设计一下。
+
+已通过 Bilibili 原切片 BV1Qw8z6uEUZ 标题／简介公共 API 与非官方应援 8 月 21 日记录交叉确认：致命公司联动插不上话，只能介绍路边植物，同伴已经坐电梯离开。小松绿移除主持，改 287／怕死，满能受击自盾 12/16/20%，原地固定四秒养护圈每秒 3/4/5%，移除落地单奶。保留二费、溢出转盾及本人倒下后植物寿命。
+
+公开本人演唱／歌回／原创合唱依据收录于 docs/autochess-singing.md；17 商店＋2 敌方加入歌势，保留旧羁绊和费用。2/4/6 档技能增伤 12/20/30%，六秒不同声部轮唱需 2/3/4 声部；合唱后四秒休息，不预存声部。治疗最弱受伤友军 4/6%，六档最弱两人各 8%；高档歌势术盾 4/6% 三秒。普攻不增、持续 pulse 不刷声、同名去重、己敌独立、阵亡与脑控排除，不新增音频。模型按旧 schema 特征名投影，未重新训练。
+
+490 项规则全过，新增八项专项覆盖多档真实伤害／治疗／术盾吸收与寿命、轮唱窗口／同名／死亡／脑控、敌方、自然受击植物施法。已有满席 AI 测试改为全场二星＋候补一星，继续验证出售已有高星棋的低星重复件，不再固定卖某四个名字。版本／更新日志 0.11.1 一致性检查通过。18 组固定阵容样例（3 种子×8/12/16 回合×开启／关闭歌势）自然完成，开歌势各一次和声；8 回合两组均胜，12 回合由负转胜，16 回合两组均负，不代表整体胜率。
+
+复用独立依赖验收检出 C:/Users/yuiffy/.codex/worktrees/autochess-287-verify/my-pixijs-game，保留其他线程的雨夜／hushLive／减肥游戏修改；完整 pnpm run check 后顺序 pnpm run build 通过，Next ESLint 保持开启。本次与上一轮自走棋源文件 SHA256 均与主目录一致，记录 tmp/autochess-singing/source-hashes.json。新增本地 verify-autochess-singing.cjs 复用安装 Chrome、静音／speech stub、page.screenshot 与像素 sanity。开发／生产各九张证据已逐张目检，覆盖小松绿商店／图鉴、歌势三档图鉴、手机图鉴／战场、六歌势站位、自然和声／裸子植物、0.11.1 更新日志；无横向溢出、无页面／控制台／HTTP 错误。自然和声在约 6.5 秒触发且治疗、三秒术盾真实结算，小松绿约 10.8 秒自然受击施法。生产验收额外等待可见头像加载完成。证据与门禁在 tmp/autochess-singing/development/、production/ 及 check-final.log／build-final.log。生产试玩 http://localhost:4074/game/autochess。未提交／推送，已完成本轮需求。
 
 ## 2026-10-13 · 今天也要动：角色装备与战斗节奏（本地已验收）
 
@@ -25,6 +57,21 @@ Original prompt: 完善减肥土豆兄弟游戏。一个是主角形象和装备
 开发版静音安装 Chrome 完整 19 张、专项 5 张、临时静音共享客户端 1 张已全部逐张打开目检，状态／DOM／1100×700 画布／PNG sanity 一致，页面与控制台无错误。完整回归包括三天赋通关、失败、暂停／失焦／帮助、记录／分享／重开、多点触控／取消／键触混合、320/390px／横屏、存储受限、减少动态、真实 RAF；专项通过公开操作捕获三类攻击、牛肉干预警和心流。
 
 主工作区另有 hushLive 循环依赖等进行中错误，不修改它们。托管检出 C:/Users/yuiffy/.codex/worktrees/fitness-refresh/my-pixijs-game 基于 d7f081d，只复制本次源文件，按锁文件离线安装独立依赖，完整 pnpm run check 后顺序 pnpm run build 通过，保留 Next ESLint。五个运行源文件 SHA256 与主工作区逐个一致。生产版完整回归 19 张、专项 5 张均通过并已逐张打开目检，状态／DOM／画布／PNG 交叉核对通过，错误为空；证据 tmp/fitness-refresh/production/ 和 production-details/，门禁 check-final.log／build-final.log，source-hashes.json 保存一致性。已停止 4085 开发服务，仅移除本任务 tsconfig 临时引用，保留其他线程配置。生产试玩 http://localhost:4086/game/sui-fitness。未提交／推送；本轮目标已完成，无剩余必须事项。
+
+## 2026-10-13 · 自走棋 287 全员开麦（已验收）
+
+Original prompt: 自走棋加入287其余几人。调研设计符合她们的特性和梗的技能和羁绊。并且之前把邪恶外星人移出，四星是不是人少了。可以合理安排一些星级变动。记得总结到更新日志里。
+
+已交叉调研四人联动、枝堇书屋藤蔓／屏蔽妈字、小松绿互联网盆栽／裸子植物、羽啾宇宙观测／烂梗卡组。来源及创作和事实的区别记录于 docs/autochess-287.md。新增二费小松绿（固定养护圈／周期回血／溢出转盾）、四费枝堇（密集敌群伤害／扣能量／固定圈减速）、四费羽啾（高攻击优先／三张真实飞行卡／末张短控与击退）；小路五费保留冲锋与格挡并加入 287。新增 2/4 档开战能量、施法接力与四人护甲，去重同名，敌我分别执行，阵亡成员不能接力。已有本人公开头像在三种画风复用，无额外生成资产。
+
+实时费用池从 7/8/11/9/6 变为 7/9/11/11/6，41 → 44 位，四费 9 → 11。初次依据 types.ts 过时分组注释误报为 7 → 9，已在说明、游戏内更新日志、CHANGELOG 及浏览器断言纠正，并移除旧费用分组注释；保留 ID 顺序避免额外扰动商店随机种子。悠亚仍敌方专属，不为补池强行移动已平衡角色。版本同步 v0.11.0／2026-10-13，发布一致性通过。
+
+482 项规则回归通过，含 7 项新增专项：三档技能、真实弹道命中／目标死亡重选、圈内外／寿命与施法者死亡、护盾不反向削减、双方接力去重、真实购买／三合一／续档及 Go 模型有限打分。现有 Go 权重按特征名投影，新增羁绊不挤歪旧施法输入，不宣称重新训练。Chrome 开发与生产验证三位自然首次施法分别为羽啾 3.45s、枝堇 7.52s、小松绿 9.82s，证明在正常回能条件下可触发，不代表普遍平衡或胜率。浏览器发现特效引用尚未初始化颜色，已修正。系统 Chrome 静音、speech stub，商店真实扣金、图鉴与 390px 详情、部署、自然施法、手机战斗、版本日志，开发与生产各 11 张图通过 sanity／状态／DOM／画布／错误核对，全部逐张打开目检，页面／控制台错误及失败响应为空。
+
+修改 TS ESLint、482 项规则与版本一致性检查通过。共享工作区首次完整 check 通过，随后构建被同时进行的雨夜类型修改阻断，重检又遇到未完成的 hushLive 类型；未覆盖这些任务。基于 d7f081d 创建独立验收检出，只复制本轮自走棋源码／脚本／日志与版本，逐文件 SHA256 与主目录一致；安装独立依赖后顺序 pnpm run check → pnpm run build 全部通过，保留 Next 构建 ESLint，既有无关警告保持。最终门禁日志 tmp/autochess-287/isolated-{check,build}-final.log，源文件核对 verification-snapshot.json，生产浏览器报告 production/287-report.json。主目录本轮 Next 自动加入的 tsconfig 类型路径已恢复。
+
+本机生产试玩 http://127.0.0.1:4072/game/autochess，独立 .next-autochess-287-build，HTTP 200 后才启动浏览器验收。验收检出位于 C:/Users/yuiffy/.codex/worktrees/autochess-287-verify/my-pixijs-game；开发服务 4071 保留。未提交、推送或远端部署，本轮目标已完成，无待处理验收项。
+
 
 ## 2026-10-13 · 雨夜角色、战斗与立体箱庭大型更新（八项已验收）
 
@@ -834,6 +881,7 @@ ShopCard 移除两个标签限制和单行裁切，桌面／手机均按完整�
 
 465/465 规则测试通过（旧的固定 nth-child 详情定位源码断言由真实浏览器边界回归替代）；修改 TS 的 ESLint、测试脚本语法、完整 pnpm run check 后顺序 pnpm run build 均通过，保持构建 ESLint。证据 tmp/autochess-zoom/production/report.json、生产截图、{rules,check,build,production}.log。已停止临时开发服务并清理其 tsconfig include；本地生产预览 http://127.0.0.1:4039/game/autochess。2026-10-07 用户授权提交 master；提交前再次顺序通过完整 check／build，仅纳入本轮自走棋修复和验证文件，保留工作区其他任务改动。手机为 Chrome 窄屏模拟，未验证实体手机与其他浏览器；本轮目标无待处理项。
 
+
 ## 2026-10-13 · 雨夜寻味：第三关「天镜归航」（本地验收）
 
 Original prompt: 继续制作下一关卡、地区，内容自行设计；地区区分和衔接优美，参考艾尔登法环的远眺后抵达，路线有记忆点且自然；允许最多 1000 积分增加动画演出。
@@ -845,3 +893,34 @@ Original prompt: 继续制作下一关卡、地区，内容自行设计；地区
 169 / 169 规则通过，修改雨夜 TS/TSX 的 ESLint 通过。共享工作区完整检查受并行 HushLive 改动的 ESLint 错误阻断；已有独立验收检出只同步雨夜源文件与测试后，顺序通过完整 check／build，保留 Next 构建 ESLint。71 个游戏源文件与生产检出 SHA-256 一致。静音安装版 Chrome 生产场景 16 张和真实完整第三关流程 9 张全部逐张目检，PNG sanity、文字状态、DOM、画布及错误交叉核对通过，错误为空。全路线含支路、首领、暂停、实际归灯休息、即时存门、送灯、跳过、刷新、行旅返回，零死亡；390／320px 地图和减少动态效果验证通过。仅模拟 Chrome 窄屏，模型仍为程序低模。
 
 证据 tmp/night-sky-production/、tmp/night-sky-journey-production/，门禁 tmp/night-sky-isolated-{rules,check,build}-release.log，源一致性 tmp/night-sky-source-audit.json；详见 docs/night-rain-skyplain.md。开发服务停止，只移除本任务 dev 类型路径，生产服务保留 http://127.0.0.1:4065/game/night-rain。完成第二关后由归水灯东侧进入；新端口与旧端口存档独立。用户授权将当前雨夜大型更新与第三关合并为一个本地 commit；未推送或公开部署。
+
+
+## 2026-10-13 · 嘘，TA还在播：小游戏、同居事件与角色 CG（本地验收完成）
+
+Original prompt: 优化小游戏玩法／视觉；增加烧鹅等外卖、床上小睡与呼噜劝退；旅行归家开局／出门宵夜结局；加入栞栞、弥月；设备故障由男友偷偷修复。追加：用生图制作角色事件／结尾 CG。校正：弥月懂电脑，修复 CG 给岁己；旅行归家不能开局就弹 CG；岁己图背景错误出现一对男女，必须移除。
+
+完成三种开锁、料理、压枪与报点反馈；新增三种外卖、床边小睡／眼神／手势／微信、三类设备诊断／隔离／观察／恢复、稀有双行李归家与女主走到桌前才开播、两种宵夜选择及真实四秒出门；新增两位女主原型配饰与异色瞳。冷却内按扳机丢输入、暂停／失焦双轴倾斜遗留、窄屏出门遮挡已修复。
+
+最终五张 CG：主播酱收工留灯、岁己修复后致谢、七海宵夜、栞栞旅行当晚完成后休息、弥月电脑游戏后分享操作诀窍。原呼噜图背景男女、弥月修电脑、开局迎门三张未采用，已移除游戏资源且画布标注；新版岁己／弥月实图已逐张检查，没有多余人物。五张本地 WebP、原图及最终提示词已保存。原生模态相册支持 Tab／Esc、解锁提示与旧 v1 存档迁移，首次事件 CG 自动暂停并恢复，结果 CG 保留结算。
+
+71/71 规则通过；修改源文件 ESLint 通过。开发 CG 五条实际普通操作流程、暂停、焦点、重看、刷新与 320px 通过，12 张截图已逐张打开目检，错误为空；前期小游戏 24 张／事件 21 张也已目检。完整 check 后顺序 build 与最终生产复测进行中。详见 docs/hush-life-update.md，提示词 docs/hush-cg-prompts.json。尚未提交／部署本轮修改；保护其他线程改动。
+
+最终完整 check 后顺序 build 通过，Next 构建 ESLint 保持启用。生产五条 CG、三类修复／三层小睡、旅行与两种宵夜选择／三种新增食物、移动靶／报点／双轴失焦、全部小游戏桌面／320px 及通用冒烟均通过；采用的 38 张截图全部逐张打开目检，PNG sanity／状态／DOM／画布交叉核对通过，最终报告错误为空。宵夜首跑出现一次未定位 int64 浏览器异常，增加错误堆栈／URL采集重跑后全部通过，失败摘要记在 tmp/hush-final-audit.json。证据 tmp/hush-final-{cg,events,outings,feedback,arcade,shared}/；规则 tmp/hush-cg-rules-final.log，门禁 tmp/hush-life-{check,build}-cg-final.log。开发服务已停止，只清理本任务临时 tsconfig 类型路径；本地生产预览 http://127.0.0.1:4076/game/hush-live。本轮要求无待办，未提交／未部署；实体手机与 Safari 尚未验证。
+
+## 2026-10-13 · 风邮小镇：鼠标视角、跑步与洞窟（本地验收）
+
+Original prompt: 试玩后要求无需按住鼠标转视角、Shift 跑步，开场预告独立双层地图及递进难度，返程靠近桥时大鲤鱼跳出咬断桥；增加遮挡视野、不规则回环/死路，以及走过岔路的记忆探索。
+
+完成标准 pointer lock 与 Esc 释放暂停、Shift 1.85 倍跑步/触屏切换；标题展示海港旁独立双层商场岛，四区域远行预览提前说明八封信。第三封返程真实靠近才触发 3.4 秒鲤鱼跃起、咬板、入水与持久缺口，仍可绕路；没有突兀墙体。第七、八封进入 33 节点/37 边的非规则封闭石廊，岩壁、屋顶、斜向转折、雾、回环和死路遮挡视野；地图/渲染/碰撞共用道路图。G 自愿回想面对的支路是否走过，B 自愿留现场地面/地图月牙；完整重复穿过路段才统计，结果显示重复路程、回想/错误和记号。旧六封完成存档保留并解锁洞窟，断桥演出中途和探索状态可保存。
+
+18/18 规则通过；改动源 ESLint、隔离工作树完整 check 后顺序 build 均通过，保持 Next 构建 ESLint。安装版 Chrome 静音生产验证八封合法往返、实际鼠标捕获/释放与 Shift、断桥/绕行、双层、洞窟新/已走回想/粉笔/刷新、触屏/窄屏/横屏；30 张 PNG 全部逐张打开目检，文本状态/DOM/画布/像素 sanity 交叉核对，错误为空。手机洞窟使用合法桌面操作得到的原始存档，未伪造剧情。用户反映鼠标跳角后，确认本轮测试浏览器已关闭，不再于用户试玩期间运行指针捕获测试；未确定系统指针跳角的原因。
+
+只同步本任务 14 个文件及游戏馆对应条目，SHA256 全部一致；43 个其他已修改跟踪文件的同步前后哈希保持一致，保留主 package 0.11.2 和其他游戏改动。开发试玩保留 http://127.0.0.1:4093/game/wayfinder ，生产验证服务 http://127.0.0.1:4094/game/wayfinder ，不同端口的浏览器存档独立。证据 tmp/wayfinder-v2-{production,integration.json,rules.log,check-final.log,build-final.log}；详见 docs/wayfinder-verification.md 与设计说明。未提交/推送/部署，手机仅 Chrome 模拟，现实导航迁移和长期好玩程度未作真人验证。
+
+## 2026-10-13 · 全部本地改动统一提交与发布
+
+用户授权「本地改动全部提交部署」。当前所有源文件、验证脚本、文档、风邮小镇预览、Hush 最终 WebP 和 output 原始生成图一并纳入版本库；原始未采用图只作为制作记录，不进入 public 游戏资源。此前本地雨夜／健身两笔提交一起推送。
+
+发布前主工作区顺序通过 pnpm run check、pnpm run build，保留 Next 构建 ESLint。构建输出隔离到 .next-all-local-release；仅移除构建自动添加的临时 tsconfig include，恢复原配置。自走棋 490、Hush 71、风邮小镇 18 项，共 579/579 规则通过，自走棋 0.11.2 版本一致性通过。证据 tmp/all-local-{release-check,release-build,autochess-rules,hush-rules,wayfinder-rules,release-version}.log。
+
+沿用 GitHub Yuiffy/my-pixijs-game 的 master → 已关联 Vercel 项目 my-pixijs-game 的生产流程和现有域名，不创建新站点。发布结果以相同 Git SHA 的远程部署状态为准；浏览器自动测试不再捕获用户鼠标。

@@ -28,6 +28,7 @@ export const AIM_POINTS: Record<
   bathroom: { ...BATHROOM, height: 1.1 },
   charging: CHARGER_TRAY,
   kitchen: { x: 420, y: 155, height: 1.0 },
+  equipment: { x: 806, y: 292, height: 0.95 },
   bed: { x: 710, y: 425, height: 0.7 },
   sofa: { x: 220, y: 325, height: 0.66 },
   shelf: { x: 826, y: 477, height: 0.66 },
@@ -99,7 +100,7 @@ export function lookPoint(r: Runtime3D, spot: Spot) {
   return { x, y: point.height, z };
 }
 export function clearControls(r: Runtime3D) {
-  if (r.game.daily) r.game.daily.mini.held = false;
+  if (r.game.daily) { r.game.daily.mini.held = false; r.game.daily.mini.tiltX = 0; r.game.daily.mini.tiltZ = 0; }
   r.keys.clear();
   r.stick = { x: 0, y: 0 };
   r.held = false;

@@ -8,6 +8,7 @@ import { arrivalAction, activityInput, restartPractice, chooseGoodnight, finishL
 import MiniGame from "./MiniGame";
 import TapButton from "./TapButton";
 import styles from "./daily.module.css";
+import LifeEventPanel from "./LifeEventPanel";
 
 export default function DailyPanel({
   game: s,
@@ -38,21 +39,24 @@ export default function DailyPanel({
     return () => cancelAnimationFrame(frame);
   }, [s, panel, stage, entertainment]);
   if (!d) return null;
+  if (d.panel === "nap" || d.panel === "repair") return <LifeEventPanel game={s} onChange={onChange} />;
   const change = (fn: () => void) => {
     fn();
     onChange();
   };
   if (d.arrival !== "done" && d.arrival !== "locked") {
     const intro = d.arrival === "intro";
+    const { trip } = d.outing;
     return (
-<section className={styles.arrival} aria-label="下班回家">
+<section className={`${styles.arrival} ${trip ? styles.tripArrival : ""}`} aria-label="下班回家">
       <small>{d.arrival === "inside" ? "21:36 / 家里的玄关" : "21:36 / 门外的走廊"}</small>
-      <h2>{intro ? "刚下班回到家，悄悄进去…" : d.arrival === "unlocked" ? "锁开了，轻轻推开门。" : d.arrival === "open" ? "门开了，回家吧。" : d.arrival === "entering" ? "放轻脚步…" : "进屋了，别忘了轻轻关门。"}</h2>
-      <p>{intro ? `门里传来${skinOf(s.skin).name}和观众聊天的声音。把钥匙拿稳，别惊动正在直播的TA。` : s.message}</p>
+      <h2>{intro ? trip ? "两只行李箱，一起回家。" : "刚下班回到家，悄悄进去…" : d.arrival === "unlocked" ? "锁开了，轻轻推开门。" : d.arrival === "open" ? "门开了，回家吧。" : d.arrival === "entering" ? "放轻脚步…" : "进屋了，别忘了轻轻关门。"}</h2>
+      <p>{intro && trip ? s.message : intro ? `门里传来${skinOf(s.skin).name}和观众聊天的声音。把钥匙拿稳，别惊动正在直播的TA。` : s.message}</p>
       {d.arrival !== "entering" && <TapButton onActivate={() => change(() => arrivalAction(s))}>{intro ? "拿出钥匙，轻轻开锁" : d.arrival === "unlocked" ? "扶住门把，轻轻开门" : d.arrival === "open" ? "悄悄走进家里" : "轻轻关上大门"}</TapButton>}
     </section>
 );
   }
+  if (d.stage === "outing") return <section className={`${styles.arrival} ${styles.tripArrival}`} aria-label="一起出门吃宵夜"><small>02:18 / NIGHT WALK</small><h2>走吧，现在可以牵手了。</h2><p>{d.memory}</p></section>;
   if (d.stage === "sleep") return (
       <div className={styles.sleep} role="status">
         <small>00:48 — 02:13</small>
@@ -66,21 +70,21 @@ export default function DailyPanel({
       <section className={styles.panel} aria-label="下播后的故事">
         <small>02:13 / OFF AIR</small>
         <h2>
-          {d.after === "rice" ? "原来你也还没吃饱。" : "头发还没擦干呢。"}
+          {d.after === "supper" ? "楼下的小摊还亮着灯。" : d.after === "rice" ? "原来你也还没吃饱。" : "头发还没擦干呢。"}
         </h2>
         <p>
-          {d.after === "rice"
+          {d.after === "supper" ? `${skinOf(s.skin).name}关掉直播灯，已经换好了鞋：“今晚想出去透透气。你陪我，好不好？”两件外套搭在门边，这次不用再小声说话。` : d.after === "rice"
             ? `${skinOf(s.skin).name}穿着睡衣站在料理台前，锅里只放了一人份的米饭。看到你，手里的锅铲停住了：“怎么醒了？我马上就来。”`
             : `水声刚停，${skinOf(s.skin).name}披着毛巾，踮脚走到沙发旁。“本来想轻一点的。”你伸手碰了碰还湿着的发梢。`}
         </p>
         <div className={styles.choices}>
           <button onClick={() => change(() => chooseGoodnight(s, "together"))}>
-            {d.after === "rice"
+            {d.after === "supper" ? "一起去吃烧鹅和热汤" : d.after === "rice"
               ? "拿两把勺子，一起吃"
               : "递杯温水，陪你坐一会儿"}
           </button>
           <button onClick={() => change(() => chooseGoodnight(s, "care"))}>
-            {d.after === "rice"
+            {d.after === "supper" ? "披上外套，牵手出门" : d.after === "rice"
               ? "接过锅铲：我来，你歇着"
               : "拿干毛巾，帮你擦头发"}
           </button>
@@ -187,7 +191,7 @@ export default function DailyPanel({
             ? d.leisurePlace === "computer"
               ? "离开电脑，去沙发小睡 →"
               : "收起手机，在沙发上小睡 →"
-            : "收起手机，继续忙家里的事 →"
+            : d.leisurePlace === "computer" ? "离开电脑，继续忙家里的事 →" : "收起手机，继续忙家里的事 →"
           : "先起来走走"}
       </button>
       {d.leisureTime < 8 && (

@@ -1,17 +1,13 @@
+import { beforeStream, tripNight } from "./outings";
 import type { Game, Point, Task } from "./engine";
 import { route, walkable } from "./navigation";
 import { skinOf } from "./skins";
 
-/** Independent streams prevent meal, arrival and chores from being coupled to seed parity. */
-export function nightRoll(seed: number, stream: number) {
-  /* eslint-disable no-bitwise -- Explicit uint32 avalanche for reproducible independent streams. */
-  let x = (seed ^ Math.imul(stream, 0x9e3779b9)) >>> 0;
-  x = Math.imul(x ^ (x >>> 16), 0x21f0aaad);
-  x = Math.imul(x ^ (x >>> 15), 0x735a2d97);
-  return ((x ^ (x >>> 15)) >>> 0) / 4294967296;
-  /* eslint-enable no-bitwise */
-}
-export type Arrival = "outside" | "sofa" | "computer";
+import { nightRoll } from "./nightRandom";
+
+export { nightRoll } from "./nightRandom";
+
+export type Arrival = "outside" | "sofa" | "computer" | "trip";
 export type Noodles = "delivery" | "sealed" | "boiling" | "hot" | "steeping" | "ready" | "carrying" | "served";
 export type Household = {
   arrival: Arrival;
@@ -42,7 +38,7 @@ export function encoreTasks(seed: number): Task[] {
   return ordered;
 }
 export function createHousehold(s: Game): Household {
-  const arrival: Arrival = s.level === 5 ? (["outside", "sofa", "computer"] as const)[Math.floor(nightRoll(s.seed, 1) * 3)] : "outside";
+  const arrival: Arrival = tripNight(s.level, s.seed) ? "trip" : s.level === 5 ? (["outside", "sofa", "computer"] as const)[Math.floor(nightRoll(s.seed, 1) * 3)] : "outside";
   return {
     arrival,
 noodles: "delivery",
@@ -131,7 +127,7 @@ export function stepHousehold(s: Game, dt: number) {
   if (b.stage === "done") return;
   if (b.stage === "pending") {
     // Do not interrupt an embrace, a modal interaction, or an invitation already in progress.
-    if (s.elapsed < b.due || d.panel || s.busy || s.visit || s.actionProgress > 0) return;
+    if (beforeStream(s) || s.elapsed < b.due || d.panel || s.busy || s.visit || s.actionProgress > 0 || ["fault", "isolated", "testing"].includes(d.events.repair.stage)) return;
     b.stage = "out"; b.restoreDoor = s.doorClosed; b.clock = 0;
     s.message = `${skinOf(s.skin).name}对观众说“离开一下，马上回来”，闭麦摘下耳机，起身去洗手间。`;
     d.messages.push({ from: "partner", text: "我去一下洗手间，帮我留条过道～" });

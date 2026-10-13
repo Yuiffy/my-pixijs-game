@@ -107,6 +107,10 @@ export class CombatResolutionSystem {
       return -1;
     }
     let amount = rawAmount * (source.weakenTime > 0 ? 0.72 : 1);
+    const songLevel = this.host.state().battle?.singing[source.team].level ?? 0;
+    if (damageKind === "ability" && UNIT_DEFS[source.unitId].traits.includes("singer")) {
+      amount *= 1 + [0, 0.12, 0.2, 0.3][songLevel];
+    }
     if (target.unitId === "komichi" && source.attackType === "ranged") {
       const blockChance = abilityStatForStar(
         UNIT_DEFS.komichi,

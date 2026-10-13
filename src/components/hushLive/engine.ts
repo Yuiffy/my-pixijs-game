@@ -1,3 +1,6 @@
+import { validCgs, type CgId } from "./cg";
+import { beforeStream } from "./outings";
+import { beginNap, faultActive, repairMuted } from "./lifeEvents";
 import { skinOf, SkinId } from "./skins";
 import { beginDaily, Daily, dailyModal, discoverDaily, mealOf, offAir, openDailyPanel, sleepDaily, stepDaily } from "./daily";
 import { BODY_RADIUS, moveBody, route, walkable } from "./navigation";
@@ -6,6 +9,7 @@ import { CAT_BOWL, CAT_LITTER, BATHROOM, encoreTasks, householdAction, noodlesWa
 export type Point = { x: number; y: number };
 export type Task = "charger" | "food" | "delta" | "hug" | "kiss" | "cook" | "leisure" | "cat-food" | "cat-litter";
 export type Spot =
+  | "equipment"
   | "cat"
   | "cat-bowl"
   | "cat-litter"
@@ -35,6 +39,7 @@ export const emptyInput = (): Input => ({
 });
 export const CHARGER_TRAY = { x: 303, y: 319.4, height: 0.79 };
 export const SPOTS: Record<Spot, Point & { name: string }> = {
+  equipment: { x: 806, y: 336, name: "直播设备 · 检修信号" },
   cat: { x: 180, y: 422, name: "小猫" },
   "cat-bowl": { x: CAT_BOWL.x, y: 435, name: "猫粮碗" },
   "cat-litter": { x: CAT_LITTER.x, y: 440, name: "猫砂盆" },
@@ -99,6 +104,7 @@ export const TASK_NAMES: Record<Task, string> = {
   kiss: "交换一个晚安吻",
 };
 export type Save = {
+  cgs: CgId[];
   skin: SkinId;
   version: 1;
   unlocked: number;
@@ -109,6 +115,7 @@ export type Save = {
   partner: "她" | "他";
 };
 export const freshSave = (): Save => ({
+  cgs: [],
   skin: "host",
   version: 1,
   unlocked: 0,
@@ -140,6 +147,7 @@ export function parseSave(raw: string | null): Save {
       s.endlessBest < 0
     ) return freshSave();
     return {
+      cgs: validCgs(s.cgs),
       skin: skinOf(s.skin).id,
       version: 1,
       unlocked: s.unlocked,
@@ -160,6 +168,8 @@ export type Busy = {
   noise: number;
 };
 export type Delta = {
+  streak: number;
+  bestStreak: number;
   active: boolean;
   hits: number;
   misses: number;
@@ -270,6 +280,8 @@ export function broadcast(s: Game) {
   };
 }
 export function partnerPose(s: Game) {
+  if (beforeStream(s) && s.daily) return { x: s.daily.outing.x, y: s.daily.outing.y, stand: 1 };
+  if (offAir(s) && s.daily?.after === "supper") return { x: 175, y: 477 + (s.daily.stage === "outing" ? s.daily.outing.exitClock * 22 : 0), stand: 1 };
   if (offAir(s)) return s.daily?.after === "rice"
     ? { x: 447, y: 204, stand: 1 } : { x: 280, y: 395, stand: 1 };
   if (onBreak(s) && s.daily) return { x: s.daily.household.rest.x, y: s.daily.household.rest.y, stand: 1 };
@@ -289,10 +301,10 @@ export function interactionPoint(s: Game, spot: Spot): Point {
   if (spot === "cat-bowl") return CAT_BOWL;
   if (spot === "cat-litter") return CAT_LITTER;
   if (spot === "charging") return CHARGER_TRAY;
-  return spot === "partner" && (s.visit || offAir(s) || onBreak(s)) ? partnerPose(s) : SPOTS[spot];
+  return spot === "partner" && (s.visit || offAir(s) || onBreak(s) || beforeStream(s)) ? partnerPose(s) : SPOTS[spot];
 }
 export function partnerBehavior(s: Game) {
-  const speaking = s.phase === "playing" && !onBreak(s) && ((!offAir(s) && s.muted <= 0) || s.daily?.stage === "goodnight");
+  const speaking = s.phase === "playing" && !beforeStream(s) && !onBreak(s) && !repairMuted(s) && ((!offAir(s) && s.muted <= 0) || s.daily?.stage === "goodnight");
   const speechTime = offAir(s) ? s.daily?.clock ?? 0 : s.elapsed;
   const near = distance(s.player, partnerPose(s)) < 170;
   return {
@@ -300,6 +312,7 @@ export function partnerBehavior(s: Game) {
     peek:
       near &&
       (!!s.visit ||
+        (!!s.daily?.events.nap.active && s.daily.events.nap.reaction > 0) ||
         s.busy?.key === "food" ||
         (s.elapsed + (s.seed % 3)) % 6 < 1.3),
     mouth:
@@ -312,7 +325,7 @@ export function partnerBehavior(s: Game) {
 export function nearest(s: Game): Spot | null {
   const spots = Object.keys(SPOTS) as Spot[];
   return (
-    spots.filter(id => id !== "cat" && id !== "bathroom").find(
+    spots.filter(id => id !== "cat" && id !== "bathroom" && (id !== "equipment" || (faultActive(s) && distance(s.player, SPOTS.equipment) < 38))).find(
       (id) => distance(s.player, interactionPoint(s, id)) < (id === "door" ? 75 : 65),
     ) || null
   );
@@ -324,7 +337,7 @@ export function travel(s: Game, spot: Spot) {
     spot === "cat" && s.daily ? { x: s.daily.household.cat.x, y: s.daily.household.cat.y + (s.daily.household.cat.y > 460 ? -52 : 52) }
       : spot === "partner" && onBreak(s) ? { x: 220, y: 405 }
       : spot === "partner" && offAir(s)
-      ? s.daily?.after === "rice" ? { x: 396, y: 238 } : { x: 242, y: 428 }
+      ? s.daily?.after === "supper" ? { x: 165, y: 503 } : s.daily?.after === "rice" ? { x: 396, y: 238 } : { x: 242, y: 428 }
       : spot === "partner" && s.visit
       ? { x: s.visit.x + 26, y: s.visit.y + 9 }
       : spot === "door"
@@ -374,13 +387,15 @@ function availableAction(
       ? focus
       : null;
   if (dailyModal(s)) return { key: "", label: "完成眼前的小事", seconds: 0, noise: 0 };
-  if (s.daily?.stage === "after" && (spot === "partner" || spot === (s.daily.after === "rice" ? "kitchen" : "sofa"))) return { key: "discover", label: `轻声叫${skinOf(s.skin).name}`, seconds: 0.3, noise: 0 };
+  if (s.daily?.stage === "after" && (spot === "partner" || spot === (s.daily.after === "supper" ? "entry" : s.daily.after === "rice" ? "kitchen" : "sofa"))) return { key: "discover", label: `轻声叫${skinOf(s.skin).name}`, seconds: 0.3, noise: 0 };
   const pending = (id: Task) => s.tasks.includes(id) && !s.done.includes(id);
   const h = s.daily?.household;
+  if (spot === "bed" && s.daily?.stage === "home" && !s.carry) return { key: s.daily.events.nap.cooldown > 0 ? "" : "nap", label: s.daily.events.nap.cooldown > 0 ? "TA还盯着这边，先去忙点别的吧" : "躺在床上偷偷小睡一会儿", seconds: 0.4, noise: 1 };
+  if (spot === "equipment" && faultActive(s) && !s.carry) return { key: "repair", label: "蹲下检查直播设备", seconds: 0.4, noise: 1 };
   if (spot === "cat" && h && !s.carry) return { key: "pet-cat", label: "蹲下摸摸小猫", seconds: 0.6, noise: 0 };
   if (spot === "cat-bowl" && pending("cat-food") && !s.carry) return { key: "cat-food", label: "量一勺猫粮，倒入碗里", seconds: 0.9, noise: 3 };
   if (spot === "cat-litter" && pending("cat-litter") && !s.carry) return { key: "cat-litter", label: `铲起一处结团 · ${h?.cat.scoops ?? 0}/3`, seconds: 0.7, noise: 2 };
-  if (spot === "partner" && onBreak(s)) return { key: "", label: "TA暂时离席，等洗好手回来再亲近", seconds: 0, noise: 0 };
+  if (spot === "partner" && (onBreak(s) || beforeStream(s))) return { key: "", label: "TA暂时离席，等洗好手回来再亲近", seconds: 0, noise: 0 };
   if (spot === "kitchen" && h && s.daily?.meal === "noodles") {
     if (h.noodles === "sealed" && s.carry === "food") return { key: "boil-water", label: "放下桶面，加水烧一壶热水", seconds: 0.8, noise: 3 };
     if (h.noodles === "hot" && !s.carry) return { key: "pour-noodles", label: "撕盖放调料，倒热水泡面", seconds: 1.2, noise: 2 };
@@ -445,6 +460,8 @@ export function action(s: Game, focus: Spot | null = nearest(s)) {
 }
 function completeAction(s: Game, key: string) {
   if (householdAction(s, key)) return;
+  if (key === "nap") { beginNap(s); return; }
+  if (key === "repair" && s.daily) { s.daily.panel = "repair"; s.path = []; return; }
   if (key === "computer") { openDailyPanel(s, "leisure", true); return; }
   if (key === "cook" || key === "leisure") { openDailyPanel(s, key); return; }
   if (key === "sleep") { sleepDaily(s); return; }
@@ -498,7 +515,7 @@ function completeAction(s: Game, key: string) {
   }
 }
 function heardNoise(s: Game, noise: number) {
-  if (offAir(s) || onBreak(s)) return 0;
+  if (offAir(s) || beforeStream(s) || onBreak(s) || repairMuted(s)) return 0;
   const b = broadcast(s);
   const wall =
     s.player.x < 506 ? (s.doorClosed ? (s.seal ? 0.07 : 0.15) : 0.48) : 1;
@@ -517,12 +534,13 @@ function deltaTarget(s: Game) {
 export function hitDelta(s: Game, id: number) {
   const d = s.delta;
   if (s.phase !== "playing" || !d?.active || d.id !== id) return;
+  d.streak++; d.bestStreak = Math.max(d.bestStreak, d.streak);
   d.hits = Math.min(8, d.hits + (s.quiet ? 1 : 2));
   const noise = heardNoise(s, s.quiet ? 16 : 48);
   s.suspicion = Math.min(100, s.suspicion + noise * 0.45);
   s.peak = Math.max(s.peak, s.suspicion);
   s.noiseFlash = 0.35;
-  d.feedback = s.quiet ? "报点命中 +1" : "大声报点 +2";
+  d.feedback = `${["北桥", "仓库", "楼梯口"][d.id % 3]}收到！${s.quiet ? "低声 +1" : "大声 +2"} · 连续 ${d.streak} 次`;
   if (s.suspicion >= 100) {
     end(s, false, "caught");
     return;
@@ -539,6 +557,7 @@ export function missDelta(s: Game) {
   const d = s.delta;
   if (s.phase !== "playing" || !d?.active) return;
   d.misses++;
+  d.streak = 0;
   d.feedback = "没点准，重新瞄准";
   const noise = heardNoise(s, 34);
   s.suspicion = Math.min(100, s.suspicion + noise * 0.4);
@@ -708,6 +727,8 @@ export function step(s: Game, dt: number, input: Input) {
       } else if (a.mode === "minigame") {
         s.delta = {
           active: true,
+          streak: 0,
+          bestStreak: 0,
           hits: 0,
           misses: 0,
           id: (s.delta?.id ?? 0) + 1,

@@ -52,7 +52,9 @@ export interface BattleEffect {
     | "komichi_sign"
     | "mumu_whip"
     | "mind_control"
-    | "neural_link";
+    | "neural_link"
+    | "vine_library"
+    | "plant_nursery";
   x: number;
   y: number;
   x2?: number;
@@ -113,6 +115,9 @@ export interface ChronosphereZone {
 }
 
 export interface HealingZone {
+  /** 固定盆栽圈与帕可摸鱼圈共用寿命管理，治疗规则各自独立。 */
+  kind?: "plant";
+  healRatio?: number;
   sourceFid: string;
   team: Team;
   x: number;
@@ -445,6 +450,7 @@ export interface DamageTrace {
 }
 
 export interface BattleState {
+  singing: Record<Team, { level: number; voices: UnitId[]; expiresAt: number; readyAt: number; choruses: number }>;
   elapsed: number;
   limit: number;
   engagedTeams: Record<Team, boolean>;

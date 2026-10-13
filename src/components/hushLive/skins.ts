@@ -2,6 +2,8 @@ export const SKINS = [
   { id: "host", name: "主播酱", description: "暖棕长发 · 玫瑰毛衣", hair: "#64464a", eyes: "#4f4344", outfit: "#bf8e91", accent: "#e0ccb5", dark: "#6a625e", backdrop: "#626d88" },
   { id: "sui", name: "岁己", description: "银色双马尾 · 猫耳帽", hair: "#d8d4ed", eyes: "#d95a68", outfit: "#ae8fd1", accent: "#cfb8ef", dark: "#373245", backdrop: "#655581" },
   { id: "nana7mi", name: "七海", description: "棕发金瞳 · 鲨鱼外套", hair: "#725047", eyes: "#dc9e32", outfit: "#424957", accent: "#75b6d5", dark: "#303743", backdrop: "#496c82" },
+  { id: "shiori", name: "栞栞", description: "奶金侧辫 · 棕色兜帽", hair: "#e8dcc3", eyes: "#608bcc", outfit: "#d5bd8e", accent: "#f1ece5", dark: "#60462d", backdrop: "#787c91" },
+  { id: "mizuki", name: "弥月", description: "米金双马尾 · 黑白发结", hair: "#eee1b9", eyes: "#a178d5", outfit: "#343640", accent: "#eeeadf", dark: "#202630", backdrop: "#67557d" },
 ] as const;
 export type SkinId = (typeof SKINS)[number]["id"];
 export type Skin = (typeof SKINS)[number];

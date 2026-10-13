@@ -89,12 +89,16 @@ export const createGoCombatScorer = (model: GoModelData): GoCombatScorer => {
   if (model.schema !== "go-combat-ranker-v2" && model.schema !== "go-combat-ranker-v3") {
     throw new Error(`Unsupported Go combat model schema: ${model.schema}`);
   }
-  if (
-    model.unitFeatureNames.length !== UNIT_COMBAT_FEATURE_NAMES.length
-    || model.unitFeatureNames.some((name, index) => name !== UNIT_COMBAT_FEATURE_NAMES[index])
-  ) {
+  // Existing weights predate 287. Project by feature name so the inserted trait
+  // cannot shift cast-timing inputs. Rollouts still use the complete live rules.
+  const trainedNames = UNIT_COMBAT_FEATURE_NAMES.filter((name) => name !== "trait:gen287" && name !== "trait:singer");
+  const previousNames = UNIT_COMBAT_FEATURE_NAMES.filter((name) => name !== "trait:singer");
+  const matches = (names: readonly string[]) => model.unitFeatureNames.length === names.length
+    && model.unitFeatureNames.every((name, index) => name === names[index]);
+  if (!matches(UNIT_COMBAT_FEATURE_NAMES) && !matches(previousNames) && !matches(trainedNames)) {
     throw new Error("Go combat model unit feature schema does not match current game data");
   }
+  const featureIndices = model.unitFeatureNames.map((name) => UNIT_COMBAT_FEATURE_NAMES.indexOf(name as typeof UNIT_COMBAT_FEATURE_NAMES[number]));
   const unitIndex = indexOf(model.vocab.units);
   const starterIndex = indexOf(model.vocab.starters);
   const tagIndex = indexOf(model.vocab.waveTags);
@@ -133,11 +137,12 @@ export const createGoCombatScorer = (model: GoModelData): GoCombatScorer => {
   const baseUnitEmbedding = (id: string, embeddingIndex: number) => {
     const cached = baseUnitEmbeddingCache.get(id);
     if (cached) return cached;
+    const liveFeatures = unitCombatFeatureVector(id);
     const encoded = add(
       unitEmbedding[embeddingIndex],
       linear(
         legacyUnitFeatures?.[embeddingIndex]
-          ?? Float64Array.from(unitCombatFeatureVector(id)),
+          ?? Float64Array.from(featureIndices.map((index) => liveFeatures[index])),
         matrix("unit_feature_projection.weight"),
       ),
     );

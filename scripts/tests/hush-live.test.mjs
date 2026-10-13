@@ -5,6 +5,7 @@ import { loadTypescriptModule } from "./helpers/load-typescript-module.mjs";
 
 const e = await loadTypescriptModule("src/components/hushLive/engine.ts");
 const { objective } = await loadTypescriptModule('src/components/hushLive/guide.ts');
+const life = await loadTypescriptModule("src/components/hushLive/lifeEvents.ts");
 const daily = await loadTypescriptModule('src/components/hushLive/daily.ts');
 const {
   step,
@@ -64,6 +65,8 @@ function completeNight(s, choice = 'together') {
     if (s.daily?.panel === 'leisure') { s.daily.volume = 15; advance(s, 9); daily.finishLeisure(s); continue; }
     if (s.daily?.stage === 'sleep') { advance(s, 3.1); continue; }
     if (s.daily?.panel === 'story') { daily.chooseGoodnight(s, choice); advance(s, .1); continue; }
+    if (s.daily?.panel === 'repair') { life.repairInput(s, 'isolate'); life.repairInput(s, s.daily.events.repair.kind); advance(s, 3.1); life.repairInput(s, 'resume'); continue; }
+    if(s.daily?.stage==='outing') { advance(s,4.2);continue; }
     const next = objective(s);
     walk(s, next.spot);
     if (objective(s).spot !== next.spot || objective(s).key !== next.key) continue;
@@ -240,11 +243,11 @@ test('following current objectives completes every integrated night and all afte
   const memories = new Set();
   for (let level = 1; level <= 5; level++) for (const seed of [1, 42, 99]) for (const choice of ['care', 'together']) {
     const s = e.createGame(level, seed, level); s.phase = 'playing';
-    assert.equal(s.daily.arrival, s.daily.household.arrival === 'outside' ? 'intro' : 'done'); completeNight(s, choice);
+    assert.equal(s.daily.arrival, ['outside','trip'].includes(s.daily.household.arrival) ? 'intro' : 'done'); completeNight(s, choice);
     assert.equal(s.won, true, JSON.stringify(s)); memories.add(s.daily.memory);
     assert.ok(e.record(e.freshSave(), s).unlocked >= (level < 5 ? level + 1 : 0));
   }
-  assert.equal(memories.size, 4);
+  assert.equal(memories.size, 6);
 });
 
 test('the guide prioritizes what is in your hands, and explains a blocking closed door', () => {
@@ -527,15 +530,15 @@ test('encore independently varies home starts, varied deliveries, homemade meals
     const s = e.createGame(5,seed,5), d=s.daily;
     assert.deepEqual(s,e.createGame(5,seed,5));
     arrivals.set(d.household.arrival,(arrivals.get(d.household.arrival)||0)+1);
-    assert.equal(d.arrival,d.household.arrival==='outside'?'intro':'done');
-    if(d.household.arrival==='outside')assert.ok(s.player.y>532);else assert.ok(nav.walkable(s.player,false));
+    assert.equal(d.arrival,['outside','trip'].includes(d.household.arrival)?'intro':'done');
+    if(['outside','trip'].includes(d.household.arrival))assert.ok(s.player.y>532);else assert.ok(nav.walkable(s.player,false));
     if(d.homemade) homemade++; else meals.set(d.meal,(meals.get(d.meal)||0)+1);
     plans.add(s.tasks.join(','));
     assert.equal(new Set(s.tasks).size,s.tasks.length);
     if(d.homemade)assert.ok(s.tasks.indexOf('cook')<s.tasks.indexOf('food'));
   }
-  assert.equal(arrivals.size,3);assert.equal(meals.size,daily.MEALS.length);assert.ok(plans.size>30);
-  assert.ok([...arrivals.values()].every(n=>n>700));assert.ok([...meals.values()].every(n=>n>200));
+  assert.equal(arrivals.size,4);assert.equal(meals.size,daily.MEALS.length);assert.ok(plans.size>30);
+  assert.ok(arrivals.get("trip")>150 && arrivals.get("trip")<450);assert.ok([...arrivals].filter(([k])=>k!=="trip").every(([,n])=>n>700));assert.ok([...meals.values()].every(n=>n>140));
   assert.ok(homemade>450&&homemade<750);
 });
 
@@ -572,7 +575,7 @@ test('cats wander around furniture, sleep, eat after feeding, and cleanup cannot
 
 test('partner takes a private bathroom break, walks collision-free both ways, and resumes talking', () => {
   for(const closed of [false,true]){
-    const s=createGame(5,21,5);s.phase='playing';s.doorClosed=closed;
+    const s=createGame(5,21,5);s.phase='playing';s.doorClosed=closed;s.daily.events.repair.stage='none';
     const states=new Set();let muted=false;
     for(let i=0;i<2600&&s.daily.household.rest.stage!=='done';i++){
       advance(s,.05);const b=s.daily.household.rest;states.add(b.stage);
@@ -593,7 +596,7 @@ test('random nights with changing food, cat chores and bathroom events can all b
     meals.add(s.daily.meal);starts.add(s.daily.household.arrival);
     if(s.daily.meal==='noodles')assert.equal(s.daily.household.noodles,'served');
   }
-  assert.equal(meals.size,daily.MEALS.length);assert.equal(starts.size,3);
+  assert.equal(meals.size,daily.MEALS.length);assert.equal(starts.size,4);
 });
 
 

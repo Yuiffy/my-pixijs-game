@@ -1,4 +1,4 @@
-import { dialReady, DIAL_TOLERANCE, lockSignal, Mini } from "./minigames";
+import { dialReady, DIAL_TOLERANCE, lockSignal, recoilTarget, Mini } from "./minigames";
 
 /** Canvas coordinates are fixed; CSS handles scaling without changing input or simulation. */
 export function drawMini(c: CanvasRenderingContext2D, m: Mini) {
@@ -164,8 +164,9 @@ export function drawMini(c: CanvasRenderingContext2D, m: Mini) {
       line(i * 100, 0, i * 100, 400, "#456056", 1);
       line(0, i * 60, 700, i * 60, "#456056", 1);
     }
-    [90, 60, 30].forEach((r, i) => {
-      ellipse(350, 200, r, r, ["#d6c8a4", "#668b78", "#df9d71"][i]);
+    const target = recoilTarget(m);
+    [105, 70, 35].forEach((r, i) => {
+      ellipse(target.x * 7, target.y * 4, r, r * (4 / 7), ["#d6c8a4", "#668b78", "#df9d71"][i]);
     });
     m.marks.forEach((p) => ellipse(p.x * 7, p.y * 4, 4, 4, p.hit ? "#fff4bb" : "#c8614c"),);
     const x = m.aimX * 7;

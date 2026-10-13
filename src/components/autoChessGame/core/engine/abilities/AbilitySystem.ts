@@ -1,3 +1,4 @@
+import { contributeSinging } from "../singing";
 import {
   BATTLE_BOUNDS,
   pointDistanceFromForwardRay,
@@ -5,6 +6,8 @@ import {
 } from "../../battleGeometry";
 import {
   UNIT_DEFS,
+  TRAITS,
+  traitLevelForCount,
   abilityStatForStar,
   type UnitId,
 } from "../../gameData";
@@ -230,6 +233,37 @@ export class AbilitySystem {
     const addShield = (target: Fighter, amount: number, capRatio = 0.55) => this.host.grantShield(source, target, amount, capRatio);
 
     switch (source.unitId) {
+      case "viridis": {
+        const duration = abilityStatForStar(def, source.star, "duration", 4);
+        const radius = abilityStatForStar(def, source.star, "radius", 115);
+        this.host.grantShield(source, source, source.maxHp * abilityStatForStar(def, source.star, "shieldRatio", 0.12), 0.55);
+        this.state.battle?.healingZones.push({ kind: "plant", healRatio: abilityStatForStar(def, source.star, "healRatio", 0.03), sourceFid: source.fid, team: source.team, x: source.x, y: source.y, radius, life: duration, maxLife: duration, pulseTimer: 1, color: def.accent });
+        this.host.addEffect({ kind: "plant_nursery", x: source.x, y: source.y, color: def.accent, life: duration, size: radius });
+        break;
+      }
+      case "sumire": {
+        const radius = abilityStatForStar(def, source.star, "radius", 115);
+        const center = this.host.densestTarget(targets, radius);
+        if (!center) break;
+        const duration = abilityStatForStar(def, source.star, "duration", 3);
+        targets.filter((target) => Math.hypot(target.x - center.x, target.y - center.y) <= radius).forEach((target) => {
+          deal(target, abilityStatForStar(def, source.star, "damageMultiplier", 2.3));
+          target.energy = Math.max(0, target.energy - abilityStatForStar(def, source.star, "energyDrain", 20));
+          target.slowTime = Math.max(target.slowTime, 0.2);
+          target.slowMultiplier = Math.min(target.slowMultiplier, 0.45);
+        });
+        this.state.battle?.controlZones.push({ kind: "slow", sourceFid: source.fid, team: source.team, x: center.x, y: center.y, radius, life: duration, maxLife: duration, color: def.accent, slowMultiplier: 0.45 });
+        this.host.addEffect({ kind: "vine_library", x: center.x, y: center.y, color: def.accent, life: duration, size: radius });
+        break;
+      }
+      case "chu2u": {
+        const target = [...targets].sort((a, b) => b.attack - a.attack)[0];
+        if (!target) break;
+        ["📡", "👽", "😼"].forEach((emoji, index) => {
+          this.state.battle?.projectileVolley.push({ sourceFid: source.fid, targetFid: target.fid, delay: index * 0.4, damage: source.attack * abilityStatForStar(def, source.star, "damageMultiplier", 1.2), damageKind: "ability", burnPower: 0, speed: 520, color: def.accent, size: 22, style: "laugh", emoji, stunDuration: index === 2 ? abilityStatForStar(def, source.star, "stunDuration", 0.45) : 0, knockbackDistance: index === 2 ? abilityStatForStar(def, source.star, "knockback", 24) : 0 });
+        });
+        break;
+      }
       case "sumi": {
         source.energy = source.maxEnergy;
         source.stealthTime = SUMI_STEALTH_DURATION;
@@ -1142,6 +1176,20 @@ export class AbilitySystem {
       }
     }
 
+    const { battle } = this.state;
+    if (battle) contributeSinging(battle, source, this.host);
+    if (battle && def.traits.includes("gen287")) {
+      const members = new Set(battle[source.team].filter((fighter) => UNIT_DEFS[fighter.unitId].traits.includes("gen287")).map((fighter) => fighter.unitId));
+      const level = traitLevelForCount(TRAITS.gen287, members.size);
+      const partner = this.host.living(source.team)
+        .filter((fighter) => fighter !== source && UNIT_DEFS[fighter.unitId].traits.includes("gen287") && fighter.energy < fighter.maxEnergy)
+        .sort((a, b) => a.energy / a.maxEnergy - b.energy / b.maxEnergy)[0];
+      if (level && partner) {
+        partner.energy = Math.min(partner.maxEnergy, partner.energy + [0, 8, 14][level]);
+        this.host.addEffect({ kind: "line", x: source.x, y: source.y, x2: partner.x, y2: partner.y, color: TRAITS.gen287.color, life: 0.55, size: 3 });
+        this.host.addEffect({ kind: "text", x: partner.x, y: partner.y - 35, color: TRAITS.gen287.color, text: `287 接力 +${[0, 8, 14][level]}`, life: 0.65, size: 11 });
+      }
+    }
     if (source.unitId !== "tower_god") {
       this.host.addEffect({
         kind: "text",

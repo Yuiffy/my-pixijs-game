@@ -2,6 +2,7 @@ import { nightRoll } from "./household";
 
 export type MiniKind = "dial" | "pick" | "pins" | "toss" | "eggs" | "recoil";
 export type MiniInput =
+  | "mode"
   | "turn"
   | "set"
   | "press"
@@ -11,6 +12,10 @@ export type MiniInput =
   | "toss"
   | "aim";
 export type Mini = {
+  precision: number;
+  streak: number;
+  bestStreak: number;
+  movingTarget: boolean;
   kind: MiniKind;
   seed: number;
   clock: number;
@@ -59,6 +64,10 @@ export const lockKind = (seed: number): MiniKind => (["dial", "pick", "pins"] as
 export const cookKind = (seed: number): MiniKind => (nightRoll(seed, 31) < 0.5 ? "toss" : "eggs");
 export function createMini(kind: MiniKind, seed: number): Mini {
   return {
+    precision: 0,
+    streak: 0,
+    bestStreak: 0,
+    movingTarget: false,
     kind,
     seed,
     clock: 0,
@@ -157,10 +166,15 @@ export function lockSignal(m: Mini) {
 }
 function mistake(m: Mini, text: string) {
   m.misses++;
+  m.streak = 0;
   m.feedback = text;
   m.cooldown = 0.45;
 }
 function latch(m: Mini) {
+  const deviation = m.kind === "dial" ? angleDistance(m.angle, m.targets[m.score]) : Math.abs((m.kind === "pick" ? m.angle : m.lift) - m.targets[m.score]);
+  if (deviation <= (m.kind === "dial" ? 7 : 3)) m.precision++;
+  m.streak++;
+  m.bestStreak = Math.max(m.bestStreak, m.streak);
   m.score++;
   m.travel = 0;
   m.torque = 0;
@@ -178,6 +192,11 @@ function latch(m: Mini) {
 /** All movement comes from the main simulation clock; UI only supplies intent. */
 export function miniInput(m: Mini, input: MiniInput, x = 0, y = 0) {
   if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+  if (input === "mode" && m.kind === "recoil") {
+    const movingTarget = !m.movingTarget;
+    Object.assign(m, createMini("recoil", m.seed), { movingTarget });
+    return;
+  }
   if (input === "release") {
     m.held = false;
     return;
@@ -222,10 +241,13 @@ export function miniInput(m: Mini, input: MiniInput, x = 0, y = 0) {
     m.spin = 0;
     m.feedback = "牛肉翻起来了！把锅移到影子下面接住。";
   }
+  if (input === "press" && (m.kind === "pick" || m.kind === "recoil")) {
+    m.held = true;
+    return;
+  }
   if (input !== "press" || m.cooldown > 0) return;
   if (m.kind === "dial") {
     if (dialReady(m)) {
-      m.angle = m.targets[m.score];
       latch(m);
     } else mistake(
         m,
@@ -236,7 +258,7 @@ export function miniInput(m: Mini, input: MiniInput, x = 0, y = 0) {
   } else if (m.kind === "pins") {
     if (Math.abs(m.lift - m.targets[m.score]) <= 7) latch(m);
     else mistake(m, "缺口没对齐剪切线，再抬高或放低一点。前面的弹子不会掉。");
-  } else if (m.kind === "pick" || m.kind === "recoil") m.held = true;
+  }
 }
 export function stepMini(m: Mini, dt: number) {
   if (m.won || !Number.isFinite(dt) || dt <= 0) return;
@@ -286,11 +308,15 @@ export function stepMini(m: Mini, dt: number) {
       m.flight = false;
       m.y = 0;
       if (Math.abs(m.x - m.pan) < 16) {
+        const precise = Math.abs(m.x - m.pan) < 6;
+        if (precise) m.precision++;
+        m.streak++;
+        m.bestStreak = Math.max(m.bestStreak, m.streak);
         m.face = bottomFace(m.rotation);
         m.feedback =
           m.faces[m.face] >= 1
             ? "接住了，不过这面已熟。左右斜甩或反向甩，换一面。"
-            : "接住！先在锅里煎到金黄，再翻下一面。";
+            : precise ? "稳稳接在锅心！先煎到金黄，再翻下一面。" : "接住！先在锅里煎到金黄，再翻下一面。";
       } else {
         m.rotation = [...m.fromRotation];
         mistake(
@@ -346,17 +372,24 @@ export function stepMini(m: Mini, dt: number) {
           b.z += (dz / distance) * push;
         }
       }
-    m.score = m.grains.filter((g) => g.coat >= 1).length;
+    const coated = m.grains.filter((g) => g.coat >= 1).length;
+    if (coated > m.score) { m.precision += coated - m.score; m.streak = coated; m.bestStreak = coated; }
+    m.score = coated;
     m.won = m.score === 6;
     m.feedback = m.won
       ? "粒粒裹上金黄蛋液，蛋炒饭出锅！"
       : "缓缓绕圈倾斜铁锅，让白米饭滑过蛋液，变成金黄色。";
   }
   if (m.kind === "recoil" && m.held && m.cooldown === 0) {
-    const hit = Math.hypot(m.aimX - 50, m.aimY - 50) <= 15;
+    const target = recoilTarget(m);
+    const deviation = Math.hypot(m.aimX - target.x, m.aimY - target.y);
+    const hit = deviation <= 15;
     m.marks.push({ x: m.aimX, y: m.aimY, hit });
     m.shots++;
     if (hit) m.score++;
+    if (deviation <= 5) m.precision++;
+    m.streak = hit ? m.streak + 1 : 0;
+    m.bestStreak = Math.max(m.bestStreak, m.streak);
     m.aimY = clamp(m.aimY - 4.3, 0, 100);
     m.aimX = clamp(m.aimX + Math.sin(m.shots * 2.4) * 2.1, 0, 100);
     m.cooldown = 0.16;
@@ -366,4 +399,20 @@ export function stepMini(m: Mini, dt: number) {
       m.feedback = `24发结束 · ${m.score}发命中。${m.score >= 18 ? "压得很稳！" : m.score >= 10 ? "不错，下次试着更稳一点。" : "枪口会往上抬，持续往下拖来抵消。"}`;
     }
   }
+  if (m.kind === "recoil" && !m.held && !m.won) {
+    // Short bursts settle naturally; holding fire still requires active recoil compensation.
+    const recover = 1 - Math.exp(-dt * 1.8);
+    m.aimY += (50 - m.aimY) * recover;
+    m.aimX += (50 - m.aimX) * recover;
+  }
+}
+
+export function recoilTarget(m: Mini) {
+  return m.movingTarget ? { x: 50 + Math.sin(m.clock * 0.9) * 21, y: 50 + Math.cos(m.clock * 0.65) * 12 } : { x: 50, y: 50 };
+}
+
+export function nextFaceHint(m: Mini) {
+  const choices = [{ turn: 0, name: "向上甩" }, { turn: 2, name: "向下甩" }, { turn: -1, name: "左斜甩" }, { turn: 1, name: "右斜甩" }];
+  const next = choices.sort((a, b) => m.faces[bottomFace(turnedRotation(m.rotation, a.turn))] - m.faces[bottomFace(turnedRotation(m.rotation, b.turn))])[0];
+  return `${next.name} → ${FACE_NAMES[bottomFace(turnedRotation(m.rotation, next.turn))]}`;
 }

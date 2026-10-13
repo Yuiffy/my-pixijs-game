@@ -1,5 +1,7 @@
 "use client";
 
+import { beforeStream } from "./outings";
+
 import { memo, useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
@@ -28,6 +30,9 @@ import DailyScene, { MealModels } from "./DailyScene";
 import { offAir } from "./daily";
 import { onBreak } from "./household";
 import HouseholdScene from "./HouseholdScene";
+import LifeEventScene from "./LifeEventScene";
+import OutingScene from "./OutingScene";
+import { faultActive, repairMuted } from "./lifeEvents";
 
 type Vec = [number, number, number];
 type BoxProps = {
@@ -258,14 +263,16 @@ function Partner({
         ? Math.min(0.5, Math.max(0, r.elapsedFrame - lastAnimationTime.current))
         : dt;
     lastAnimationTime.current = r.elapsedFrame;
-    if (headphones.current) headphones.current.visible = !offAir(r.game) && !onBreak(r.game);
+    if (headphones.current) headphones.current.visible = !beforeStream(r.game) && !offAir(r.game) && !onBreak(r.game);
     if (towel.current) towel.current.visible = !player && offAir(r.game) && r.game.daily?.after === "shower";
-    rig.current.visible = (!player || r.game.won) && (r.game.won || !onBreak(r.game) || r.game.daily?.household.rest.stage !== "inside");
-    const pos = r.game.won
+    const tripArrival = beforeStream(r.game) && r.game.daily?.outing.stage === "arrival";
+    const goingOut = r.game.daily?.after === "supper" && ["outing", "complete"].includes(r.game.daily.stage);
+    rig.current.visible = (!player || r.game.won || tripArrival || goingOut) && (r.game.won || !onBreak(r.game) || r.game.daily?.household.rest.stage !== "inside");
+    const pos = goingOut ? { x: player ? 120 : 158, y: 477 + (r.game.daily?.outing.exitClock ?? 0) * 22 } : tripArrival && player ? r.game.player : r.game.won
       ? { x: player ? 209 : 259, y: 327 }
       : partnerPose(r.game);
     const [x, z] = worldPoint(pos);
-    const stand = player || r.game.won ? 0 : partnerPose(r.game).stand;
+    const stand = tripArrival || goingOut ? 1 : player || r.game.won ? 0 : partnerPose(r.game).stand;
     rig.current.position.set(x, stand * 0.24, z);
     if (seatedLegs.current) seatedLegs.current.visible = stand < 0.1;
     if (standingLegs.current) {
@@ -274,22 +281,22 @@ function Partner({
       standingLegs.current.scale.y = (0.61 + stand * 0.24) / 0.85;
       standingLegs.current.children.forEach((leg, i) => {
         leg.rotation.x =
-          (stand > 0.1 && stand < 0.95) || onBreak(r.game)
+          (stand > 0.1 && stand < 0.95) || onBreak(r.game) || beforeStream(r.game) || goingOut
             ? Math.sin(r.game.elapsed * 9 + i * Math.PI) * 0.12
             : 0;
       });
     }
     const [px, pz] = worldPoint(r.game.player);
-    const near = Math.hypot(px - x, pz - z) < 2.2;
+    const near = Math.hypot(px - x, pz - z) < 2.2 || !!r.game.daily?.events.nap.active;
     const behavior = partnerBehavior(r.game);
     const romantic =
       ["hug", "kiss", "bonus"].includes(r.game.actionKey) &&
       r.game.actionProgress > 0 &&
       !r.game.busy;
-    const wanted = r.game.won
+    const wanted = goingOut ? 0 : beforeStream(r.game) && r.game.daily ? r.game.daily.outing.yaw : r.game.won
       ? Math.atan2(-2.7 - x, 1.74 - z)
       : onBreak(r.game) && r.game.daily ? r.game.daily.household.rest.yaw
-      : near && (behavior.peek || romantic || offAir(r.game))
+      : near && (behavior.peek || romantic || offAir(r.game) || !!r.game.daily?.events.nap.active)
         ? Math.atan2(px - x, pz - z)
         : Math.PI;
     if (mouth.current && smile.current) {
@@ -321,9 +328,9 @@ function Partner({
       ) ||
         r.game.affection > 0);
     for (const arm of [left.current, right.current]) if (arm) arm.rotation.x +=
-          ((offAir(r.game) && r.game.daily?.after === "rice" ? -0.6 + Math.sin(r.game.daily.clock * 4) * 0.2 : hugging ? -1.45 : invitation ? -0.8 : -0.3) - arm.rotation.x) *
+          ((r.game.daily?.events.nap.active && r.game.daily.events.nap.reaction >= 2 ? -1.2 + Math.sin(r.game.daily.events.nap.clock * 8) * 0.18 : offAir(r.game) && r.game.daily?.after === "rice" ? -0.6 + Math.sin(r.game.daily.clock * 4) * 0.2 : hugging ? -1.45 : invitation ? -0.8 : -0.3) - arm.rotation.x) *
           Math.min(1, motionDt * 6);
-    if (eyes.current) eyes.current.scale.y = Math.sin(r.game.pulse * 0.37) > 0.99 ? 0.15 : 1;
+    if (eyes.current) eyes.current.scale.y = r.game.daily?.events.nap.active && r.game.daily.events.nap.reaction > 0 ? 0.5 : Math.sin(r.game.pulse * 0.37) > 0.99 ? 0.15 : 1;
     if (!player) {
       r.tracking.yaw = rig.current.rotation.y;
       r.tracking.pitch = head.current?.rotation.x ?? 0;
@@ -346,7 +353,7 @@ function Partner({
         color={sweater}
       />
       {!player && <SkinDetails id={skin.id} part="body" />}
-      <Box at={[0, 0.61, 0.02]} size={[0.34, 0.15, 0.3]} color="#6a625e" />
+      <Box at={[0, 0.61, 0.02]} size={[0.34, 0.15, 0.3]} color={!player && (skin.id === "shiori" || skin.id === "mizuki") ? skin.dark : "#6a625e"} />
       <group ref={seatedLegs}>
         {[-1, 1].map((sign) => (
           <group key={sign}>
@@ -354,18 +361,18 @@ function Partner({
               from={[sign * 0.11, 0.6, 0.07]}
               to={[sign * 0.11, 0.47, 0.44]}
               radius={0.08}
-              color="#6a625e"
+              color={!player && (skin.id === "shiori" || skin.id === "mizuki") ? skin.dark : "#6a625e"}
             />
             <Rod
               from={[sign * 0.11, 0.47, 0.44]}
               to={[sign * 0.11, 0.13, 0.49]}
               radius={0.065}
-              color="#756d63"
+              color={!player && (skin.id === "shiori" || skin.id === "mizuki") ? "#48424a" : "#756d63"}
             />
             <Ball
               at={[sign * 0.11, 0.1, 0.56]}
               scale={[0.85, 0.52, 1.45]}
-              color="#e5d5bd"
+              color={!player && (skin.id === "shiori" || skin.id === "mizuki") ? skin.dark : "#e5d5bd"}
               radius={0.1}
             />
           </group>
@@ -378,19 +385,19 @@ function Partner({
               from={[sign * 0.11, 0.85, 0.03]}
               to={[sign * 0.11, 0.44, 0.07]}
               radius={0.073}
-              color="#6a625e"
+              color={!player && (skin.id === "shiori" || skin.id === "mizuki") ? skin.dark : "#6a625e"}
             />
             <Rod
               from={[sign * 0.11, 0.44, 0.07]}
               to={[sign * 0.11, 0.1, 0.08]}
               radius={0.065}
-              color="#756d63"
+              color={!player && (skin.id === "shiori" || skin.id === "mizuki") ? "#48424a" : "#756d63"}
             />
             <Ball
               at={[sign * 0.11, 0.065, 0.14]}
               radius={0.1}
               scale={[0.85, 0.52, 1.4]}
-              color="#e5d5bd"
+              color={!player && (skin.id === "shiori" || skin.id === "mizuki") ? skin.dark : "#e5d5bd"}
             />
           </group>
         ))}
@@ -456,7 +463,7 @@ function Partner({
                 at={[sign * 0.064, 0, 0]}
                 radius={!player && skin.id !== "host" ? 0.015 : 0.019}
                 scale={[1, 1.25, 0.3]}
-                color={player ? "#4f4344" : skin.eyes}
+                color={player ? "#4f4344" : skin.id === "mizuki" && sign > 0 ? "#d57eab" : skin.eyes}
               />
               {!player && skin.id !== "host" && <Ball at={[sign * 0.064, 0, 0.005]} radius={0.008} scale={[0.8, 1.3, 0.22]} color="#392a39" />}
               <Ball
@@ -606,9 +613,12 @@ function Room({
       chair.current.rotation.y = tracking.yaw;
       tracking.chairYaw = tracking.yaw;
     }
-    const signature = [tracking.yaw, tracking.pitch, tracking.roll, tracking.mouth, tracking.blink, tracking.stand, r.game.won, offline, appearance.skin].join('|');
+    const repair = r.game.daily?.events.repair;
+    const technical = repairMuted(r.game) ? '稍等一下 · 正在检查信号' : faultActive(r.game) ? '信号异常 · 场外处理中' : '';
+    const avatarPose = faultActive(r.game) && repair?.kind === 'camera' ? { ...tracking, yaw: Math.PI, mouth: 0, blink: 1 } : tracking;
+    const signature = [technical, tracking.yaw, tracking.pitch, tracking.roll, tracking.mouth, tracking.blink, tracking.stand, r.game.won, offline, appearance.skin].join('|');
     if (signature !== avatarSignature.current) {
-      paintAvatar(textures.avatar, tracking, r.game.won || offline, appearance.skin);
+      paintAvatar(textures.avatar, avatarPose, r.game.won || offline, appearance.skin, technical);
       avatarSignature.current = signature;
       tracking.avatarYaw = Math.atan2(Math.sin(tracking.yaw - Math.PI), Math.cos(tracking.yaw - Math.PI));
       tracking.avatarMouth = tracking.mouth;
@@ -620,7 +630,7 @@ function Room({
         ? Math.min(0.5, Math.max(0, r.elapsedFrame - lastAnimationTime.current))
         : dt;
     lastAnimationTime.current = r.elapsedFrame;
-    if (frontDoor.current) frontDoor.current.rotation.y = THREE.MathUtils.damp(frontDoor.current.rotation.y, ["open", "entering", "inside"].includes(r.game.daily?.arrival ?? "") ? -Math.PI / 2 : 0, 7, motionDt);
+    if (frontDoor.current) frontDoor.current.rotation.y = THREE.MathUtils.damp(frontDoor.current.rotation.y, (["open", "entering", "inside"].includes(r.game.daily?.arrival ?? "") || r.game.daily?.stage === "outing" || (r.game.won && r.game.daily?.after === "supper")) ? -Math.PI / 2 : 0, 7, motionDt);
     if (door.current) door.current.rotation.y = THREE.MathUtils.damp(
         door.current.rotation.y,
         r.game.doorClosed ? 0 : Math.PI / 2,
@@ -1062,6 +1072,8 @@ function Room({
       <Ball at={[-5.89, 1.0, 1.64]} radius={0.045} color="#c5b085" />
       <DailyScene runtime={r} />
       <HouseholdScene runtime={r} />
+      <LifeEventScene runtime={r} />
+      <OutingScene runtime={r} />
       <Hands runtime={r} />
       <GoalMarker runtime={r} />
     </>
@@ -1211,9 +1223,20 @@ function CameraRig({
   }, [camera, size.width, size.height]);
   const probe = () => {
     const [x, z] = worldPoint(r.game.player);
-    if (r.game.won) {
+    if ((beforeStream(r.game) && r.game.daily?.outing.stage === "arrival") || (r.game.daily?.after === "supper" && ["outing", "complete"].includes(r.game.daily.stage))) {
+      camera.position.set(-4.95, 1.8, 6.3);
+      camera.lookAt(size.width < size.height ? -4.65 : -4.1, 1.0, 3.65);
+    } else if (r.game.daily?.after === "supper" && r.game.daily.panel === "story") {
+      camera.position.set(-5.9, 1.65, 2.8);
+      camera.lookAt(-4.3, 1.05, size.width < size.height ? 2.25 : 1.65);
+    } else if (r.game.won) {
       camera.position.set(-2.7, 1.33, 1.74);
       camera.lookAt(-3.5, 1.0, 0.14);
+    } else if (r.game.daily?.events.nap.active) {
+      camera.position.set(3.35, 0.91, 1.40);
+      const target = lookPoint(r, "partner");
+      camera.lookAt(target.x, target.y, target.z);
+      camera.rotateZ(-0.13);
     } else {
       const intimate =
         ["hug", "kiss", "bonus"].includes(r.game.actionKey) &&

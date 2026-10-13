@@ -882,13 +882,18 @@ export class CombatProjectileSystem {
       );
       const targetTeam: Team = source.team === "player" ? "enemy" : "player";
       // 带角度偏移的弹幕（近视射击）开火时重新找最近目标，体现瞄不准
-      const target =
+      let target =
         shot.angleOffset !== undefined
           ? this.host.nearestTarget(source, this.host.living(targetTeam)) ||
             (locked?.alive ? locked : null)
           : locked?.alive
             ? locked
             : null;
+      if (source.unitId === "chu2u" && !target) {
+        target = this.host.living(targetTeam)
+          .filter((fighter) => Math.hypot(fighter.x - source.x, fighter.y - source.y) <= UNIT_DEFS.chu2u.abilityRange)
+          .sort((a, b) => b.attack - a.attack)[0] || null;
+      }
       if (target) this.fireFixedProjectile(source, target, shot);
       return false;
     });

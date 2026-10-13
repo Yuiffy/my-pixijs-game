@@ -26,6 +26,15 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
     title: '动作与探索',
     games: [
       {
+        title: '风邮小镇',
+        href: '/game/wayfinder',
+        description: '八封信，从海港奔向两层商场与曲折洞窟。大鲤鱼咬断归途木桥，岔路与回环等你自己认路。',
+        image: '/games/wayfinder/preview.png',
+        meta: '3D 找路冒险 · 纸地图 · 地标与回信',
+        releaseDate: '2026-10-13',
+        updateDate: '2026-10-13',
+      },
+      {
         title: '岁己 · 旅居之魂',
         href: '/game/night-rain',
         description:

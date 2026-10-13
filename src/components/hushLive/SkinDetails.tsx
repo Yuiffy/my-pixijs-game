@@ -12,6 +12,36 @@ function Stripe({ at, size, color, tilt = 0 }: { at: Vec; size: Vec; color: stri
 export function SkinDetails({ id, part }: { id: SkinId; part: "head" | "body" }) {
   const skin = skinOf(id);
   if (id === "host") return null;
+  if (id === "shiori" || id === "mizuki") return part === "head" ? (
+    <group>
+      {id === "shiori" ? (
+<>
+        <Orb at={[0, 0.095, -0.07]} scale={[0.25, 0.21, 0.19]} color={skin.dark} />
+        <Orb at={[0, 0.08, 0.013]} scale={[0.214, 0.18, 0.17]} color={skin.hair} />
+        {[0, 1, 2, 3, 4].map(n => <Orb key={n} at={[0.2 + Math.sin(n * 2) * 0.022, -0.08 - n * 0.063, 0.012]} scale={[0.058 - n * 0.004, 0.058, 0.052]} color={n % 2 ? "#cfbea0" : skin.hair} />)}
+        <Stripe at={[0.23, 0.23, 0]} size={[0.14, 0.045, 0.028]} color={skin.accent} tilt={0.5} />
+        <Stripe at={[0.2, -0.34, 0.03]} size={[0.13, 0.035, 0.025]} color={skin.accent} tilt={-0.2} />
+        <Stripe at={[-0.11, 0.1, 0.18]} size={[0.065, 0.012, 0.013]} color="#b96590" tilt={-0.3} />
+      </>
+) : [-1, 1].map(sign => (
+<group key={sign}>
+        {[0, 1, 2, 3, 4].map(n => <Orb key={n} at={[sign * (0.26 + Math.sin(n * 1.9) * 0.028), 0.02 - n * 0.083, -0.045]} scale={[0.076 - n * 0.006, 0.087, 0.068]} color={n % 2 ? "#daca9e" : skin.hair} />)}
+        {[0, 1].map(n => (
+<group key={n} position={[sign * 0.255, 0.14 - n * 0.25, 0.016]}>
+          <Stripe at={[0, 0, 0]} size={[0.18, 0.062, 0.04]} color={skin.dark} tilt={sign * 0.6} />
+          <Stripe at={[0, 0, 0.024]} size={[0.02, 0.14, 0.013]} color={skin.accent} tilt={sign * -0.4} />
+        </group>
+))}
+      </group>
+))}
+    </group>
+  ) : (
+<group>
+    <Stripe at={[0, 0.85, 0.165]} size={[0.15, 0.28, 0.02]} color={id === "shiori" ? skin.accent : skin.dark} />
+    {[-1, 1].map(sign => <Stripe key={sign} at={[sign * 0.05, 1.01, 0.18]} size={[0.11, 0.052, 0.025]} color={skin.dark} tilt={sign * 0.4} />)}
+    {[0, 1, 2].map(n => <Orb key={n} at={[id === "mizuki" ? 0.09 : 0, 0.88 - n * 0.085, 0.18]} scale={[0.012, 0.012, 0.008]} color={id === "mizuki" ? "#c5bc9e" : skin.dark} />)}
+  </group>
+);
   if (part === "body") return (
 <group>
     <Stripe at={[0, 0.85, 0.158]} size={[0.18, 0.29, 0.018]} color={id === "sui" ? skin.dark : "#eee9df"} />
@@ -84,6 +114,8 @@ export function SkinPortrait({ id }: { id: SkinId }) {
     <path d="M45 57q5 5 10 0" fill="none" stroke="#a86c70" strokeWidth="2" />
     {id === "sui" && <g><path d="M24 24L23 3 38 14Q52 5 65 14L78 3 78 28Z" fill={s.dark} /><path d="M28 14L28 8 34 16M69 16L74 8 74 15" stroke={s.accent} strokeWidth="4" /><ellipse cx="51" cy="27" rx="31" ry="6" fill="#4c435d" /></g>}
     {id === "nana7mi" && <g><path d="M61 28l13 -2m-13 7 13 -2" stroke="#e3bf65" strokeWidth="3" /><path d="M24 30l8 6m-8 0 8 -6" stroke="#d6e6e6" strokeWidth="2" /><path d="M36 72l14 6 14 -6 -4 15 -10 -7 -10 7Z" fill={s.accent} /></g>}
+    {id === "shiori" && <g><path d="M22 52Q8 4 50 3Q91 4 78 55L71 23Q49 8 29 26Z" fill={s.dark} />{[0, 1, 2, 3].map(n => <ellipse key={n} cx={74 + (n % 2) * 3} cy={48 + n * 8} rx="7" ry="7" fill={s.hair} />)}<path d="M73 17l14 -9 -5 14Z" fill={s.accent} /></g>}
+    {id === "mizuki" && <g>{[-1, 1].map(sign => <g key={sign}><ellipse cx={50 + sign * 34} cy="51" rx="9" ry="25" fill={s.hair} /><path d={`M${50 + sign * 34} 23l-12 -7 3 15 9 -4 9 4 3 -15Z`} fill={s.dark} /></g>)}<ellipse cx="60" cy="45" rx="3.7" ry="5" fill="#d57eab" /><circle cx="59" cy="43" r="1.4" fill="#fff8ef" /></g>}
   </svg>
 );
 }

@@ -73,3 +73,23 @@ test('recoil forces downwards compensation; one clip is finite and release stops
   input(active,'press');for(let i=0;i<200&&!active.won;i++){input(active,'aim',50-active.aimX,50-active.aimY);step(active,.05);}
   assert.equal(active.shots,24);assert.equal(active.score,24);assert.equal(active.held,false);step(active,5);assert.equal(active.shots,24);
 });
+
+test('precision rewards accurate detents and resets a streak after a real miss',()=>{
+  for(const offset of [0,12]){const m=createMini('dial',4);m.angle=m.targets[0]-offset;m.travel=20;input(m,'press');assert.equal(m.score,1);assert.equal(m.precision,offset?0:1);assert.equal(m.streak,1);input(m,'press');assert.equal(m.streak,0);assert.equal(m.bestStreak,1);}
+});
+
+test('moving target demands tracking, mode changes start a fresh clip, and bursts settle on release',async()=>{
+  const {recoilTarget}=await loadTypescriptModule('src/components/hushLive/minigames.ts');
+  const m=createMini('recoil',7);input(m,'mode');assert.equal(m.movingTarget,true);const first=recoilTarget(m);step(m,1);assert.notDeepEqual(recoilTarget(m),first);
+  input(m,'press');for(let i=0;i<300&&!m.won;i++){const t=recoilTarget(m);input(m,'aim',t.x-m.aimX,t.y-m.aimY);step(m,.025);}
+  assert.equal(m.shots,24);assert.equal(m.score,24);assert.equal(m.precision,24);assert.equal(m.bestStreak,24);
+  input(m,'mode');assert.equal(m.won,false);assert.equal(m.shots,0);assert.equal(m.movingTarget,false);input(m,'press');step(m,.1);input(m,'release');const y=m.aimY;step(m,.5);assert.ok(m.aimY>y);assert.equal(m.shots,1);
+});
+
+
+test('a recoil trigger pressed during fire cooldown resumes fire when the cooldown ends',()=>{
+  const m=createMini('recoil',7);input(m,'press');step(m,.025);input(m,'release');
+  assert.equal(m.shots,1);assert.ok(m.cooldown>0);input(m,'press');
+  assert.equal(m.held,true);step(m,.2);assert.equal(m.shots,2);
+  input(m,'release');step(m,1);assert.equal(m.shots,2);
+});

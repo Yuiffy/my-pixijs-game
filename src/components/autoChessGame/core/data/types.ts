@@ -19,13 +19,14 @@ export const TRAIT_IDS = [
   "mature",
   "dance",
   "aggression",
+  "gen287",
+  "singer",
 ] as const;
 
 export type TraitId = (typeof TRAIT_IDS)[number];
 
 export const SHOP_UNIT_IDS = [
-  // 每位角色暂时只保留一个低费代表；岁己保留多种形态。
-  // 1 费
+  // 保留历史加入顺序以稳定商店种子；实时费用以 units.ts 为准。
   "ember_blade",
   "gale_archer",
   "rift_stalker",
@@ -35,7 +36,6 @@ export const SHOP_UNIT_IDS = [
   "meme",
   "zeyin",
   "pako",
-  // 2 费
   "sun_guard",
   "rift_brawler",
   "sui_blue",
@@ -46,7 +46,7 @@ export const SHOP_UNIT_IDS = [
   "kioi",
   "nightin",
   "tiandou",
-  // 3 费
+  "viridis",
   "sui_bird",
   "sui_flower",
   "mitsuri",
@@ -55,7 +55,6 @@ export const SHOP_UNIT_IDS = [
   "sumi",
   "spark_mage",
   "yukisyo",
-  // 4 费
   "sui_cat",
   "nagisa",
   // "akirinco",
@@ -65,7 +64,8 @@ export const SHOP_UNIT_IDS = [
   "xuehui",
   "tower_god",
   "cog_scribe",
-  // 5 费
+  "sumire",
+  "chu2u",
   "biscuit_sui",
   "cinder_ram",
   "seki_boar_king",

@@ -1,3 +1,5 @@
+import { createOuting, Outing, stepOuting } from "./outings";
+import { createLifeEvents, LifeEvents, stepLifeEvents } from "./lifeEvents";
 import { createMini, cookKind, lockKind, miniInput, stepMini, Mini, MiniInput } from "./minigames";
 import { skinOf } from "./skins";
 import type { Game } from "./engine";
@@ -46,10 +48,15 @@ export const MEALS = [
     note: "一碗热饭，配你最喜欢的小菜。",
     color: "#f1e6ca",
   },
+  { id: "goose", name: "烧鹅双拼饭", note: "脆皮烧鹅和叉烧，酸梅酱单独放，不会弄脏键盘。", color: "#a95b2e" },
+  { id: "dumplings", name: "虾饺", note: "蒸笼还温着，先咬一小口，小心烫。", color: "#efe3d0" },
+  { id: "soup", name: "菌菇鸡汤", note: "汤和饭分开装，喝口热汤润润嗓子。", color: "#e0b76f" },
   { id: "beef", name: "骰子牛", note: "六面都煎熟了，趁热吃。", color: "#895036" },
 ] as const;
 export type Meal = (typeof MEALS)[number]["id"];
 export type Daily = {
+  events: LifeEvents;
+  outing: Outing;
   arrival: "intro" | "locked" | "unlocked" | "open" | "entering" | "inside" | "done";
   arrivalTime: number;
   household: Household;
@@ -57,8 +64,8 @@ export type Daily = {
   leisurePlace: "sofa" | "computer";
   meal: Meal;
   homemade: boolean;
-  stage: "home" | "sleep" | "after" | "goodnight" | "complete";
-  panel: "lock" | "cook" | "leisure" | "story" | null;
+  stage: "home" | "sleep" | "after" | "goodnight" | "outing" | "complete";
+  panel: "lock" | "cook" | "leisure" | "story" | "nap" | "repair" | null;
   clock: number;
   beats: number;
   mistakes: number;
@@ -67,23 +74,26 @@ export type Daily = {
   volume: number;
   entertainment: "video" | "game";
   leisureTime: number;
+  computerPlay: number;
   loudTime: number;
   replied: boolean;
   unread: boolean;
   messages: { from: "partner" | "我"; text: string }[];
-  after: "rice" | "shower";
+  after: "rice" | "shower" | "supper";
   memory: string;
 };
 export const mealOf = (s: Game) => MEALS.find((m) => m.id === s.daily?.meal) ?? MEALS[3];
 export const offAir = (s: Game) => !!s.daily && s.daily.stage !== "home";
-export const dailyModal = (s: Game) => !!s.daily && (s.daily.arrival !== "done" || !!s.daily.panel || s.daily.stage === "sleep");
+export const dailyModal = (s: Game) => !!s.daily && (s.daily.arrival !== "done" || !!s.daily.panel || ["sleep", "outing"].includes(s.daily.stage));
 export function beginDaily(s: Game) {
   const homemade = s.tasks.includes("cook");
   const meal = MEALS[s.level === 5 ? Math.floor(nightRoll(s.seed, 3) * MEALS.length) : (s.seed + s.level - 2) % MEALS.length].id;
   const household = createHousehold(s);
-  const outside = household.arrival === "outside";
+  const outside = ["outside", "trip"].includes(household.arrival);
   s.player = outside ? { x: 139, y: 585 } : household.arrival === "sofa" ? { x: 220, y: 405 } : { x: 230, y: 220 };
   s.daily = {
+    events: createLifeEvents(s),
+    outing: createOuting(s),
     arrival: outside ? "intro" : "done",
     arrivalTime: 0,
     household,
@@ -101,6 +111,7 @@ export function beginDaily(s: Game) {
     volume: 70,
     entertainment: "video",
     leisureTime: 0,
+    computerPlay: 0,
     loudTime: 0,
     replied: false,
     unread: false,
@@ -112,10 +123,10 @@ export function beginDaily(s: Game) {
           : meal === "noodles" ? "超市送来的桶面放在门口啦。帮我烧壶水泡一下，好不好？" : `${outside ? "回来啦？" : "你在家真好。"}今晚想吃${MEALS.find((m) => m.id === meal)?.name}，放桌上就好～`,
       },
     ],
-    after: s.level === 5 ? nightRoll(s.seed, 16) < 0.5 ? "rice" : "shower" : (s.seed + s.level) % 2 ? "rice" : "shower",
+    after: s.level === 5 && nightRoll(s.seed, 66) < 0.25 ? "supper" : s.level === 5 ? nightRoll(s.seed, 16) < 0.5 ? "rice" : "shower" : (s.seed + s.level) % 2 ? "rice" : "shower",
     memory: "",
   };
-  s.message = outside ? `下班到家，门里传来${skinOf(s.skin).name}和观众聊天的声音。先轻轻开门。` : household.arrival === "sofa" ? `今晚一直在家。你从沙发上伸个懒腰，${skinOf(s.skin).name}还在隔壁直播，小猫在脚边打盹。` : `你刚结束一局游戏，摘下耳机。${skinOf(s.skin).name}在直播，先看看家里有什么需要帮忙的。`;
+  s.message = household.arrival === "trip" ? `旅行回家啦！你和${skinOf(s.skin).name}一人拖着一只箱子，TA说：“我先进去开播，行李等会儿一起收。”` : outside ? `下班到家，门里传来${skinOf(s.skin).name}和观众聊天的声音。先轻轻开门。` : household.arrival === "sofa" ? `今晚一直在家。你从沙发上伸个懒腰，${skinOf(s.skin).name}还在隔壁直播，小猫在脚边打盹。` : `你刚结束一局游戏，摘下耳机。${skinOf(s.skin).name}在直播，先看看家里有什么需要帮忙的。`;
 }
 export function activityInput(s: Game, input: MiniInput, x = 0, y = 0) {
   const d = s.daily;
@@ -148,7 +159,7 @@ function syncActivity(s: Game, previousMisses: number) {
 export function arrivalAction(s: Game) {
   const d = s.daily;
   if (!d || s.phase !== "playing") return;
-  if (d.arrival === "intro") { d.arrival = "locked"; d.panel = "lock"; } else if (d.arrival === "unlocked") { d.arrival = "open"; s.message = "门开了一道缝。扶着门，悄悄走进去。"; } else if (d.arrival === "open") { d.arrival = "entering"; d.arrivalTime = 0; } else if (d.arrival === "inside") { d.arrival = "done"; s.requireRelease = true; s.message = `大门轻轻合上，终于到家了。${skinOf(s.skin).name}还在和观众说话。`; }
+  if (d.arrival === "intro") { d.arrival = "locked"; d.panel = "lock"; } else if (d.arrival === "unlocked") { d.arrival = "open"; s.message = "门开了一道缝。扶着门，悄悄走进去。"; } else if (d.arrival === "open") { d.arrival = "entering"; d.arrivalTime = 0; } else if (d.arrival === "inside") { d.arrival = "done"; s.requireRelease = true; s.message = d.outing.trip ? `${skinOf(s.skin).name}把行李靠在玄关：“我去开播，你先歇会儿。”` : `大门轻轻合上，终于到家了。${skinOf(s.skin).name}还在和观众说话。`; }
 }
 export function openDailyPanel(s: Game, panel: "cook" | "leisure", computer = false) {
   const d = s.daily;
@@ -192,6 +203,7 @@ export function sleepDaily(s: Game) {
   if (s.phase !== "playing" || s.daily.stage !== "home" || !s.tasks.every(t => s.done.includes(t))) return;
   s.daily.household.rest.stage = "done";
   s.daily.household.rest.path = [];
+  if (s.daily.events.repair.stage === "fixed") s.daily.after = "supper";
   s.daily.stage = "sleep";
   s.daily.clock = 0;
   s.daily.panel = null;
@@ -209,7 +221,7 @@ export function chooseGoodnight(s: Game, choice: "together" | "care") {
   const d = s.daily;
   if (s.phase !== "playing" || !d || d.stage !== "goodnight") return;
   d.memory =
-    d.after === "rice"
+    d.after === "supper" ? choice === "together" ? `关掉直播灯，你和${skinOf(s.skin).name}并肩出门。街角小摊还亮着，一份烧鹅双拼、两碗热汤。TA把脆皮那块夹给你：“今晚轮到我照顾你。”` : `你给${skinOf(s.skin).name}披好外套，一起下楼买宵夜。夜风里，TA悄悄牵住你的手：“不用压低声音了，想吃什么就说。”` : d.after === "rice"
       ? choice === "together"
         ? `凌晨两点，一碗蛋炒饭，两把勺子。${skinOf(s.skin).name}把第一口递给你：“明天也一起吃饭吧。”`
         : `你接过锅铲，让${skinOf(s.skin).name}去坐着。背后忽然贴过来一个拥抱：“今天最开心的事，就是你在家。”`
@@ -217,7 +229,8 @@ export function chooseGoodnight(s: Game, choice: "together" | "care") {
         ? `你把温水递过去，${skinOf(s.skin).name}靠在你肩上擦头发：“直播说了好多话，还是最想和你说晚安。”`
         : `你把干毛巾轻轻盖在${skinOf(s.skin).name}头上。${skinOf(s.skin).name}握住你的手：“头发擦干了，再抱着你睡。”`;
   d.panel = null;
-  d.stage = "complete";
+  d.stage = d.after === "supper" ? "outing" : "complete";
+  d.outing.exitClock = 0;
   s.love += 25;
   s.message = d.memory;
 }
@@ -232,7 +245,9 @@ export function stepDaily(s: Game, dt: number): boolean {
     s.player = { x: 139, y: 585 - 85 * (t * t * (3 - 2 * t)) };
     if (t >= 1) d.arrival = "inside";
   }
+  stepOuting(s, dt);
   if (d.arrival === "done") stepHousehold(s, dt);
+  stepLifeEvents(s, dt);
   d.cooldown = Math.max(0, d.cooldown - dt);
   if (d.panel === "lock" || d.panel === "cook" || (d.panel === "leisure" && d.entertainment === "game")) {
     const { misses } = d.mini;
@@ -243,12 +258,13 @@ export function stepDaily(s: Game, dt: number): boolean {
     d.stage = "after";
     d.clock = 0;
     s.message =
-      d.after === "rice"
+      d.after === "supper" ? `${skinOf(s.skin).name}关了直播，拿起两件外套：“还醒着？一起出去吃点宵夜吧。”去玄关找TA。` : d.after === "rice"
         ? `02:13 · 锅铲轻轻碰响。你醒了：${skinOf(s.skin).name}怎么还在给自己炒饭？去料理台看看。`
         : `02:13 · 浴室水声停了。${skinOf(s.skin).name}抱着毛巾走出来，看到你醒了：“吵醒你啦？”就在沙发旁，抬头看看TA。`;
   }
   if (d.panel === "leisure") {
     d.leisureTime += dt;
+    if (d.leisurePlace === "computer" && d.entertainment === "game") d.computerPlay += dt;
     if (d.volume > 35 && !onBreak(s)) {
       d.loudTime += dt;
       s.suspicion = Math.min(

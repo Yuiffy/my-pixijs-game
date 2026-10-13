@@ -233,6 +233,10 @@ export const renderTextState = (context: TextStateContext) => {
       })),
       selected: context.state.selected,
       battle: battle && {
+        singing: Object.fromEntries((["player", "enemy"] as const).map((team) => {
+          const song = battle.singing[team];
+          return [team, { level: song.level, voices: battle.elapsed < song.expiresAt ? song.voices : [], required: [0, 2, 3, 4][song.level], phraseRemaining: Math.max(0, song.expiresAt - battle.elapsed), restRemaining: Math.max(0, song.readyAt - battle.elapsed), choruses: song.choruses }];
+        })),
         elapsed: Number(battle.elapsed.toFixed(1)),
         engagedTeams: { ...battle.engagedTeams },
         timeRemaining: Number(
@@ -317,6 +321,8 @@ export const renderTextState = (context: TextStateContext) => {
             duration: zone.maxLife,
           })),
           healingZones: battle.healingZones.map((zone) => ({
+            kind: zone.kind || "angel_fish",
+            healRatio: zone.healRatio,
             x: Math.round(zone.x),
             y: Math.round(zone.y),
             radius: zone.radius,

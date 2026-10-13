@@ -1,5 +1,9 @@
 "use client";
 
+import { beforeStream } from "./outings";
+import { earnedCgs, type CgId } from "./cg";
+import CgGallery from "./CgGallery";
+
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import GameShareButton from "@/app/game/GameShareButton";
@@ -42,6 +46,7 @@ import TapButton from "./TapButton";
 import MiniGame, { MINI_TITLES } from "./MiniGame";
 import { createMini, miniInput, stepMini, Mini, MiniKind } from "./minigames";
 import { dailyModal, mealOf, offAir } from "./daily";
+import { faultActive, repairMuted } from "./lifeEvents";
 import { householdStatus, onBreak } from "./household";
 
 const Apartment = dynamic(() => import("./Apartment"), { ssr: false });
@@ -88,6 +93,10 @@ export default function HushLive() {
   const [note, setNote] = useState("");
   const [shareText, setShareText] = useState("");
   const [journal, setJournal] = useState(false);
+  const [gallery, setGallery] = useState<CgId | "album" | null>(null);
+  const galleryRef = useRef<CgId | "album" | null>(null);
+  const resumeGallery = useRef(false);
+  const [newMemory, setNewMemory] = useState(false);
   const [knob, setKnob] = useState({ x: 0, y: 0 });
   const lookDrag = useRef<{ id: number; x: number; y: number } | null>(null);
   const stickPointer = useRef<number | null>(null);
@@ -120,6 +129,7 @@ export default function HushLive() {
   const tick = useCallback(
     (dt: number) => {
       const { current } = runtime;
+      if (galleryRef.current) return;
       if (practice.current) {
         if (!practicePaused.current) stepMini(practice.current, dt);
         if (current.manual || performance.now() - lastPaint.current > 70) {
@@ -137,6 +147,17 @@ export default function HushLive() {
       if ((current.game.delta?.active || dailyModal(current.game)) && document.pointerLockElement) {
         clearControls(current);
         document.exitPointerLock();
+      }
+      if (["playing", "result"].includes(current.game.phase)) {
+        const earned = earnedCgs(current.game).filter(id => !current.save.cgs.includes(id));
+        if (earned.length) {
+          persist({ ...current.save, cgs: [...current.save.cgs, ...earned] });
+          resumeGallery.current = current.game.phase === "playing";
+          if (resumeGallery.current) pause3D(current);
+          if (document.pointerLockElement) document.exitPointerLock();
+          const [first] = earned;
+          galleryRef.current = first; setGallery(first); setNewMemory(true);
+        }
       }
       audio.current?.update(current, soundRef.current);
       const now = performance.now();
@@ -157,7 +178,7 @@ export default function HushLive() {
     refresh();
   }, [refresh]);
   const onLost = useCallback(() => {
-    if (practice.current) { practice.current.held = false; practicePaused.current = true; }
+    if (practice.current) { practice.current.held = false; practice.current.tiltX = 0; practice.current.tiltZ = 0; practicePaused.current = true; }
     pause3D(runtime.current);
     setSceneError(true);
     setSceneReady(false);
@@ -166,7 +187,7 @@ export default function HushLive() {
   const pause = useCallback(() => {
     const { current } = runtime;
     if (practice.current) {
-      practice.current.held = false;
+      practice.current.held = false; practice.current.tiltX = 0; practice.current.tiltZ = 0;
       practicePaused.current = !practicePaused.current;
       refresh();
       return;
@@ -214,6 +235,7 @@ export default function HushLive() {
         ...text3D(current),
         practice: practice.current,
         practicePaused: practicePaused.current,
+        cg: galleryRef.current,
         objective: objective(current.game),
         broadcast: broadcast(current.game),
       });
@@ -222,7 +244,7 @@ export default function HushLive() {
       if (Number.isFinite(ms) && ms >= 0 && ms <= 300000) tick(ms / 1000);
     };
     const blur = () => {
-      if (practice.current) { practice.current.held = false; practicePaused.current = true; }
+      if (practice.current) { practice.current.held = false; practice.current.tiltX = 0; practice.current.tiltZ = 0; practicePaused.current = true; }
       pause3D(current);
       lookDrag.current = null;
       stickPointer.current = null;
@@ -246,6 +268,7 @@ export default function HushLive() {
       rotateLockedView(current, event.movementX, event.movementY);
     };
     const keyDown = (event: KeyboardEvent) => {
+      if (galleryRef.current) return;
       if (
         event.target instanceof HTMLElement &&
         ["SELECT", "INPUT", "TEXTAREA"].includes(event.target.tagName)
@@ -326,6 +349,16 @@ export default function HushLive() {
     audio.current.resume().catch(() => {});
     refresh();
   };
+  const closeGallery = () => {
+    galleryRef.current = null; setGallery(null); setNewMemory(false);
+    if (resumeGallery.current && r.game.phase === "paused" && r.webglReady) r.game.phase = "playing";
+    resumeGallery.current = false; refresh();
+  };
+  const openGallery = () => {
+    resumeGallery.current = r.game.phase === "playing";
+    if (resumeGallery.current) pause3D(r);
+    unlock(); galleryRef.current = "album"; setGallery("album"); setNewMemory(false); refresh();
+  };
   const selectNight = (level: number, nextSeed = seed.current) => {
     clearControls(r);
     unlock();
@@ -347,7 +380,7 @@ export default function HushLive() {
     refresh();
   };
   const closePractice = () => {
-    if (practice.current) practice.current.held = false;
+    if (practice.current) { practice.current.held = false; practice.current.tiltX = 0; practice.current.tiltZ = 0; }
     practice.current = null;
     practicePaused.current = false;
     clearControls(r);
@@ -518,6 +551,7 @@ onRestart={() => startPractice(mini.kind)} />
             <br />
             还在播<span>。</span>
           </h1>
+          <button className={styles.albumButton} onClick={openGallery}>回忆相册 · {save.cgs.length}/5</button>
           <p className={styles.tagline}>屏幕里的偶像，生活里的恋人。</p>
           <div className={styles.brief}>
             <small>
@@ -534,7 +568,7 @@ onRestart={() => startPractice(mini.kind)} />
               {g.level === 0
                 ? "走进直播间，拿回床尾的充电器，再回到沙发。别让麦克风听见你。"
                 : g.level === 5
-                  ? `${g.daily?.household.arrival === "outside" ? "今晚下班回家，先轻轻开门。" : g.daily?.household.arrival === "sofa" ? "今晚本来就在家，从沙发旁开始。" : "今晚在家打游戏，从电脑旁开始。"} 猫咪、晚饭和临时离席，每晚有不同的小事。`
+                  ? `${g.daily?.outing.trip ? "今晚旅行归来，两个人带着行李箱回家，TA随后开播。" : g.daily?.household.arrival === "outside" ? "今晚下班回家，先轻轻开门。" : g.daily?.household.arrival === "sofa" ? "今晚本来就在家，从沙发旁开始。" : "今晚在家打游戏，从电脑旁开始。"} 猫咪、晚饭和临时离席，每晚有不同的小事。`
                   : LEVELS[g.level].subtitle}
             </p>
             {g.daily && <small>今晚的晚饭：{`${g.daily.homemade ? "亲手做的" : ""}${mealOf(g).name}`} · 忙完回沙发，故事会继续。</small>}
@@ -695,6 +729,7 @@ onRestart={() => startPractice(mini.kind)} />
                 : "下一个夜晚 →"
               : "再试一次 →"}
           </button>
+          <button className={styles.albumButton} onClick={openGallery}>回忆相册 · {save.cgs.length}/5</button>
           <div className={styles.resultButtons}>
             <button onClick={() => selectNight(g.level, g.seed)}>
               重玩本晚
@@ -761,7 +796,7 @@ onRestart={() => startPractice(mini.kind)} />
           </section>
           <section className={styles.liveStatus} aria-label="直播状态">
             <p className={b.music || g.muted > 0 ? styles.safe : ""}>
-              {offAir(g) ? "○ OFF AIR · 可以放心说话了" : onBreak(g) ? "○ 暂时离席 · 已闭麦" : g.muted > 0
+              {beforeStream(g) ? "○ 旅行返家 · 还没开播" : offAir(g) ? "○ OFF AIR · 可以放心说话了" : repairMuted(g) ? "○ 稍等画面 · 检修中已闭麦" : faultActive(g) ? "● 设备信号异常 · 等你帮忙" : onBreak(g) ? "○ 暂时离席 · 已闭麦" : g.muted > 0
                 ? `● 已闭麦 ${g.muted.toFixed(1)}s`
                 : b.music
                   ? `♫ 唱歌掩护 ${Math.ceil(b.remaining)}s`
@@ -867,6 +902,7 @@ onRestart={() => startPractice(mini.kind)} />
                     ))}
               </ol>
               <p>{g.chat}</p>
+              {g.daily && <p>也可以自由摸猫、去床上小睡；设备亮橙灯时，去桌边帮TA检查。</p>}
               <small>
                 棉拖鞋{g.slippers ? "已穿上" : "第二晚解锁"} · 门条
                 {g.seal ? "已安装" : "第四晚解锁"}
@@ -947,6 +983,7 @@ onRestart={() => startPractice(mini.kind)} />
           {g.delta?.active && <DeltaGame game={r.game} onChange={refresh} />}
         </>
       )}
+      {gallery && <CgGallery selected={gallery} unlocked={save.cgs} fresh={newMemory} onSelect={id => { galleryRef.current = id; setGallery(id); setNewMemory(false); }} onClose={closeGallery} />}
       {note && (
         <div className={styles.notice} role="status">
           {note}

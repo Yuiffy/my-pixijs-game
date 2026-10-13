@@ -16,6 +16,21 @@
   pointer-events: auto;
   overscroll-behavior: contain;
 }
+.napPanel { background: #f0e7dbcF; backdrop-filter: blur(12px); }
+.tripArrival { left: auto !important; right: 4%; top: auto !important; bottom: 7%; transform: none !important; max-height: 65%; overflow: auto; }
+@media (max-width: 600px) { .tripArrival { right: 16px; bottom: 5%; padding: 18px; } }
+.snore { color: #647789; font: italic 40px Georgia, serif; letter-spacing: 12px; }
+.snore span { font-size: 62px; }
+.signalBoard { display: grid; gap: 8px; padding: 16px; border-radius: 14px; background: #253b37; color: #dcece1; }
+.signalBoard > div { display: flex; align-items: center; gap: 12px; }
+.signalBoard i { width: 9px; height: 9px; border-radius: 50%; background: #91d6ae; }
+.signalBoard [data-status="fault"] i { background: #ffbd80; box-shadow: 0 0 12px #ffbd80; }
+.signalBoard b { margin-left: auto; font-size: 12px; }
+.miniTelemetry { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 12px; margin: 12px 0; border-radius: 10px; background: #e1e8d9; color: #476047; font-size: 12px; }
+.miniTelemetry span:last-child { color: #866134; }
+.panel progress { display: block; width: 100%; accent-color: #54846b; margin: 12px 0; }
+.panel button:disabled { opacity: .5; cursor: default; }
+.panel .leaveEvent { display: block; margin: 14px auto 0; border: 0; background: transparent; font-size: 12px; }
 .panel > small {
   font-size: 10px;
   letter-spacing: 1.5px;
@@ -228,3 +243,8 @@
 @media(max-width:600px) { .cookingSurface { height: 240px; } }
 
 .panel button, .arrival button { touch-action: manipulation; }
+
+.minigame .tabs button { flex: 1; min-height: 44px; padding: 9px 12px; border: 1px solid #9ba68c; border-radius: 9px; background: #e8e7d5; color: #364b3d; font-size: 12px; cursor: pointer; }
+.minigame .tabs button[aria-pressed="true"] { background: #48694f; color: #fff8e4; }
+
+@media(max-width:600px) { .panel.napPanel { top:auto; bottom:12px; transform:none; max-height:43%; padding:14px; } .napPanel h2 { margin:6px 0; font-size:17px; } .napPanel .snore { display:none; } .napPanel > small:last-child { display:none; } .napPanel p { margin:6px 0; line-height:1.5; } .napPanel .primary { margin-top:8px; } }

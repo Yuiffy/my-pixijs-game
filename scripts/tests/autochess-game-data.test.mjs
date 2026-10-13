@@ -508,7 +508,7 @@ test("岁己形态拆分到不同关系构筑", () => {
     assert.ok(data.UNIT_DEFS[id].portrait);
   });
   assert.equal(data.UNIT_DEFS.sui.name, "小红帽");
-  assert.deepEqual(data.UNIT_DEFS.sui.traits, ["dance", "aggression", "vanguard"]);
+  assert.deepEqual(data.UNIT_DEFS.sui.traits, ["dance", "aggression", "vanguard", "singer"]);
   assert.equal(data.UNIT_DEFS.sui_blue.name, "贪吃岁");
   assert.deepEqual(data.UNIT_DEFS.sui_blue.traits, ["skeleton_soldier", "gluttony", "finance", "traffic"]);
   assert.equal(data.UNIT_DEFS.sui_blue.abilityName, "吃！");
@@ -733,7 +733,7 @@ test("北欧魔法师升为三费并提供能量驱动的三档时停", () => {
     [1, 2, 3, 4, 5].map(
       (tier) => data.SHOP_UNITS.filter((id) => data.UNIT_DEFS[id].tier === tier).length,
     ),
-    [7, 8, 11, 9, 6],
+    [7, 9, 11, 11, 6],
   );
   assert.equal(data.abilityDescriptionForStar(data.UNIT_DEFS.gale_archer, 3), data.UNIT_DEFS.gale_archer.abilityDescription);
 });
@@ -812,7 +812,7 @@ test("沐霂改为后排单体救援且不再造成范围伤害或群盾", () =>
 test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.equal(new Set(data.SHOP_UNITS).size, data.SHOP_UNITS.length);
   assert.ok(data.SHOP_UNITS.includes("mitsuri"));
-  assert.equal(data.SHOP_UNITS.length, 41);
+  assert.equal(data.SHOP_UNITS.length, 44);
   ["nori", "meme", "kioi", "nightin", "guangyi", "lovely", "rei", "rutice", "komichi"].forEach((id) => assert.ok(data.SHOP_UNITS.includes(id)));
   assert.equal(data.SHOP_UNITS.includes("akirinco"), false);
   ["aza", "ayana", "yy", "haruka"].forEach((id) => {
@@ -914,7 +914,7 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   ["sui_blue", "shiori"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("skeleton_soldier")));
   ["rift_brawler", "mitsuri", "clock_gunner"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("yue_gang")));
   ["sun_guard", "rift_brawler", "clock_gunner"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("gen27")));
-  assert.deepEqual(data.UNIT_DEFS.rift_brawler.traits, ["gen27", "yue_gang"]);
+  assert.deepEqual(data.UNIT_DEFS.rift_brawler.traits, ["gen27", "yue_gang", "singer"]);
   assert.deepEqual(data.UNIT_DEFS.rift_stalker.traits, ["assassin", "mystic"]);
   ["dawn_duelist", "ember_blade", "nightin"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("dwarf")));
   ["sun_guard", "dawn_duelist"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("traffic")));
@@ -929,7 +929,7 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
     assert.equal(unit.id, id);
     assert.equal(unit.shop, true);
     assert.equal(unit.cost, unit.tier);
-    assert.ok(unit.traits.length >= 1 && unit.traits.length <= 4);
+    assert.ok(unit.traits.length >= 1 && unit.traits.length <= 5);
     unit.traits.forEach((trait) => assert.ok(data.TRAIT_IDS.includes(trait)));
   });
 });
@@ -1017,7 +1017,7 @@ test("星汐、塔神与礼墨使用已下载的公开头像并保留各自角�
   assert.match(sumi.passiveDescription, /后坐力.*推离目标/);
   assert.equal(sumi.abilityCastTiming, "selfBuff");
   assert.deepEqual(seki.traits, ["wild", "aggression", "skeleton_soldier"]);
-  assert.deepEqual(towerGod.traits, ["mystic", "traffic"]);
+  assert.deepEqual(towerGod.traits, ["mystic", "traffic", "singer"]);
   assert.deepEqual(sumi.traits, ["mystic", "ranger", "gluttony"]);
   assert.deepEqual(data.UNIT_DEFS.meme.traits, ["wild", "skeleton_soldier", "aggression", "traffic"]);
 });
@@ -1036,7 +1036,7 @@ test("主动技能触发类别与技能形态一致", () => {
   });
   assert.deepEqual(
     data.SHOP_UNITS.filter((id) => data.UNIT_DEFS[id].abilityCastTiming === "selfOnHit"),
-    ["sun_guard"],
+    ["sun_guard", "viridis"],
     "只有明确的自保技能应使用受击触发",
   );
 });
@@ -1080,7 +1080,7 @@ test("五费四时小路使用双形象路牌技能，降费角色同步削弱",
     {
       tier: 5,
       cost: 5,
-      traits: ["traffic", "mystic", "assassin"],
+      traits: ["gen287", "traffic", "mystic", "assassin", "singer"],
       hp: 360,
       attack: 44,
       armor: 24,
@@ -1139,7 +1139,7 @@ test("五费四时小路使用双形象路牌技能，降费角色同步削弱",
   const lovely = data.UNIT_DEFS.lovely;
   assert.deepEqual(
     { tier: lovely.tier, cost: lovely.cost, traits: lovely.traits, hp: lovely.hp, attack: lovely.attack, armor: lovely.armor },
-    { tier: 5, cost: 5, traits: ["host", "dance", "assassin"], hp: 430, attack: 42, armor: 36 },
+    { tier: 5, cost: 5, traits: ["host", "dance", "assassin", "singer"], hp: 430, attack: 42, armor: 36 },
   );
   assert.deepEqual(
     lovely.abilityLevels.map((level) => [

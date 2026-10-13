@@ -21,7 +21,7 @@ export default function DeltaGame({
       <header>
         <div>
           <small>DELTA / 小队频道</small>
-          <h2>瞄准小球，点击报点</h2>
+          <h2>标记动向，给队友报点</h2>
         </div>
         <button
           onClick={() => {
@@ -34,7 +34,7 @@ export default function DeltaGame({
       </header>
       <div className={styles.deltaStats}>
         <strong>报点 {d.hits} / 8</strong>
-        <span>失误 {d.misses} / 3</span>
+        <span>连续 {d.streak} · 失误 {d.misses} / 3</span>
         <button
           aria-pressed={game.quiet}
           onClick={() => {
@@ -55,7 +55,8 @@ export default function DeltaGame({
           }
         }}
       >
-        <span className={styles.deltaWatermark}>NORTH BRIDGE</span>
+        <span className={styles.deltaWatermark}>{["NORTH BRIDGE / 北桥", "WAREHOUSE / 仓库", "STAIRWAY / 楼梯口"][id % 3]}</span>
+        <div className={styles.deltaCover} aria-hidden="true"><i /><i /><i /></div>
         <button
           key={id}
           data-delta-target={id}
@@ -83,7 +84,7 @@ export default function DeltaGame({
             onChange();
           }}
         >
-          <i />
+          <i /><span aria-hidden="true">{["桥", "仓", "梯"][id % 3]}</span>
         </button>
         <div className={styles.deltaFeedback} aria-live="polite">
           {d.feedback}

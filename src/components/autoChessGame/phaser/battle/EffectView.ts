@@ -167,6 +167,23 @@ export class EffectViewRenderer {
       if (label.style.color !== effect.color) label.setColor(effect.color);
       return;
     }
+    if (effect.kind === "vine_library" || effect.kind === "plant_nursery") {
+      const size = effect.size || 115;
+      const fieldColor = Phaser.Display.Color.HexStringToColor(effect.color).color;
+      graphics.clear().setVisible(true).fillStyle(fieldColor, 0.1).fillCircle(0, 0, size);
+      graphics.lineStyle(2, fieldColor, 0.65).strokeCircle(0, 0, size);
+      for (let index = 0; index < 6; index += 1) {
+        const angle = (index * Math.PI) / 3 + Math.sin(progress * Math.PI * 2) * 0.08;
+        const x = Math.cos(angle) * size * 0.82;
+        const y = Math.sin(angle) * size * 0.82;
+        graphics.lineStyle(3, fieldColor, 0.8).lineBetween(x * 0.65, y * 0.65, x, y);
+        graphics.fillStyle(fieldColor, 0.75).fillEllipse(x, y, 14, 7);
+      }
+      label.setText(effect.kind === "vine_library" ? "藤蔓书屋 · 屏蔽" : "裸子植物哎").setFontFamily(FONT_FAMILY).setFontSize(12).setY(-size - 12)
+        .setVisible(true);
+      if (label.style.color !== effect.color) label.setColor(effect.color);
+      return;
+    }
     if (effect.kind === "komichi_sign") {
       const sweep = effect.text === "sweep";
       const smash = effect.text === "smash";

@@ -151,6 +151,7 @@ export class CombatSetupSystem {
       maxHp *= globalVanguardLevel === 3 ? 1.18 : 1.1;
     }
     if (wildLevel) armor += [0, 10, 22, 38][wildLevel];
+    if (memberLevel("gen287") === 2) armor += 12;
     if (rangerLevel) attackInterval /= [1, 1.12, 1.26, 1.45][rangerLevel];
     if (skeletonLevel) {
       attack *= 1.35;
@@ -200,6 +201,7 @@ export class CombatSetupSystem {
       energy: Math.min(
         def.energyProfile.max,
         def.energyProfile.start +
+          [0, 10, 20][memberLevel("gen287")] +
           [0, 20, 45, 70][mysticLevel] +
           [0, 0, 10, 22][globalMysticLevel] +
           [0, 0, 10, 22][traitLevel("gen27")] * (gen27Member ? 1 : 0) +
@@ -643,6 +645,10 @@ export class CombatSetupSystem {
     });
 
     const battle: BattleState = {
+      singing: {
+        player: { level: traitLevel("singer"), voices: [], expiresAt: 0, readyAt: 0, choruses: 0 },
+        enemy: { level: enemyTraitLevel("singer"), voices: [], expiresAt: 0, readyAt: 0, choruses: 0 },
+      },
       elapsed: 0,
       limit: 24,
       engagedTeams: { player: false, enemy: false },

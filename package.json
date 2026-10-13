@@ -1,6 +1,6 @@
 {
   "name": "my-pixijs-game",
-  "version": "0.10.2",
+  "version": "0.11.2",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.33.0",
@@ -8,6 +8,8 @@
     "node": ">=20.17.0 <25"
   },
   "scripts": {
+    "wayfinder:test": "node --test scripts/tests/wayfinder.test.mjs",
+    "wayfinder:verify": "node scripts/verify-wayfinder.cjs",
     "reset:test": "node --test scripts/tests/reset-rush*.test.mjs",
     "reset:save:verify": "node scripts/verify-reset-save.cjs",
     "pinglu:save:test": "node --test scripts/tests/pinglu-save.test.mjs && node scripts/verify-pinglu-geography.cjs",
@@ -83,7 +85,7 @@
     "pre-stream:controls:verify": "node scripts/verify-pre-stream-controls.cjs",
     "pre-stream:test": "node --test scripts/tests/pre-stream-game.test.mjs",
     "pre-stream:verify": "node scripts/verify-pre-stream-game.cjs",
-    "hush:test": "node --test scripts/tests/hush-live.test.mjs scripts/tests/hush-minigames.test.mjs",
+    "hush:test": "node --test scripts/tests/hush-live.test.mjs scripts/tests/hush-minigames.test.mjs scripts/tests/hush-life-events.test.mjs scripts/tests/hush-cg.test.mjs",
     "hush:verify": "node scripts/verify-hush-3d.cjs && node scripts/verify-hush-3d-controls.cjs && node scripts/verify-hush-interactions.cjs",
     "marriage:test": "node --test scripts/tests/marriage-pressure.test.mjs scripts/tests/marriage-pressure-v6.test.mjs scripts/tests/marriage-pressure-immersive.test.mjs scripts/tests/marriage-pressure-immersion.test.mjs",
     "marriage:verify:immersion": "node scripts/verify-marriage-immersion.cjs",

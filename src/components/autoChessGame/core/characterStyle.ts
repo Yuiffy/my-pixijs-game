@@ -111,6 +111,8 @@ export const resolveUnitPortrait = (
     portraitStyle: definition.portraitStyle || "round",
   };
   if (!base.portrait) return base;
+  // 新同期沿用已收录的本人头像；所有画风都有真实资源可用。
+  if (["viridis", "sumire", "chu2u"].includes(unitId)) return base;
   if (unitId === "komichi" && style === "detail") {
     return {
       portrait: "/images/autochess/portraits/minimal/komichi.png",

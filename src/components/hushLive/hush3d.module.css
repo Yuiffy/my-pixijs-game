@@ -920,3 +920,13 @@
 @media(max-width:600px) { .practicePanel { top: 52px; bottom: 12px; padding: 16px; } .practicePanel h3 { font-size: 21px; } }
 
 .practicePanel button, .arcadeChoices button { touch-action: manipulation; }
+.deltaCover { position: absolute; inset: 0; pointer-events: none; opacity: .4; }
+.deltaCover i { position: absolute; width: 19%; height: 26%; border: 2px solid #9bac80; background: #243d32; transform: skewY(-8deg); left: 8%; top: 25%; }
+.deltaCover i:nth-child(2) { left: 42%; top: 48%; width: 26%; height: 32%; }
+.deltaCover i:nth-child(3) { left: 76%; top: 13%; width: 16%; height: 37%; }
+.deltaTarget span { position: absolute; inset: 0; display: grid; place-items: center; color: #344b30; font-weight: 700; pointer-events: none; }
+.deltaTarget { z-index: 1; }
+
+@media (max-width: 400px) { .skinPicker > div { gap: 4px; } .skinPicker button { padding: 4px 2px 7px; } .skinPicker span { font-size: 11px; white-space: nowrap; } }
+
+.albumButton { display:block; min-height:44px; padding:10px 14px; margin:14px 0; color:#48694f; border:1px solid #aab39a; border-radius:8px; background:#e1e8d980; cursor:pointer; touch-action:manipulation; }
