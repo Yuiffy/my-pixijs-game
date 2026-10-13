@@ -9,6 +9,26 @@
   color: var(--ink);
   font-family: Arial, "Microsoft YaHei", sans-serif;
 }
+.trainingStatus {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 14px;
+  padding: 9px 14px;
+  font-size: 11px;
+  color: #756677;
+}
+.trainingStatus [data-complete="true"] {
+  color: #527969;
+  font-weight: 700;
+}
+.trainingStatus strong {
+  color: #806393;
+}
+@media (max-width: 600px) {
+  .trainingStatus { gap: 4px 9px; font-size: 10px; padding: 7px 10px; }
+}
 .surface {
   min-height: 100svh;
   display: flex;
@@ -1068,3 +1088,9 @@
     transition: none !important;
   }
 }
+
+.foodGuide { margin: 16px 0; padding: 12px 16px; border: 1px solid #dbc8b8; border-radius: 12px; background: #fff9ee; font-size: 13px; line-height: 1.7; }
+.foodGuide summary { cursor: pointer; font-weight: 700; }
+.foodGuide ul { padding-left: 18px; }
+.foodGuide li { margin: 6px 0; }
+.foodGuide p { color: #826e67; }

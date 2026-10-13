@@ -275,3 +275,137 @@ test("the same seed without training cannot meet the goal and grows slower than 
   assert.ok(activeAtTwoMinutes.level > noTrainingAtTwoMinutes.level);
   assert.deepEqual(passive.workouts, { gym: 0, swim: 0, home: 0 });
 });
+
+test("a circuit needs three distinct completed stations, grants one reward and can be repeated", () => {
+  const s = isolated();
+  const complete = kind => {
+    const zone = s.zones.find(z => z.kind === kind);
+    s.player = { x: zone.x, y: zone.y }; s.motivation = 60;
+    run(s, 2, { x: 0, y: 0, exercise: true });
+  };
+  complete('gym'); complete('gym');
+  assert.deepEqual(s.circuit, ['gym']); assert.equal(s.circuits, 0);
+  complete('home'); assert.equal(s.circuit.length, 2);
+  const before = s.totalXp;
+  complete('swim');
+  assert.equal(s.circuits, 1); assert.deepEqual(s.circuit, []);
+  assert.ok(s.flowTime > 11.9); assert.ok(s.totalXp - before >= 20);
+  assert.ok(s.motivation > 49 && s.motivation < 50);
+  while(s.phase === 'upgrade') chooseUpgrade(s, fitnessUpgrade(s));
+  pauseFitness(s); const frozen = structuredClone(s);
+  advanceFitness(s, 3000); assert.deepEqual(s, frozen);
+  startFitness(s); run(s, 13); assert.equal(s.flowTime, 0);
+  complete('swim'); complete('gym'); complete('home'); assert.equal(s.circuits, 2);
+});
+
+test("heart of the wave increases pressure but recovery slows spawning at every stage", () => {
+  for(let day=1;day<=5;day++) {
+    const warm=engine.wavePace({day,time:0}).interval;
+    const surge=engine.wavePace({day,time:20}).interval;
+    const recovery=engine.wavePace({day,time:50}).interval;
+    assert.ok(surge < warm && recovery > warm && surge >= 0.55);
+  }
+  const s=playing(7); s.invincible=30; s.weapons.dumbbell=0;
+  run(s,11); assert.ok(s.foods.length>0); assert.ok(s.foods.every(f=>f.kind!=='tea'));
+  run(s,30); assert.ok(s.foods.some(f=>f.kind==='tea'));
+});
+
+test("jerky warns before committing, locks its direction and cannot home during a burst", () => {
+  const s=isolated(); s.weapons.dumbbell=0;
+  s.foods=[foodAt(s,{kind:'jerky',x:750,y:350,charge:0})];
+  stepFitness(s,1/60); const f=s.foods[0];
+  assert.equal(f.telegraph,0.5); assert.equal(f.rush,0); const x=f.x, vx=f.vx;
+  run(s,0.45,{x:0,y:1}); assert.equal(f.x,x); assert.equal(f.vx,vx);
+  run(s,0.12,{x:0,y:1}); assert.ok(f.rush>0); assert.ok(f.x<x); assert.equal(f.y,350);
+});
+
+test("flow increases weapon damage opportunities against a stationary target", () => {
+  for(const kind of ['dumbbell','water','aura','rope']) {
+    const normal=isolated(), flow=isolated();
+    for(const s of [normal,flow]) {
+      s.weapons={dumbbell:0,water:0,aura:0,rope:0}; s.weapons[kind]=1;
+      s.foods=[foodAt(s,{kind:'tea',telegraph:30,x:s.player.x+65,hp:10000,maxHp:10000})];
+      s.invincible=100; s.flowTime=s===flow?12:0;
+    }
+    run(normal,3); run(flow,3);
+    assert.ok(flow.weaponDamage[kind]>=normal.weaponDamage[kind],kind);
+    if(kind!=='aura' && kind!=='rope') assert.ok(flow.weaponDamage[kind]>normal.weaponDamage[kind],kind);
+  }
+});
+
+test("water muzzle does not skip a target already touching the player", () => {
+  const s=isolated('swimmer'); s.invincible=10;
+  s.foods=[foodAt(s,{kind:'tea',telegraph:10,x:s.player.x+12,hp:10,maxHp:10})];
+  stepFitness(s,1/60);
+  assert.ok(s.weaponDamage.water>0); assert.ok(s.foods[0].hp<10);
+});
+
+
+test("food roster unlocks gradually and seeded waves naturally include all seven kinds", () => {
+  assert.deepEqual(engine.foodPool({elapsed:0}), ['dq','jerky']);
+  assert.equal(engine.foodPool({elapsed:23}).includes('cake'),false);
+  assert.equal(engine.foodPool({elapsed:24}).includes('cake'),true);
+  assert.equal(engine.foodPool({elapsed:79}).includes('hotpot'),false);
+  assert.equal(engine.foodPool({elapsed:80}).length,7);
+  const seen=new Set();
+  for(let seed=1;seed<=5;seed++) {
+    const s=isolated(); s.random=seed; s.elapsed=90; s.day=2; s.spawnTimer=0;
+    s.invincible=999; s.weapons.dumbbell=0;
+    for(let i=0;i<1800;i++) { stepFitness(s,1/60); s.foods.forEach(f=>seen.add(f.kind)); }
+  }
+  assert.equal(seen.size,7);
+});
+
+test("cake defeat creates exactly two small pieces, never recursively and respects the cap", () => {
+  const s=isolated(); s.weapons.dumbbell=0;
+  s.foods=[foodAt(s,{kind:'cake',hp:0,maxHp:3,x:400})];
+  stepFitness(s,1/60);
+  assert.equal(s.defeats,1); assert.equal(s.foods.length,2);
+  assert.ok(s.foods.every(f=>f.crumb&&f.hp===1&&f.radius===13));
+  assert.notEqual(s.foods[0].id,s.foods[1].id);
+  s.foods.forEach(f=>f.hp=0);stepFitness(s,1/60);
+  assert.equal(s.foods.length,0);assert.equal(s.defeats,3);
+  s.foods=Array.from({length:85},()=>foodAt(s,{kind:'cake',hp:0,x:-30}));
+  stepFitness(s,1/60);assert.equal(s.foods.length,85);
+  assert.ok(s.foods.every(f=>f.x>=15));
+});
+
+test("hotpot locks in place, warns without damage, then damages only within its steam circle", () => {
+  for(const distance of [85,110]) {
+    const s=isolated();s.weapons.dumbbell=0;
+    const f=foodAt(s,{kind:'hotpot',radius:27,x:s.player.x+distance,charge:0});s.foods=[f];
+    const fat=s.fatMass;stepFitness(s,1/60);
+    assert.equal(f.telegraph,0.9);const x=f.x;
+    run(s,0.8);assert.equal(s.fatMass,fat);assert.equal(f.x,x);
+    run(s,0.2);
+    assert.equal(s.fatMass>fat,distance===85);
+    if(distance===110) { assert.ok(f.rush>0); assert.equal(f.x,x); }
+  }
+});
+
+test("hotpot can be escaped or defeated before steam; pause freezes its warning", () => {
+  const s=isolated();s.weapons.dumbbell=0;
+  const f=foodAt(s,{kind:'hotpot',x:s.player.x+85,charge:0});s.foods=[f];stepFitness(s,1/60);
+  pauseFitness(s);const before=structuredClone(s);advanceFitness(s,2000);assert.deepEqual(s,before);
+  startFitness(s);const fat=s.fatMass;run(s,1.5,{x:-1,y:0});assert.ok(s.fatMass<=fat);
+  const t=isolated();t.foods=[foodAt(t,{kind:'hotpot',hp:1,x:t.player.x+70,telegraph:0.8})];
+  stepFitness(t,1/60);assert.equal(t.foods.length,0);assert.equal(t.defeats,1);
+});
+
+test("crayfish moves sideways at long range with bounded speed, then directly pursues nearby", () => {
+  const s=isolated();s.weapons.dumbbell=0;
+  const f=foodAt(s,{kind:'crayfish',x:s.player.x+200});s.foods=[f];const {x,y}=f;
+  stepFitness(s,1/60);assert.notEqual(f.y,y);assert.ok(f.x<x);
+  assert.ok(Math.hypot(f.x-x,f.y-y)<=80/60+1e-8);
+  f.x=s.player.x+80;f.y=s.player.y;stepFitness(s,1/60);assert.equal(f.y,s.player.y);
+});
+
+test("cutlet changes speed at half health without adding hidden contact damage", () => {
+  const deltas=[];
+  for(const hp of [5,2]) {
+    const s=isolated();s.weapons.dumbbell=0;
+    const f=foodAt(s,{kind:'cutlet',hp,maxHp:5,x:s.player.x+200});s.foods=[f];const x=f.x;
+    run(s,0.2);deltas.push(x-f.x);
+  }
+  assert.ok(Math.abs(deltas[1]/deltas[0]-2.1)<1e-8);
+});

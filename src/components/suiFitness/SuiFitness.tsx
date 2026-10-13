@@ -23,7 +23,9 @@ import {
   TARGET_BODY_FAT,
   TALENT_DEFS,
   WEAPON_DEFS,
+  FOOD_DEFS,
   workoutCost,
+  wavePace,
 } from "./engine";
 import type { FitnessInput, FitnessState, Talent, WeaponKind } from "./engine";
 import { drawFitness } from "./renderer";
@@ -93,7 +95,6 @@ export default function SuiFitness() {
   const stick = useRef({ x: 0, y: 0, pointer: -1 });
   const [stickView, setStickView] = useState({ x: 0, y: 0 });
   const pending = useRef({ dash: false, pulse: false });
-  const assets = useRef<{ sui?: HTMLImageElement }>({});
   const drawRef = useRef<() => void>(() => {});
 
   const sync = useCallback(() => {
@@ -207,15 +208,6 @@ export default function SuiFitness() {
       setNotice("本机纪录暂时不可用，本局仍可玩。");
     }
 
-    let alive = true;
-    const image = new Image();
-    image.onload = () => {
-      if (alive) {
-        assets.current.sui = image;
-        drawRef.current();
-      }
-    };
-    image.src = SUI_IMAGE;
     let frame = 0;
     let manual = false;
     let last = performance.now();
@@ -225,7 +217,7 @@ export default function SuiFitness() {
     const target = window as FitnessWindow;
     const draw = () => {
       const ctx = canvas.current?.getContext("2d");
-      if (ctx) drawFitness(ctx, game.current, assets.current, {
+      if (ctx) drawFitness(ctx, game.current, {
           reducedMotion: reduced.matches,
         });
     };
@@ -249,7 +241,9 @@ export default function SuiFitness() {
             workoutKeys.current.size > 0 ||
             keys.current.has("KeyE"),
         },
-        assetsReady: !!assets.current.sui,
+        assetsReady: true,
+        visualRevision: 3,
+        wave: wavePace(game.current),
         helpOpen: helpRef.current,
       });
     target.advanceTime = simulate;
@@ -332,7 +326,6 @@ export default function SuiFitness() {
     setLoaded(true);
     sync();
     return () => {
-      alive = false;
       window.cancelAnimationFrame(frame);
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
@@ -665,7 +658,7 @@ export default function SuiFitness() {
                     </span>
                   </>
                 ) : (
-                  <span>攻击自动释放 · 去运动区按住 E 训练</span>
+                  <span>攻击自动释放 · 三站各练一次触发心流</span>
                 )}
               </div>
             </>
@@ -684,8 +677,22 @@ export default function SuiFitness() {
                 ))}
             </div>
             <small>
-              击退 {view.defeats} · 燃脂储备 {view.burnReserve.toFixed(2)} kg
+              击退 {view.defeats} · {wavePace(view).name} · 燃脂储备 {view.burnReserve.toFixed(2)} kg
             </small>
+          </div>
+        )}
+        {interactive && (
+          <div className={styles.trainingStatus} aria-label="训练连携与增益">
+            <span>三站连携 {view.circuit.length}/3</span>
+            {(["gym", "swim", "home"] as const).map(kind => (
+              <span key={kind} data-complete={view.circuit.includes(kind)}>
+                {view.circuit.includes(kind) ? "✓ " : "○ "}{EXERCISE_DEFS[kind].name}
+              </span>
+            ))}
+            <strong>{view.flowTime > 0 ? `心流 ${Math.ceil(view.flowTime)}s · 攻速 +25%` : "集齐三站：心流 + 动力"}</strong>
+            {view.buffs.attack > 0 && <span>强攻 {Math.ceil(view.buffs.attack)}s</span>}
+            {view.buffs.speed > 0 && <span>加速 {Math.ceil(view.buffs.speed)}s</span>}
+            {view.buffs.guard > 0 && <span>防护 {Math.ceil(view.buffs.guard)}s</span>}
           </div>
         )}
         <div className={styles.controls}>
@@ -808,7 +815,7 @@ export default function SuiFitness() {
                 <ol className={styles.rules}>
                   <li>
                     <b>美食会追你。</b>DQ
-                    慢但重、牛肉干快速贴身，西西里柠檬柚会瞄准冲刺。碰到增加脂肪负担，已装备武器会自动攻击。
+                    慢但重、牛肉干快速贴身，西西里柠檬柚会瞄准冲刺。新美食随进度登场。碰到增加脂肪负担，已装备武器会自动攻击。
                   </li>
                   <li>
                     <b>动力靠行动攒。</b>击退敌人掉落小星星，拾取后去运动区按住
@@ -819,6 +826,7 @@ export default function SuiFitness() {
                     <b>三种运动，三条路线。</b>
                     站定两秒、消耗 24 动力（自我鼓励可降至
                     16）。移动或碰撞会打断。健身房保肌强攻；游泳积累更多燃脂储备；居家训练保肌防护。储备会逐步兑现，不会一练就减一大截。
+                    三站各完成一次，触发 12 秒运动心流：攻速 +25%、动力 +12、体力 +25、经验 +8；同站重复不累计连携。
                   </li>
                   <li>
                     <b>别只盯着秤。</b>从 48.00 kg、35% 体脂开始，达到体重
@@ -827,6 +835,13 @@ export default function SuiFitness() {
                     20，会结束挑战。站着等不会消耗脂肪或获得经验。
                   </li>
                 </ol>
+                <details className={styles.foodGuide}>
+                  <summary>美食图鉴 · 7 种诱惑与应对</summary>
+                  <ul>{Object.entries(FOOD_DEFS).map(([kind, def]) => (
+                    <li key={kind}><b>{def.name}</b> · {def.description}</li>
+                  ))}</ul>
+                  <p>新增食物取材自岁己 2026 年 9–10 月直播；战斗技能为游戏创作。</p>
+                </details>
                 <div className={styles.ruleKeys}>
                   <span>WASD / 方向键移动</span>
                   <span>空格冲刺</span>
@@ -836,6 +851,7 @@ export default function SuiFitness() {
                 </div>
                 <p className={styles.smallPrint}>
                   五个游戏阶段各 {DAY_SECONDS} 秒；体重与体脂是本作的虚构数值。
+                  每阶段先热身、再围攻、最后恢复。牛肉干与果茶冲锋前会显示方向，横向闪避更安全。
                 </p>
                 <button className={styles.primary} onClick={closeHelp}>
                   收起说明

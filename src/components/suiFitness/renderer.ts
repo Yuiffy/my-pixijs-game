@@ -1,10 +1,10 @@
 import type { FitnessState } from "./engine";
-import { upgradeRank } from "./engine";
+import { HOTPOT_RADIUS, upgradeRank } from "./engine";
+import { drawAthlete } from "./athlete";
 
 type Ctx = CanvasRenderingContext2D;
 type Zone = FitnessState["zones"][number];
 type Food = FitnessState["foods"][number];
-type Assets = { sui?: HTMLImageElement };
 
 const WIDTH = 1100;
 const HEIGHT = 700;
@@ -391,13 +391,26 @@ function food(c: Ctx, f: Food, time: number, reduced: boolean) {
   const wobble = reduced ? 0 : Math.sin(time * 4 + f.x * 0.07) * 1.6;
   const scale = f.radius / 20;
   ellipse(c, f.x + 3, f.y + 14 * scale, 21 * scale, 7 * scale, "#6e465323");
-  if (f.telegraph && f.telegraph > 0) {
+  if (f.kind === "hotpot" && (f.telegraph > 0 || f.rush > 0)) {
+    const active = f.rush > 0;
+    c.save();
+    if (!active) c.setLineDash([7, 6]);
+    ring(c, f.x, f.y, HOTPOT_RADIUS, active ? "#e17846" : "#c87c4b", 3);
+    c.restore();
+    ellipse(c, f.x, f.y, HOTPOT_RADIUS, HOTPOT_RADIUS, active ? "#efb15b55" : "#efb15b19");
+    if (active) for (let i = 0; i < 6; i++) {
+      const a = (i * TAU) / 6;
+      ellipse(c, f.x + Math.cos(a) * 43, f.y + Math.sin(a) * 43, 15, 20, "#fff2dcbb");
+    }
+    text(c, active ? "热汽！" : "即将喷汽 · 离开圆圈", f.x, f.y - HOTPOT_RADIUS - 10, 12, "#9e553c", 700);
+  } else if (f.telegraph && f.telegraph > 0) {
     const pulse = reduced ? 0 : Math.sin(time * 15) * 2;
     ring(c, f.x, f.y, f.radius + 10 + pulse, "#dc6761b3", 3);
     ring(c, f.x, f.y, f.radius + 16, "#dc676134", 3);
     star(c, f.x, f.y - f.radius - 22, 7, CORAL);
-    const endX = f.x + f.vx * 0.65;
-    const endY = f.y + f.vy * 0.65;
+    const rushDuration = f.kind === "tea" ? 0.65 : 0.4;
+    const endX = f.x + f.vx * rushDuration;
+    const endY = f.y + f.vy * rushDuration;
     line(c, [f.x, f.y, endX, endY], "#e67f7422", f.radius * 1.65);
     c.save();
     c.setLineDash([7, 10]);
@@ -476,7 +489,7 @@ function food(c: Ctx, f: Food, time: number, reduced: boolean) {
     line(c, [-7, 7, -2, 3, 2, 8, 7, 3], "#a16950", 3);
     ellipse(c, -6, 18, 1.6, 2, INK);
     ellipse(c, 6, 18, 1.6, 2, INK);
-  } else {
+  } else if (f.kind === "tea") {
     line(c, [6, -7, 10, -33, 20, -37], "#91a575", 3.5);
     c.beginPath();
     c.moveTo(-17, -18);
@@ -505,6 +518,57 @@ function food(c: Ctx, f: Food, time: number, reduced: boolean) {
     leaf(c, -18, -25, -0.3, 8, "#a7b67a");
     ellipse(c, -5, 13, 1.6, 2, INK);
     ellipse(c, 3, 13, 1.6, 2, INK);
+  } else if (f.kind === "cake") {
+    // A triangular strawberry slice, repeated at smaller scale for crumbs.
+    c.beginPath(); c.moveTo(-20, -13); c.lineTo(17, -6); c.lineTo(17, 20);
+    c.lineTo(-20, 13); c.closePath(); c.fillStyle = "#f2ce9c"; c.fill();
+    c.strokeStyle = "#b78372"; c.lineWidth = 2; c.stroke();
+    line(c, [-19, 1, 16, 8], "#ed91a1", 6);
+    c.beginPath(); c.moveTo(-20, -13); c.lineTo(-2, -24); c.lineTo(17, -6); c.closePath();
+    c.fillStyle = "#fff6e8"; c.fill(); c.stroke();
+    ellipse(c, -2, -21, 7, 9, "#df6675");
+    leaf(c, -3, -30, 0.4, 7, "#85a771");
+    ellipse(c, -4, -22, 1, 1, "#ffe4a3"); ellipse(c, 0, -18, 1, 1, "#ffe4a3");
+    ellipse(c, -10, 7, 1.6, 2, INK); ellipse(c, 7, 11, 1.6, 2, INK);
+  } else if (f.kind === "crayfish") {
+    for (const side of [-1, 1]) {
+      for (let i = 0; i < 3; i++) line(c, [side * 8, i * 7 - 1, side * 21, i * 8 + 3], "#b75b4a", 2);
+      line(c, [side * 8, -10, side * 20, -23], "#b75b4a", 4);
+      ellipse(c, side * 23, -25, 8, 12, "#e2825d");
+      line(c, [side * 23, -34, side * 23, -25], "#8f4e45", 2);
+    }
+    ellipse(c, 0, 4, 11, 23, "#cd614e");
+    for (let i = 0; i < 3; i++) line(c, [-8, 9 + i * 5, 8, 9 + i * 5], "#f3a074", 2);
+    ellipse(c, 0, -10, 13, 14, "#ed906b");
+    line(c, [-5, -20, -14, -34], "#ad5847", 1.5); line(c, [5, -20, 14, -34], "#ad5847", 1.5);
+    ellipse(c, -5, -12, 2, 2.5, INK); ellipse(c, 5, -12, 2, 2.5, INK);
+    ellipse(c, -5, 26, 6, 5, "#ed906b"); ellipse(c, 5, 26, 6, 5, "#ed906b");
+  } else if (f.kind === "cutlet") {
+    const broken = f.hp <= f.maxHp / 2;
+    ellipse(c, 0, 5, 25, 20, "#fef6df");
+    ellipse(c, 4, 7, 19, 13, "#b67b43");
+    ellipse(c, -9, 2, 11, 12, "#fff7e3");
+    round(c, -17, -17, 36, 25, 8, broken ? "#ffe3aa" : "#d69a4a", "#98673e");
+    for (let i = -10; i < 16; i += 7) line(c, [i, -13, i - 4, 4], "#b37939", 2);
+    if (broken) {
+      line(c, [-3, -19, -7, -8, 2, -3, -3, 9], "#fff8e4", 4);
+      line(c, [-32, 0, -25, 0], "#d59257", 2); line(c, [27, -10, 33, -13], "#d59257", 2);
+    }
+    ellipse(c, -5, -3, 1.6, 2, INK); ellipse(c, 8, -3, 1.6, 2, INK);
+  } else if (f.kind === "hotpot") {
+    round(c, -31, -5, 10, 12, 4, "#997a6e"); round(c, 21, -5, 10, 12, 4, "#997a6e");
+    round(c, -23, -9, 46, 29, 11, "#ac8571", "#795e56");
+    ellipse(c, 0, -9, 24, 12, "#efd4ac"); ellipse(c, 0, -9, 20, 9, "#d67949");
+    line(c, [0, -17, -5, -10, 0, -2], "#ead0ad", 2);
+    ellipse(c, -10, -9, 5, 3, "#f6d896"); ellipse(c, 10, -7, 4, 4, "#edac96");
+    leaf(c, 7, -14, 1, 8, "#93a775");
+    ellipse(c, -7, 8, 1.6, 2, INK); ellipse(c, 7, 8, 1.6, 2, INK);
+    for (const x of [-10, 5]) line(c, [x, -25, x - 3, -30, x, -37], "#b9997b88", 2);
+  }
+  if (f.hitFlash && f.hitFlash > 0) {
+    c.globalAlpha = (f.hitFlash / 0.12) * 0.65;
+    ellipse(c, 0, 0, 21, 25, "#fff8d5");
+    c.globalAlpha = 1;
   }
   if (f.maxHp > 1 && f.hp < f.maxHp) {
     for (let i = 0; i < f.maxHp; i += 1) ellipse(
@@ -539,109 +603,6 @@ function pickup(
   }
 }
 
-function fallbackHead(c: Ctx) {
-  ellipse(c, -21, -22, 9, 21, "#d6ccd9");
-  ellipse(c, 21, -22, 9, 21, "#d6ccd9");
-  ellipse(c, -20, -28, 7, 18, "#f5f1ed");
-  ellipse(c, 20, -28, 7, 18, "#f5f1ed");
-  ellipse(c, 0, -29, 22, 21, "#fff0e8");
-  ellipse(c, 0, -39, 24, 17, "#f4efed");
-  c.beginPath();
-  c.moveTo(-20, -42);
-  c.lineTo(-6, -23);
-  c.lineTo(-3, -34);
-  c.lineTo(8, -22);
-  c.lineTo(12, -37);
-  c.lineTo(21, -28);
-  c.lineTo(21, -43);
-  c.closePath();
-  c.fillStyle = "#f4efed";
-  c.fill();
-  ellipse(c, -8, -23, 4, 5, "#d4a253");
-  ellipse(c, 8, -23, 4, 5, "#d4a253");
-  ellipse(c, -9, -25, 1.4, 1.6, "#fffdf6");
-  ellipse(c, 7, -25, 1.4, 1.6, "#fffdf6");
-  ellipse(c, -16, -16, 4, 2, "#f2b4aa");
-  ellipse(c, 16, -16, 4, 2, "#f2b4aa");
-  line(c, [-3, -14, 0, -12, 3, -14], "#b88781", 1.5);
-  c.beginPath();
-  c.moveTo(-24, -41);
-  c.lineTo(-24, -65);
-  c.lineTo(-10, -52);
-  c.quadraticCurveTo(0, -59, 13, -51);
-  c.lineTo(25, -64);
-  c.lineTo(24, -39);
-  c.closePath();
-  c.fillStyle = "#665c72";
-  c.fill();
-  line(c, [-21, -58, -20, -48, -14, -51], "#d2a7d7", 3);
-  line(c, [20, -57, 19, -47, 14, -50], "#d2a7d7", 3);
-  round(c, -25, -44, 48, 8, 4, "#574f64");
-  text(c, "SUI", 7, -48, 6, "#a995bb", 700);
-}
-
-function player(
-  c: Ctx,
-  s: FitnessState,
-  assets: Assets,
-  reduced: boolean,
-  moving: boolean,
-) {
-  const { x, y } = s.player;
-  const step = reduced || !moving ? 0 : Math.sin(s.elapsed * 14) * 2;
-  ellipse(c, x, y + 16, 21, 8, "#6e46532b");
-  if (s.invincible > 0) ring(c, x, y - 7, 32, "#f4a78599", 3);
-  c.save();
-  c.translate(x, y + (reduced ? 0 : Math.sin(s.elapsed * 3) * 0.6));
-  if (s.invincible > 0 && !reduced) c.globalAlpha = 0.72 + Math.sin(s.elapsed * 18) * 0.2;
-  round(c, -13, 6 + step, 10, 18, 5, "#765a72");
-  round(c, 3, 6 - step, 10, 18, 5, "#765a72");
-  round(c, -15, 18 + step, 14, 8, 4, "#fff7eb", "#aa8c8e");
-  round(c, 1, 18 - step, 15, 8, 4, "#fff7eb", "#aa8c8e");
-  const outfit =
-    s.talent === "swimmer"
-      ? "#81bdce"
-      : s.talent === "rhythm"
-        ? "#a6b886"
-        : "#e9979b";
-  round(c, -16, -16, 32, 29, 12, outfit, "#bd7d8b");
-  round(c, -21, -10 + step, 10, 18, 5, outfit);
-  round(c, 11, -10 - step, 10, 18, 5, outfit);
-  ellipse(c, -18, 7 + step, 4, 4, "#ffe9da");
-  ellipse(c, 18, 7 - step, 4, 4, "#ffe9da");
-  line(c, [0, -11, 0, 7], "#f3c3bd", 2);
-  star(c, 0, -2, 4, "#fff3df", 5);
-  if (assets.sui?.complete && assets.sui.naturalWidth > 0) {
-    const image = assets.sui;
-    // Reuse Sui's transparent portrait: the cat cap, white hair and golden eyes.
-    c.drawImage(
-      image,
-      image.naturalWidth * 0.245,
-      image.naturalHeight * 0.053,
-      image.naturalWidth * 0.485,
-      image.naturalHeight * 0.216,
-      -31,
-      -65,
-      62,
-      59,
-    );
-  } else fallbackHead(c);
-  c.restore();
-  const angle = s.attackAngle;
-  const orbit = reduced ? angle : s.elapsed * 1.6;
-  for (let i = 0; i < (s.weapons.dumbbell > 0 ? 2 : 0); i += 1) {
-    const a = orbit + Math.PI * i;
-    dumbbell(
-      c,
-      x + Math.cos(a) * 35,
-      y - 10 + Math.sin(a) * 23,
-      a + 0.5,
-      0.51,
-      "#987e9b",
-    );
-  }
-}
-
 function attackObjects(c: Ctx, s: FitnessState) {
   for (const p of s.projectiles) {
     const a = Math.atan2(p.vy, p.vx);
@@ -663,7 +624,7 @@ function attackObjects(c: Ctx, s: FitnessState) {
   ring(c, s.player.x, s.player.y, radius, "#93a97660", 2);
   c.setLineDash([]);
   for (let i = 0; i < rank + 1; i++) {
-    const angle = s.elapsed * 4 + (TAU * i) / (rank + 1);
+    const angle = s.ropeAngle + (TAU * i) / (rank + 1);
     const x = s.player.x + Math.cos(angle) * radius;
     const y = s.player.y + Math.sin(angle) * radius;
     ellipse(c, x, y, 13, 13, "#e7eabd");
@@ -681,12 +642,12 @@ function feedback(c: Ctx, s: FitnessState) {
     c.globalAlpha = alpha;
     c.beginPath();
     c.moveTo(0, 0);
-    c.arc(0, 0, s.attackRange, s.attackAngle - 0.65, s.attackAngle + 0.65);
+    c.arc(0, 0, s.attackRange, s.attackAngle - 0.85, s.attackAngle + 0.85);
     c.closePath();
     c.fillStyle = "#efafaa26";
     c.fill();
     c.beginPath();
-    c.arc(0, 0, s.attackRange - 5, s.attackAngle - 0.55, s.attackAngle + 0.55);
+    c.arc(0, 0, s.attackRange - 5, s.attackAngle - 0.8, s.attackAngle + 0.8);
     c.strokeStyle = "#fffdf2";
     c.lineWidth = 9;
     c.stroke();
@@ -767,7 +728,6 @@ function feedback(c: Ctx, s: FitnessState) {
 export function drawFitness(
   c: Ctx,
   s: FitnessState,
-  assets: Assets,
   options: { reducedMotion?: boolean } = {},
 ) {
   const reduced = Boolean(options.reducedMotion);
@@ -797,10 +757,23 @@ export function drawFitness(
       );
     }
   }
+  if (s.flowTime > 0) {
+    ring(c, s.player.x, s.player.y, 49, "#ad91c599", 3);
+    for (let i = 0; i < 6; i++) {
+      const a = (i * TAU) / 6 + (reduced ? 0 : s.elapsed * 0.8);
+      star(c, s.player.x + Math.cos(a) * 49, s.player.y + Math.sin(a) * 49, 4, "#ab89be");
+    }
+  }
   for (const p of s.pickups) pickup(c, p, s.elapsed, reduced);
-  for (const f of s.foods) food(c, f, s.elapsed, reduced);
   attackObjects(c, s);
   feedback(c, s);
-  player(c, s, assets, reduced, moving);
+  let painted = false;
+  for (const f of [...s.foods].sort((a, b) => a.y - b.y)) {
+    if (!painted && f.y > s.player.y) {
+      drawAthlete(c, s, reduced, moving); painted = true;
+    }
+    food(c, f, s.elapsed, reduced);
+  }
+  if (!painted) drawAthlete(c, s, reduced, moving);
   c.restore();
 }

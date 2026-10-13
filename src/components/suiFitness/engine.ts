@@ -13,7 +13,23 @@ export const MAX_WEAPONS = 3;
 export type Exercise = "gym" | "swim" | "home";
 export type Talent = "strength" | "swimmer" | "rhythm";
 export type WeaponKind = "dumbbell" | "water" | "rope" | "aura";
-export type FoodKind = "dq" | "jerky" | "tea";
+export type FoodKind = "dq" | "jerky" | "tea" | "cake" | "hotpot" | "crayfish" | "cutlet";
+export const FOOD_DEFS: Record<FoodKind, {
+  name: string; hp: number; radius: number; speed: number; burden: number;
+  unlock: number; description: string;
+}> = {
+  dq: { name: "DQ", hp: 4, radius: 25, speed: 57, burden: 0.14, unlock: 0, description: "慢速追赶，耐打的大杯冰淇淋" },
+  jerky: { name: "牛肉干", hp: 1, radius: 17, speed: 87, burden: 0.07, unlock: 0, description: "短蓄力直冲，横向躲开箭头" },
+  tea: { name: "西西里柠檬柚", hp: 3, radius: 20, speed: 74, burden: 0.10, unlock: 12, description: "远距离瞄准冲刺，蓄力后不追踪" },
+  cake: { name: "草莓蛋糕", hp: 3, radius: 24, speed: 52, burden: 0.10, unlock: 24, description: "击破后分成两块小蛋糕；范围攻击可一起清掉" },
+  crayfish: { name: "小龙虾", hp: 2, radius: 19, speed: 76, burden: 0.08, unlock: 40, description: "左右横移包抄；贴近后直追" },
+  cutlet: { name: "咖喱猪排", hp: 5, radius: 26, speed: 45, burden: 0.12, unlock: 60, description: "厚壳慢行，半血破壳后加速；留出退路" },
+  hotpot: { name: "火锅", hp: 4, radius: 27, speed: 48, burden: 0.11, unlock: 80, description: "停下蓄力后喷汽；离开虚线圆或提前击破" },
+};
+export const HOTPOT_RADIUS = 78;
+export function foodPool(s: Pick<FitnessState, "elapsed">): FoodKind[] {
+  return (Object.keys(FOOD_DEFS) as FoodKind[]).filter(kind => s.elapsed >= FOOD_DEFS[kind].unlock);
+}
 export type Phase = "ready" | "playing" | "paused" | "upgrade" | "won" | "lost";
 export interface FitnessInput {
   x: number;
@@ -37,6 +53,8 @@ export interface Food {
   vx: number;
   vy: number;
   ropeGrace?: number;
+  hitFlash?: number;
+  crumb?: boolean;
 }
 export interface Pickup {
   id: number;
@@ -106,6 +124,12 @@ export interface FitnessState {
   comboTime: number;
   workouts: Record<Exercise, number>;
   lastWorkout: Exercise | null;
+  circuit: Exercise[];
+  circuits: number;
+  flowTime: number;
+  waterAngle: number;
+  waterFlash: number;
+  ropeAngle: number;
   buffs: { attack: number; speed: number; guard: number };
   exercise: { kind: Exercise; progress: number } | null;
   message: string;
@@ -281,6 +305,12 @@ const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n
 const distance = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.hypot(a.x - b.x, a.y - b.y);
 export const upgradeRank = (s: FitnessState, id: string) => s.upgrades.filter((value) => value === id).length;
 export const workoutCost = (s: FitnessState) => 24 - upgradeRank(s, "focus") * 4;
+/** Each minute offers a readable build-up, a surge, then time to collect/train. */
+export function wavePace(s: Pick<FitnessState, "day" | "time">) {
+  if (s.time < 12) return { name: "热身", interval: 1.12 - (s.day - 1) * 0.07 };
+  if (s.time < 44) return { name: "围攻", interval: 0.84 - (s.day - 1) * 0.07 };
+  return { name: "恢复", interval: 1.55 - (s.day - 1) * 0.08 };
+}
 export function refreshBody(s: FitnessState) {
   s.muscle = clamp(s.muscle, 0, 100);
   s.leanMass = 30.42 + s.muscle * 0.012;
@@ -352,15 +382,15 @@ function offerLevel(s: FitnessState) {
 }
 function spawnFood(s: FitnessState) {
   const edge = Math.floor(random(s) * 4);
-    const roll = random(s);
-  const kind: FoodKind = roll < 0.35 ? "dq" : roll < 0.7 ? "jerky" : "tea";
-  const hp =
-    (kind === "dq" ? 4 : kind === "tea" ? 3 : 1) + Math.floor((s.day - 1) / 2);
+  const pool = foodPool(s);
+  const kind = pool[Math.floor(random(s) * pool.length)];
+  const def = FOOD_DEFS[kind];
+  const hp = def.hp + Math.floor((s.day - 1) / 2);
   const along = random(s);
   s.foods.push({
     id: s.nextId++,
     kind,
-    radius: kind === "dq" ? 25 : kind === "tea" ? 20 : 17,
+    radius: def.radius,
     hp,
     maxHp: hp,
     x:
@@ -449,9 +479,20 @@ function workout(s: FitnessState, kind: Exercise) {
     s.buffs.guard = s.talent === "rhythm" ? 24 : 16;
   }
   s.lastWorkout = kind;
+  if (!s.circuit.includes(kind)) s.circuit.push(kind);
+  if (s.circuit.length === 3) {
+    s.circuit = [];
+    s.circuits += 1;
+    s.flowTime = 12;
+    s.stamina = Math.min(100, s.stamina + 25);
+    s.motivation = Math.min(100, s.motivation + 12);
+    gainXp(s, 8);
+    effect(s, "aura", s.player.x, s.player.y, 145);
+  }
   refreshBody(s);
   const earned = Math.round(xp * (1 + upgradeRank(s, "discipline") * 0.2));
   say(s, `${EXERCISE_DEFS[kind].name}完成 · 经验 +${earned} · 燃脂储备 +${credited.toFixed(2)} kg`, 2.3);
+  if (s.circuit.length === 0) say(s, "三站连携！运动心流 12 秒 · 攻速 +25% · 动力 +12", 3);
   effect(s, "exercise", s.player.x, s.player.y);
 }
 function finishDay(s: FitnessState) {
@@ -535,6 +576,12 @@ export function createFitness(
     comboTime: 0,
     workouts: { gym: 0, swim: 0, home: 0 },
     lastWorkout: null,
+    circuit: [],
+    circuits: 0,
+    flowTime: 0,
+    waterAngle: 0,
+    waterFlash: 0,
+    ropeAngle: 0,
     exercise: null,
     buffs: { attack: 0, speed: 0, guard: 0 },
     message: "48.00 → 40.00 kg · 拾取星星和训练得经验，升级随时发生。",
@@ -588,14 +635,16 @@ function hit(s: FitnessState, food: Food, amount: number, weapon: WeaponKind) {
   if (food.hp <= 0) return;
   s.weaponDamage[weapon] += Math.min(food.hp, amount);
   food.hp -= amount;
+  food.hitFlash = 0.12;
   effect(s, "hit", food.x, food.y);
 }
 function attack(s: FitnessState, dt: number) {
+  const tempo = s.flowTime > 0 ? 1.25 : 1;
   const power =
     (1 + upgradeRank(s, "strong") * 0.2) * (s.buffs.attack > 0 ? 1.35 : 1);
   const reach = upgradeRank(s, "reach") * 12;
   for (const kind of Object.keys(s.weaponTimers) as WeaponKind[]) {
-    s.weaponTimers[kind] = Math.max(0, s.weaponTimers[kind] - dt);
+    s.weaponTimers[kind] = Math.max(0, s.weaponTimers[kind] - dt * tempo);
   }
   const near = s.foods
     .filter((food) => food.hp > 0)
@@ -633,13 +682,16 @@ function attack(s: FitnessState, dt: number) {
     distance(near[0], s.player) < 620 + reach * 3
   ) {
     const angle = Math.atan2(near[0].y - s.player.y, near[0].x - s.player.x);
+    s.waterAngle = angle;
+    s.waterFlash = 0.16;
+    const muzzle = Math.max(0, Math.min(33, distance(near[0], s.player) - near[0].radius - 8));
     const count = water >= 4 ? 3 : water >= 2 ? 2 : 1;
     for (let i = 0; i < count; i++) {
       const spread = angle + (i - (count - 1) / 2) * 0.12;
       s.projectiles.push({
         id: s.nextId++,
-        x: s.player.x,
-        y: s.player.y - 4,
+        x: s.player.x + Math.cos(angle) * muzzle,
+        y: s.player.y - 4 + Math.sin(angle) * muzzle,
         vx: Math.cos(spread) * 450,
         vy: Math.sin(spread) * 450,
         life: 1.5 + reach * 0.005,
@@ -669,10 +721,10 @@ function attack(s: FitnessState, dt: number) {
     const count = rope + 1;
       const radius = 74 + reach + (rope - 1) * 8;
     for (const food of near) {
-      food.ropeGrace = Math.max(0, (food.ropeGrace || 0) - dt);
+      food.ropeGrace = Math.max(0, (food.ropeGrace || 0) - dt * tempo);
       if (food.ropeGrace > 0 || food.hp <= 0) continue;
       for (let i = 0; i < count; i++) {
-        const angle = s.elapsed * 4 + (Math.PI * 2 * i) / count;
+        const angle = s.ropeAngle + (Math.PI * 2 * i) / count;
         if (
           distance(food, {
             x: s.player.x + Math.cos(angle) * radius,
@@ -713,6 +765,7 @@ function tick(s: FitnessState, dt: number, input: FitnessInput) {
   if (s.phase !== "playing") return;
   s.time = Math.min(DAY_SECONDS, s.time + dt);
   s.elapsed += dt;
+  s.ropeAngle = (s.ropeAngle + dt * 4 * (s.flowTime > 0 ? 1.25 : 1)) % (Math.PI * 2);
   s.muscle -= dt * 0.1;
   s.stamina = Math.min(
     100,
@@ -726,6 +779,8 @@ function tick(s: FitnessState, dt: number, input: FitnessInput) {
     "pulseCooldown",
     "attackFlash",
     "comboTime",
+    "flowTime",
+    "waterFlash",
   ] as const) s[field] = Math.max(0, s[field] - dt);
   for (const kind of ["attack", "speed", "guard"] as const) s.buffs[kind] = Math.max(0, s.buffs[kind] - dt);
   if (s.comboTime === 0) s.combo = 0;
@@ -825,7 +880,7 @@ function tick(s: FitnessState, dt: number, input: FitnessInput) {
   s.spawnTimer -= dt;
   while (s.spawnTimer <= 0) {
     if (s.foods.length < 85) spawnFood(s);
-    s.spawnTimer += (0.9 - (s.day - 1) * 0.08) * (0.88 + random(s) * 0.24);
+    s.spawnTimer += wavePace(s).interval * (0.88 + random(s) * 0.24);
   }
   s.proteinTimer -= dt;
   if (s.proteinTimer <= 0) {
@@ -841,13 +896,34 @@ function tick(s: FitnessState, dt: number, input: FitnessInput) {
   for (const food of s.foods) {
     if (food.hp <= 0) continue;
     food.age += dt;
+    food.hitFlash = Math.max(0, (food.hitFlash || 0) - dt);
     const toward = distance(food, s.player);
-      const dx = toward > 0 ? (s.player.x - food.x) / toward : 0;
-      const dy = toward > 0 ? (s.player.y - food.y) / toward : 0;
-    let foodSpeed =
-      (food.kind === "dq" ? 57 : food.kind === "jerky" ? 87 : 74) + s.day * 4;
-    if (food.kind === "jerky" && food.age % 2.6 > 1.95) foodSpeed *= 1.8;
-    if (food.kind === "tea") {
+    const dx = toward > 0 ? (s.player.x - food.x) / toward : 0;
+    const dy = toward > 0 ? (s.player.y - food.y) / toward : 0;
+    let foodSpeed = FOOD_DEFS[food.kind].speed + s.day * 4;
+    if (food.crumb) foodSpeed = 96 + s.day * 4;
+    if (food.kind === "cutlet" && food.hp <= food.maxHp / 2) foodSpeed *= 2.1;
+    if (food.kind === "hotpot") {
+      if (food.rush > 0) {
+        food.rush = Math.max(0, food.rush - dt);
+        continue;
+      }
+      if (food.telegraph > 0) {
+        food.telegraph = Math.max(0, food.telegraph - dt);
+        if (food.telegraph === 0) {
+          food.rush = 0.45;
+          food.charge = 4.2;
+        }
+        continue;
+      }
+      food.charge -= dt;
+      if (food.charge <= 0 && toward < 190) {
+        food.telegraph = 0.9;
+        continue;
+      }
+    }
+    if (food.kind === "tea" || food.kind === "jerky") {
+      const tea = food.kind === "tea";
       if (food.rush > 0) {
         food.rush = Math.max(0, food.rush - dt);
         food.x += food.vx * dt;
@@ -857,35 +933,57 @@ function tick(s: FitnessState, dt: number, input: FitnessInput) {
       if (food.telegraph > 0) {
         food.telegraph = Math.max(0, food.telegraph - dt);
         if (food.telegraph === 0) {
-          food.rush = 0.65;
-          food.charge = 3.3;
+          food.rush = tea ? 0.65 : 0.4;
+          food.charge = tea ? 3.3 : 2.6;
         }
         continue;
       }
       food.charge -= dt;
-      if (food.charge <= 0 && toward < 430) {
-        food.telegraph = 0.7;
-        food.vx = dx * (270 + s.day * 10);
-        food.vy = dy * (270 + s.day * 10);
+      if (food.charge <= 0 && toward < (tea ? 430 : 280)) {
+        food.telegraph = tea ? 0.7 : 0.5;
+        const rushSpeed = tea ? 270 + s.day * 10 : foodSpeed * 1.8;
+        food.vx = dx * rushSpeed;
+        food.vy = dy * rushSpeed;
         continue;
       }
     }
-    food.x += dx * foodSpeed * dt;
-    food.y += dy * foodSpeed * dt;
+    const sideways = food.kind === "crayfish" && toward > 90
+      ? Math.sin(food.age * 3 + food.id) * 0.9 : 0;
+    const travel = (foodSpeed * dt) / Math.hypot(1, sideways);
+    food.x += (dx - dy * sideways) * travel;
+    food.y += (dy + dx * sideways) * travel;
   }
   attack(s, dt);
   const remaining: Food[] = [];
+  const crumbs: Food[] = [];
   for (const food of s.foods) {
     if (food.hp <= 0) {
       defeatFood(s, food);
+      if (food.kind === "cake" && !food.crumb) {
+        for (const side of [-1, 1]) crumbs.push({
+          ...food,
+          id: s.nextId++,
+          crumb: true,
+          radius: 13,
+          hp: 1,
+          maxHp: 1,
+          x: clamp(food.x + side * 22, 15, WORLD.width - 15),
+          y: clamp(food.y, 15, WORLD.height - 15),
+          age: 0,
+          charge: 3,
+          telegraph: 0,
+          rush: 0,
+          hitFlash: 0,
+        });
+      }
       continue;
     }
     if (
       s.invincible === 0 &&
-      distance(food, s.player) < food.radius + PLAYER_RADIUS
+      distance(food, s.player) < (food.kind === "hotpot" && food.rush > 0 ? HOTPOT_RADIUS : food.radius) + PLAYER_RADIUS
     ) {
       s.fatMass +=
-        (food.kind === "dq" ? 0.14 : food.kind === "jerky" ? 0.07 : 0.1) *
+        (food.crumb ? 0.04 : FOOD_DEFS[food.kind].burden) *
         (1 - upgradeRank(s, "guard") * 0.2) *
         (s.buffs.guard > 0 ? 0.6 : 1);
       s.invincible = 0.7;
@@ -895,18 +993,14 @@ function tick(s: FitnessState, dt: number, input: FitnessInput) {
       effect(s, "hit", s.player.x, s.player.y);
       say(
         s,
-        `${food.kind === "dq"
-          ? "DQ"
-          : food.kind === "jerky"
-            ? "牛肉干"
-            : "西西里柠檬柚"}贴身！脂肪负担增加，闪开再训练。`,
+        `${FOOD_DEFS[food.kind].name}贴身！脂肪负担增加，闪开再训练。`,
         1.3,
       );
       continue;
     }
     remaining.push(food);
   }
-  s.foods = remaining;
+  s.foods = [...remaining, ...crumbs.slice(0, Math.max(0, 85 - remaining.length))];
   const pickupRadius = 50 + upgradeRank(s, "magnet") * 38;
   s.pickups = s.pickups.filter((item) => {
     item.life -= dt;
