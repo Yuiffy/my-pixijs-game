@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-17",
+  "tool": "built-in image_gen",
+  "note": "User approved initial generation as detail mode and refinement generation as minimal mode.",
+  "transparent_background": true,
+  "references": [
+    {
+      "path": "tmp/autochess-minimal-refresh/sumire-original-standing-02.webp",
+      "url": "https://sumire.live/assets/original/standing-02.webp",
+      "role": "original full-body identity and costume, from unofficial fan archive"
+    },
+    {
+      "path": "public/images/livers/sumire.jpg",
+      "role": "original face identity"
+    },
+    {
+      "path": "public/images/autochess/portraits/minimal/sui.png",
+      "role": "rendering style only"
+    }
+  ],
+  "prompt": "Create ONE transparent full-body chibi autochess sprite of 枝堇 Sumire. Reference image 1 is her ORIGINAL full-body character design and is the authority for identity, hairstyle and costume. Image 2 is her original face reference. Image 3 (sui minimal) defines bold readable game-sprite rendering, NOT her identity. Do not copy the generic purple side-braid design from earlier attempts. Desired detail level is BETWEEN a featureless mascot and intricate anime illustration: preserve her specific gothic botanical librarian design with a few large, legible motifs. Identity essentials from the original: muted grey-lavender hair, swept fringe, rounded coiled side bun(s) behind the ears, a long straight face-framing sidelock reaching her chest (NOT a chunky long side braid); clear cyan-blue eyes; an asymmetric deep-violet clematis flower cluster with TWO flowers of different sizes mounted on a pale silver leaf-shaped ornament, suggesting the original accessory without tiny mesh. Her small charcoal-violet dress has a WHITE short shoulder cape / broad scalloped collar, a violet ribbon bow and a single light-purple diamond jewel at the throat; a dark fitted waist and TWO broad skirt layers, a few large scallops instead of detailed lace. Dark gloves and chunky dark mid-calf boots. Include ONE broad silver-grey curling vine with two purple blossoms on one side of the skirt, and ONE clearly visible violet botanical tendril curling behind her on the other side with just two broad leaves, close to her body. She holds a compact dark book against her waist, cover has ONE large violet flower and a simple curved stem; book must not hide the white cape and collar bow. Quiet gentle slightly mysterious expression. Oversized head about 58-62% total height, tiny body, three-quarter view facing right, compact upright silhouette, entire head and feet visible. Strong consistent dark outline, clean flat color areas, only broad cel shadow regions. Hair represented by broad coherent locks with few separation lines. No individual hair strands, fabric texture, fine lace/mesh, filigree, microscopic jewelry, dense embroidery, complex folds, extra floating particles or realistic lighting. Keep enough shape and color separation for cape, flower clip, skirt and vine to read at 64px. Muted lavender / charcoal / white / violet palette, blue eyes; do not add other colors. Single centered character only, square canvas, genuinely transparent alpha background, generous clear margins, no ground or shadow, no labels, no text, no watermark.",
+  "user_feedback": "Initial original-reference generation is too polished and could belong to detail mode; simplify rendering, retain identity silhouettes.",
+  "refinement": {
+    "reference_roles": [
+      "initial identity-correct but too detailed generated Sumire",
+      "minimal/sui.png: style authority"
+    ],
+    "source_image": "exec-9bc5e2c5-848b-4433-8631-4a89e988ef6f.png"
+  },
+  "selected_asset": {
+    "source": "C:\\Users\\yuiffy\\.codex\\generated_images\\01a14624-b734-7980-90dc-c04f9abb6d34\\exec-92eda28a-98fb-425b-be4d-7ab5eb89c19e.png",
+    "size": [
+      512,
+      512
+    ],
+    "alpha": [
+      0,
+      255
+    ],
+    "bbox": [
+      26,
+      28,
+      475,
+      483
+    ],
+    "sha256": "d180fb8a5da74b00f614992265507ccbf77b0574baafd62e7b043368486cf3da",
+    "target": "public/images/autochess/portraits/minimal/sumire.png (also default portraits/sumire.png)"
+  },
+  "selected_detail_asset": {
+    "source": "C:\\Users\\yuiffy\\.codex\\generated_images\\01a14624-b734-7980-90dc-c04f9abb6d34\\exec-9bc5e2c5-848b-4433-8631-4a89e988ef6f.png",
+    "target": "public\\images\\autochess\\portraits\\detail\\sumire.png",
+    "size": [
+      512,
+      512
+    ],
+    "alpha": [
+      0,
+      255
+    ],
+    "sha256": "b2cc00557ef3bef2c694fecba9e3c0fab7b7cf2e0b67e0b38f6e425b9e63c4f9"
+  }
+}

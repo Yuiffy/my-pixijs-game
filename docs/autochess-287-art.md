@@ -1,5 +1,9 @@
 # 287 三人棋子形象（0.12.0）
 
+> 2026-10-17：下文是首版历史记录，三人极简素材已因细节过密而重新生成。后续极简生成必须使用 [极简美术规范](autochess-minimal-art-guide.md) 与其中的完整 prompt，不能直接复用本页旧提示词。细节版仍沿用本页记录。
+
+> 追加确认：枝堇的细节档也已替换为本轮第一张原立绘参考成图，极简档使用第二张简化成图。两档来源与 prompt 见 [枝堇新图记录](autochess-sumire-minimal-v2.json)。
+
 用户要求为新加入的小松绿、枝堇、羽啾生成游戏形象。原实现只沿用本人圆头像；本次补齐极简、细节两套独立透明全身 Q 版。使用内置 imagegen，身份参考来自 public/images/livers/{viridis,sumire,chu2u}.jpg；极简画风参考 minimal/komichi.png，细节画风参考 detail/zeyin.png。经典「棋子」模式继续使用原头像。
 
 生成提示词组：

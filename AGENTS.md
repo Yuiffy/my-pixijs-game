@@ -12,6 +12,14 @@
 
 ## Autochess visual testing
 
+- Before generating or replacing minimal autochess character art, read
+  `docs/autochess-minimal-art-guide.md` and reuse the complete prompts in
+  `docs/autochess-minimal-prompts.json` (Sumire uses the revised
+  `docs/autochess-sumire-minimal-v2.json`). Inspect original character art first;
+  preserve distinctive hairstyle and costume shapes when simplifying. Match `sui` and
+  `grove_mender` minimal sprites and inspect at 48/64px; do not reuse the old
+  detail-heavy 287 prompts for minimal art.
+
 - Read `progress.md` before changing or debugging the autochess game.
 - The game uses Phaser with `Phaser.AUTO`, which normally selects WebGL. The shared
   `web_game_playwright_client.js` launches bundled headless Chromium with forced
