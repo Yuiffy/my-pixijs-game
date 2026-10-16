@@ -61,6 +61,34 @@ test('287 同名去重，开战加能与护甲只作用于成员，两档接力�
   }
 });
 
+test('小松绿敌我各星无需受击或附近目标，回满能量自动种圈，消耗能量后不连放', () => {
+  for (const star of [1, 2, 3]) for (const team of ['player', 'enemy']) {
+    const engine = setup([['viridis', star]]);
+    if (team === 'enemy') {
+      Object.defineProperty(engine, 'currentWave', { get: () => ({ round: 1, name: '植物', tag: '植物', modifier: 1, units: [{ id: 'viridis', star }] }) });
+      engine.state.phase = 'preparation'; engine.startBattle();
+    }
+    const battle = engine.state.battle;
+    [...battle.player, ...battle.enemy].forEach(inert);
+    const source = battle[team][0];
+    source.x = team === 'player' ? 100 : 1000; source.y = 300;
+    const opponents = battle[team === 'player' ? 'enemy' : 'player'];
+    opponents.forEach(f => { f.x = team === 'player' ? 1000 : 100; f.y = 300; });
+    source.energy = source.maxEnergy - .5; source.energyPerSecond = 7;
+    step(engine, .025); assert.equal(battle.healingZones.length, 0);
+    step(engine, .1);
+    assert.equal(source.damageTaken, 0); assert.equal(source.hp, source.maxHp);
+    assert.equal(battle.healingZones.length, 1);
+    const zone = battle.healingZones[0];
+    assert.equal(zone.team, team); assert.equal(zone.x, source.x); assert.equal(zone.y, source.y);
+    assert.ok(Math.abs(source.shield - source.maxHp * [0, .12, .16, .2][star]) < 1e-6);
+    assert.ok(source.energy < 1);
+    step(engine, 1.05); assert.equal(battle.healingZones.length, 1);
+    source.energy = source.maxEnergy; step(engine, .025);
+    assert.equal(battle.healingZones.length, 2);
+  }
+});
+
 test('小松绿各星固定养护圈：四次回血，越界／敌人不受益，溢出不削现有大盾', () => {
   for (const star of [1, 2, 3]) {
     const engine = setup([['viridis', star], ['nori', 1], ['sui', 1]]);

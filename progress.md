@@ -1,5 +1,13 @@
 # 项目进度
 
+## 2026-10-17 · 小松绿满能量自动种植物（本地验收）
+
+用户反馈小松绿战斗一直不放技能，检查确认旧 selfOnHit 要求满能且最近 0.2 秒受击，后排不受击会长期满能不施法；用户确认改为满能自动种植物。仅将 viridis 释放类别改为既有 selfBuff，不再等待受击、附近敌人或受伤友军；保留自身 12/16/20% 护盾、半径 115／四秒固定养护圈、每秒 3/4/5% 治疗、溢出转盾 18% 上限、287／怕死。同步商店／图鉴分星说明、当前设计文档和 0.12.1 版本／更新日志。保留同时进行的昵称、美术和 AI 训练修改。
+
+回归先复现旧条件下失败，再确认敌我各一至三星无受击／无附近目标自然回满施法、消耗能量不连放及再次回满释放；更新旧受击类别名单，完整 491 项规则通过。修改 TS 定向 ESLint、版本一致性、脚本 node --check、diff 检查通过。CJS／MJS 直接 ESLint 仍因既有 TSConfig 项目范围返回解析错误，使用实际规则及浏览器执行验证，未关闭构建 ESLint。完整 pnpm run check → pnpm run build 顺序通过，生产目录 .next-viridis-build；移除构建自动新增的临时 tsconfig 类型路径。
+
+新增 scripts/verify-autochess-viridis.cjs 通过 verify-autochess.cjs 的 AUTOCHESS_VIRIDIS=1 入口复用安装版静音 Chrome、speech stub、page.screenshot 与像素 sanity。开发／生产各三张最终截图均逐张打开目检，交叉核对 render_game_to_text、DOM、画布尺寸及页面／控制台／HTTP 错误（均为空）。受控后排无受击场景仅靠自然回能约 14.3 秒种圈，自盾 12% 真实结算，队友生命 69→73.14；覆盖图鉴和 390px 战场。生产首轮图鉴头像尚未载入，脚本补齐可见图片就绪等待后复跑，以最终截图为证。证据 tmp/viridis-{development,production}/、tmp/viridis-{rules,check,build,eslint}.log。开发试玩 http://127.0.0.1:4074/game/autochess，生产试玩 http://127.0.0.1:4078/game/autochess。未提交、推送或部署。
+
 ## 2026-10-13 · 雨夜开门方向误判（本地验收）
 
 Original prompt: 魂游有时候这边能开门，但靠近互动却说不能从这边打开，可能位置不对，容易引起误解，修一修。

@@ -1,10 +1,25 @@
-export const AUTOCHESS_VERSION = "0.12.0";
-export const AUTOCHESS_RELEASE_DATE = "2026-10-13";
+export const AUTOCHESS_VERSION = "0.12.1";
+export const AUTOCHESS_RELEASE_DATE = "2026-10-17";
 
 export const AUTOCHESS_RELEASE_HISTORY = [
   {
     version: AUTOCHESS_VERSION,
     date: AUTOCHESS_RELEASE_DATE,
+    title: "小松绿自动种植物",
+    summary: "裸子植物改为满能量自动释放，解决后排小松绿长期满能量却不施法的问题。",
+    sections: [
+      {
+        title: "技能释放调整",
+        items: [
+          "小松绿无需受击，满能量便自动给自己护盾并在脚下种下固定养护圈。",
+          "保留各星护盾、治疗、溢出转盾数值与 4 秒持续时间，以及 287、怕死羁绊。养护圈仍留在原地。",
+        ],
+      },
+    ],
+  },
+  {
+    version: "0.12.0",
+    date: "2026-10-13",
     title: "287 全身棋子形象",
     summary: "小松绿、枝堇、羽啾补齐极简与细节两套透明全身 Q 版，商店、图鉴与战场统一展示。",
     sections: [

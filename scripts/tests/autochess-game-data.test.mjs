@@ -1027,6 +1027,7 @@ test("星汐、塔神与礼墨使用已下载的公开头像并保留各自角�
 
 test("主动技能触发类别与技能形态一致", () => {
   const expectedTimings = {
+    viridis: "selfBuff",
     sun_guard: "selfOnHit",
     sui: "offenseReady",
     rift_brawler: "offenseInRange",
@@ -1039,7 +1040,7 @@ test("主动技能触发类别与技能形态一致", () => {
   });
   assert.deepEqual(
     data.SHOP_UNITS.filter((id) => data.UNIT_DEFS[id].abilityCastTiming === "selfOnHit"),
-    ["sun_guard", "viridis"],
+    ["sun_guard"],
     "只有明确的自保技能应使用受击触发",
   );
 });

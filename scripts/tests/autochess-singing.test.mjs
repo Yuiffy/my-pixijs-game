@@ -30,7 +30,7 @@ const sing = (engine, f) => contributeSinging(engine.state.battle, f, host(engin
 const step = (engine, seconds) => { for (let t = 0; t < seconds - 1e-8; t += .025) engine.update(.025); };
 const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-6, `${a} != ${b}`);
 
-test('合唱严格采用指定九人名单，岁己仅小红帽加入，小松绿仍为怕死受击自保', () => {
+test('合唱严格采用指定九人名单，岁己仅小红帽加入，小松绿保留怕死并满能自动自保', () => {
   assert.deepEqual(Object.values(UNIT_DEFS).filter(u => u.traits.includes('singer')).map(u => u.id).sort(), [...singers].sort());
   assert.equal(singers.filter(id => SHOP_UNITS.includes(id)).length, 9);
   assert.equal(TRAITS.singer.name, '合唱');
@@ -39,7 +39,7 @@ test('合唱严格采用指定九人名单，岁己仅小红帽加入，小松�
   for (const id of ['seki_boar_king', 'miki_guest', 'hatsuse_guest', 'spark_mage', 'cog_scribe']) assert.equal(UNIT_DEFS[id].traits.includes('singer'), false);
   assert.deepEqual(UNIT_DEFS.viridis.traits, ['gen287', 'vanguard']);
   assert.equal(UNIT_DEFS.viridis.abilityName, '裸子植物');
-  assert.equal(UNIT_DEFS.viridis.abilityCastTiming, 'selfOnHit');
+  assert.equal(UNIT_DEFS.viridis.abilityCastTiming, 'selfBuff');
 });
 
 test('2/4/6 开战档位按不同姓名计数；技能增伤真实结算，普攻及非成员不增幅', () => {
@@ -132,15 +132,15 @@ test('敌我分别轮唱并享受相同增伤，敌方同名成员可合唱', ()
   b.singing.enemy.level = 0; near(value / e.damage(b.enemy[0], target, 100, false, 'ability'), 1.12);
 });
 
-test('真实施法 hook 计声一次，阿梓持续歌唱不额外计声；小松绿满能受击才放原地植物', () => {
+test('真实施法 hook 计声一次，阿梓持续歌唱不额外计声；小松绿满能自动放原地植物', () => {
   const e = setup(['cinder_ram', 'clock_gunner', 'viridis']); const b = e.state.battle;
   e.castAbility(b.player[0], b.enemy, true);
   assert.deepEqual(b.singing.player.voices, ['cinder_ram']);
   step(e, 1.1); assert.equal(b.singing.player.choruses, 0);
   assert.deepEqual(b.singing.player.voices, ['cinder_ram']);
   const green = b.player[2]; green.energy = green.maxEnergy; green.x = 250; green.y = 300;
-  step(e, .05); assert.equal(b.healingZones.length, 0);
-  e.damage(b.enemy[0], green, 10); step(e, .025);
+  assert.equal(green.hitPulse, 0);
+  step(e, .05);
   assert.equal(b.healingZones.length, 1);
   const zone = b.healingZones[0]; assert.equal(zone.x, 250); assert.equal(zone.y, 300);
   assert.ok(green.shield >= green.maxHp * .12);

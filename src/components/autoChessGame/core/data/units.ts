@@ -13,7 +13,7 @@ const COMBAT_PROFILES: Record<
   UnitId,
   Pick<UnitDefinition, "attackType" | "energyProfile" | "range" | "moveSpeed" | "abilityCastTiming">
 > = {
-  viridis: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 210, moveSpeed: 48, abilityCastTiming: "selfOnHit" },
+  viridis: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 210, moveSpeed: 48, abilityCastTiming: "selfBuff" },
   sumire: { attackType: "ranged", energyProfile: { ...ENERGY_PROFILES.reservoir, name: "书屋蓄能", max: 120, perSecond: 6, onAttack: 10 }, range: 225, moveSpeed: 48, abilityCastTiming: "offenseReady" },
   chu2u: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 265, moveSpeed: 56, abilityCastTiming: "offenseReady" },
   // selfOnHit：自保，受击时放
@@ -124,8 +124,8 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     attackInterval: 1.15,
     abilityRange: 420,
     abilityName: "裸子植物",
-    abilityDescription: "满能量受击后先给自己 12%/16%/20% 最大生命护盾，再在自己脚下讲起裸子植物：半径 115 的固定科普圈持续 4 秒，每秒治疗圈内友军 3%/4%/5% 最大生命，溢出转为护盾，上限 18%。朋友走远了、自己怕死后跳了，圈也不会跟着走。",
-    abilityLevels: threeAbilityLevels([[3, 12], [4, 16], [5, 20]], ([healPercent, shieldPercent]) => ({ summary: `自保 ${shieldPercent}% 护盾 · 4 秒科普 · 每秒 ${healPercent}% 治疗`, description: `受击后自身获得 ${shieldPercent}% 最大生命护盾；在自己脚下留下半径 115 的科普圈，每秒治疗圈内友军 ${healPercent}% 最大生命，治疗溢出转盾上限 18%。圈留在原地。`, stats: { healRatio: healPercent / 100, shieldRatio: shieldPercent / 100, radius: 115, duration: 4 } })),
+    abilityDescription: "满能量自动释放，先给自己 12%/16%/20% 最大生命护盾，再在自己脚下讲起裸子植物：半径 115 的固定科普圈持续 4 秒，每秒治疗圈内友军 3%/4%/5% 最大生命，溢出转为护盾，上限 18%。朋友走远了、自己怕死后跳了，圈也不会跟着走。",
+    abilityLevels: threeAbilityLevels([[3, 12], [4, 16], [5, 20]], ([healPercent, shieldPercent]) => ({ summary: `自保 ${shieldPercent}% 护盾 · 4 秒科普 · 每秒 ${healPercent}% 治疗`, description: `满能量自动释放，自身获得 ${shieldPercent}% 最大生命护盾；在自己脚下留下半径 115 的科普圈，每秒治疗圈内友军 ${healPercent}% 最大生命，治疗溢出转盾上限 18%。圈留在原地。`, stats: { healRatio: healPercent / 100, shieldRatio: shieldPercent / 100, radius: 115, duration: 4 } })),
     portrait: "/images/autochess/portraits/viridis.png",
     portraitStyle: "sprite",
     shop: true,

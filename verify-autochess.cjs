@@ -159,6 +159,12 @@ const closeBrowser = async () => {
     return;
   }
 
+  if (process.env.AUTOCHESS_VIRIDIS === '1') {
+    await require('./scripts/verify-autochess-viridis.cjs')({ page, state, capture, screenshots, errors, failedResponses });
+    await closeBrowser();
+    return;
+  }
+
   if (process.env.AUTOCHESS_SINGING === '1') {
     await require('./scripts/verify-autochess-singing.cjs')({ page, state, capture, screenshots, errors, failedResponses });
     await closeBrowser();
