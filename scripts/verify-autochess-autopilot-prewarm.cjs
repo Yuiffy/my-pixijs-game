@@ -168,7 +168,7 @@ let browser;
 
   await page.getByRole("button", { name: "游戏设置" }).click();
   const settings = page.getByRole("dialog", { name: "游戏设置" });
-  await settings.getByRole("radiogroup", { name: "AI 等级" })
+  await settings.getByRole("radiogroup", { name: "托管 AI 等级" })
     .getByRole("radio", { name: "看穿" })
     .click();
   await settings.getByRole("button", { name: "关闭设置" }).click();

@@ -162,7 +162,7 @@ let browser;
   await page.getByRole("button", { name: "游戏设置" }).click();
   const settings = page.getByRole("dialog", { name: "游戏设置" });
   const strategies = settings.getByRole("radiogroup", { name: "托管风格" });
-  const levels = settings.getByRole("radiogroup", { name: "AI 等级" });
+  const levels = settings.getByRole("radiogroup", { name: "托管 AI 等级" });
   await assert.doesNotReject(() => strategies.getByRole("radio", { name: "稳健" }).waitFor());
   assert.deepEqual(
     await strategies.getByRole("radio").allTextContents(),
@@ -206,7 +206,7 @@ let browser;
   const layout = await page.evaluate(() => {
     const panel = document.querySelector(".rift-settings-panel")?.getBoundingClientRect();
     const buttons = Array.from(document.querySelectorAll(
-      '[aria-label="托管风格"] [role="radio"], [aria-label="AI 等级"] [role="radio"]',
+      '[aria-label="托管风格"] [role="radio"], [aria-label="托管 AI 等级"] [role="radio"]',
     )).map((button) => ({
       text: button.textContent,
       width: button.getBoundingClientRect().width,
@@ -231,7 +231,7 @@ let browser;
   const mobileLayout = await page.evaluate(() => {
     const panel = document.querySelector(".rift-settings-panel")?.getBoundingClientRect();
     const buttons = Array.from(document.querySelectorAll(
-      '[aria-label="托管风格"] [role="radio"], [aria-label="AI 等级"] [role="radio"]',
+      '[aria-label="托管风格"] [role="radio"], [aria-label="托管 AI 等级"] [role="radio"]',
     )).map((button) => ({
       text: button.textContent,
       width: button.getBoundingClientRect().width,

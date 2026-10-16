@@ -3,10 +3,12 @@
 /* eslint-disable no-console */
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { Tooltip } from "antd";
 import {
   AudioMutedOutlined,
   CloseOutlined,
   HistoryOutlined,
+  InfoCircleOutlined,
   LoadingOutlined,
   RobotOutlined,
   SettingOutlined,
@@ -432,7 +434,7 @@ export default function AutoChessGame({ multiplayer }: { multiplayer?: Multiplay
       // The strategy still applies for this session when storage is unavailable.
     }
     const label = AUTOPILOT_LEVEL_OPTIONS.find(([option]) => option === level)?.[1] || level;
-    setMessage(`AI 等级已切换为${label}。`);
+    setMessage(`托管 AI 等级已切换为${label}。`);
     setRevision((value) => value + 1);
   }, [autopilotStyle]);
 
@@ -1048,8 +1050,12 @@ export default function AutoChessGame({ multiplayer }: { multiplayer?: Multiplay
                 </div>
               </div>
               <div className="rift-setting-strategy rift-setting-autopilot-level">
-                <span>AI 等级</span>
-                <div role="radiogroup" aria-label="AI 等级">
+                <span className="rift-setting-label">托管 AI 等级
+                  <Tooltip title="控制托管时替你买棋、布阵的决策能力，不影响敌人难度。" trigger={["hover", "focus", "click"]}>
+                    <button type="button" className="rift-setting-info" aria-label="托管 AI 等级说明"><InfoCircleOutlined aria-hidden="true" /></button>
+                  </Tooltip>
+                </span>
+                <div role="radiogroup" aria-label="托管 AI 等级">
                   {AUTOPILOT_LEVEL_OPTIONS.map(([level, label]) => (
                     <button
                       key={level}

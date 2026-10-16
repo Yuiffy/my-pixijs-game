@@ -1000,3 +1000,11 @@ Original prompt: 五个人说话和唱歌都很难听、奇怪；用动森口音
 证据 tmp/hush-blips-{live,story,events,spatial}/report.json、tmp/hush-blips-shared/；门禁 tmp/hush-blips-{rules,eslint,check,build}.log。4095 已重启使用 .next-hush-blips-release，刷新即可试听新版；只移除自己的临时 tsconfig 类型路径，未更改其他服务或配置。当前改动未提交/推送/部署；未作人工听感评测，手机仍为 Chrome 模拟。实现已完成，无待办。
 
 后续用户试玩后授权“可以，提交远端”。沿用本轮已通过的 79 项规则、修改源 ESLint、顺序完整 check / build 和静音浏览器验收，重新核对全部 49 段音频哈希与四份浏览器报告；仅提交当前共用拟声、音乐/音效、三维音源及相关素材/脚本/文档，推送 origin/master。未采用的 TTS 素材与制作记录留在 tmp，不纳入提交。
+
+## 2026-10-17 · 托管 AI 等级提示
+
+Original prompt: 自走棋设置里的AI等级好像有玩家以为是敌人AI等级，你来改改显示形式让它明确是托管AI等级。追加：不要字太多，说明放到 info 图标里。
+
+设置与切换反馈改为“托管 AI 等级”；标题旁增加 ⓘ，说明“控制托管时替你买棋、布阵的决策能力，不影响敌人难度。”仅悬停、聚焦或点击时显示。复用 Ant Design Tooltip，手机可点，保持四档策略逻辑。同步四个浏览器验证脚本的可访问名称定位。
+
+定向 ESLint、完整 pnpm run check 后顺序 pnpm run build 通过，保留构建 ESLint。现有 settings 验证采用安装版静音 Chrome、speech stub 与全页截图；四档实际状态、桌面 hover/focus、390px 点击、DOM/画布尺寸/文本状态/无错误和 PNG sanity 通过；四张最终截图全部打开目检。证据 tmp/autochess-settings-browser.json、tmp/autochess-settings-build.log、.tmp/autochess/autochess-settings*.png。本地开发预览 http://127.0.0.1:4106/game/autochess，未提交或部署。仅移除本任务 tsconfig 临时路径，保留并行美术任务修改。无剩余必需待办。

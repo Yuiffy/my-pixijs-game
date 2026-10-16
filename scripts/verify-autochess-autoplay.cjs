@@ -210,7 +210,7 @@ let browser;
   const settings = page.getByRole("dialog", { name: "游戏设置" });
   await settings.waitFor({ state: "visible" });
   const strategyGroup = settings.getByRole("radiogroup", { name: "托管风格" });
-  const levelGroup = settings.getByRole("radiogroup", { name: "AI 等级" });
+  const levelGroup = settings.getByRole("radiogroup", { name: "托管 AI 等级" });
   const survivalStyle = strategyGroup.getByRole("radio", { name: "稳健" });
   const balancedStyle = strategyGroup.getByRole("radio", { name: "平衡" });
   const highrollStyle = strategyGroup.getByRole("radio", { name: "搏上限" });
@@ -288,8 +288,8 @@ let browser;
   await settings.waitFor({ state: "visible" });
   assert.ok(await settings.getByRole("switch", { name: "游戏声音" }).isVisible());
   assert.ok(await settings.getByRole("radiogroup", { name: "托管风格" }).isVisible());
-  assert.ok(await settings.getByRole("radiogroup", { name: "AI 等级" }).isVisible());
-  assert.ok(await settings.getByRole("radiogroup", { name: "AI 等级" })
+  assert.ok(await settings.getByRole("radiogroup", { name: "托管 AI 等级" }).isVisible());
+  assert.ok(await settings.getByRole("radiogroup", { name: "托管 AI 等级" })
     .getByRole("radio", { name: "看穿" }).isVisible());
   assert.equal(await settings.getByRole("radio", { name: "看穿2" }).count(), 0);
   assert.equal(await settings.getByRole("radio", { name: "Go测试" }).count(), 0);
