@@ -108,6 +108,44 @@ test("战斗中续局从开战点重演，同一战结算和随机流一致", ()
   assert.equal(restored.engine.getRandomState(), first.engine.getRandomState());
 });
 
+test("后台不规则计时与续局重演保持相同战况，不能靠重开改变结果", () => {
+  const storage = memoryStorage();
+  const first = create(storage, 90603);
+  start(first);
+  first.dispatch({ type: "shop", index: 0 });
+  first.dispatch({ type: "battle" });
+  const restored = create(storage);
+  first.update(1 / 144);
+  first.setBackgroundBattleEnabled(true, 1000);
+  first.setHidden(true, 1000);
+  let now = 1000;
+  for (let tick = 0; tick < 1000 && first.engine.state.phase === "battle"; tick += 1) {
+    now += [137, 503, 17, 251][tick % 4];
+    first.updateBackground(now);
+  }
+  assert.equal(first.engine.state.phase, "result");
+  restored.dispatch({ type: "resume" });
+  const locked = restored.engine.getSimulationSnapshot();
+  const location = { zone: "board", index: locked.state.board.findIndex(Boolean) };
+  assert.ok(location.index >= 0);
+  for (const action of [
+    { type: "shop", index: 1 }, { type: "reroll" }, { type: "buyXp" },
+    { type: "sell", location },
+    { type: "move", from: location, to: { zone: "bench", index: 0 } },
+  ]) restored.dispatch(action);
+  const after = restored.engine.getSimulationSnapshot();
+  for (const key of ["board", "bench", "shop", "gold", "playerLevel"]) assert.deepEqual(after.state[key], locked.state[key], key);
+  restored.setBattlePaused(false);
+  finishBattle(restored);
+  assert.deepEqual(restored.engine.state.result, first.engine.state.result);
+  assert.equal(restored.engine.state.score, first.engine.state.score);
+  assert.equal(restored.engine.getRandomState(), first.engine.getRandomState());
+  for (const team of ["player", "enemy"]) {
+    const combatStats = bridge => bridge.engine.state.battle[team].map(({ fid, hp, alive, damageDealt }) => ({ fid, hp, alive, damageDealt }));
+    assert.deepEqual(combatStats(restored), combatStats(first));
+  }
+});
+
 test("结算和天赋续局不重发收入、不重抽选项或推进两次", () => {
   const storage = memoryStorage();
   const first = create(storage, 90604);

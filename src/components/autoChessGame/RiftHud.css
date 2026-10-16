@@ -1156,6 +1156,7 @@
 .rift-resume-run span { font-size: 12px; color: #acbfca; overflow-wrap: anywhere; }
 .rift-resume-run .rift-action { flex-shrink: 0; min-height: 44px; }
 .rift-save-issue { color: #ffcd85; font-size: 12px; }
+.rift-save-help { color: #acbfca; font-size: 12px; line-height: 1.6; margin: 0 0 16px; }
 .rift-battle-inspector {
   position: absolute;
   right: 16px;

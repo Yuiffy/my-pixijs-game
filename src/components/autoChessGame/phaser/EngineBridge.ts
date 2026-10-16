@@ -475,14 +475,7 @@ export class EngineBridge {
   public update(deltaSeconds: number) {
     if (this.codexOpen || this.hidden || this.battlePaused) return;
     if (this.engine.state.phase === "battle") {
-      this.liveBattleTimeRemainder += Math.min(0.05, Math.max(0, deltaSeconds));
-      while (
-        this.engine.state.phase === "battle"
-        && this.liveBattleTimeRemainder + 1e-9 >= LIVE_BATTLE_STEP_SECONDS
-      ) {
-        this.engine.update(LIVE_BATTLE_STEP_SECONDS);
-        this.liveBattleTimeRemainder -= LIVE_BATTLE_STEP_SECONDS;
-      }
+      this.advanceLiveBattle(Math.min(0.05, Math.max(0, deltaSeconds)));
       this.flushEvents();
       return;
     }
@@ -490,6 +483,18 @@ export class EngineBridge {
     if (this.engine.state.toast) {
       this.engine.update(Math.min(0.05, Math.max(0, deltaSeconds)));
       this.flushEvents();
+    }
+  }
+
+  private advanceLiveBattle(seconds: number) {
+    // Foreground, background and checkpoint replay must use the same combat steps.
+    this.liveBattleTimeRemainder += seconds;
+    while (
+      this.engine.state.phase === "battle"
+      && this.liveBattleTimeRemainder + 1e-9 >= LIVE_BATTLE_STEP_SECONDS
+    ) {
+      this.engine.update(LIVE_BATTLE_STEP_SECONDS);
+      this.liveBattleTimeRemainder -= LIVE_BATTLE_STEP_SECONDS;
     }
   }
 
@@ -553,9 +558,12 @@ export class EngineBridge {
     if (!elapsedMilliseconds || (this.engine.state.phase !== "battle" && !this.engine.state.toast)) {
       return 0;
     }
-    const steps = Math.max(1, Math.ceil(elapsedMilliseconds / (1000 / 60)));
-    const delta = elapsedMilliseconds / 1000 / steps;
-    for (let index = 0; index < steps; index += 1) this.engine.update(delta);
+    if (this.engine.state.phase === "battle") this.advanceLiveBattle(elapsedMilliseconds / 1000);
+    else {
+      const steps = Math.max(1, Math.ceil(elapsedMilliseconds / (1000 / 60)));
+      const delta = elapsedMilliseconds / 1000 / steps;
+      for (let index = 0; index < steps; index += 1) this.engine.update(delta);
+    }
     this.flushEvents();
     this.onEvent?.({ type: "state" });
     return elapsedMilliseconds;
@@ -757,6 +765,7 @@ export class EngineBridge {
       this.inspectedFighterId = null;
     }
     if (phase !== this.previousPhase) {
+      this.liveBattleTimeRemainder = 0;
       this.persistCheckpoint();
       if (phase === "battle") this.emitAudio("battle");
       if (phase === "result") this.emitAudio(this.engine.state.result?.won ? "win" : "loss");

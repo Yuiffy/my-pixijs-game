@@ -214,10 +214,15 @@ export default function RiftHud({
           <section className="rift-title-choice-panel">
             {savedRun && (
               <div className="rift-resume-run">
-                <div><strong>未完成的远征</strong><span>第 {savedRun.round} 战 · 核心 {savedRun.hp} · {({ preparation: "整备", result: "结算", augment: "天赋选择", battle: "待重新开战" })[savedRun.phase]}</span></div>
+                <div>
+                  <strong>未完成的远征</strong>
+                  <span>第 {savedRun.round} 战 · 核心 {savedRun.hp} · {({ preparation: "整备", result: "结算", augment: "天赋选择", battle: "战斗已锁定" })[savedRun.phase]}</span>
+                  {savedRun.phase === "battle" && <span>继续后重演本场战斗，不能返回整备。</span>}
+                </div>
                 <ActionButton tone="confirm" onClick={() => dispatch({ type: "resume" })}><HistoryOutlined aria-hidden="true" />继续远征</ActionButton>
               </div>
             )}
+            {!multiplayer && <p className="rift-save-help">进度自动保存在当前浏览器，关闭后可继续远征。</p>}
             {saveIssue && <p className="rift-save-issue" role="status">{saveIssue === "incompatible" ? "已有存档与当前版本不兼容" : saveIssue === "invalid" ? "已有存档未通过完整性校验" : "浏览器存储不可用，本局暂未保存"}</p>}
             <div className="rift-play-mode-block">
               <span>01 / 游玩方式</span>
