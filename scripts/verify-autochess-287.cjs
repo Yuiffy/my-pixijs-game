@@ -27,10 +27,10 @@ module.exports = async ({ page, state, capture, screenshots, errors, failedRespo
     bridge.engine.state.shop = ['viridis', 'sumire', 'chu2u', 'komichi', 'viridis'];
     bridge.dispatch({ type: 'clearSelection' });
   });
-  await page.getByRole('button', { name: /^购买小松绿Viridis/ }).first().hover();
+  await page.getByRole('button', { name: /^购买植物学家/ }).first().hover();
   await page.waitForTimeout(200);
   await evidence('shop');
-  for (const [name, cost] of [['小松绿Viridis', 2], ['枝堇Sumire', 4], ['羽啾chu2u', 4], ['四时小路Komichi', 5]]) {
+  for (const [name, cost] of [['植物学家', 2], ['紫色妈妈', 4], ['烂梗小孩', 4], ['路牌女', 5]]) {
     const before = await state();
     await page.getByRole('button', { name: new RegExp(`^购买${name}`) }).first().click();
     assert.equal((await state()).player.gold, before.player.gold - cost);
@@ -39,7 +39,7 @@ module.exports = async ({ page, state, capture, screenshots, errors, failedRespo
   assert.equal(purchased.activeTraits.find(t => t.name === '287').count, 4);
   assert.equal(purchased.activeTraits.find(t => t.name === '287').level, 2);
   await page.getByRole('button', { name: '图鉴 / 本局天赋' }).click();
-  for (const name of ['小松绿Viridis', '枝堇Sumire', '羽啾chu2u']) {
+  for (const name of ['植物学家', '紫色妈妈', '烂梗小孩']) {
     // Start from the overview each time so selection does not depend on scroll.
     await page.getByRole('button', { name: '概览', exact: true }).click();
     await page.getByRole('button', { name: `查看${name}详情`, exact: true }).click();

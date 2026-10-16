@@ -5,7 +5,7 @@ const { writeFileSync } = require('node:fs');
 module.exports = async ({ page, state, capture, screenshots, errors, failedResponses }) => {
   const report = { frames: {}, screenshots, errors, failedResponses };
   const ids = ['viridis', 'sumire', 'chu2u'];
-  const names = ['小松绿Viridis', '枝堇Sumire', '羽啾chu2u'];
+  const names = ['植物学家', '紫色妈妈', '烂梗小孩'];
   const evidence = async name => {
     await page.waitForFunction(() => [...document.images].every(img => img.complete && img.naturalWidth > 0));
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));

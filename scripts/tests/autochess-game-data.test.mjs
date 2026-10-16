@@ -1048,7 +1048,7 @@ test("主动技能触发类别与技能形态一致", () => {
 test("帕可使用公开头像、公开内容衍生技能与主持阵容羁绊", async () => {
   const pako = data.UNIT_DEFS.pako;
   assert.ok(data.SHOP_UNITS.includes("pako"));
-  assert.equal(pako.name, "帕可Pako");
+  assert.equal(pako.name, "打工天使");
   assert.equal(pako.tier, 1);
   assert.equal(pako.cost, 1);
   assert.equal(pako.hp, 142);

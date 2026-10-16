@@ -1016,3 +1016,12 @@ Original prompt: 自走棋设置里的AI等级好像有玩家以为是敌人AI�
 设置与切换反馈改为“托管 AI 等级”；标题旁增加 ⓘ，说明“控制托管时替你买棋、布阵的决策能力，不影响敌人难度。”仅悬停、聚焦或点击时显示。复用 Ant Design Tooltip，手机可点，保持四档策略逻辑。同步四个浏览器验证脚本的可访问名称定位。
 
 定向 ESLint、完整 pnpm run check 后顺序 pnpm run build 通过，保留构建 ESLint。现有 settings 验证采用安装版静音 Chrome、speech stub 与全页截图；四档实际状态、桌面 hover/focus、390px 点击、DOM/画布尺寸/文本状态/无错误和 PNG sanity 通过；四张最终截图全部打开目检。证据 tmp/autochess-settings-browser.json、tmp/autochess-settings-build.log、.tmp/autochess/autochess-settings*.png。本地开发预览 http://127.0.0.1:4106/game/autochess，未提交或部署。仅移除本任务 tsconfig 临时路径，保留并行美术任务修改。无剩余必需待办。
+
+## 2026-10-17 · 用户确认四位棋子花名
+
+按用户定稿：小松绿 → 植物学家、枝堇 → 紫色妈妈、羽啾 → 烂梗小孩、四时小路 → 路牌女。副标题保留原名；同步三份浏览器验证脚本的名称定位。确认记录见 docs/autochess-nicknames.md。仅调整显示文案，保留工作区既有技能/版本与美术改动；定向 ESLint 通过，未提交或部署。
+规则验证 490/491 通过；唯一失败是既有技能改动对应的旧断言：autochess-game-data.test.mjs:1040 仍期待 viridis 使用 selfOnHit，当前工作区已改为 selfBuff。与本次改名无关，本轮未改动该技能或断言。日志 tmp/autochess-nicknames-tests.log。
+
+## 2026-10-17 · 追加六位棋子命名定稿
+
+按用户确认：帕可 → 打工天使、露蒂丝 → 露医生、星汐 → 山猪王、梨安 → 梨安（去后缀）、又一 → 又一（去后缀）、恬豆 → 棒棒糖刘海。同步花名文档、帕可名称断言及星汐/恬豆浏览器脚本定位。数据与战报相关现有 38 项测试全部通过，日志 tmp/autochess-nicknames-followup-tests.log；未提交或部署。

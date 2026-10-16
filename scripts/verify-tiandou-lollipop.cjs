@@ -54,7 +54,7 @@ mkdirSync(artifactDirectory, { recursive: true });
     const preparation = await readState();
     if (preparation.phase !== "preparation" || !preparation.shop.some((unit) => unit?.id === "tiandou")) continue;
 
-    const tiandouCard = page.locator('button[aria-label^="恬豆·甜点转圈"]');
+    const tiandouCard = page.locator('button[aria-label^="棒棒糖刘海"]');
     await tiandouCard.waitFor({ state: "visible" });
     await tiandouCard.click();
     await page.waitForTimeout(500);

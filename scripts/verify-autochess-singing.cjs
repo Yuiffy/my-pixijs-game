@@ -21,7 +21,7 @@ module.exports = async ({ page, state, capture, screenshots, errors, failedRespo
   await page.locator('.rift-dom-choice').first().click();
   if (process.env.AUTOCHESS_SINGING_ROSTER === '1') {
     await page.getByRole('button', { name: '图鉴 / 本局天赋' }).click();
-    await page.getByRole('button', { name: '查看星汐Seki详情', exact: true }).click();
+    await page.getByRole('button', { name: '查看山猪王详情', exact: true }).click();
     const detail = await page.locator('[data-codex-unit-details]').innerText();
     assert.match(detail, /山猪冲阵/); assert.doesNotMatch(detail, /合唱/);
     await evidence('roster-seki');
@@ -31,7 +31,7 @@ module.exports = async ({ page, state, capture, screenshots, errors, failedRespo
     const songText = await song.innerText();
     assert.doesNotMatch(songText, /星汐/);
     const members = songText.split('相关棋子：')[1].trim().split('、');
-    assert.deepEqual([...members].sort(), ['老弥', '雅吨', '七海大鲨鱼', '蛙梓', '小红帽', '塔神', '泽音美乐蒂', '狍子偶像', '四时小路Komichi'].sort());
+    assert.deepEqual([...members].sort(), ['老弥', '雅吨', '七海大鲨鱼', '蛙梓', '小红帽', '塔神', '泽音美乐蒂', '狍子偶像', '路牌女'].sort());
     await evidence('roster-singers');
     assert.deepEqual(errors, []); assert.deepEqual(failedResponses, []);
     writeFileSync('.tmp/autochess/singing-roster-report.json', JSON.stringify({ ...report, members }, null, 2));
@@ -46,11 +46,11 @@ module.exports = async ({ page, state, capture, screenshots, errors, failedRespo
     e.state.shop = ['viridis', 'clock_gunner', 'rift_brawler', 'sui', 'tower_god'];
     bridge.dispatch({ type: 'clearSelection' });
   });
-  await page.getByRole('button', { name: /^购买小松绿Viridis/ }).hover();
+  await page.getByRole('button', { name: /^购买植物学家/ }).hover();
   await evidence('shop');
-  await page.getByRole('button', { name: /^购买小松绿Viridis/ }).click();
+  await page.getByRole('button', { name: /^购买植物学家/ }).click();
   await page.getByRole('button', { name: '图鉴 / 本局天赋' }).click();
-  await page.getByRole('button', { name: '查看小松绿Viridis详情', exact: true }).click();
+  await page.getByRole('button', { name: '查看植物学家详情', exact: true }).click();
   const detail = page.locator('[data-codex-unit-details]');
   const text = await detail.innerText();
   assert.match(text, /裸子植物/); assert.match(text, /怕死/); assert.doesNotMatch(text, /主持/);
@@ -59,7 +59,7 @@ module.exports = async ({ page, state, capture, screenshots, errors, failedRespo
   const song = page.locator('article').filter({ hasText: '合唱 · 职业' });
   assert.equal(await song.count(), 1); await song.scrollIntoViewIfNeeded();
   const songText = await song.innerText();
-  assert.deepEqual(songText.split('相关棋子：')[1].trim().split('、').sort(), ['老弥', '雅吨', '七海大鲨鱼', '蛙梓', '小红帽', '塔神', '泽音美乐蒂', '狍子偶像', '四时小路Komichi'].sort());
+  assert.deepEqual(songText.split('相关棋子：')[1].trim().split('、').sort(), ['老弥', '雅吨', '七海大鲨鱼', '蛙梓', '小红帽', '塔神', '泽音美乐蒂', '狍子偶像', '路牌女'].sort());
   for (const expected of [/2 名/, /4 名/, /6 名/, /12%/, /20%/, /30%/, /4 秒休息/, /术盾/]) assert.match(songText, expected);
   await evidence('trait-codex');
   await page.setViewportSize({ width: 390, height: 844 }); await song.scrollIntoViewIfNeeded();

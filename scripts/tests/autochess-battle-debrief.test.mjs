@@ -113,5 +113,5 @@ test("胜局复盘聚合相同棋子的关键输出或支援", () => {
   });
   assert.equal(support.kind, "standout");
   assert.equal(support.tone, "positive");
-  assert.match(support.title, /关键支援 · 帕可Pako/);
+  assert.match(support.title, /关键支援 · 打工天使/);
 });
