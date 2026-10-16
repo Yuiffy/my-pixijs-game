@@ -1479,6 +1479,9 @@ test("长考和看穿连续空刷后会先做精确阵容复核", () => {
     state.board.forEach((unit) => {
       if (unit) unit.star = 3;
     });
+    // This tests unfinished development; a fully graduated oracle roster now
+    // goes straight to its terminal composition review without dry rerolls.
+    state.board.find(Boolean).star = 2;
     const autopilot = new AutoChessAutopilot(
       bridge,
       "evolution",
@@ -1523,6 +1526,7 @@ test("精确复核后即使空刷计数被重置也只再付费刷新四次", ()
   state.board.forEach((unit) => {
     if (unit) unit.star = 3;
   });
+  state.board.find(Boolean).star = 2;
   const autopilot = new AutoChessAutopilot(
     bridge,
     "evolution",

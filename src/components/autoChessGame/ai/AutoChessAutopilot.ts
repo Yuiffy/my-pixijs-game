@@ -548,6 +548,16 @@ export class AutoChessAutopilot {
 
   private seerExtraRerolls = 0;
 
+  private oracleTerminalProject: {
+    id: UnitId;
+    star: 1 | 2 | 3;
+    rerolls: number;
+    saleUid: number | null;
+    lineupUids: number[];
+  } | null = null;
+
+  private oracleTerminalCommitted = false;
+
   private seerFutureShopPreviewKey = "";
 
   private seerFutureShopPreview: readonly (readonly (UnitId | null)[])[] = [];
@@ -702,6 +712,8 @@ export class AutoChessAutopilot {
   }
 
   private resetStrategyState() {
+    this.oracleTerminalProject = null;
+    this.oracleTerminalCommitted = false;
     this.invalidateFinalLineup();
     this.exactLineupSearchRequested = false;
     this.seerRouteAbandoned = false;
@@ -1066,7 +1078,9 @@ export class AutoChessAutopilot {
       if (this.shouldAuditLiveBattle() && auditEligible) {
         const audit = this.exactBattleAudit(roster);
         this.lastBattlePredictionScore = audit.score;
-        const expectsWin = this.style === "seer"
+        const expectsWin = this.oracleTerminalCommitted
+          ? coarseScore >= 10000
+          : this.style === "seer"
           ? this.seerPlan?.steps?.[0]?.expectedBattleWon !== false
           : coarseScore > 0 || recoveryAudit;
         if (
@@ -1133,6 +1147,8 @@ export class AutoChessAutopilot {
   }
 
   private resetPreparation(round: number) {
+    this.oracleTerminalProject = null;
+    this.oracleTerminalCommitted = false;
     this.plannedRound = round;
     this.preparationStartGold = this.bridge.engine.state.gold;
     this.stabilizationInterestTiersAtRisk = 0;
@@ -4381,6 +4397,184 @@ export class AutoChessAutopilot {
       .reduce((sum, { unit }) => sum + unitCopyValue(unit), 0);
   }
 
+  private oracleTerminalReviewOpen(roster: OwnedEntry[]) {
+    const { engine } = this.bridge;
+    return this.modernConfiguration
+      && this.thinkingLevel === "oracle"
+      && engine.state.round >= 18
+      && engine.isMaxPlayerLevel
+      && engine.boardCount === engine.boardCap
+      && roster.every(({ unit }) => unit.star === 3);
+  }
+
+  private oracleTerminalProjectCost(id: UnitId, star: 1 | 2 | 3) {
+    const { engine } = this.bridge;
+    let { cost } = UNIT_DEFS[id];
+    if (star > 1 && !engine.isStarForgeUnlocked) cost += engine.starForgeUnlockCost;
+    if (star >= 2) cost += engine.getStarForgeUpgradeCost({ uid: -1, id, star: 1 })!;
+    if (star === 3) cost += engine.getStarForgeUpgradeCost({ uid: -1, id, star: 2 })!;
+    return cost;
+  }
+
+  /** Keep a verified exchange atomic: reach the shop, make room, buy, then forge. */
+  private continueOracleTerminalProject(roster: OwnedEntry[]): GameAction | null {
+    const project = this.oracleTerminalProject;
+    if (!project) return null;
+    const { engine } = this.bridge;
+    const { state } = engine;
+    const incoming = roster.find(({ unit }) => unit.id === project.id);
+    if (!incoming) {
+      const sale = roster.find(({ unit, location }) => (
+        unit.uid === project.saleUid && location.zone === "bench"
+      ));
+      const remainingCost = this.oracleTerminalProjectCost(project.id, project.star)
+        + Math.max(0, project.rerolls - state.freeRerollCharges);
+      if (state.gold + (sale ? engine.getUnitSellValue(sale.unit) : 0) < remainingCost) {
+        this.oracleTerminalProject = null;
+        this.finalizingEconomy = true;
+        return null;
+      }
+      if (project.rerolls > 0) {
+        project.rerolls -= 1;
+        this.rerolls += 1;
+        if (state.freeRerollCharges === 0) this.paidRerolls += 1;
+        return { type: "reroll" };
+      }
+      const index = state.shop.indexOf(project.id);
+      if (index >= 0) {
+        if (engine.canStoreUnit(project.id)) return { type: "shop", index };
+        if (sale) {
+          this.soldUnitIds.add(sale.unit.id);
+          return { type: "sell", location: sale.location };
+        }
+      }
+    } else if (incoming.unit.star < project.star) {
+      const cost = engine.isStarForgeUnlocked
+        ? engine.getStarForgeUpgradeCost(incoming.unit)!
+        : engine.starForgeUnlockCost;
+      if (state.gold >= cost) return { type: "starForge", location: incoming.location };
+    } else {
+      const lineup = project.lineupUids.map((uid) => (
+        uid === -1 ? incoming : roster.find(({ unit }) => unit.uid === uid)!
+      ));
+      if (lineup.every(Boolean)) {
+        // Preserve the exact-tested team, including a low-star trait accessory
+        // that the model shortlist might otherwise discard after the purchase.
+        this.invalidateFinalLineup();
+        this.plannedLineupUids = lineup.map(({ unit }) => unit.uid);
+        this.plannedLineupUnits = new Map(lineup.map(({ unit }) => [
+          unit.uid, { id: unit.id, star: unit.star },
+        ]));
+        this.plannedFormation = "go_canonical";
+        this.plannedBoardSlots = new Map(formationPlacements(lineup, "go_canonical")
+          .map(({ entry, slot }) => [entry.unit.uid, slot]));
+        this.plannedLineupScore = this.rolloutLineupScore(lineup, "go_canonical", false, EXACT_COMBAT_HZ);
+        this.plannedLineupRandomState = engine.getRandomState();
+        this.oracleTerminalCommitted = true;
+        this.rescueLineupLocked = true;
+        this.exactLineupSearchRequested = true;
+        this.formationStartedThisPreparation = true;
+      }
+    }
+    this.oracleTerminalProject = null;
+    this.finalizingEconomy = true;
+    return null;
+  }
+
+  /** Graduation ends star chasing, but does not make the composition immutable. */
+  private oracleTerminalReviewAction(roster: OwnedEntry[]): GameAction | null {
+    if (this.oracleTerminalProject) return this.continueOracleTerminalProject(roster);
+    const { engine } = this.bridge;
+    const { state } = engine;
+    this.exactLineupSearchRequested = true;
+    // Already deployed and winning: avoid even a cosmetic formation pass.
+    if (this.exactBattleAudit(roster).score >= 10000) return { type: "battle" };
+    const lineup = this.rolloutTargetLineup(roster);
+    const currentScore = this.rolloutLineupScore(lineup, this.plannedFormation, false, EXACT_COMBAT_HZ);
+    if (currentScore >= 10000) {
+      this.finalizingEconomy = true;
+      return null;
+    }
+
+    const selectedUids = new Set(lineup.map(({ unit }) => unit.uid));
+    // Rank reserves by their best contribution to this and the known upcoming
+    // waves, rather than granting every unique three-star permanent immunity.
+    const sale = roster.filter(({ unit, location }) => (
+      location.zone === "bench"
+      && !selectedUids.has(unit.uid)
+      && !this.improvedUnitUidsThisPreparation.has(unit.uid)
+    )).map((entry) => ({
+      entry,
+      value: Math.max(...lineup.map((_, index) => this.oracleFutureModelScore(
+        lineup.map((member, slot) => (slot === index ? entry : member)),
+        "go_canonical",
+      ))),
+    })).sort((left, right) => left.value - right.value
+      || this.unitScore(left.entry.unit, roster) - this.unitScore(right.entry.unit, roster)
+      || left.entry.unit.uid - right.entry.unit.uid)[0]?.entry;
+    if (!sale && !state.bench.some((unit) => !unit)) {
+      this.finalizingEconomy = true;
+      return null;
+    }
+    const availableGold = state.gold + (sale ? engine.getUnitSellValue(sale.unit) : 0);
+    const shops = [state.shop, ...this.seerFutureShopForecast(Math.min(
+      SEER_ENDGAME_MAX_EXTRA_REROLLS,
+      this.oraclePlanningWindow().futureShopLookahead,
+    ))];
+    const ownedIds = new Set(roster.map(({ unit }) => unit.id));
+    const incomingUid = engine.getSimulationSnapshot().uid;
+    const seen = new Set<UnitId>();
+    const plans = shops.flatMap((shop, rerolls) => shop.flatMap((id) => {
+      if (!id || seen.has(id) || ownedIds.has(id) || this.soldUnitIds.has(id)) return [];
+      seen.add(id);
+      return ([1, 2, 3] as const).flatMap((star) => {
+        const cost = this.oracleTerminalProjectCost(id, star)
+          + Math.max(0, rerolls - state.freeRerollCharges);
+        if (cost > availableGold || Math.max(0, rerolls - state.freeRerollCharges) > state.gold) return [];
+        const incoming: OwnedEntry = {
+          unit: { uid: incomingUid, id, star }, location: { zone: "bench", index: -1 },
+        };
+        return lineup.map((_, index) => {
+          const candidate = lineup.map((member, slot) => (slot === index ? incoming : member));
+          return {
+            id,
+            star,
+            rerolls,
+            cost,
+            lineup: candidate,
+            model: this.goModelScore(candidate, "go_canonical"),
+          };
+        });
+      });
+    })).sort((left, right) => right.model - left.model || left.cost - right.cost);
+    // Fixed shortlist; no full roster search for every shop/bench pair.
+    const distinctProjects = new Map<string, typeof plans[number]>();
+    plans.forEach((plan) => {
+      const key = `${plan.id}:${plan.star}`;
+      if (!distinctProjects.has(key)) distinctProjects.set(key, plan);
+    });
+    const finalists = Array.from(distinctProjects.values())
+      .slice(0, this.thinkingBudget().exactRolloutCandidates)
+      .map((plan) => ({
+        ...plan,
+        score: this.rolloutLineupScore(plan.lineup, "go_canonical", false, EXACT_COMBAT_HZ),
+      })).filter((plan) => plan.score >= currentScore + REPLACEMENT_ROLLOUT_MIN_GAIN)
+      .sort((left, right) => right.score - left.score || left.cost - right.cost);
+    const best = finalists[0];
+    if (!best) {
+      this.finalizingEconomy = true;
+      return null;
+    }
+    this.oracleTerminalProject = {
+      id: best.id,
+      star: best.star,
+      rerolls: best.rerolls,
+      saleUid: state.bench.every(Boolean) ? sale?.unit.uid ?? null : null,
+      lineupUids: best.lineup.map(({ unit }) => (unit.id === best.id ? -1 : unit.uid)),
+    };
+    return this.continueOracleTerminalProject(roster);
+  }
+
   private seerEndgameInvestmentOpen(roster: OwnedEntry[]) {
     const { state } = this.bridge.engine;
     return this.style === "seer"
@@ -6333,6 +6527,10 @@ export class AutoChessAutopilot {
         return formation;
       }
       return engine.boardCount > 0 ? { type: "battle" } : null;
+    }
+
+    if (this.oracleTerminalProject || this.oracleTerminalReviewOpen(roster)) {
+      return this.oracleTerminalReviewAction(roster);
     }
 
     this.observeStabilizationStrength(roster);
