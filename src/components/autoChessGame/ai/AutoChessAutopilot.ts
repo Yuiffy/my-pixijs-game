@@ -515,6 +515,10 @@ export class AutoChessAutopilot {
 
   private preparationStartGold = 0;
 
+  private fastLineupKey = "";
+
+  private fastLineupUids: number[] = [];
+
   private stabilizationInterestTiersAtRisk = 0;
 
   private seerPlan: SeerPlan | null = null;
@@ -2203,6 +2207,15 @@ export class AutoChessAutopilot {
 
   private targetLineup(roster: OwnedEntry[]) {
     const cap = this.bridge.engine.boardCap;
+    const fast = this.usesFastEvaluation();
+    const fastKey = fast
+      ? `${this.bridge.engine.state.round}/${cap}/${this.preferenceStyle}/${this.thinkingLevel}/${roster
+        .map(({ unit }) => `${unit.uid}:${unit.id}:${unit.star}`).join(",")}`
+      : "";
+    if (fast && fastKey === this.fastLineupKey) {
+      const byUid = new Map(roster.map((entry) => [entry.unit.uid, entry]));
+      return this.fastLineupUids.map((uid) => byUid.get(uid)!);
+    }
     const ranked = [...roster].sort(
       (left, right) => this.unitScore(right.unit, roster) - this.unitScore(left.unit, roster)
         || left.unit.uid - right.unit.uid,
@@ -2215,7 +2228,29 @@ export class AutoChessAutopilot {
       const melee = ranked.find(({ unit }) => UNIT_DEFS[unit.id].attackType === "melee");
       if (melee) selected[selected.length - 1] = melee;
     }
-    return selected;
+    let best = selected;
+    if (fast && roster.length > selected.length) {
+      // Individual ranks include bench partners. Compare complete teams so a
+      // real trait breakpoint can beat a unit whose partners remain benched.
+      // One heuristic swap adds no model calls, rollouts or future information.
+      let bestScore = this.lineupHeuristicScore(selected);
+      const selectedUids = new Set(selected.map(({ unit }) => unit.uid));
+      roster.filter(({ unit }) => !selectedUids.has(unit.uid)).forEach((incoming) => {
+        selected.forEach((_, index) => {
+          const candidate = selected.map((entry, slot) => (slot === index ? incoming : entry));
+          if (!candidate.some(({ unit }) => UNIT_DEFS[unit.id].attackType === "melee")) return;
+          const score = this.lineupHeuristicScore(candidate);
+          if (score <= bestScore) return;
+          bestScore = score;
+          best = candidate;
+        });
+      });
+    }
+    if (fast) {
+      this.fastLineupKey = fastKey;
+      this.fastLineupUids = best.map(({ unit }) => unit.uid);
+    }
+    return best;
   }
 
   private lineupHeuristicScore(lineup: OwnedEntry[]) {
@@ -5345,7 +5380,7 @@ export class AutoChessAutopilot {
     if (salePool.length === 0) return null;
 
     const originalGold = state.gold;
-    let levelScore: number | null = null;
+    let levelPlan: { saleUid: number; score: number } | null = null;
     let best: {
       sale: OwnedEntry;
       candidate: ShopCandidate | null;
@@ -5354,26 +5389,32 @@ export class AutoChessAutopilot {
     } | null = null;
     try {
       salePool.forEach((sale) => {
+        const remainingRoster = roster.filter(({ unit }) => unit.uid !== sale.unit.uid);
         state.gold = originalGold + engine.getUnitSellValue(sale.unit);
         const upgrade = this.upgradeAction();
         let upgradeScore = Number.NEGATIVE_INFINITY;
         if (upgrade?.type === "buyXp") {
-          if (levelScore === null) {
+          if (levelPlan === null) {
             const currentLevel = state.playerLevel;
             try {
               if (currentLevel < 10) {
                 state.playerLevel = (currentLevel + 1) as PlayerLevel;
-                levelScore = this.previewRosterRollout(
-                  roster,
-                  false,
-                  Math.min(30, this.rolloutCombatHz),
-                );
-              } else levelScore = Number.NEGATIVE_INFINITY;
+                levelPlan = {
+                  saleUid: sale.unit.uid,
+                  score: this.previewRosterRollout(
+                    remainingRoster,
+                    false,
+                    Math.min(30, this.rolloutCombatHz),
+                  ),
+                };
+              } else levelPlan = { saleUid: sale.unit.uid, score: Number.NEGATIVE_INFINITY };
             } finally {
               state.playerLevel = currentLevel;
             }
           }
-          upgradeScore = levelScore;
+          // Keep the existing single level-preview budget. Its score belongs
+          // only to this sale: another sale leaves a different army behind.
+          if (levelPlan?.saleUid === sale.unit.uid) upgradeScore = levelPlan.score;
         }
 
         const candidate = this.shopCandidates(roster, false)[0] || null;

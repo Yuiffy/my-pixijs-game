@@ -92,6 +92,7 @@ def parse_args() -> argparse.Namespace:
         help="Only train and evaluate cache entries produced at this combat frequency.",
     )
     parser.add_argument("--seed", type=int, default=20260808)
+    parser.add_argument("--initialize-from", help="Fine-tune an exported ranker, mapping vocabularies and features by name.")
     parser.add_argument("--cpu", action="store_true", help="Disable CUDA even when available.")
     return parser.parse_args()
 
@@ -136,7 +137,7 @@ def parse_entry(cache_key: str, score: float, source: str) -> CombatExample | No
     if len(parts) < 9 or not parts[1].startswith("hz:"):
         return None
     schema = parts[0]
-    if schema == "combat-v1" and len(parts) == 9:
+    if schema in {"combat-v1", "combat-v2"} and len(parts) == 9:
         _, hz, starter, augments, wave_tag, modifier, enemies, players, branch = parts
         enemy_seed = 0
         round_number = 0
@@ -203,8 +204,10 @@ def load_examples(
     rejected = 0
     frequency_filtered = 0
     raw_entries = 0
+    source_fingerprints: set[str | None] = set()
     for path in files:
         payload = json.loads(path.read_text(encoding="utf-8"))
+        source_fingerprints.add(payload.get("sourceFingerprint"))
         payload_feature_names = payload.get("unitFeatureNames", [])
         payload_unit_features = payload.get("unitFeatures", {})
         if payload_feature_names and payload_unit_features:
@@ -228,6 +231,9 @@ def load_examples(
                 frequency_filtered += 1
                 continue
             deduplicated[example.cache_key] = example
+    if len(source_fingerprints) > 1:
+        raise ValueError("Cannot mix combat datasets from different game rules or unversioned caches")
+    source_fingerprint = next(iter(source_fingerprints), None)
     examples = sorted(deduplicated.values(), key=lambda example: example.cache_key)
     return examples, {
         "files": len(files),
@@ -236,6 +242,7 @@ def load_examples(
         "rejectedEntries": rejected,
         "frequencyFilteredEntries": frequency_filtered,
         "combatHz": combat_hz,
+        "sourceFingerprint": source_fingerprint,
     }, {
         "names": unit_feature_names,
         "values": unit_features,
@@ -554,6 +561,7 @@ def export_model(
     report_metrics: dict,
     unit_feature_names: list[str],
     verification: list[dict],
+    source_fingerprint: str | None,
 ) -> None:
     state = {
         name: rounded(tensor.detach().float().cpu().tolist())
@@ -562,6 +570,7 @@ def export_model(
     payload = {
         "schema": MODEL_SCHEMA,
         "trainedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "sourceFingerprint": source_fingerprint,
         "vocab": vocabularies,
         "unitFeatureNames": unit_feature_names,
         "normalization": {
@@ -576,8 +585,41 @@ def export_model(
     path.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
 
 
+def initialize_model(model, previous, vocabularies, feature_names):
+    """Preserve learned mechanics; new traits start neutral and new IDs use unk."""
+    state = model.state_dict()
+    embeddings = {
+        "unit_embedding.weight": "units",
+        "starter_embedding.weight": "starters",
+        "tag_embedding.weight": "waveTags",
+    }
+    for name, target in state.items():
+        if name == "unit_features":
+            continue  # Always retain the current game's attributes.
+        source = torch.tensor(previous["state"][name], dtype=target.dtype, device=target.device)
+        if name in embeddings:
+            vocabulary = embeddings[name]
+            old_indices = {key: index for index, key in enumerate(previous["vocab"][vocabulary])}
+            for index, key in enumerate(vocabularies[vocabulary]):
+                target[index].copy_(source[old_indices.get(key, 0)])
+        elif name in {"unit_feature_projection.weight", "augment_projection.0.weight"}:
+            old_names = previous["unitFeatureNames"] if name.startswith("unit_feature") else previous["vocab"]["augments"]
+            new_names = feature_names if name.startswith("unit_feature") else vocabularies["augments"]
+            old_indices = {key: index for index, key in enumerate(old_names)}
+            target.zero_()
+            for index, key in enumerate(new_names):
+                if key in old_indices:
+                    target[:, index].copy_(source[:, old_indices[key]])
+        elif target.shape == source.shape:
+            target.copy_(source)
+        else:
+            raise ValueError(f"Incompatible initialization tensor: {name}")
+    model.load_state_dict(state)
+
+
 def main() -> None:
     args = parse_args()
+    previous = json.loads(Path(args.initialize_from).read_text(encoding="utf-8")) if args.initialize_from else None
     random.seed(args.seed)
     torch.manual_seed(args.seed)
     if torch.cuda.is_available():
@@ -600,15 +642,18 @@ def main() -> None:
     if not validation:
         raise RuntimeError("Validation split is empty")
 
+    previous_vocab = previous["vocab"] if previous else {}
     vocabularies = {
-        "units": vocab(
-            unit_id
+        "units": vocab([
+            *previous_vocab.get("units", []),
+            *static_features["values"],
+            *(unit_id
             for example in examples
-            for unit_id, _, _ in (*example.players, *example.enemies)
-        ),
-        "starters": vocab(example.starter for example in examples),
-        "waveTags": vocab(example.wave_tag for example in examples),
-        "augments": vocab(augment for example in examples for augment in example.augments),
+            for unit_id, _, _ in (*example.players, *example.enemies)),
+        ]),
+        "starters": vocab([*previous_vocab.get("starters", []), *(example.starter for example in examples)]),
+        "waveTags": vocab([*previous_vocab.get("waveTags", []), *(example.wave_tag for example in examples)]),
+        "augments": vocab([*previous_vocab.get("augments", []), *(augment for example in examples for augment in example.augments)]),
     }
     if not static_features["names"] or not static_features["values"]:
         raise RuntimeError(
@@ -630,9 +675,13 @@ def main() -> None:
     modifier_mean = sum(example.modifier for example in train) / len(train)
     modifier_variance = sum((example.modifier - modifier_mean) ** 2 for example in train) / len(train)
     modifier_std = max(1e-6, math.sqrt(modifier_variance))
+    if previous:
+        modifier_mean = previous["normalization"]["modifierMean"]
+        modifier_std = previous["normalization"]["modifierStd"]
     maximum_enemy_position = max(
         24,
         1 + max((position for example in examples for _, _, position in example.enemies), default=0),
+        len(previous["state"]["enemy_position_embedding.weight"]) if previous else 0,
     )
 
     encoded_train = EncodedSplit(train, vocabularies, modifier_mean, modifier_std, device)
@@ -664,6 +713,8 @@ def main() -> None:
         maximum_enemy_position,
         unit_feature_tensor,
     ).to(device)
+    if previous:
+        initialize_model(model, previous, vocabularies, static_features["names"])
     optimizer = torch.optim.AdamW(
         model.parameters(),
         lr=args.learning_rate,
@@ -781,6 +832,7 @@ def main() -> None:
         "device": str(device),
         "gpu": torch.cuda.get_device_name(0) if device.type == "cuda" else None,
         "seed": args.seed,
+        "initializedFrom": str(Path(args.initialize_from).resolve()) if previous else None,
         "elapsedSeconds": elapsed,
         "epochsRequested": args.epochs,
         "bestEpoch": best_epoch,
@@ -807,6 +859,7 @@ def main() -> None:
         final_metrics,
         static_features["names"],
         verification,
+        source_stats["sourceFingerprint"],
     )
     report_path = Path(args.report)
     report_path.parent.mkdir(parents=True, exist_ok=True)

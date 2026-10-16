@@ -4806,6 +4806,101 @@ test("终局商店优先完成已有六份的三星项目", () => {
   assert.ok(focused.score > fresh.score);
 });
 
+test("各档筹资升本不会把将出售的棋子算回战力", () => {
+  for (const level of ["novice", "veteran", "deep", "oracle", "go"]) {
+    const bridge = new EngineBridge(73002, 1, { simulation: true });
+    bridge.setConsoleLogging(false);
+    bridge.engine.state.starterChoices = ["bastion"];
+    bridge.engine.startRun("bastion");
+    const { state } = bridge.engine;
+    state.round = 8;
+    state.playerLevel = 4;
+    state.gold = 3;
+    state.board.fill(null);
+    state.bench.fill(null);
+    ["mossback", "gale_archer", "sui", "tiandou"].forEach((id, index) => {
+      state.board[index] = { uid: index + 1, id, star: 1 };
+    });
+    state.bench[0] = { uid: 100, id: "spark_mage", star: 1 };
+    const pilot = new AutoChessAutopilot(bridge, "evolution", {}, "balanced", undefined,
+      20, undefined, false, level);
+    pilot.rolloutTargetLineup = (roster) => roster.filter(({ location }) => location.zone === "board");
+    pilot.expendableInterestEntries = (roster) => roster.filter(({ location }) => location.zone === "bench");
+    pilot.upgradeAction = () => ({ type: "buyXp" });
+    pilot.shopCandidates = () => [];
+    let previews = 0;
+    pilot.previewRosterRollout = (roster) => {
+      previews += 1;
+      // The extra slot helps only if this fifth unit is still owned.
+      return roster.some(({ unit }) => unit.uid === 100) ? 10500 : 9900;
+    };
+    assert.equal(pilot.fundingSaleAction(pilot.ownedEntries(), 10000), null);
+    assert.equal(previews, 1);
+    assert.equal(state.playerLevel, 4);
+    assert.equal(state.gold, 3);
+    assert.equal(state.bench[0].uid, 100);
+  }
+});
+
+test("不同出售方案不共用升本战力，仍只预演一次升本", () => {
+  const bridge = new EngineBridge(73003, 1, { simulation: true });
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  const { state } = bridge.engine;
+  state.playerLevel = 4;
+  state.bench.fill(null);
+  state.bench[0] = { uid: 100, id: "spark_mage", star: 1 };
+  state.bench[1] = { uid: 101, id: "gale_archer", star: 1 };
+  const pilot = new AutoChessAutopilot(bridge, "evolution", {}, "balanced", "normal", 20,
+    undefined, false, "veteran");
+  pilot.rolloutTargetLineup = () => [];
+  pilot.expendableInterestEntries = (roster) => roster.filter(({ location }) => location.zone === "bench");
+  pilot.unitScore = (unit) => unit.uid;
+  bridge.engine.getUnitSellValue = (unit) => unit.uid === 100 ? 2 : 1;
+  pilot.upgradeAction = () => ({ type: "buyXp" });
+  pilot.shopCandidates = () => [];
+  let previews = 0;
+  pilot.previewRosterRollout = () => { previews += 1; return 10500; };
+  assert.deepEqual(pilot.fundingSaleAction(pilot.ownedEntries(), 10000), {
+    type: "sell", location: { zone: "bench", index: 0 },
+  });
+  assert.equal(previews, 1);
+});
+
+test("快速档比较实际整队羁绊，换人不增加模型或战斗预算", () => {
+  for (const level of ["novice", "veteran"]) {
+    const bridge = new EngineBridge(73000, 1, { simulation: true });
+    bridge.setConsoleLogging(false);
+    bridge.engine.state.starterChoices = ["bastion"];
+    bridge.engine.startRun("bastion");
+    const { state } = bridge.engine;
+    state.round = 3;
+    state.playerLevel = 4;
+    state.board.fill(null);
+    state.bench.fill(null);
+    ["sui", "mossback", "kioi", "tiandou", "sui_blue"].forEach((id, index) => {
+      state.bench[index] = { uid: index + 1, id, star: 1 };
+    });
+    const pilot = new AutoChessAutopilot(bridge, "evolution", {}, "balanced", "normal", 20,
+      () => { throw new Error("Heuristic swaps must not invoke the model"); }, false, level);
+    const before = getAutopilotRolloutCacheStats().misses;
+    const lineup = pilot.targetLineup(pilot.ownedEntries());
+    assert.equal(lineup.length, 4);
+    assert.ok(lineup.some(({ unit }) => unit.id === "mossback"));
+    assert.ok(!lineup.some(({ unit }) => unit.id === "kioi"));
+    assert.equal(getAutopilotRolloutCacheStats().misses, before);
+    // Moving a unit keeps the cached selection but must return its new location.
+    state.board[0] = state.bench[1];
+    state.bench[1] = null;
+    const moved = pilot.targetLineup(pilot.ownedEntries());
+    assert.equal(moved.find(({ unit }) => unit.id === "mossback").location.zone, "board");
+    // A merge changes the key and must reconsider the roster.
+    state.bench[2].star = 3;
+    assert.ok(pilot.targetLineup(pilot.ownedEntries()).some(({ unit }) => unit.id === "kioi"));
+  }
+});
+
 test("新手和老手不运行隐藏战斗，只有长考产生 rollout miss", () => {
   const makePilot = (seed, level, scorer) => {
     const bridge = new EngineBridge(seed, 1, { simulation: true, battleStepHz: 60 });

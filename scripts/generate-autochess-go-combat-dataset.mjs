@@ -1,5 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { computeAutoChessRolloutSourceFingerprint } from "./lib/autochess-rollout-cache.mjs";
 import { loadTypescriptModule } from "./tests/helpers/load-typescript-module.mjs";
 
 const { EngineBridge } = await loadTypescriptModule(
@@ -70,6 +71,7 @@ const FORMATION = "go_canonical";
 const AUGMENT_IDS = AUGMENTS.map(({ id }) => id);
 const UNIT_FEATURE_NAMES = [...UNIT_COMBAT_FEATURE_NAMES];
 const UNIT_FEATURES = currentUnitCombatFeatures();
+const sourceFingerprint = (await computeAutoChessRolloutSourceFingerprint()).hash;
 
 const makeRng = (initialSeed) => {
   let state = initialSeed >>> 0 || 1;
@@ -228,8 +230,12 @@ for (const [enemyIndex, enemySeed] of enemySeeds.entries()) {
 }
 
 const entries = snapshotAutopilotRolloutCache();
+if ((await computeAutoChessRolloutSourceFingerprint()).hash !== sourceFingerprint) {
+  throw new Error("Game rules changed while generating combat labels; regenerate from a fixed checkout");
+}
 const payload = {
   schema: "go-combat-dataset-v2",
+  sourceFingerprint,
   generatedAt: new Date().toISOString(),
   seedBase,
   enemySeeds,

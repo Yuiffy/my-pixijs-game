@@ -153,6 +153,12 @@ const closeBrowser = async () => {
     throw new Error(`截图 ${name} 连续失败: ${lastError instanceof Error ? lastError.message : String(lastError)}`);
   };
 
+  if (process.env.AUTOCHESS_MODEL_REFRESH === '1') {
+    await require('./scripts/verify-autochess-model-refresh.cjs')({ page, state, capture, screenshots, errors, failedResponses });
+    await closeBrowser();
+    return;
+  }
+
   if (process.env.AUTOCHESS_ORACLE_TERMINAL === '1') {
     await require('./scripts/verify-autochess-oracle-terminal.cjs')({ page, state, capture, screenshots, errors, failedResponses });
     await closeBrowser();
