@@ -1095,6 +1095,8 @@ export class AutoChessAutopilot {
           // Reopen the decision window once. If no legal improvement exists,
           // the next pass may still accept this unavoidable loss.
           this.exactBattleAuditRejectedKey = audit.key;
+          this.finalizingEconomy = false;
+          this.formationStartedThisPreparation = false;
           this.invalidateFinalLineup();
           this.invalidateSeerPlan(false);
           this.nextActionAt = now;
@@ -3482,10 +3484,12 @@ export class AutoChessAutopilot {
         const key = `${this.bridge.engine.state.round}/${randomState}/board/${board
           .map((entry) => (entry ? `${entry.unit.uid}:${entry.unit.id}:${entry.unit.star}` : "-"))
           .join(",")}`;
-        if (key === this.confidenceKey) return this.confidenceScore;
+        if (key === this.confidenceKey) {
+          return this.confidenceAfterBattleAudit(roster, this.confidenceScore);
+        }
         this.confidenceKey = key;
         this.confidenceScore = this.rolloutBoardScore(board);
-        return this.confidenceScore;
+        return this.confidenceAfterBattleAudit(roster, this.confidenceScore);
       }
     }
     const lineup = this.rolloutTargetLineup(roster);
@@ -3494,7 +3498,9 @@ export class AutoChessAutopilot {
       .map(({ unit }) => `${unit.uid}:${unit.id}:${unit.star}`)
       .sort()
       .join("|")}`;
-    if (key === this.confidenceKey) return this.confidenceScore;
+    if (key === this.confidenceKey) {
+      return this.confidenceAfterBattleAudit(roster, this.confidenceScore);
+    }
     const plannedMatches = lineup.length === this.plannedLineupUids.length
       && lineup.every(({ unit }) => this.plannedLineupUids.includes(unit.uid))
       && lineup.every(({ unit }) => {
@@ -3508,7 +3514,7 @@ export class AutoChessAutopilot {
       && plannedRandomStateMatches
       ? this.plannedLineupScore
       : this.rolloutLineupScore(lineup);
-    return this.confidenceScore;
+    return this.confidenceAfterBattleAudit(roster, this.confidenceScore);
   }
 
   private battleConfidence(roster: OwnedEntry[]) {
@@ -3519,14 +3525,27 @@ export class AutoChessAutopilot {
     return this.rolloutBoardScore(board);
   }
 
+  /** Reuse a rejected battle's result only for that same deployed board and RNG. */
+  private confidenceAfterBattleAudit(roster: OwnedEntry[], score: number) {
+    if (!this.exactBattleAuditRejectedKey || !this.plannedLineupIsOnBoard(roster)) return score;
+    return this.currentBattleAuditKey() === this.exactBattleAuditKey
+      ? Math.min(score, this.exactBattleAuditScore)
+      : score;
+  }
+
+  private currentBattleAuditKey() {
+    const { state } = this.bridge.engine;
+    return `${state.round}/${this.bridge.engine.getRandomState()}/${state.board
+      .map((unit) => (unit ? `${unit.uid}:${unit.id}:${unit.star}` : "-"))
+      .join(",")}`;
+  }
+
   private exactBattleAudit(roster: OwnedEntry[]) {
     const { state } = this.bridge.engine;
     const board = state.board.map((unit) => (
       unit ? roster.find(({ unit: owned }) => owned.uid === unit.uid) || null : null
     ));
-    const key = `${state.round}/${this.bridge.engine.getRandomState()}/${board
-      .map((entry) => (entry ? `${entry.unit.uid}:${entry.unit.id}:${entry.unit.star}` : "-"))
-      .join(",")}`;
+    const key = this.currentBattleAuditKey();
     if (key !== this.exactBattleAuditKey) {
       this.exactBattleAuditKey = key;
       // Search uses the cheap live timestep. This single formal combat branch

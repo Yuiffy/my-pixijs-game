@@ -1,5 +1,81 @@
 # 项目进度
 
+## 2026-10-17 · 训练经验归档与可用流程修复发布
+
+Original prompt: 把训练中总结的经验和进展一起 commit 推送到远端，有可用的提升也推送到 master；用户明确 master 推送即触发部署。训练保持停止，未恢复长时间训练或强度评测。
+
+本次提交训练／环境／蒸馏／重标注／Chrome 评测／对照／合并工具、回归测试、研究总结及精简结果证据。总结见 `docs/autochess-muzero.md`，可随仓库保留的独立对照、开发集、部分分片、原报告 SHA256 与发布验证见 `docs/experiments/autochess-training-20261017.json`。未通过的静态值表移至 `docs/experiments/autochess-unit-values-rejected-20261017.json`，不接入运行时。完整模型与对局仍保留本地 `tmp/muzero/` 和停止时备份。
+
+可独立发布的改动仅为开战审计状态机修复：长考／看穿拒绝已知败局时重开运营与布阵标志，并用同一部署／星级／站位／RNG 的已有审计结果约束乐观缓存，不新增预演预算，不改默认平衡＋老手。此为流程缺陷修复；四档稳定强度提升仍未通过独立 Chrome 验收，不能据此宣称 MuZero 策略晋级。既有本地 HEAD e619e74 的保存回放修复保留，随 master 正常快进推送。
+
+最终验证：508/508 自走棋规则通过，含三项审计专项与宏动作测试；Python 13 项通过，包括终局／吸收状态、搜索方向、确定性和对照／合并的缺局、重复、运行时／错误拒绝。源文件定向 ESLint、工具语法检查、完整 `pnpm run check` → `pnpm run build` 顺序通过，保留 Next 构建 ESLint。首次检查发现本轮 AI 文件为 CRLF，仅统一该文件到 LF 后重验通过。隔离生产构建 `.next-autochess-ai-release`，删除 Next 自动追加的本任务临时 tsconfig include，其他配置保留。
+
+生产版静音安装 Chrome 通过默认设置、手机布局、自选等级持久化、AI 实际开战／结算及真实打包 Worker 16 战烟测；六张截图均通过像素 sanity、文本状态／DOM／画布／错误交叉核对并逐张打开目检。86200 长考样例仍败，保留原始事实，不当作胜率提升证据。页面／控制台／HTTP 错误均为空；本地日志 `tmp/muzero/publish-*.log`，报告 `.tmp/autochess/{model-refresh,ai-worker}-report.json`。本次发布无需继续训练，旧活动句柄与历史“未提交”描述均只作历史记录。
+
+## 2026-10-17 · 用户结束本轮训练（已停止，以下状态优先）
+
+用户要求保存当前进展并结束本轮训练。已停止全部八个高档 Chrome 分片评测及低档开发候选进程；参考开发进程已正常结束。随后检查无存活的训练／评估 Node/Python 进程，也无本轮 Playwright Chrome 主进程。不要依据下方历史句柄自动续跑。本轮未达到四档稳定提升的目标，目标按用户要求暂停，不标为完成。
+
+远端再次核实 origin/master 为 `0c9f7bd4fc22bf316e66c5b5dfffcc4531408bb7`，包含此前已验收修复；本任务没有执行生产部署，不能将推送等同于上线。本地 HEAD 为其他聊天的 `e619e74644ca236af08377e32d2e7a80e8dc8fef`，保留。默认仍为平衡＋老手。本轮实验未 commit/push，不启动新训练、不将未验收策略混入发布。
+
+当前正式源码仅保留未提交的高档开战审计修复；新手／老手失败候选已撤回。`noviceUnitValues.json` 尚未 import。高档 Node 口径的改善不代表网页效果；Chrome 独立验收仅部分完成，保存 chrome2-shard-* 与两份 oracle 前缀，未合并为通过结论。低档独立 Chrome 89200／89300 两组：新手合并 +0.0625 胜、通关 +2，老手 +0.15625 胜、通关 +1，均未通过预定门槛。
+
+最后开发集 86500–86531（仅供后续研究，不是独立验收）：参考新手 12.34375 胜／通关 8，老手 13.4375／10；combat-heuristic 新手 12.34375／3、老手 13.5／11；live-greedy 新手 12.4375／4、老手 12.65625／5；blend-values 新手 12.65625／6，老手仅完成 14/32 局，部分结果不作完整比较。各报告保留于 `tmp/muzero/`。
+
+接续资料：`docs/autochess-muzero.md`、训练／评测／比较脚本、专项测试及冻结源码／模型／报告均留本地。收尾快照目录 `.tmp/autochess-training-stop-20261017/` 保存本轮源文件、工作树补丁、顶层评测证据及 SHA256 清单，避免只依赖聊天摘要；实验完整目录 `tmp/muzero/` 原地保留。最近新增的 merge 脚本尚未执行验证，部分报告不能冒充完整验收。若以后重新授权继续，先重新审查状态；提交任何源代码前仍须完整 check → build 及真实 Chrome 验证。
+
+## 2026-10-17 · 用户询问七小时后的上线状态
+
+最新远端git ls-remote已确认origin/master仍0c9f7bd4fc22bf316e66c5b5dfffcc4531408bb7，包含卖棋筹资预览／快速阵容修复。未执行生产部署。新MuZero实验不能宣称全档达标：Chrome选阵静态值新手89200／89300两组每组-0.03125／+0.15625，合并仅+0.0625，通关多2，但未达预定门槛，不能发布新手该候选；报告chrome2-result-novice.json。尚未按失败种子调参。用户正在要求给可上线版本结论，不应再把长实验当成已验收版上线的前提。
+
+前批Chrome进程句柄缺失，Win32_Process确认无评估进程，部分报告损坏；保留旧chrome-acceptance-*，相同冻结源重跑为chrome2-*。新增原子写盘改变驱动fingerprint，均重新完整跑，不混旧报告。活session89518 reference（先oracle89000／89100，再deep）、28738 audit（同顺序）、23523低档reference（新手89200／89300后老手）、34228 lineup-values（同顺序）；本次刚poll均确认running。各组输出chrome2-acceptance-{variant}-{level}-{seed}.json/.log。高档看穿耗时较长，仍不完整。Python比较新增runtime差异拒绝，9项通过，tmp/muzero/muzero-tests-runtime.log。不要重启已存活进程。
+
+## 2026-10-17 · 当前续跑状态（优先于下方旧记录）
+
+远端已推0c9f7bd；主HEAD仍e619e74，持续目标active。当前源码已撤回失败的新手全局估值／komichi及老手finance过滤，仅保留高档审计修复，未提交。当前规则508／check／build曾顺序通过；最后改源码后还需最终重验。新表已全部当前规则重新标注：6144＋3582样本，71／11个胜负标签变化，指纹52e393c178bfa44b0cdeaf93b2681fb9babd8f7ef5e3ae2820c0844dd01a4c2d；训练7605、留出2121，准确率0.80528，来源SHA与learner SHA在noviceUnitValues.json。不能引用旧混规则原型收益。
+
+Node独立89000／89100两组32局：新手全局估值＋komichi每组+1／-0.09375，合并+0.453125、通关不变，因第二组回退未通过；老手finance过滤每组-0.5／+0.375，合并-0.0625、通关少5，拒绝。长考审计每组+0.4375／+1.375，合并+0.90625、通关多3，Node口径通过，CI[-0.203125,2.0625]，不是95%显著。报告acceptance-result-{novice,veteran,deep}.json。看穿Node因下面运行时发现中止，partial不能当完整报告。
+
+重要新增边界：实际Chrome与Node对完全相同战斗初始快照（逐字段核对相同）推进到约3秒出现轨迹分歧，86200第8战后天赋选择因此不同，Node修后16战赢／留6金，实际Chrome仍败／留20金。不能把该Node单局翻胜描述为网页复现。新增evaluate-autochess-chrome.cjs，将冻结TS／JSON模块同一转译方式装入安装版Chrome真实Worker，60Hz正式战斗／20Hz预演／审计true／interactive true／静音，源码＋驱动指纹；86200结果与实际Next打包Worker一致（16战14胜，留20金，失败）。原Node比较只作Node证据，最终必须通过Chrome独立验收。未更改引擎数学或游戏规则。
+
+活Chrome高档独立验收，每进程顺序89000／89100各32局：session50497 reference deep、90382 reference oracle、26016 audit deep、78212 audit oracle；输出chrome-acceptance-{reference,audit}-{deep,oracle}-{seed}.json/.log。不要重复启动，不按这些种子调参。冻结源live-reference／live-audit不修改。Node旧oracle session53702／92632已中止。
+
+新低档开发：冻结tmp/muzero/lineup-values，仅在选上场阵容时使用当前静态单位估值，购买／经济unitScore默认原值，不加komichi、不去finance、不增加候选／模拟预算。Node86400起32局新手13.0625→14.5625，通关5→13；老手待核对完整报告。单遍greedy也在同集开发，报告development-864-greedy-*，尚不发布。活session31710 lineup-values、45497 reference、81628 greedy，应该接近完成。Chrome开发8局86400：session81823 reference、22336 lineup-values，每进程新手后老手；输出chrome-development-{reference,lineup-values}-{level}.json/.log。低档只有新开发通过才用真正全新89200／89300做独立验收，不能重用已看过的89000／89100调参。
+
+实际Next生产Worker烟测新增scripts/verify-autochess-ai-worker.cjs，AUTOCHESS_AI_WORKER=1复用verify-autochess.cjs，受控时钟通过真实打包Worker跑16战及结算，未要求固定种子必胜。两张ai-worker-boss-{deployed,result}.png通过sanity／状态／DOM／画布／错误核对，已逐张打开目检，错误为空；报告.tmp/autochess/ai-worker-report.json，日志tmp/muzero/browser-worker.log。4132生产服务session21384仍开；使用的build在撤低档前完成，高档路径相同，最终组合后必须重建并复验默认设置／Worker。临时runtime-parity诊断脚本和大快照只在tmp中，不进发布。误递归复制node_modules的release-current-values目录已中断，未继续使用；正式冻结是release-current-v2，不删其他目录。
+
+## 2026-10-17 · MuZero 运营探索（持续目标，未完成）
+
+Original prompt: 用 MuZero 无预训练探索或其思路完善决策，直到各档稳定、适度提升后 commit / push；保持默认平衡＋老手，不增加候选、战斗预演、未来信息预算或操作延迟，不使用子代理。
+
+用户另要求先推当前已验收版本：0c9f7bd4fc22bf316e66c5b5dfffcc4531408bb7 已推送 origin/master，远端核对一致，包含卖棋升本预览和快速选阵等已验收修复，未包含 MuZero 实验。随后其他聊天提交 e619e74 保存回放修复，不能回退／覆盖。持续目标未达成。
+
+新增离线回合级 MuZero：随机初始化 representation／recurrent dynamics/reward／policy/value，单人折扣 PUCT，树搜索只调用学到模型；真实引擎执行正常／早升本／存款／集中项目／补强宏动作，原各档负责具体买棋布阵。观测无种子、随机状态或未来信息。工具、准确范围和事先写定的各档两个独立32局验收口径见 docs/autochess-muzero.md。不能将 loss 下降、教师一致率或8局开发结果当作强度验收。
+
+已修实验漏判16战Boss失败终局、子进程正常关闭、评估指纹读取、终局零价值及任意动作零奖励的吸收状态训练；Python5项、宏动作1项通过。初128＋四档64局训练均完成，吸收状态重新训练仍无四档共同收益。集中项目扩大86100–86131后新手胜场下降0.25、通关少2，老手平均也未提升；固定规则、首棵小树和减少dry刷新均拒绝。数据／明确拒绝记录在 tmp/muzero/。
+
+V2发现单改 reserveCap 不会释放锚定利息，实验补强明确动用4档利息、存钱保护利息、normal完全恢复。新动作指纹不混旧数据；85400起128局新手／老手随机重训完成（230.89秒），tmp/muzero/explore-economy-v2。normal在86000–86007与原参考逐局完整轨迹完全相同。V2按状态搜索开发8局新手12.625／通关1、老手12.25／1，相对原12.625／0、12.875／1，仍未稳定改善；长考16.625／3与参考相同。固定全程补强四档12.125／13／14／17.25，均不晋级。仅16战用旧补强宏动作也没有四档共同收益。失败候选不进入网页。
+
+重要验证边界：早期环境虽战斗60Hz、原预演20Hz，但关闭了网页开战前审计，interactiveRuntime也是false；高档结果仅作旧离线配置开发参考，不可代表实际Worker。主脚本现改为网页相同 liveBattleAudit=true、interactiveRuntime=true；冻结 tmp/muzero/live-reference 为0c9f7bd源码＋e619e74桥接，实际配置开发种子86200起。旧baseline/economy-v2快照保留、旧模型不能用新环境指纹评估。旧learned-v2和spend-boss-v2的oracle运行在其他档已证伪后主动中止，部分报告不可作为完整8局。
+
+进一步检验16战终关留钱：该战失败即使有HP也结束，现托管却可能保留利息线。冻结候选 tmp/muzero/live-boss 仅在现代配置16战释放 goldReserve／stabilizationGoldReserve、关闭理财升本留80金，其他轮与预算不变；仅实验，未改正式TS。活session88869为真实配置参考、89433为该候选，四档各8局86200开发对照，输出 tmp/muzero/live-{reference,boss}-{level}.json/.log；先核对进度，勿重复启动。主目录其他源码未新增AI修改。
+
+战后金币不能当开战未花钱：inspect-novice-86125确认实际开战留21金，战后才43金。诊断使用实际对局结束后的独立快照，不改变原决策。任何有效候选须先冻结，真正独立各档32＋32局门禁、源码规则／定向ESLint、完整check→build、安装版静音Chrome真实Worker验证后才commit/push，尚无候选达到此条件。
+
+### 继续探索与当前活任务（覆盖上面的旧句柄记录）
+
+真实配置发现并复现新缺陷：86200长考16战第一次开战审计为-20.506，finalizingEconomy仍true；第二次相同板面／RNG仍-20.506并直接失败，准备动作仅25、开战留18金。修正审计拒绝后恢复运营／部署标志，已知败局只约束同一真实部署板面和RNG，不加预演；补强后该16战审计10089.078，留6金获胜，35准备动作。源码已暂接入主目录，未提交；3项专项回归、初版全量508规则及定向ESLint通过。八局开发86200–86207，长考17.625→19.75、通关5→5；看穿21.25→23.5、通关6→6，bootstrap正差概率0.8507／0.9968，仍非独立验收。
+
+高档候选已冻结为tmp/muzero/live-audit，不再按验收样本调参。独立89000–89031／89100–89131，各档各两组32局／最多32战，baseline实际网页审计true／interactiveRuntime=true：session55910 reference deep、53702 reference oracle、36214 audit deep、92632 audit oracle；输出tmp/muzero/acceptance-{reference,audit}-{level}-{seed}.json/.log。每进程顺序两组；勿重复启动。reference源码仍0c9f7bd＋e619e74桥接，候选只有审计修复。最终合并低档条件分支后，高档须另验证实际路径等价并完成源码／浏览器门禁。
+
+低档32局开发86300–86331：参考新手12.875／通关7、老手13.1875／6。老手去掉unitScore搭档及lineupHeuristic里的纯经济finance战力加分，保留显式理财投资，13.65625／12；更快单次贪心换人14.03125／8，也只作候选；优先成熟协议12.84375／6，拒绝。新手固定模型表13.8125／5、加komichi项目13.78125／6；单加komichi13.09375／8；只改预测的finance估值12.84375／7；早期专用表8／12战截止均回退，拒绝。除审计缺陷外，尚不能宣称所有档位稳定提升。
+
+主目录临时接入候选（未提交）：新手离线单位静态值表＋komichi项目，老手finance不计战力，高档审计修复；tmp/muzero/release-candidate为快照，AutoChessAutopilot SHA F1D10455BD25B10FD3C8513495D87F446C9426A13BBEA37C20017FE049E0C225。低档8局集成轨迹与各独立开发副本完全相同；默认与预算不改。但静态表原型混了不同规则指纹，已发现并拒绝作为发布数据，正在重新标注后重训，尚未开始低档独立验收。旧prototype表和开发收益不可冒称发布表效果。
+
+重新标注：新scripts/relabel-autochess-combat-data.mjs只加载engine，对存储的公开阵容做60Hz当前规则标准化场景；旧key缺UID和enemy formationIndex，明确使用uid1000+slot／默认敌阵，不冒称原对局精确重放，旧标签一律不用。session3355是6144个train-current样本→tmp/muzero/relabel-train-current.json（最近2500完成、123秒），82731为3582 onpolicy→relabel-onpolicy-train.json已完成125秒、11个胜负变化。两者新指纹均应52e393c178bfa44b0cdeaf93b2681fb9babd8f7ef5e3ae2820c0844dd01a4c2d。新scripts/train-autochess-unit-values.py严格拒绝混规则／非60Hz，按单位有界±50%线性拟合，随机seed85700、2200轮、上下文留出，输出静态值而非运行时神经网络。待两份完成后用它重训新表，先跑低档开发32局再冻结；旧表不能进入最终验收。
+
+门禁活session57779为主目录pnpm run check、74251为改低档后的全量autochess:test（尚未poll）；不得并行tsc与build。新比较器支持第二组参数，严格两组各32局／不重叠／同档／同horizon／每个方案跨组指纹固定；输出所有事先口径checks与passed，Python8项在tmp/muzero/muzero-tests-acceptance.log通过。全量之前508项通过是接低档表之前，后面的74251才是当前候选规则验证。上述src及新实验文件均未提交或推送，远端仍0c9f7bd；不覆盖其他任务e619e74提交。必须完成全部独立各档验收与check→build、安装版静音Chrome截图逐张目检后才能提交；持续goal仍active。
+
 ## 2026-10-17 · 托管 AI 决策与训练验收
 
 Original prompt: 版本更新后 AI 托管变菜，找最快有效的提升方式（例如 MuZero）。用户纠正：默认保持“平衡 + 老手”，长考慢，应整体提升各档水平，而非改默认选择。

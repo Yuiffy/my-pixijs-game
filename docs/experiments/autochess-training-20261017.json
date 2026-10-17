@@ -1,0 +1,843 @@
+{
+  "date": "2026-10-17",
+  "trainingStatus": "stopped_by_user",
+  "strengthAcceptance": "not_passed",
+  "defaultStyle": "balanced",
+  "defaultLevel": "veteran",
+  "baselineCommit": "0c9f7bd4fc22bf316e66c5b5dfffcc4531408bb7",
+  "runtimeBridgeCommit": "e619e74644ca236af08377e32d2e7a80e8dc8fef",
+  "independentChromeAcceptance": {
+    "novice": {
+      "source": "chrome2-result-novice.json",
+      "sha256": "eb7da3826f97aa711787bc9922c600da27b8a2b33f8145a5400da7625dc16918",
+      "comparison": {
+        "groups": [
+          {
+            "level": "novice",
+            "runs": 32,
+            "meanWinDelta": -0.03125,
+            "pairedBootstrap95": [
+              -1.15625,
+              1.09375
+            ],
+            "bootstrapPositiveFraction": 0.4753,
+            "moreWins": 13,
+            "fewerWins": 12,
+            "clearDelta": 3,
+            "earlyEndDelta": 0,
+            "deltas": [
+              -1,
+              2,
+              -4,
+              0,
+              -5,
+              -2,
+              6,
+              -2,
+              0,
+              -1,
+              -2,
+              -8,
+              1,
+              6,
+              2,
+              2,
+              0,
+              -5,
+              0,
+              3,
+              3,
+              3,
+              3,
+              0,
+              0,
+              4,
+              1,
+              -2,
+              4,
+              0,
+              -4,
+              -5
+            ],
+            "baselineFingerprint": "1423210d7e0b20358778a5a4a6842462fc26f9ebcdd9195cfe0c2b2c34683db1",
+            "candidateFingerprint": "40169aac68914cfca612f4fe3efd1577188be09a04e5a4d5c819ad7af3eb3f5f"
+          },
+          {
+            "level": "novice",
+            "runs": 32,
+            "meanWinDelta": 0.15625,
+            "pairedBootstrap95": [
+              -0.875,
+              1.25
+            ],
+            "bootstrapPositiveFraction": 0.6083,
+            "moreWins": 12,
+            "fewerWins": 9,
+            "clearDelta": -1,
+            "earlyEndDelta": 1,
+            "deltas": [
+              0,
+              0,
+              -1,
+              -1,
+              6,
+              -6,
+              0,
+              0,
+              0,
+              0,
+              5,
+              0,
+              -4,
+              1,
+              -5,
+              0,
+              1,
+              0,
+              -5,
+              -1,
+              9,
+              0,
+              3,
+              1,
+              1,
+              -4,
+              1,
+              1,
+              4,
+              0,
+              -3,
+              2
+            ],
+            "baselineFingerprint": "1423210d7e0b20358778a5a4a6842462fc26f9ebcdd9195cfe0c2b2c34683db1",
+            "candidateFingerprint": "40169aac68914cfca612f4fe3efd1577188be09a04e5a4d5c819ad7af3eb3f5f"
+          }
+        ],
+        "combined": {
+          "level": "novice",
+          "runs": 64,
+          "meanWinDelta": 0.0625,
+          "pairedBootstrap95": [
+            -0.71875,
+            0.828125
+          ],
+          "bootstrapPositiveFraction": 0.5586,
+          "moreWins": 25,
+          "fewerWins": 21,
+          "clearDelta": 2,
+          "earlyEndDelta": 1,
+          "deltas": [
+            -1,
+            2,
+            -4,
+            0,
+            -5,
+            -2,
+            6,
+            -2,
+            0,
+            -1,
+            -2,
+            -8,
+            1,
+            6,
+            2,
+            2,
+            0,
+            -5,
+            0,
+            3,
+            3,
+            3,
+            3,
+            0,
+            0,
+            4,
+            1,
+            -2,
+            4,
+            0,
+            -4,
+            -5,
+            0,
+            0,
+            -1,
+            -1,
+            6,
+            -6,
+            0,
+            0,
+            0,
+            0,
+            5,
+            0,
+            -4,
+            1,
+            -5,
+            0,
+            1,
+            0,
+            -5,
+            -1,
+            9,
+            0,
+            3,
+            1,
+            1,
+            -4,
+            1,
+            1,
+            4,
+            0,
+            -3,
+            2
+          ],
+          "baselineFingerprint": "1423210d7e0b20358778a5a4a6842462fc26f9ebcdd9195cfe0c2b2c34683db1",
+          "candidateFingerprint": "40169aac68914cfca612f4fe3efd1577188be09a04e5a4d5c819ad7af3eb3f5f"
+        },
+        "checks": {
+          "bothGroupsImprove": false,
+          "meanAtLeastQuarterWin": false,
+          "noFewerClears": true,
+          "earlyEndsWithinOne": true,
+          "bootstrapPositiveAtLeast80Percent": false
+        },
+        "passed": false
+      }
+    },
+    "veteran": {
+      "source": "chrome2-result-veteran.json",
+      "sha256": "0f1990e6b66993c96104797c5a22363d6983050e9852db8727a9a0a21d79d95f",
+      "comparison": {
+        "groups": [
+          {
+            "level": "veteran",
+            "runs": 32,
+            "meanWinDelta": 0.625,
+            "pairedBootstrap95": [
+              -0.3125,
+              1.59375
+            ],
+            "bootstrapPositiveFraction": 0.8919,
+            "moreWins": 15,
+            "fewerWins": 8,
+            "clearDelta": 1,
+            "earlyEndDelta": 0,
+            "deltas": [
+              3,
+              3,
+              -1,
+              4,
+              1,
+              -1,
+              -4,
+              0,
+              0,
+              0,
+              0,
+              1,
+              4,
+              6,
+              8,
+              0,
+              0,
+              1,
+              2,
+              0,
+              2,
+              1,
+              -3,
+              5,
+              -3,
+              1,
+              1,
+              0,
+              -2,
+              0,
+              -5,
+              -4
+            ],
+            "baselineFingerprint": "1423210d7e0b20358778a5a4a6842462fc26f9ebcdd9195cfe0c2b2c34683db1",
+            "candidateFingerprint": "40169aac68914cfca612f4fe3efd1577188be09a04e5a4d5c819ad7af3eb3f5f"
+          },
+          {
+            "level": "veteran",
+            "runs": 32,
+            "meanWinDelta": -0.3125,
+            "pairedBootstrap95": [
+              -1.5,
+              0.875
+            ],
+            "bootstrapPositiveFraction": 0.2958,
+            "moreWins": 11,
+            "fewerWins": 12,
+            "clearDelta": 0,
+            "earlyEndDelta": -1,
+            "deltas": [
+              3,
+              -5,
+              3,
+              0,
+              0,
+              2,
+              -4,
+              0,
+              0,
+              -3,
+              8,
+              0,
+              4,
+              1,
+              -8,
+              1,
+              1,
+              -6,
+              2,
+              0,
+              0,
+              0,
+              5,
+              -1,
+              0,
+              4,
+              -2,
+              -2,
+              -1,
+              -2,
+              -3,
+              -7
+            ],
+            "baselineFingerprint": "1423210d7e0b20358778a5a4a6842462fc26f9ebcdd9195cfe0c2b2c34683db1",
+            "candidateFingerprint": "40169aac68914cfca612f4fe3efd1577188be09a04e5a4d5c819ad7af3eb3f5f"
+          }
+        ],
+        "combined": {
+          "level": "veteran",
+          "runs": 64,
+          "meanWinDelta": 0.15625,
+          "pairedBootstrap95": [
+            -0.625,
+            0.9375
+          ],
+          "bootstrapPositiveFraction": 0.6412,
+          "moreWins": 26,
+          "fewerWins": 20,
+          "clearDelta": 1,
+          "earlyEndDelta": -1,
+          "deltas": [
+            3,
+            3,
+            -1,
+            4,
+            1,
+            -1,
+            -4,
+            0,
+            0,
+            0,
+            0,
+            1,
+            4,
+            6,
+            8,
+            0,
+            0,
+            1,
+            2,
+            0,
+            2,
+            1,
+            -3,
+            5,
+            -3,
+            1,
+            1,
+            0,
+            -2,
+            0,
+            -5,
+            -4,
+            3,
+            -5,
+            3,
+            0,
+            0,
+            2,
+            -4,
+            0,
+            0,
+            -3,
+            8,
+            0,
+            4,
+            1,
+            -8,
+            1,
+            1,
+            -6,
+            2,
+            0,
+            0,
+            0,
+            5,
+            -1,
+            0,
+            4,
+            -2,
+            -2,
+            -1,
+            -2,
+            -3,
+            -7
+          ],
+          "baselineFingerprint": "1423210d7e0b20358778a5a4a6842462fc26f9ebcdd9195cfe0c2b2c34683db1",
+          "candidateFingerprint": "40169aac68914cfca612f4fe3efd1577188be09a04e5a4d5c819ad7af3eb3f5f"
+        },
+        "checks": {
+          "bothGroupsImprove": false,
+          "meanAtLeastQuarterWin": false,
+          "noFewerClears": true,
+          "earlyEndsWithinOne": true,
+          "bootstrapPositiveAtLeast80Percent": false
+        },
+        "passed": false
+      }
+    }
+  },
+  "developmentChrome86500": [
+    {
+      "source": "chrome-dev865-blend-values-novice.json",
+      "sha256": "4ede95bd7c551df916652ceabdd32333395ae611d8a44f11a02bdc00b5e1c36f",
+      "fingerprint": "7ba1a8c47c9c280a274628446a14f3ef79af32e989b4e4dd246f083c6bda2333",
+      "runtime": {
+        "browser": "155.0.8059.82",
+        "engine": "Chrome Worker",
+        "hz": 60,
+        "rolloutHz": 20
+      },
+      "config": {
+        "level": "novice",
+        "seed": 86500,
+        "runs": 32,
+        "battles": 32
+      },
+      "completed": 32,
+      "meanWins": 12.65625,
+      "clears": 6,
+      "errors": []
+    },
+    {
+      "source": "chrome-dev865-blend-values-veteran.json",
+      "sha256": "0c7f668b0c2b4737539d6842c547d632a326799772c64502b2c52e9fd289e941",
+      "fingerprint": "7ba1a8c47c9c280a274628446a14f3ef79af32e989b4e4dd246f083c6bda2333",
+      "runtime": {
+        "browser": "155.0.8059.82",
+        "engine": "Chrome Worker",
+        "hz": 60,
+        "rolloutHz": 20
+      },
+      "config": {
+        "level": "veteran",
+        "seed": 86500,
+        "runs": 32,
+        "battles": 32
+      },
+      "completed": 14,
+      "meanWins": 13.071428571428571,
+      "clears": 4,
+      "errors": []
+    },
+    {
+      "source": "chrome-dev865-combat-heuristic-novice.json",
+      "sha256": "f635db4007c6c5faaa8344f0545b2c3a561a37777c37ee0b34ace31b7549cdb3",
+      "fingerprint": "4a439232fb23ee844e7e054b8801a3c7dd583e3f4f1cc47880c3981346075c6c",
+      "runtime": {
+        "browser": "155.0.8059.82",
+        "engine": "Chrome Worker",
+        "hz": 60,
+        "rolloutHz": 20
+      },
+      "config": {
+        "level": "novice",
+        "seed": 86500,
+        "runs": 32,
+        "battles": 32
+      },
+      "completed": 32,
+      "meanWins": 12.34375,
+      "clears": 3,
+      "errors": []
+    },
+    {
+      "source": "chrome-dev865-combat-heuristic-veteran.json",
+      "sha256": "d4b7326341f01628e4466480f8a54a3e1e5a39765286d7b265b857c096ef72c9",
+      "fingerprint": "4a439232fb23ee844e7e054b8801a3c7dd583e3f4f1cc47880c3981346075c6c",
+      "runtime": {
+        "browser": "155.0.8059.82",
+        "engine": "Chrome Worker",
+        "hz": 60,
+        "rolloutHz": 20
+      },
+      "config": {
+        "level": "veteran",
+        "seed": 86500,
+        "runs": 32,
+        "battles": 32
+      },
+      "completed": 32,
+      "meanWins": 13.5,
+      "clears": 11,
+      "errors": []
+    },
+    {
+      "source": "chrome-dev865-live-greedy-novice.json",
+      "sha256": "cd55644bbff93100b630642e0b78dc524dd308ac4b927295cf2e66115bf388bd",
+      "fingerprint": "4c5f76d1be2632d305b732bb395b74e9c7330568fe7fba2f3bf14e85182e9284",
+      "runtime": {
+        "browser": "155.0.8059.82",
+        "engine": "Chrome Worker",
+        "hz": 60,
+        "rolloutHz": 20
+      },
+      "config": {
+        "level": "novice",
+        "seed": 86500,
+        "runs": 32,
+        "battles": 32
+      },
+      "completed": 32,
+      "meanWins": 12.4375,
+      "clears": 4,
+      "errors": []
+    },
+    {
+      "source": "chrome-dev865-live-greedy-veteran.json",
+      "sha256": "9b4ffd424db49a781752ce42f8895de8f086b1ee00c6e4b29169eab31d2c0bdc",
+      "fingerprint": "4c5f76d1be2632d305b732bb395b74e9c7330568fe7fba2f3bf14e85182e9284",
+      "runtime": {
+        "browser": "155.0.8059.82",
+        "engine": "Chrome Worker",
+        "hz": 60,
+        "rolloutHz": 20
+      },
+      "config": {
+        "level": "veteran",
+        "seed": 86500,
+        "runs": 32,
+        "battles": 32
+      },
+      "completed": 32,
+      "meanWins": 12.65625,
+      "clears": 5,
+      "errors": []
+    },
+    {
+      "source": "chrome-dev865-reference-novice.json",
+      "sha256": "cbe0e46bb5d35b8c239ad662dc7f6b84024cc61b3c73362f4319154f66411503",
+      "fingerprint": "1423210d7e0b20358778a5a4a6842462fc26f9ebcdd9195cfe0c2b2c34683db1",
+      "runtime": {
+        "browser": "155.0.8059.82",
+        "engine": "Chrome Worker",
+        "hz": 60,
+        "rolloutHz": 20
+      },
+      "config": {
+        "level": "novice",
+        "seed": 86500,
+        "runs": 32,
+        "battles": 32
+      },
+      "completed": 32,
+      "meanWins": 12.34375,
+      "clears": 8,
+      "errors": []
+    },
+    {
+      "source": "chrome-dev865-reference-veteran.json",
+      "sha256": "f16544158123f63c3aee86840369bfa1c95822ea9823991bdde0cb611271640f",
+      "fingerprint": "1423210d7e0b20358778a5a4a6842462fc26f9ebcdd9195cfe0c2b2c34683db1",
+      "runtime": {
+        "browser": "155.0.8059.82",
+        "engine": "Chrome Worker",
+        "hz": 60,
+        "rolloutHz": 20
+      },
+      "config": {
+        "level": "veteran",
+        "seed": 86500,
+        "runs": 32,
+        "battles": 32
+      },
+      "completed": 32,
+      "meanWins": 13.4375,
+      "clears": 10,
+      "errors": []
+    }
+  ],
+  "incompleteHighTierReports": [
+    {
+      "source": "chrome2-shard-audit-oracle-89008.json",
+      "sha256": "48895c880baa2b38ef263e39a544d72c0c6839ca9b0d6ededa34eba4c95364e6",
+      "fingerprint": "632e5a232840c6489cb8249f9c80c1fa20397fbe8e5b2121c85914dcff36ccc6",
+      "runtime": {
+        "browser": "155.0.8059.82",
+        "engine": "Chrome Worker",
+        "hz": 60,
+        "rolloutHz": 20
+      },
+      "completed": 1,
+      "seeds": [
+        89008
+      ]
+    },
+    {
+      "source": "chrome2-shard-audit-oracle-89016.json",
+      "sha256": "1c8b575230a4a9473f33e67ebb1d7585c983e98bd367ff8095b07dfbe564f5ce",
+      "fingerprint": "632e5a232840c6489cb8249f9c80c1fa20397fbe8e5b2121c85914dcff36ccc6",
+      "runtime": {
+        "browser": "155.0.8059.82",
+        "engine": "Chrome Worker",
+        "hz": 60,
+        "rolloutHz": 20
+      },
+      "completed": 2,
+      "seeds": [
+        89016,
+        89017
+      ]
+    },
+    {
+      "source": "chrome2-shard-audit-oracle-89024.json",
+      "sha256": "ae161cb4724f562bd64e8f7453aab06f50e2a24008319bc20d9d60f7d8365ee7",
+      "fingerprint": "632e5a232840c6489cb8249f9c80c1fa20397fbe8e5b2121c85914dcff36ccc6",
+      "runtime": {
+        "browser": "155.0.8059.82",
+        "engine": "Chrome Worker",
+        "hz": 60,
+        "rolloutHz": 20
+      },
+      "completed": 1,
+      "seeds": [
+        89024
+      ]
+    },
+    {
+      "source": "chrome2-shard-audit-oracle-89124.json",
+      "sha256": "21e39b643115de4c05d35b1b2ba55bc677862f637e255cec899e763da92cb7d9",
+      "fingerprint": "632e5a232840c6489cb8249f9c80c1fa20397fbe8e5b2121c85914dcff36ccc6",
+      "runtime": {
+        "browser": "155.0.8059.82",
+        "engine": "Chrome Worker",
+        "hz": 60,
+        "rolloutHz": 20
+      },
+      "completed": 4,
+      "seeds": [
+        89124,
+        89125,
+        89126,
+        89127
+      ]
+    },
+    {
+      "source": "chrome2-shard-reference-oracle-89016.json",
+      "sha256": "432789d23e7bfdfcf7de05304a0181a2a41cac90ed184769ee28ab2c46625246",
+      "fingerprint": "1423210d7e0b20358778a5a4a6842462fc26f9ebcdd9195cfe0c2b2c34683db1",
+      "runtime": {
+        "browser": "155.0.8059.82",
+        "engine": "Chrome Worker",
+        "hz": 60,
+        "rolloutHz": 20
+      },
+      "completed": 4,
+      "seeds": [
+        89016,
+        89017,
+        89018,
+        89019
+      ]
+    },
+    {
+      "source": "chrome2-shard-reference-oracle-89024.json",
+      "sha256": "8ebc72cbe3f9460c32d440ecae8b846ff5b6f218b55fad79fb6588b0adb22017",
+      "fingerprint": "1423210d7e0b20358778a5a4a6842462fc26f9ebcdd9195cfe0c2b2c34683db1",
+      "runtime": {
+        "browser": "155.0.8059.82",
+        "engine": "Chrome Worker",
+        "hz": 60,
+        "rolloutHz": 20
+      },
+      "completed": 1,
+      "seeds": [
+        89024
+      ]
+    },
+    {
+      "source": "chrome2-shard-reference-oracle-89124.json",
+      "sha256": "a520d48757de6cfb7cf79e4f3ed62f55ac3a4253aa40695aa8dc47c9e797cffc",
+      "fingerprint": "1423210d7e0b20358778a5a4a6842462fc26f9ebcdd9195cfe0c2b2c34683db1",
+      "runtime": {
+        "browser": "155.0.8059.82",
+        "engine": "Chrome Worker",
+        "hz": 60,
+        "rolloutHz": 20
+      },
+      "completed": 6,
+      "seeds": [
+        89124,
+        89125,
+        89126,
+        89127,
+        89128,
+        89129
+      ]
+    },
+    {
+      "source": "chrome2-acceptance-audit-oracle-89000.prefix.json",
+      "sha256": "30273cbe7c824026e8e0c65b2eee23eaa4f31cf8ee43cad2b6b206d23f78d352",
+      "fingerprint": "632e5a232840c6489cb8249f9c80c1fa20397fbe8e5b2121c85914dcff36ccc6",
+      "runtime": {
+        "browser": "155.0.8059.82",
+        "engine": "Chrome Worker",
+        "hz": 60,
+        "rolloutHz": 20
+      },
+      "completed": 8,
+      "seeds": [
+        89000,
+        89001,
+        89002,
+        89003,
+        89004,
+        89005,
+        89006,
+        89007
+      ]
+    },
+    {
+      "source": "chrome2-acceptance-reference-oracle-89000.prefix.json",
+      "sha256": "5288f266e114e2d3c3fee52cb1745866208c9f6ef62fe254509aae5a78b5c340",
+      "fingerprint": "1423210d7e0b20358778a5a4a6842462fc26f9ebcdd9195cfe0c2b2c34683db1",
+      "runtime": {
+        "browser": "155.0.8059.82",
+        "engine": "Chrome Worker",
+        "hz": 60,
+        "rolloutHz": 20
+      },
+      "completed": 9,
+      "seeds": [
+        89000,
+        89001,
+        89002,
+        89003,
+        89004,
+        89005,
+        89006,
+        89007,
+        89008
+      ]
+    }
+  ],
+  "releaseVerification": {
+    "releaseScope": "battle-audit state-machine bug fix only; learned strength candidates rejected",
+    "autochessRulesPassed": 508,
+    "pythonTestsPassed": 13,
+    "checkThenBuild": "passed",
+    "defaultStyle": "balanced",
+    "defaultLevel": "veteran",
+    "logs": [
+      {
+        "path": "tmp/muzero/publish-rules.log",
+        "sha256": "f0fb4bb71996f6a7ed48909ad9b8e299904a5eaaa6a4adce77e8993d86170ea9"
+      },
+      {
+        "path": "tmp/muzero/publish-python.log",
+        "sha256": "0b59ffee2bb11d67b563ef32c6ebe0f742edc8b7de0fec35145e3d21219d6c8d"
+      },
+      {
+        "path": "tmp/muzero/publish-eslint.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "tmp/muzero/publish-check.log",
+        "sha256": "7cdf084f2eda762728cbfd619005f708119cbb6bc2743a3862d8aba544ad761e"
+      },
+      {
+        "path": "tmp/muzero/publish-build.log",
+        "sha256": "23c9d135e6d9daa4f2cfc80f1352d12aba7dcaa66d8305fca8a30d8560553d73"
+      }
+    ],
+    "browsers": [
+      {
+        "test": "model-refresh",
+        "sha256": "0116d3e6bd8eae77f499a144c1e6b19463564dd09c80f9699703b1b537047d65",
+        "screenshots": {
+          "model-refresh-default-desktop": {
+            "width": 1440,
+            "height": 900,
+            "colors": 4096,
+            "nearBlackRatio": 0.0005,
+            "darkRatio": 0.8671,
+            "transparentRatio": 0
+          },
+          "model-refresh-default-mobile": {
+            "width": 390,
+            "height": 844,
+            "colors": 2799,
+            "nearBlackRatio": 0,
+            "darkRatio": 0.8186,
+            "transparentRatio": 0
+          },
+          "model-refresh-autopilot-battle": {
+            "width": 1440,
+            "height": 900,
+            "colors": 4096,
+            "nearBlackRatio": 0.001,
+            "darkRatio": 0.2926,
+            "transparentRatio": 0
+          },
+          "model-refresh-result": {
+            "width": 1440,
+            "height": 900,
+            "colors": 4096,
+            "nearBlackRatio": 0.0003,
+            "darkRatio": 0.8658,
+            "transparentRatio": 0
+          }
+        },
+        "errors": [],
+        "failedResponses": [],
+        "visuallyInspected": true
+      },
+      {
+        "test": "ai-worker",
+        "sha256": "0b0ab96cec7fc4e780dacfc71d5277b05b7618e7a91fa783673b1d2ab2af9be1",
+        "screenshots": {
+          "ai-worker-boss-deployed": {
+            "width": 1440,
+            "height": 900,
+            "colors": 4096,
+            "nearBlackRatio": 0.0031,
+            "darkRatio": 0.3001,
+            "transparentRatio": 0
+          },
+          "ai-worker-boss-result": {
+            "width": 1440,
+            "height": 900,
+            "colors": 4096,
+            "nearBlackRatio": 0.0002,
+            "darkRatio": 0.8673,
+            "transparentRatio": 0
+          }
+        },
+        "errors": [],
+        "failedResponses": [],
+        "visuallyInspected": true,
+        "round": 16,
+        "settledPhase": "result",
+        "fixtureWon": false,
+        "note": "smoke test, not evidence of improved win rate"
+      }
+    ]
+  }
+}
