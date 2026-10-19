@@ -22,7 +22,8 @@ test('every local game route has exactly one catalog entry, usable artwork and v
     assert.ok(isGamePath(game.href));
     assert.match(game.releaseDate, /^\d{4}-\d{2}-\d{2}$/);
     if (game.updateDate) assert.ok(game.updateDate >= game.releaseDate, game.title);
-    if (game.image) await access(`public${game.image}`);
+    assert.ok(game.image, `missing game cover: ${game.title}`);
+    await access(`public${game.image}`);
   }
 });
 

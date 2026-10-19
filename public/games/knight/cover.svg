@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640">
+  <title>Knight：空洞搜打撤</title>
+  <defs>
+    <radialGradient id="cavern"><stop stop-color="#50776c"/><stop offset="1" stop-color="#122722"/></radialGradient>
+    <linearGradient id="beam" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#dcf3ad" stop-opacity=".42"/><stop offset="1" stop-color="#dcf3ad" stop-opacity="0"/></linearGradient>
+  </defs>
+  <rect width="640" height="640" fill="#101e1b"/>
+  <rect x="30" y="30" width="580" height="580" rx="6" fill="url(#cavern)" stroke="#698578" stroke-opacity=".45"/>
+  <g fill="none" stroke="#aac99d" stroke-opacity=".1">
+    <path d="M80 100h480M80 180h480M80 260h480M80 340h480M80 420h480M80 500h480M80 580h480M100 80v480M180 80v480M260 80v480M340 80v480M420 80v480M500 80v480M580 80v480"/>
+    <circle cx="320" cy="345" r="170"/><circle cx="320" cy="345" r="115"/>
+  </g>
+  <path d="M30 221l88 91-20 82 68 80-30 136H30Zm580-37-89 126 32 78-69 78 35 144h91Z" fill="#11241f"/>
+  <path d="M66 540l125-67 90 21 86-11 89 13 118 51v63H66Z" fill="#0c1c18"/>
+  <path d="M345 304l215-125 11 267Z" fill="url(#beam)"/>
+  <path d="M267 330q31-27 69 0l28 136-48 30-70-22Z" fill="#b2c2a1"/>
+  <path d="M253 343l-31 22 3 88 34 10 18-80Z" fill="#526c59" stroke="#a8bc91" stroke-width="3"/>
+  <path d="M279 450l-12 74 22 5 28-73m4-3 18 74h25l-17-83" fill="#142b24" stroke="#8da37e" stroke-width="5"/>
+  <path d="M292 287l-12-38 23 19 28-1 25-21-8 48q-5 28-28 29-25-1-28-36Z" fill="#e8e9c9"/>
+  <path d="M301 285l6 13m24-13-6 13" stroke="#18362b" stroke-width="8" stroke-linecap="round"/>
+  <path d="M330 344l42-27 20 10-51 42" fill="#b2c2a1"/>
+  <path d="M370 313l52-22 6 14-51 25Z" fill="#d6dabc"/>
+  <circle cx="424" cy="298" r="8" fill="#e2f5a6"/>
+  <g fill="#dce9c6" text-anchor="middle" font-family="Arial,'Microsoft YaHei',sans-serif">
+    <text x="320" y="153" font-size="76" font-weight="900" letter-spacing="3">KNIGHT</text>
+    <text x="320" y="204" font-size="30" font-weight="700" letter-spacing="8">空洞搜打撤</text>
+    <text x="320" y="550" font-size="18" letter-spacing="5" fill="#a8c786">搜索 · 交战 · 撤离</text>
+  </g>
+  <g fill="none" stroke="#c4d69a" stroke-width="3"><path d="M51 80V51h29m480 0h29v29M51 560v29h29m480 0h29v-29"/></g>
+</svg>

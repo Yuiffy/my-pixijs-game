@@ -73,6 +73,7 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
       {
         title: 'Knight：空洞搜打撤',
         href: '/knight',
+        image: '/games/knight/cover.svg',
         description: '深入空洞搜集资源、应对遭遇，在局势失控前带着战利品撤离。',
         meta: '搜打撤 · 扮演探索者 · 搜索、交战、撤离',
         externalStats: true,
@@ -221,6 +222,7 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
       {
         title: '这算越界吗？',
         href: '/game/uwaki-hantei',
+        image: '/games/uwaki-hantei/cover.svg',
         description: '40 个日常情境，画出你的恋爱边界。和朋友或恋人聊聊彼此的答案。',
         meta: '中文互动问卷 · 进度保存 · 结果图分享',
         releaseDate: '2026-10-19',
