@@ -219,6 +219,13 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
     title: '故事与抉择',
     games: [
       {
+        title: '这算越界吗？',
+        href: '/game/uwaki-hantei',
+        description: '40 个日常情境，画出你的恋爱边界。和朋友或恋人聊聊彼此的答案。',
+        meta: '中文互动问卷 · 进度保存 · 结果图分享',
+        releaseDate: '2026-10-19',
+      },
+      {
         title: '虚境归途',
         href: '/game/rpg',
         description: '醒来成了一块饼干，结识伙伴，在山河间寻找通往现实的路。',
