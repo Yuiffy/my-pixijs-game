@@ -57,6 +57,7 @@ export const sui: LiverInfo = {
       { src: '/images/materials/biscuit/饼干岁4.jpeg', title: '饼干岁 · 躺着大拇指', tag: '饼干岁' },
       { src: '/images/materials/biscuit/饼干岁5.jpeg', title: '饼干岁 · 购物车哭哭', tag: '饼干岁' },
       { src: '/images/materials/jiajia/嘉嘉立绘张嘴伸手闭眼.png', title: '嘉嘉 · 张嘴伸手闭眼', tag: '嘉嘉猫' },
+      { src: '/images/materials/jiajia/jiajia-paws-up.jpg', title: '嘉嘉 · 双爪举起', tag: '嘉嘉猫' },
     ],
     bird: [
       { src: '/images/materials/bird/岁己_小鸟跳静态图.png', title: '本体 · 小鸟跳', tag: '小鸟' },
