@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640">
-  <title>这算越界吗？恋爱边界判定表</title>
+  <title>出轨行为忍耐程度问卷</title>
   <rect width="640" height="640" fill="#eeedf0"/>
   <g fill="none" stroke="#d91888" stroke-width="10">
     <path d="M51 52l24 24m0-24L51 76m514-24l24 24m0-24l-24 24"/>
@@ -8,10 +8,10 @@
   <rect x="112" y="48" width="416" height="32" rx="16" fill="#f5bfdf"/>
   <text x="320" y="71" text-anchor="middle" fill="#b51272" font-family="Arial,sans-serif" font-size="17" font-weight="700" letter-spacing="4">LOVE BOUNDARY</text>
   <g fill="#d91888" font-family="'Microsoft YaHei','PingFang SC',sans-serif" font-weight="900" text-anchor="middle">
-    <text x="320" y="222" font-size="72">这算</text>
-    <text x="320" y="332" font-size="105" letter-spacing="-6">越界吗？</text>
+    <text x="320" y="222" font-size="68">出轨行为</text>
+    <text x="320" y="332" font-size="58">忍耐程度问卷</text>
     <path d="M112 354l413-12" fill="none" stroke="#d91888" stroke-width="8"/>
-    <text x="320" y="410" font-size="27" letter-spacing="6">恋爱边界判定表</text>
+    <text x="320" y="410" font-size="27" letter-spacing="6">恋爱边界 · 互动问卷</text>
   </g>
   <g transform="translate(128 449)">
     <rect width="104" height="76" fill="#d91888"/>

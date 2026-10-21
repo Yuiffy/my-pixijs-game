@@ -19,7 +19,7 @@ export function drawResultCard(session: Session): string {
   g.fillText('R E S U L T', 600, 73);
   g.fillStyle = pink;
   for (const x of [40, 1142]) { g.beginPath(); g.roundRect(x, 140, 18, 1000, 9); g.fill(); }
-  g.font = `900 30px ${body}`; g.fillText('这算越界？判定表', 600, 175);
+  g.font = `900 30px ${body}`; g.fillText('出轨行为忍耐程度问卷', 600, 175);
   g.fillStyle = text; g.font = `900 34px ${body}`; g.fillText('你的判定类型是……', 600, 250);
   g.fillStyle = pink; g.font = '400 118px "Dela Gothic One","Microsoft YaHei",sans-serif'; g.fillText(type.name, 600, 355, 1000);
   g.fillStyle = text; g.font = `700 30px ${body}`;

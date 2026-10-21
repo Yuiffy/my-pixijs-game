@@ -60,7 +60,7 @@ export default function BoundaryQuiz() {
       setSession(s => (s.step === step ? { ...s, step: step + 1 } : s));
     }, 170);
   };
-  const summary = `这算越界吗？我的恋爱边界是「${result.type.name}」\n算越界 ${result.counts[0]} / 不算但介意 ${result.counts[1]} / 完全 OK ${result.counts[2]}\n换成自己会改变答案：${reflection ? '会' : '不会'}\n`;
+  const summary = `出轨行为忍耐程度问卷：我的恋爱边界是「${result.type.name}」\n算越界 ${result.counts[0]} / 不算但介意 ${result.counts[1]} / 完全 OK ${result.counts[2]}\n换成自己会改变答案：${reflection ? '会' : '不会'}\n`;
 
   async function copyResult() {
     try {
@@ -73,7 +73,7 @@ export default function BoundaryQuiz() {
     try {
       const a = document.createElement('a');
       a.href = card || drawResultCard(session);
-      a.download = '我的恋爱边界判定表.png';
+      a.download = '出轨行为忍耐程度问卷结果.png';
       a.click();
       setNotice('结果图已生成；手机上也可长按图片保存。');
     } catch { setNotice('图片生成失败，可以先复制文字结果。'); }
@@ -90,11 +90,11 @@ export default function BoundaryQuiz() {
           </div>
           <span aria-hidden="true">✕✕</span>
         </div>
-        <section className={styles.sheet} aria-label="恋爱边界判定表">
+        <section className={styles.sheet} aria-label="出轨行为忍耐程度问卷">
           {step === -1 && (
             <div className={styles.intro}>
               <p className={styles.lead}>和健屋一起填填看！</p>
-              <h1><small>这算</small><br />越界？判定表</h1>
+              <h1><small>出轨行为</small><br />忍耐程度问卷</h1>
               <div className={styles.legend}>{LABELS.map((label, i) => <span key={label}>{['①', '②', '③'][i]} {label}</span>)}</div>
               <p className={styles.description}>如果恋人这样做……？共 40 题，只需点击「① 算越界」「② 不算，但介意」「③ 完全 OK」三个选项。最后会显示你的判定类型和结果图片，可以保存后分享。</p>
               <button className={styles.primary} disabled={!ready} onClick={() => move(done > 0 ? Math.max(0, answers.indexOf(null) === -1 ? 40 : answers.indexOf(null)) : 0)}>{ready ? done > 0 ? '继续作答' : '开始判定' : '正在读取进度'}</button>
