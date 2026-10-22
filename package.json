@@ -8,6 +8,8 @@
     "node": ">=20.17.0 <25"
   },
   "scripts": {
+    "spring:test": "node --test scripts/tests/sui-spring.test.mjs",
+    "spring:verify": "node scripts/verify-sui-spring.cjs",
     "wayfinder:test": "node --test scripts/tests/wayfinder.test.mjs",
     "wayfinder:verify": "node scripts/verify-wayfinder.cjs",
     "reset:test": "node --test scripts/tests/reset-rush*.test.mjs",

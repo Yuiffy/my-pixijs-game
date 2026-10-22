@@ -1,0 +1,10 @@
+{
+  "tool": "built-in image_gen",
+  "date": "2026-10-22",
+  "purpose": "New transparent Sui running pose for the platformer; existing autochess art is reused without replacement.",
+  "reference": "public/images/autochess/portraits/minimal/sui.png",
+  "transparent_background": true,
+  "prompt": "Create ONE transparent full-body 2D platformer player sprite of Sui (岁己), following reference image 1's EXACT identity: white/silver hair in a short side ponytail, red eyes, red hood and flowing red short cape, dark charcoal simple dress and little dark boots. Side-view three-quarter facing RIGHT in an energetic mid-run pose with one boot forward one backward, arms clearly separated, cape swept left. Warm charming premium hand-drawn children's adventure game, thick dark-brown clean outlines, large flat color shapes, tiny compact body and big readable head about 60 percent height. No gradients, no tiny costume details, no ground, no shadow, no text, no scenery, no other figures or multiple frames. Not black cat cap or purple clothing. Entire figure contained with transparent margin. Readable at 56 pixels high; true alpha background. New pose should be recognizably the same red-hood Sui.",
+  "output": "public/games/sui-spring/sui-run.png",
+  "processing": "Only alpha-bound crop and proportional thumbnail to 320px; original generated file is preserved in the Codex generated_images directory."
+}

@@ -97,6 +97,14 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
         releaseDate: '2026-10-03',
         updateDate: '2026-10-04',
       },
+      {
+        title: '岁己 · 春日第一封信',
+        href: '/game/sui-spring',
+        description: '寄出报名信，穿过风车坡与屋顶花园，在暮色里点亮首播舞台。四关手工横版跳跃冒险。',
+        image: '/games/sui-spring/preview.png',
+        meta: '2D 横版跳跃 · 4 个关卡 · 极简角色图鉴 / 触屏',
+        releaseDate: '2026-10-22',
+      },
     ],
   },
   {

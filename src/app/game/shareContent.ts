@@ -1,4 +1,8 @@
 export const gameShareContent: Record<string, { title: string; description: string }> = {
+  '/game/sui-spring': {
+    title: '岁己 · 春日第一封信',
+    description: '从一封报名信到第一声晚上好。在四个春日关卡中奔跑、跳跃，收集星光，与极简棋子朋友一起点亮首播舞台。',
+  },
   '/game/tidal-duel': {
     title: '潮夜格斗 · 三人像素对战',
     description: '选择岁己、栞栞或黑丝原皮弥月，用空中追击与反击过招，原皮超杀命中触发专属动画。',
