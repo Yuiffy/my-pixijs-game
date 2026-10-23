@@ -1,0 +1,679 @@
+.shell {
+  --ink: #40574b;
+  --paper: #fff3dd;
+  --accent: #ad4b3e;
+  height: 100svh;
+  display: flex;
+  flex-direction: column;
+  background: #f5e5c7;
+  color: var(--ink);
+  overflow: hidden;
+  font-family: "Trebuchet MS", "Microsoft YaHei", sans-serif;
+}
+.shell button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border: 0;
+  background: none;
+  transition:
+    background 0.18s,
+    transform 0.18s;
+}
+.shell button:hover {
+  background: #be9a6c1a;
+}
+.shell button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.shell button:focus-visible,
+.shell a:focus-visible {
+  outline: 3px solid #ad4b3e;
+  outline-offset: 3px;
+}
+.toolbar {
+  height: 58px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  border-bottom: 1px solid #bea77c50;
+  background: #fff3dd;
+  gap: 16px;
+  z-index: 5;
+}
+.toolbar strong {
+  font-size: 17px;
+  letter-spacing: 2px;
+}
+.toolbar small {
+  font-size: 10px;
+  letter-spacing: 1px;
+  font-weight: normal;
+  margin-left: 15px;
+  opacity: 0.6;
+}
+.toolbar nav {
+  display: flex;
+  gap: 6px;
+}
+.toolbar button {
+  padding: 9px;
+  font-size: 13px;
+}
+.back {
+  color: #75806a;
+  font-size: 13px;
+  text-decoration: none;
+}
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: #f7e6c9;
+}
+.canvas {
+  position: absolute;
+  inset: 0;
+  outline: none;
+}
+.canvas canvas {
+  display: block;
+}
+.title {
+  position: absolute;
+  inset: 0;
+  padding: clamp(22px, 5.5vh, 70px) 7%;
+  background: linear-gradient(
+    90deg,
+    #f9edd6fa 0%,
+    #f9edd6ed 27%,
+    #f9edd61a 68%
+  );
+  animation: arrive 0.6s both;
+}
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #987753;
+  margin: 0 0 18px;
+}
+.title h1 {
+  font-family: "STKaiti", "KaiTi", "Microsoft YaHei", serif;
+  font-size: clamp(44px, 6.5vw, 96px);
+  line-height: 1.05;
+  letter-spacing: 9px;
+  margin: 0;
+  font-weight: 900;
+  color: #475c4a;
+}
+.title h1 span {
+  color: var(--accent);
+}
+.title i {
+  display: block;
+  font:
+    normal 9px/2.5 "Trebuchet MS",
+    sans-serif;
+  letter-spacing: 4px;
+  color: #8b866c;
+  margin-top: 12px;
+}
+.intro {
+  font-size: 16px;
+  line-height: 1.9;
+  margin: 18px 0 25px;
+}
+.shell .primary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+  background: var(--accent);
+  color: #fff2d9;
+  border-radius: 3px;
+  padding: 14px 23px;
+  font-size: 15px;
+  min-height: 48px;
+}
+.shell .primary:hover {
+  background: #943f34;
+  transform: translateY(-1px);
+}
+.titleHint {
+  margin-top: 22px;
+  font-size: 11px;
+  color: #85836b;
+}
+.shell .hotStart {
+  display: block;
+  padding: 12px 0 0;
+  font-size: 12px;
+}
+.hud {
+  position: absolute;
+  left: 28px;
+  right: 28px;
+  top: 20px;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  pointer-events: none;
+  text-shadow: 0 1px 5px #fff4dc;
+}
+.hearts {
+  font-size: 23px;
+  color: #b95546;
+  letter-spacing: 3px;
+}
+.hearts em {
+  font-style: normal;
+  opacity: 0.5;
+}
+.hud strong {
+  font-size: 14px;
+}
+.hud small {
+  display: block;
+  font-size: 10px;
+  color: #697561;
+  margin-top: 3px;
+}
+.hud time {
+  margin-left: auto;
+  font-size: 27px;
+  text-align: right;
+}
+.toast {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 21px;
+  background: #fff3dfef;
+  border-bottom: 2px solid #c8a97a;
+  max-width: min(720px, 90%);
+  width: max-content;
+  font-size: 13px;
+  line-height: 1.7;
+  pointer-events: none;
+  text-align: center;
+  animation: message 0.2s both;
+}
+.prompt {
+  position: absolute;
+  bottom: 91px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #40574be8;
+  color: #fff2d8;
+  padding: 9px 18px;
+  font-size: 14px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.retry {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 19px;
+  background: #fff0d870;
+}
+.notice {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff1d9;
+  color: #994a3e;
+  padding: 12px;
+  font-size: 12px;
+  text-align: center;
+  z-index: 30;
+}
+.veil,
+.deliveryVeil {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: #3b4c3e45;
+  z-index: 12;
+}
+.dialog {
+  position: relative;
+  width: min(540px, 100%);
+  max-height: 100%;
+  overflow: auto;
+  padding: 34px;
+  background: var(--paper);
+  box-shadow: 0 12px 75px #44534222;
+  border-radius: 4px;
+  animation: arrive 0.2s both;
+}
+.dialog h2,
+.receipt h2 {
+  font-family: "STKaiti", "KaiTi", serif;
+  font-size: 29px;
+  margin: 0 0 15px;
+  color: #4a5f4d;
+}
+.homeDialog {
+  width: min(930px, 100%);
+}
+.dialog p {
+  font-size: 13px;
+  line-height: 1.9;
+}
+.dialog > button:not(.close) {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+}
+.shell .close {
+  position: absolute;
+  right: 15px;
+  top: 10px;
+  font-size: 28px;
+  padding: 0 8px;
+}
+.controls {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  font-size: 12px;
+  line-height: 1.9;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.controls dt {
+  color: #a24d3d;
+}
+.controls dd {
+  margin: 0;
+}
+.trays {
+  display: flex;
+  border-top: 1px solid #b6a58166;
+  border-bottom: 1px solid #b6a58166;
+  padding: 15px 0;
+  gap: 12px;
+}
+.trays button {
+  flex: 1;
+  padding: 14px;
+  text-align: left;
+  border: 1px solid transparent;
+}
+.trays button[aria-pressed="true"] {
+  border-color: #af8064;
+  background: #ecd8b96b;
+}
+.trays small {
+  display: block;
+  font-size: 10px;
+  margin-top: 8px;
+  line-height: 1.6;
+}
+.settings {
+  margin-top: 15px;
+}
+.settings button {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  padding: 10px 0;
+  font-size: 13px;
+}
+.settings small {
+  font-size: 10px;
+  opacity: 0.7;
+}
+.settings span {
+  color: #ae523e;
+}
+.record {
+  color: #9a7852;
+  border-top: 1px solid #b6a58144;
+  padding-top: 14px;
+}
+.archive {
+  display: block;
+  color: #7e846e;
+  font-size: 11px;
+  padding: 10px 0;
+}
+.practice button {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  border-bottom: 1px solid #b6a58166;
+  padding: 15px 0;
+  font-size: 14px;
+}
+.orderDistrict {
+  display: block;
+  font-size: 10px;
+  opacity: 0.65;
+  margin-top: 5px;
+}
+.deliveryVeil {
+  justify-content: flex-start;
+  background: linear-gradient(
+    90deg,
+    #fff0d3ee 0%,
+    #fff0d3ed 28%,
+    #fff0d300 75%
+  );
+}
+.receipt {
+  margin-left: 5%;
+  width: 385px;
+  max-height: 100%;
+  overflow: auto;
+  padding: 20px;
+  animation: arrive 0.4s both;
+}
+.receipt blockquote {
+  margin: 23px 0;
+  font-family: "STKaiti", "KaiTi", serif;
+  font-size: 22px;
+  line-height: 1.8;
+}
+.receipt p {
+  font-size: 13px;
+  line-height: 1.9;
+}
+.receipt > button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  font-size: 12px;
+  text-align: left;
+}
+.receipt .nextOrder {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #b6a58166;
+  color: #9c7b56;
+}
+.receipt small {
+  font-size: 11px;
+}
+.medal {
+  color: #ad4b3e;
+  font-weight: bold;
+}
+.touch {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+  padding: 8px 18px;
+  background: #fff0d8;
+  border-top: 1px solid #b6a58150;
+  touch-action: none;
+}
+.shell .touch button {
+  width: 54px;
+  height: 50px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  background: #e4d1b0;
+  color: #53634e;
+  font-size: 20px;
+  touch-action: none;
+  user-select: none;
+}
+.touch button:nth-child(2) {
+  margin-right: auto;
+}
+.shell .touch button:nth-last-child(-n + 2) {
+  background: #bd6550;
+  color: #fff2db;
+}
+.footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 9px 28px;
+  font-size: 10px;
+  color: #8c886e;
+  background: #fff0d8;
+  flex-shrink: 0;
+}
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes message {
+  from {
+    opacity: 0;
+    margin-bottom: -5px;
+  }
+  to {
+    opacity: 1;
+    margin-bottom: 0;
+  }
+}
+@media (max-width: 650px) {
+  .toolbar {
+    height: 45px;
+    padding: 0 12px;
+    gap: 6px;
+  }
+  .toolbar strong {
+    font-size: 13px;
+    letter-spacing: 0;
+    white-space: nowrap;
+  }
+  .toolbar small {
+    display: none;
+  }
+  .toolbar button {
+    font-size: 11px;
+    padding: 7px;
+    white-space: nowrap;
+  }
+  .back {
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  .title {
+    padding: 28px 7%;
+  }
+  .title h1 {
+    font-size: 57px;
+  }
+  .titleHint {
+    max-width: 220px;
+    line-height: 1.9;
+  }
+  .intro {
+    font-size: 13px;
+  }
+  .hud {
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    gap: 8px;
+  }
+  .hud strong {
+    font-size: 11px;
+  }
+  .hud small {
+    font-size: 9px;
+  }
+  .hearts {
+    font-size: 18px;
+    letter-spacing: 1px;
+  }
+  .toast {
+    bottom: 17px;
+    font-size: 11px;
+    padding: 8px 12px;
+  }
+  .prompt {
+    bottom: 95px;
+    font-size: 12px;
+  }
+  .dialog {
+    padding: 24px;
+  }
+  .dialog h2 {
+    font-size: 23px;
+  }
+  .controls {
+    grid-template-columns: 80px 1fr;
+    gap: 10px;
+  }
+  .footer {
+    padding: 7px 12px;
+    font-size: 9px;
+  }
+  .footer span:last-child {
+    display: none;
+  }
+  .touch {
+    gap: 5px;
+    padding: 7px 8px;
+  }
+  .shell .touch button {
+    width: clamp(38px, calc((100vw - 50px) / 7), 46px);
+    height: 48px;
+  }
+  .receipt {
+    margin-left: 0;
+    padding: 10px;
+  }
+  .receipt h2 {
+    font-size: 25px;
+  }
+  .receipt blockquote {
+    font-size: 18px;
+    margin: 14px 0;
+  }
+}
+@media (max-height: 520px) {
+  .homeDialog {
+    padding: 18px;
+  }
+  .homeDialog .eyebrow {
+    display: none;
+  }
+  .homeDialog h2 {
+    font-size: 22px;
+    margin-bottom: 8px;
+  }
+  .toolbar {
+    height: 38px;
+  }
+  .footer {
+    display: none;
+  }
+  .title {
+    padding: 16px 6%;
+  }
+  .title h1 {
+    font-size: 40px;
+  }
+  .title i {
+    display: none;
+  }
+  .eyebrow {
+    margin-bottom: 8px;
+  }
+  .intro {
+    margin: 8px 0;
+    font-size: 12px;
+  }
+  .titleHint {
+    margin: 7px 0;
+    font-size: 9px;
+  }
+  .shell .primary {
+    min-height: 38px;
+    padding: 9px 16px;
+    font-size: 12px;
+  }
+  .shell .hotStart {
+    padding-top: 6px;
+    font-size: 10px;
+  }
+  .touch {
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
+  .shell .touch button {
+    height: 44px;
+  }
+  .hud {
+    top: 8px;
+  }
+  .toast {
+    bottom: 7px;
+    padding: 6px 10px;
+    font-size: 10px;
+  }
+  .prompt {
+    bottom: 59px;
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+  .receipt {
+    padding: 10px;
+  }
+  .receipt blockquote {
+    margin: 8px 0;
+    font-size: 17px;
+  }
+  .receipt h2 {
+    font-size: 23px;
+    margin-bottom: 6px;
+  }
+  .receipt p {
+    font-size: 11px;
+    margin: 7px 0;
+  }
+  .receipt .nextOrder {
+    margin-top: 8px;
+    padding-top: 7px;
+  }
+}
+@media (max-width: 360px) {
+  .toolbar {
+    padding: 0 8px;
+    gap: 4px;
+  }
+  .toolbar nav {
+    gap: 2px;
+  }
+  .toolbar button {
+    padding: 7px 5px;
+  }
+  .toolbar strong {
+    font-size: 12px;
+  }
+  .back {
+    font-size: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shell * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

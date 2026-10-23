@@ -5,6 +5,7 @@ const { chromium } = require(require.resolve('playwright', { paths: [process.cwd
 const { inspectPng } = require('./lib/autochess-screenshot.cjs');
 const { simulate } = require('./simulate-sui-spring.cjs');
 const base = process.env.SPRING_BASE_URL || 'http://127.0.0.1:4120';
+const gamePath = process.env.SPRING_PATH || '/game/sui-spring/archive';
 const out = process.env.SPRING_QA_DIR || '.tmp/sui-spring';
 const errors = []; const captures = [];
 const state = p => p.evaluate(() => JSON.parse(window.render_game_to_text()));
@@ -19,7 +20,7 @@ async function capture(p, name) {
   captures.push({ name, pixels, dom, state: await state(p) });
 }
 (async () => {
-  assert.equal((await fetch(`${base}/game/sui-spring`, { signal: AbortSignal.timeout(60000) })).status, 200);
+  assert.equal((await fetch(`${base}${gamePath}`, { signal: AbortSignal.timeout(60000) })).status, 200);
   fs.mkdirSync(out, { recursive: true });
   const browser = await chromium.launch({ channel: 'chrome', headless: process.env.SPRING_HEADED !== '1', args: ['--mute-audio', '--disable-speech-api'] });
   try {
@@ -30,7 +31,7 @@ async function capture(p, name) {
     const p = await context.newPage();
     p.on('pageerror', e => errors.push(e.message)); p.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
     p.on('response', r => { if (r.status() >= 400 && /\/(games\/sui-spring|images\/autochess|_next|game\/sui-spring)/.test(r.url())) errors.push(`HTTP ${r.status()} ${r.url()}`); });
-    await p.goto(`${base}/game/sui-spring?test=1`);
+    await p.goto(`${base}${gamePath}?test=1`);
     await p.getByRole('button', { name: '把信寄出去' }).waitFor({ timeout: 60000 });
     await p.evaluate(() => window.springTest.manual(true));
     await capture(p, '01-title');
@@ -87,7 +88,7 @@ async function capture(p, name) {
     await mobile.route(/\/api\/(record|demos\/visits)(\?|$)/, r => r.fulfill({ json: { success: true, count: 0 } }));
     await mobile.addInitScript(() => { if (window.speechSynthesis) window.speechSynthesis.speak = () => {}; });
     const m = await mobile.newPage(); m.on('pageerror', e => errors.push(e.message));
-    await m.goto(`${base}/game/sui-spring?test=1`); await m.getByRole('button', { name: '把信寄出去' }).waitFor();
+    await m.goto(`${base}${gamePath}?test=1`); await m.getByRole('button', { name: '把信寄出去' }).waitFor();
     await m.evaluate(() => window.springTest.manual(true));
     await m.getByRole('button', { name: '把信寄出去' }).tap();
     const cdp = await mobile.newCDPSession(m);

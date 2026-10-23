@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import SpringGame from "@/components/suiPlatformer/SpringGame";
+import DeliveryGame from "@/components/suiDelivery/DeliveryGame";
 
 export const metadata: Metadata = {
-  title: "岁己 · 春日第一封信 | 横版跳跃冒险",
+  title: "岁己 · 春日第一单 | 横版配送冒险",
   description:
-    "在春日花田、风车坡、屋顶花园和首播舞台奔跑跳跃。四个手工关卡、可变跳高、极简棋子伙伴与一本慢慢集齐的图鉴。",
+    "挑起面团、踩踏借力，借蒸汽冲过雨棚，搭乘剧场吊台，停稳宴席机。四个街区、十二个订单，最后走到留给岁己的红椅子，一起吃上热饭。",
 };
 export default function SpringPage() {
-  return <SpringGame />;
+  return <DeliveryGame />;
 }

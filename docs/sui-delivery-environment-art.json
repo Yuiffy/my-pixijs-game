@@ -1,0 +1,660 @@
+{
+  "version": 6,
+  "created": "2026-10-23",
+  "tool": "built-in image_gen.imagegen",
+  "processing": "Original RGBA PNGs preserved unchanged in docs/art/sui-delivery/environment. Runtime WebP encoding uses quality90, exact=True; alpha verified byte-for-byte. No crop, recolor or background removal. Phaser uses uniform scale. First three facades use original alpha-bottom coordinates; gatehouse and workshop use recorded >=200 alpha content bounds as placement baselines to ignore faint edge pixels. Collision ledges remain separate foreground geometry. Kitchen wall, oven, cooling racks and backdoor use >=200 alpha bounds and uniform scale; the raised service sill meets the unchanged delivery platform.",
+  "images": [
+    {
+      "group": "cafe",
+      "prompt": "Use case: stylized-concept. Asset type: one production transparent 2D side-view platformer environment cutout, a small springtime neighborhood restaurant facade. NEW original illustration, not a gameplay screenshot. A single charming squat two-story village cafe with broad warm ivory limewashed walls, deep terracotta red tiled gable roof, carved warm dark wooden beams and a short cream chimney. Strict straight-on orthographic front elevation, no isometric side face, no receding perspective. Full building entirely in frame, about 85% of image height, generous transparent margin. The building silhouette is wider than tall, width:height about1.05:1. Roof occupies top30%; wall bottom70%. Ground-level arched dark green wooden entrance on LEFT with a low stone threshold; RIGHT half has one simple sage window with warm cream mullions above waist height and a broad blank area below it for the game to overlay a serving counter. A wide blank cream signboard under the eaves, no letters. Small hanging copper soup pot pictogram as sign at far left, but no words. Subtle hand-painted plaster variation, a few exposed brick corners, individually readable large roof tiles, cozy amber interior light, restrained leaf vines at wall corners, tiny terracotta flower pot by left door. Style: polished hand-painted storybook 2D game art, simple confident rounded silhouettes, moderately thick soft dark brown contours and broad cel shadows, texture stays quiet, harmonious cream/sage/terracotta palette, morning light from upper left. Carefully designed big shape hierarchy readable when scaled to350px wide. Entire facade has a flat horizontal bottom edge, complete building visible. NO people, characters, animals, lettering, text, numbers, UI, HUD, sky, ground plane, landscape, extra buildings, detached items, drop shadow, cast shadow outside silhouette or perspective depth. No tables, counters, stairs, balconies or foreground obstacles; those are separate gameplay layers. Genuinely transparent alpha background, never a checkerboard illustration.",
+      "original": "C:/Users/yuiffy/.codex/generated_images/01a16797-598f-7d61-afa8-cedcb53ece36/exec-fa2e610f-f11f-498e-bc58-ced15c3d9fb8.png",
+      "file": "docs/art/sui-delivery/environment/cafe-source-v1.png",
+      "sourceSha256": "e2a911689cf82a26037e85fee319f7b6a18552a558428b227a99d67bf26ff643",
+      "size": [
+        1285,
+        1224
+      ],
+      "alphaBounds": [
+        0,
+        39,
+        1285,
+        1166
+      ],
+      "runtime": "public/games/sui-spring/environment/cafe-v1.webp",
+      "runtimeSha256": "65266e9fa07ebe52a841972a056c60c65371878f4d75cdad9e88798788edcadd",
+      "runtimeBytes": 367480
+    },
+    {
+      "group": "attic",
+      "prompt": "Use case: stylized-concept. Asset type: NEW original production transparent 2D platformer building facade, wide gardener's two-story house overlooking a canal. Image1 is STYLE REFERENCE ONLY: match its warm hand-painted plaster, chunky outlined roof tiles, soft dark-brown contours, sage-green woodwork and cozy storybook craft. Make a DIFFERENT building, not a variation of that cafe. Strict straight-on orthographic front elevation for side-scrolling game. Entire facade isolated on true alpha, full silhouette fits with clear margin. Wide building width:height about1.65:1. Warm pale cream plaster, large moss/sage green tiled gable roof on top30% of height, broad wooden support beams. Lower floor has THREE modest dark sage windows and stone footings. Upper floor under eaves: on the right half, wide tall open French windows with warm cream wooden mullions and green shutters, room inside softly lit. Leave entire middle-height facade plain below those upper windows so the game can overlay its own level balcony deck and rail. A small front-facing gabled dormer on roof's left half, short square chimney, restrained ivy along right edge, a few clay plant pots on lower window sills. A gardener's house, softly lived in but not ornate or overgrown. Carefully composed big shapes that stay legible at700px wide. Same limited cream/olive/terracotta palette and morning upper-left light as reference. Thin hand-painted texture, broad soft cel shadows; no photorealism. Flat horizontal bottom of building, no pavement, sky or outside shadow. NO people, animals, characters, text, labels, numbers, UI, balcony, stairs, ladders, terraces, detached plants, background landscape, ground or other buildings. Upper floor windows are level on one horizontal line. No isometric side face or perspective vanishing. Real alpha transparency, not checkerboard.",
+      "reference": "cafe-v1.png (style only)",
+      "original": "C:/Users/yuiffy/.codex/generated_images/01a16797-598f-7d61-afa8-cedcb53ece36/exec-c0da408f-3799-4a9a-b3b7-d430fe679c2d.png",
+      "file": "docs/art/sui-delivery/environment/attic-source-v1.png",
+      "sourceSha256": "b7c00b74de5e3cb7e01dbd781b2bfdf37afff9eba5ef66cf86e23fa0b553d305",
+      "size": [
+        1610,
+        977
+      ],
+      "alphaBounds": [
+        0,
+        8,
+        1610,
+        977
+      ],
+      "runtime": "public/games/sui-spring/environment/attic-v1.webp",
+      "runtimeSha256": "a9d36d05bbf8f8985d832831ebdbf2bdc19fa3a6fdb7c7fea72b6058c0da5c81",
+      "runtimeBytes": 359052
+    },
+    {
+      "group": "bakery",
+      "prompt": "Use case: stylized-concept. Asset type: NEW production transparent 2D side-view platformer bakery exterior. Image1 is STYLE REFERENCE ONLY: use matching hand-painted ivory plaster, chunky terracotta tiles, warm wood, quiet sage accents, brown contours and broad shadows. ONE complete small village bakery facade, straight-on orthographic elevation, no visible side wall or perspective depth. Building width:height about0.95:1, broad terracotta gable roof at top30%, small stone chimney. Front-facing cream plaster walls, an UPPER round attic window, then under eaves a small blank oval wooden sign bearing only ONE simple relief silhouette of a loaf (NO lettering). Lower floor has large two-panel display window with cream mullions and sage shutters, warm dark amber interior, a few simple golden loaves visible on ONE shelf. Left side narrow dark green arched door, modest timber corner posts and cream stone base. Lower third mostly plain timber/plaster so the game can overlay flower fence and platforms. One small pot at door, restrained flowering vine at right corner. Same original polished storybook game style as reference, readable at350px wide, big simple shapes, moderate contour, subtle plaster and tile variation. Full building and chimney inside frame with margin, flat horizontal foundation, true transparent alpha. NO people, characters, animals, text, numbers, UI, sky, ground, cast shadow outside silhouette, tables, benches, balcony, stairs, ladders, detachable items, extra buildings or scenery. Clear single building silhouette.",
+      "reference": "cafe-v1.png (style only)",
+      "original": "C:/Users/yuiffy/.codex/generated_images/01a16797-598f-7d61-afa8-cedcb53ece36/exec-dd34f4dc-1163-485e-b753-a7f1f740e47c.png",
+      "file": "docs/art/sui-delivery/environment/bakery-source-v1.png",
+      "sourceSha256": "9c2f7767c1cd0232bce812f7e03c9d6222dab40ffe639a68f07389cf62e3a5c1",
+      "size": [
+        1222,
+        1287
+      ],
+      "alphaBounds": [
+        0,
+        39,
+        1222,
+        1245
+      ],
+      "runtime": "public/games/sui-spring/environment/bakery-v1.webp",
+      "runtimeSha256": "dab9d41dd1f6eed0923689b01ce6b5450d3b8718d73dacbdcdd000e1d057095b",
+      "runtimeBytes": 321590
+    },
+    {
+      "group": "gatehouse",
+      "prompt": "Use case: stylized-concept. Asset type: NEW original transparent 2D side-view platformer environment cutout, an UPPER GATEHOUSE CHAMBER only. Image1 is STYLE REFERENCE ONLY: match its chunky outlined tiles, warm limewash and carved brown timbers, sage shutters, cozy storybook hand-painted style. Different architecture, NOT a cafe. Strict straight-on orthographic front elevation, NO isometric side face or receding perspective. A small broad enclosed loft chamber spanning above a courtyard passage. ONLY the upper chamber and its gabled roof, no legs or ground floor. Width:height about1.45:1, roof top35%, wall lower65%. Moss olive-green tiled roof with rounded readable tiles, cream plaster with a few exposed stone corners and dark wooden corner beams. One small centered sage shuttered window with warm lamp glow. Restrained ivy at outer edges, NOT dangling far below. The chamber terminates in a straight flat horizontal dark-brown timber bottom at the very bottom of the cutout, no projecting shelves or doors. This chamber will be placed above an actual playable low passage and the game will draw its supports separately. Keep wall detail restrained at320px game width. Match reference broad warm upper-left morning light, quiet brush texture, medium brown contours and cream/sage/wood palette. Entire upper building isolated with actual transparent alpha, generous clear margin on all sides; full silhouette visible. NO lower story, pillar, arch, stairs, ledge, balcony, terrace, door, chimney, fence, people, animals, characters, sky, ground, scenery, words, letters, numbers, signs, HUD, UI or shadow outside silhouette. No painted checkerboard. One connected upper chamber only.",
+      "original": "C:/Users/yuiffy/.codex/generated_images/01a16797-598f-7d61-afa8-cedcb53ece36/exec-f5807d3e-a3eb-42a9-aa2b-269728d1e934.png",
+      "reference": "docs/art/sui-delivery/environment/cafe-source-v1.png (style only)",
+      "file": "docs/art/sui-delivery/environment/gatehouse-source-v1.png",
+      "sourceSha256": "175e8bf12b51bd7a24e10b04063e503506a2344859ffffff05b2bc79c3ad6709",
+      "size": [
+        1507,
+        1044
+      ],
+      "alphaBounds": [
+        0,
+        21,
+        1495,
+        1044
+      ],
+      "placementAlphaThreshold": 200,
+      "placementBounds": [
+        11,
+        115,
+        1491,
+        922
+      ],
+      "runtime": "public/games/sui-spring/environment/gatehouse-v1.webp",
+      "runtimeSha256": "6eabbfb651e5a080b2f9c0e4a16113764fd58577044eac9e863310dc7eb2e7f1",
+      "runtimeBytes": 243964,
+      "placement": {
+        "x": 400,
+        "baselineY": 562,
+        "displayWidth": 325,
+        "contentBottom": 922,
+        "role": "upper chamber only; support posts drawn from y550 to680 behind exact collision ledges"
+      }
+    },
+    {
+      "group": "workshop",
+      "prompt": "Use case: stylized-concept. Asset type: NEW original production transparent 2D side-view platformer facade, a cozy neighborhood repairer's cottage/workshop. Image1 is STYLE REFERENCE ONLY: warm ivory limewashed plaster, soft dark-brown outlines, chunky roof tiles, exposed wooden beams, sage joinery, golden lamps and restrained brush texture. A DIFFERENT asymmetrical building, NOT a cafe. Strict straight-on orthographic front elevation, no receding perspective, no isometric side wall. Entire wide silhouette visible with generous alpha margin, building width:height about1.5:1. Two volumes as a connected building: LEFT THIRD a very low one-story open workshop alcove roofed with olive tiles, lower roof at roughly two-thirds down the overall image, with dim rear wall and a tidy hanging wrench, mallet and a small coil of rope on a pegboard; RIGHT TWO THIRDS a taller two-story cream cottage with broad moss/sage green tiled roof, a short square cream chimney, a tiny arched green door at ground level, and TWO warm shuttered upper windows placed directly under the eaves on one horizontal line near top third. Leave the facade between these upper windows and lower floor plain so a playable platform can overlay it; NO baked-in balcony or ledges. The low workshop alcove should be visibly open at its front, plain lower floor; game places its actual workbench in front separately. No foreground workbench, table or machinery. Small subtle copper repair-tool pictogram fixed high on low wing wall, no words. Scattered plaster wear and stone corners, a few small ivy leaves at the outside right corner; avoid flower shop appearance. Limited cream/olive/terracotta/dark brown palette, warm light from upper left, moderately thick brown contour, detailed craft but clear large forms readable at600px wide. Flat horizontal base, building isolated on genuinely transparent alpha background. NO people, animals, characters, food, cafe sign, lettering, text, numbers, HUD, UI, sky, ground plane, trees, other buildings, ground shadows, detached tools, stairs, platforms, balcony, rails, fences or terrace. No checkerboard illustration. One coherent connected building with the low wing on LEFT and tall cottage on RIGHT.",
+      "original": "C:/Users/yuiffy/.codex/generated_images/01a16797-598f-7d61-afa8-cedcb53ece36/exec-91cc3636-c040-470e-9978-70cf088d58d1.png",
+      "reference": "docs/art/sui-delivery/environment/cafe-source-v1.png (style only)",
+      "file": "docs/art/sui-delivery/environment/workshop-source-v1.png",
+      "sourceSha256": "1428b5d2d37893117798111b0bd06f94369a2c772fc67a91e241e9397e31d758",
+      "size": [
+        1536,
+        1024
+      ],
+      "alphaBounds": [
+        0,
+        26,
+        1536,
+        965
+      ],
+      "placementAlphaThreshold": 200,
+      "placementBounds": [
+        10,
+        30,
+        1526,
+        960
+      ],
+      "runtime": "public/games/sui-spring/environment/workshop-v1.webp",
+      "runtimeSha256": "ab094cee02565c6487630ec384767dc088595cd05cc8e81f0c776eddd3a2c223",
+      "runtimeBytes": 258946,
+      "placement": {
+        "x": 1540,
+        "baselineY": 680,
+        "displayWidth": 620,
+        "contentBottom": 960,
+        "role": "low left workshop behind the actual repair bench; tall right house behind the canopy and rooftop platform"
+      }
+    },
+    {
+      "group": "kitchen-wall",
+      "prompt": "Use case: stylized-concept. Asset type: NEW original production 2D side-scrolling game environment BACK WALL, a warm working bakery cutaway, isolated true alpha. Input image 1 is STYLE REFERENCE ONLY: match the existing bakery's hand-painted ivory plaster, chunky warm timber, sage-green wood, copper/terracotta accents, soft brown contour and cozy morning light. Create one panoramic WIDE RECTANGULAR back-wall section, width:height about3.3:1. Strict straight-on orthographic front elevation, flat side-view plane, no vanishing point or visible side walls. One continuous quiet pale cream plaster wall with aged warm timber top cornice and a few broad vertical posts, large simple sage-framed windows distributed in THREE distinct bays: left tall paired panes, center a modest arched window, right wide open shutters with pale green garden glimpses contained inside glass. Two small warm copper pendant lights high near the top. Restrained tiny exposed-brick patches and subtle flour marks near the base. Large calm wall areas below the windows so moving characters and separate gameplay ledges remain easy to read. Top cornice straight horizontal; bottom edge straight horizontal. The full cutaway entirely in frame with transparent margin; use a broad panorama composition. Polished storybook game illustration, broad simple cel shadows and quiet brush texture, cream/sage/ochre palette, no high-frequency detail. This is ONLY an architectural BACKGROUND WALL. Do NOT paint any walkable-looking shelves, furniture, oven, worktops, counters, racks, floor, beams projecting in front, ledges, platforms, stairs, props, sacks, characters, people, animals, signs, text, letters, UI, HUD, sky or exterior landscape outside windows. No ground plane or exterior drop shadow. Genuine transparent alpha around the wall, never checkerboard. Keep the illustration flat enough to sit behind crisp game collision platforms. NEW asset, do not modify the reference.",
+      "original": "C:/Users/yuiffy/.codex/generated_images/01a16797-598f-7d61-afa8-cedcb53ece36/exec-35241ec6-124a-4efd-82d9-c18295366b32.png",
+      "reference": "docs/art/sui-delivery/environment/bakery-source-v1.png (style only)",
+      "file": "docs/art/sui-delivery/environment/kitchen-wall-source-v1.png",
+      "sourceSha256": "cfa670f78df1d5511965cdd5197e70bae0253d633108cbc740a151ae9820bf87",
+      "size": [
+        2161,
+        728
+      ],
+      "alphaBounds": [
+        35,
+        25,
+        2128,
+        686
+      ],
+      "placementAlphaThreshold": 200,
+      "placementBounds": [
+        44,
+        82,
+        2118,
+        671
+      ],
+      "runtime": "public/games/sui-spring/environment/kitchen-wall-v1.webp",
+      "runtimeSha256": "83825d8257f05a1ad901a32c38f9bd20686af23c753412c76efd4e668f75f9d9",
+      "runtimeBytes": 313012,
+      "placement": {
+        "x": 350,
+        "baselineY": 680,
+        "displayWidth": 2170,
+        "contentBottom": 671,
+        "role": "panoramic wall behind collision surfaces at depth0.65"
+      }
+    },
+    {
+      "group": "kitchen-oven",
+      "prompt": "Use case: stylized-concept. Asset type: NEW production transparent 2D game prop, one stationary village bread oven for a side-scrolling bakery interior. Image1 is STYLE REFERENCE ONLY: match warm ivory hand-painted stone/plaster, softly outlined large simple shapes, terracotta bricks, sage accents, quiet brush texture, cozy storybook craft. Strict front orthographic elevation, no visible side wall or receding perspective. Single compact oven, width:height about0.82:1, complete silhouette entirely visible with true transparent margin. Squat rounded-arch ivory brick body with a tall broad cream masonry hood, a small terracotta brick patch, short top chimney. Wide dark warm-brown arched baking opening in lower half with a soft subtle amber glow and two golden loaves deep inside. Simple dark iron trim, no handles/knobs sticking out. Flat horizontal stone footing. Broad clean shapes readable at160px high, warm morning light from upper left; moderately thick dark brown contour and broad cel shadows. ONLY the static oven object: NO walls, room, furniture, shelves, tables, floor, shadow outside the silhouette, smoke plume, fire particles, people, animals, lettering, numerals, signs, UI, HUD, unattached bread or utensils. Do not draw a green tray or movable platform. Real transparent alpha, no checkerboard. It will sit behind an independently moving cream-edged green baking tray that the game draws separately.",
+      "original": "C:/Users/yuiffy/.codex/generated_images/01a16797-598f-7d61-afa8-cedcb53ece36/exec-89097ba0-ed3e-448e-9602-64149beba9f4.png",
+      "reference": "docs/art/sui-delivery/environment/bakery-source-v1.png (style only)",
+      "file": "docs/art/sui-delivery/environment/kitchen-oven-source-v1.png",
+      "sourceSha256": "113b0c7d550baaa985f70981e442a0cf1d2adc9ba942e044f509fcfdab058ea8",
+      "size": [
+        1136,
+        1385
+      ],
+      "alphaBounds": [
+        0,
+        11,
+        1136,
+        1370
+      ],
+      "placementAlphaThreshold": 200,
+      "placementBounds": [
+        12,
+        15,
+        1124,
+        1364
+      ],
+      "runtime": "public/games/sui-spring/environment/kitchen-oven-v1.webp",
+      "runtimeSha256": "5ede93daa85f22c50c5de47e9dace296f6f5ffb647467ef794879d47899a517b",
+      "runtimeBytes": 268278,
+      "placement": {
+        "x": 950,
+        "baselineY": 680,
+        "displayWidth": 220,
+        "contentBottom": 1364,
+        "role": "static background oven behind independent moving baking pan"
+      }
+    },
+    {
+      "group": "bread-rack",
+      "prompt": "Use case: stylized-concept. Asset type: NEW production transparent 2D game prop, a freestanding village bakery cooling rack. Image1 is STYLE REFERENCE ONLY: match warm hand-painted ivory/ochre/wood, soft dark-brown contours, broad cel shadows, quiet brush texture and cozy storybook craft. Strict front orthographic elevation, no visible side wall or receding perspective. One narrow tall wooden rack, width:height about0.68:1, four stout brown corner posts and THREE horizontal shelves holding several varied golden loaves with simple scoring. Dark muted warm recess behind the bread, chunky readable frame, short square feet on one flat horizontal baseline. Entire rack isolated in frame with transparent margin. No extension beyond the frame, bread stays inside the shelf silhouette. Readable at110px wide and160px tall, upper-left soft morning light, medium brown contour and broad uncomplicated shapes. The rack is a background decoration placed behind real separate collision platforms; keep the frame modest and shelves lower-contrast than interactive gameplay edges. ONLY one wooden rack with bread: NO people, animals, characters, wall, room, floor, stairs, ladders, detached props, table, counter, trailing fabric, lettering, words, numbers, signs, UI, HUD, ground or shadow outside silhouette. True transparent alpha, no checkerboard.",
+      "original": "C:/Users/yuiffy/.codex/generated_images/01a16797-598f-7d61-afa8-cedcb53ece36/exec-a8b10606-da87-4f24-bbb5-51d77e8cc222.png",
+      "reference": "docs/art/sui-delivery/environment/bakery-source-v1.png (style only)",
+      "file": "docs/art/sui-delivery/environment/bread-rack-source-v1.png",
+      "sourceSha256": "930821a18bbbdf9b6aa8b1793144e39597f548cdd50b7e4b4c96645418864f1d",
+      "size": [
+        1034,
+        1521
+      ],
+      "alphaBounds": [
+        0,
+        9,
+        1018,
+        1521
+      ],
+      "placementAlphaThreshold": 200,
+      "placementBounds": [
+        102,
+        97,
+        931,
+        1427
+      ],
+      "runtime": "public/games/sui-spring/environment/bread-rack-v1.webp",
+      "runtimeSha256": "c7b1ba82f089f4e79fd08994408e6ed164a3bdcff43b086e4e474cd40fec9048",
+      "runtimeBytes": 295910,
+      "placement": {
+        "x": [
+          450,
+          750,
+          1760,
+          1920
+        ],
+        "baselineY": 680,
+        "displayWidth": 140,
+        "contentBottom": 1427,
+        "role": "decorative cooling racks behind real counters and shelves"
+      }
+    },
+    {
+      "group": "bakery-backdoor",
+      "prompt": "Use case: stylized-concept. Asset type: NEW production transparent 2D platformer facade, rear service building of a village bakery. Input image1 is STYLE REFERENCE ONLY: match its hand-painted cream plaster, chunky terracotta tiles, dark brown wooden outlines, sage-green joinery and warm amber interior. This is a DIFFERENT back facade, strict straight-on orthographic front elevation, no isometric side face or depth perspective. Full single two-story building and chimney entirely in frame with transparent margin; width:height about0.95:1. Simple broad terracotta gable roof on top quarter, small cream chimney on left. Under roof in upper-middle story, one WIDE OPEN arched service doorway centered slightly RIGHT, at about60% of building width. The open doorway dark inside with soft warm light, sage shutters opened outward; its bottom sill lies at about55% of total building height so a separately drawn raised game platform can meet it. Service opening tall enough to frame a small baker standing in front of it. Leave the large cream wall directly below this opening quiet and plain. Lower floor has a small closed sage wooden door on LEFT and one tiny low window on RIGHT, a few broad stone foundation blocks. Warm timber at outer corners and one simple small loaf pictogram under eaves on left, no words. Restrained ivy right side, no dangling below baseline. Flat horizontal base. Readable at450px world width, storybook broad cel shadows, upper-left light, moderate brown outlines, quiet brush texture, same restrained ivory/sage/terracotta palette. NO baked-in balcony, stairs, ladders, ledges, platforms, railing, terrace, porch, foreground fence, furniture, freestanding props, people, animals, characters, text, lettering, numerals, UI, HUD, sky, ground, cast shadow or scenery outside silhouette. Actual open service doorway is elevated, not at ground level. Transparent alpha around the entire facade, no checkerboard. Game overlays all playable platforms separately.",
+      "original": "C:/Users/yuiffy/.codex/generated_images/01a16797-598f-7d61-afa8-cedcb53ece36/exec-b73566df-ea1d-4683-b561-9ba0f3c0acde.png",
+      "reference": "docs/art/sui-delivery/environment/bakery-source-v1.png (style only)",
+      "file": "docs/art/sui-delivery/environment/bakery-backdoor-source-v1.png",
+      "sourceSha256": "3028c122b3c490c73e50ae6a7497bf30828f3c1aafa23ebba88edba0512a6dcc",
+      "size": [
+        1222,
+        1287
+      ],
+      "alphaBounds": [
+        0,
+        26,
+        1222,
+        1287
+      ],
+      "placementAlphaThreshold": 200,
+      "placementBounds": [
+        3,
+        29,
+        1221,
+        1238
+      ],
+      "runtime": "public/games/sui-spring/environment/bakery-backdoor-v1.webp",
+      "runtimeSha256": "cd7c918c062f36f286e390deaf35e50e1ef0cd5d5fcb08aed779830c78231eff",
+      "runtimeBytes": 309660,
+      "placement": {
+        "x": 2920,
+        "baselineY": 680,
+        "displayWidth": 500,
+        "contentBottom": 1238,
+        "role": "open raised service sill aligned with actual y465 delivery platform"
+      }
+    },
+    {
+      "group": "oven-crab-shell",
+      "prompt": "Use case: stylized-concept. Asset type: NEW production transparent 2D platformer machine-body sprite. Image1 is STYLE REFERENCE ONLY: match its cozy hand-painted cream masonry, terracotta, dark brown contours, broad cel shading, subtle brush texture and upper-left light. Design ONLY the central BODY SHELL of a friendly mechanical walking bread oven, front orthographic elevation, no visible side face, no perspective. Very broad squat rounded rectangle, width:height about2.15:1. One simple copper-brown outer boiler casing with large ivory stone panels, terracotta inset seams, a few large round copper rivets at the corners. TOP is FLAT across most width: a dark sage-green narrow flat top rim, no projections. At the lower center, one dark arched firebox recess occupying about40% width and60% height, empty dark brown inside with a flat horizontal sill, no baked bread and no flame; game draws live glow in this aperture. Leave the top quarter of the shell simple and quiet so game draws eyes there. Bottom flat straight horizontal baseline. Modest dark-brown medium outlines and broad clean shapes readable at250x115 game pixels, same storybook workmanship as reference, uncluttered, no fine ornament. Entire one body shell centered with transparent margin on all sides. NO legs, feet, arms, claws, eyes, face, mouth expression, antenna, valves, wheels, chimney, pipe projections, smoke, steam, flames, fire, ground, shadow, environment, scenery, people, characters, animal, lettering, words, numbers, signs, UI, HUD, checkerboard. Actual transparent alpha. This image is a layered sprite; all animated legs, eyes, valves, claws and moving platforms are drawn separately.",
+      "original": "C:/Users/yuiffy/.codex/generated_images/01a16797-598f-7d61-afa8-cedcb53ece36/exec-4ab61692-4101-47db-aa84-2d77094e47c4.png",
+      "reference": "docs/art/sui-delivery/environment/kitchen-oven-source-v1.png (style only)",
+      "file": "docs/art/sui-delivery/environment/oven-crab-shell-source-v1.png",
+      "sourceSha256": "66fb8d0d22497bfe6ca189d1c3d349208fcc39eb69253eb2573def972e970e7c",
+      "size": [
+        1840,
+        855
+      ],
+      "alphaBounds": [
+        0,
+        45,
+        1806,
+        855
+      ],
+      "placementAlphaThreshold": 200,
+      "placementBounds": [
+        44,
+        49,
+        1796,
+        806
+      ],
+      "runtime": "public/games/sui-spring/environment/oven-crab-shell-v1.webp",
+      "runtimeSha256": "60566918e4c6e3543a983888370551e63e280d852a229970f03cb3a424f3393e",
+      "runtimeBytes": 234284,
+      "placement": {
+        "bodyCenterX": "boss.x + 125",
+        "baselineY": 653,
+        "scale": "250 / 1752",
+        "origin": [
+          0.5,
+          0.9426900584795321
+        ],
+        "role": "opaque body behind real valves, eyes, safe back ledge and live firebox glow"
+      }
+    },
+    {
+      "group": "oven-crab-claw",
+      "prompt": "Use case: stylized-concept. Asset type: NEW transparent 2D platformer articulated mechanical claw sprite. Image1 is STYLE REFERENCE ONLY for warm hand-painted copper, terracotta, ivory stone, dark brown contour and broad quiet cel shading, upper-left light. Strict front orthographic side silhouette of ONE LEFT-FACING mechanical oven-crab pincer, width:height about1.6:1. One round copper hinge joint at RIGHT, two short chunky curved ivory-and-copper jaws opening slightly toward LEFT, clean wide V-shaped opening between jaw tips on left. Friendly bakery machinery, soft squared corners, clearly mechanical, two simple copper rivets, minimal chunky panels. Entire isolated claw centered inside transparent margins, no arm or connecting rod. Readable at65x40 game pixels with moderate brown outline and uncluttered broad shapes. NO body, legs, eyes, character, people, animal, flame, smoke, ground, background, text, lettering, numbers, UI, HUD, drop shadow, checkerboard. True transparent alpha around entire silhouette. Game mirrors sprite for right-facing attack and draws the arm and warning ring separately.",
+      "original": "C:/Users/yuiffy/.codex/generated_images/01a16797-598f-7d61-afa8-cedcb53ece36/exec-6863ee69-6a86-41a5-a387-9f6bcd6f41e4.png",
+      "reference": "docs/art/sui-delivery/environment/kitchen-oven-source-v1.png (style only)",
+      "file": "docs/art/sui-delivery/environment/oven-crab-claw-source-v1.png",
+      "sourceSha256": "4a432f6f60e930b9e46485f6bf286db1861d52aa037e4e4f3ee1bffc5a449aca",
+      "size": [
+        1586,
+        992
+      ],
+      "alphaBounds": [
+        0,
+        8,
+        1586,
+        992
+      ],
+      "placementAlphaThreshold": 200,
+      "placementBounds": [
+        171,
+        70,
+        1426,
+        924
+      ],
+      "runtime": "public/games/sui-spring/environment/oven-crab-claw-v1.webp",
+      "runtimeSha256": "fcdf83351a8c75d01528d9b33a46a306f4e5268328dab52c3d814213238c8f0d",
+      "runtimeBytes": 174192,
+      "placement": {
+        "centerX": "clawSide + facing * actual phase reach",
+        "centerY": 640,
+        "scale": "min((warning ? 48 : 65) / 1255, 40 / 854)",
+        "origin": [
+          0.5034678436317781,
+          0.501008064516129
+        ],
+        "mirror": "facing > 0",
+        "role": "articulated claw at actual sweep tip with separate warning ring and live arm; hidden when off"
+      }
+    },
+    {
+      "group": "oven-courtyard",
+      "prompt": "Use case: stylized-concept. Asset type: NEW transparent background facade for a cozy 2D side-view delivery platformer. Image1 is STYLE REFERENCE ONLY: match its hand-painted ivory plaster, terracotta tilework, dark brown timber contours, sage joinery, broad cel shadows and quiet brush texture. Design ONE small communal bakehouse utility building in strict front orthographic elevation, no side wall or receding perspective. Width:height about1.45:1. Broad single-story cream plaster building, low terracotta gable roof in top third, sturdy dark timber beneath eaves, one short chimney at right with no smoke. LEFT half has a big dark sage-green closed double door with wide clean vertical boards and arched stone frame; RIGHT half has a single wide warm amber service window with open sage shutters, low sill. Three chunky stone foundation blocks, subtle sparse ivy near left corner, one large copper pipe with rounded elbow at right outside wall but within silhouette. Quiet cream wall around opening, a small pictogram of two plain bread loaves centered under eaves, no words. Entire facade and chimney fully inside frame, generous true transparent margins, flat horizontal foundation baseline. Broad simple readable shapes at430 game pixels width, upper-left morning light, restrained warm ivory/sage/terracotta palette. NO foreground furniture, attached stairs, balcony, porch deck, railing, ledges, platforms, open ground passage, people, characters, animals, freestanding objects, hanging text signs, letters, numerals, UI, HUD, sky, ground, garden, cast shadow, background outside building or checkerboard. Real gameplay surfaces and delivery counter are drawn separately in front.",
+      "original": "C:/Users/yuiffy/.codex/generated_images/01a16797-598f-7d61-afa8-cedcb53ece36/exec-01d1985f-c301-49e2-817c-6cd23483d83e.png",
+      "reference": "docs/art/sui-delivery/environment/kitchen-oven-source-v1.png (style only)",
+      "file": "docs/art/sui-delivery/environment/oven-courtyard-source-v1.png",
+      "sourceSha256": "55f7a2a3eacd421e62334e59c5e0f17bebb553157b49847b4e9f9f95027039d4",
+      "size": [
+        1508,
+        1043
+      ],
+      "alphaBounds": [
+        34,
+        23,
+        1490,
+        981
+      ],
+      "placementAlphaThreshold": 200,
+      "placementBounds": [
+        39,
+        99,
+        1482,
+        977
+      ],
+      "runtime": "public/games/sui-spring/environment/oven-courtyard-v1.webp",
+      "runtimeSha256": "b05c9138f9099cd97134252536e6fbf1326e7df9a857e1529cbead16735eba7f",
+      "runtimeBytes": 230844,
+      "placement": {
+        "x": [
+          0,
+          1900
+        ],
+        "baselineY": 680,
+        "displayWidth": 430,
+        "scale": "430 / 1443",
+        "contentLeft": 39,
+        "contentBottom": 977,
+        "role": "two stationary courtyard bakehouses behind the real entry and delivery counters"
+      }
+    },
+    {
+      "group": "market-produce",
+      "prompt": "Use case: stylized-concept. Asset type: transparent 2D side-scrolling game environment sprite for the warm hand-painted storybook delivery adventure Spring First Order. Input reference: the attached cafe is a STYLE reference only, do not reproduce the building. Primary request: ONE low, broad wooden produce market counter, viewed perfectly straight-on from the side/front like a flat stage elevation. Three open wooden crates neatly display round tomatoes, pale cabbages and orange squash; a small wicker bread basket at one end. Counter has sturdy warm timber panels, a dark sage painted trim, cream edges, a few simple woodgrain lines and iron corner brackets. Width about three times total height. All produce remains below a clean low silhouette. No canopy, no tall poles, no roof, no people, no floating items. Fully isolated, genuine transparent background outside the object. Entire base lies on one straight horizontal baseline. Match attached warm ivory/sage/terracotta/umber palette, softly painted gouache texture, confident readable outlines and restrained detail suitable for display at 210 by 85 pixels. Only one counter, no sheet, no scenery, no floor, no shadow plane, no labels, no lettering, no watermark; leave a thin clear transparent margin.",
+      "original": "C:/Users/yuiffy/.codex/generated_images/01a16797-598f-7d61-afa8-cedcb53ece36/exec-30c15fae-6fd1-4999-8bd8-a95074963b52.png",
+      "reference": "docs/art/sui-delivery/environment/cafe-source-v1.png (style only)",
+      "file": "docs/art/sui-delivery/environment/market-produce-source-v1.png",
+      "sourceSha256": "3ec0172ce42954d765d68b0494c23ba4b1d8dfeec02a39f49a5d02a6d24a3006",
+      "size": [
+        1916,
+        821
+      ],
+      "alphaBounds": [
+        0,
+        12,
+        1868,
+        791
+      ],
+      "placementAlphaThreshold": 200,
+      "placementBounds": [
+        59,
+        147,
+        1860,
+        736
+      ],
+      "runtime": "public/games/sui-spring/environment/market-produce-v1.webp",
+      "runtimeSha256": "37c7c14b157f7b9c117f44c4b589c2c411543755817fba612c322412067986be",
+      "runtimeBytes": 287658,
+      "placement": {
+        "anchor": "alpha>=200 left 59, bottom 736; content width 1801",
+        "entry": {
+          "x": 80,
+          "bottom": 680,
+          "contentWidth": 210
+        },
+        "awnings": "one at each authored awning x+10, width-20, bottom680; no collision introduced",
+        "depth": 0.8
+      }
+    },
+    {
+      "group": "market-canteen",
+      "prompt": "Use case: stylized-concept. Asset type: isolated transparent 2D side-scrolling platform game environment building for Spring First Order. Input reference: attached cafe supplies the hand-painted style only. Primary request: a compact TWO-STOREY lunch-market food shop, perfectly straight-on flat front elevation, no perspective receding walls. Warm ivory plaster, rich wooden beams, moss-sage shutters, terracotta curved tiles, a tiny chimney, a few herb pots. The LOWER FLOOR is a simple storage frontage with double doors; the UPPER FLOOR has one WIDE OPEN service window with a low cream sill, a softly lit interior and stacked empty bowls set well back. The wide service window is centered roughly two-thirds down from the roof ridge, with open dark interior for an NPC to stand in front; a broad sturdy timber ledge spans its base, intended to sit behind a real gameplay platform. No balcony railing, no stairs, no figures, no external food clutter along the ledge. Whole building is a broad compact silhouette, width about equal to height. Roof begins with a straight readable eave, one small blank hanging food sign shaped like a bowl on the left. Match reference gouache brush texture, clear dark brown contours, warm sage/ivory/terracotta palette, readable at 400 pixels wide. Building entire base lies on a straight horizontal baseline. True transparency outside building, isolated no floor or background, no drop shadow plane, no text, no lettering, no watermark. Entire building visible with a small transparent margin.",
+      "original": "C:/Users/yuiffy/.codex/generated_images/01a16797-598f-7d61-afa8-cedcb53ece36/exec-9e0c6065-ac58-4462-a961-6902ac335ec6.png",
+      "reference": "docs/art/sui-delivery/environment/cafe-source-v1.png (style only)",
+      "file": "docs/art/sui-delivery/environment/market-canteen-source-v1.png",
+      "sourceSha256": "b36d45495d70e20fb3713a6435da051a99e9c0b19b8209100bee1b4307f10030",
+      "size": [
+        1285,
+        1224
+      ],
+      "alphaBounds": [
+        9,
+        30,
+        1285,
+        1180
+      ],
+      "placementAlphaThreshold": 200,
+      "placementBounds": [
+        14,
+        33,
+        1282,
+        1166
+      ],
+      "runtime": "public/games/sui-spring/environment/market-canteen-v1.webp",
+      "runtimeSha256": "c91a79753cf83e6831c2da007cfdeaf1fb539e15a14aef04b945e51bb076db3e",
+      "runtimeBytes": 409204,
+      "placement": {
+        "alphaLeft": 14,
+        "alphaBottom": 1166,
+        "serviceSillY": 610,
+        "worldLeft": 3330,
+        "worldBottom": 680,
+        "worldServiceSillY": 500,
+        "scale": 0.3237410071942446,
+        "depth": 0.8
+      }
+    },
+    {
+      "group": "market-cart",
+      "prompt": "Use case: stylized-concept. Asset type: isolated transparent 2D SIDE VIEW moving lunch cart BODY sprite for the same warm hand-painted storybook delivery game as the reference cafe. Primary request: one short broad rectangular insulated delivery cart chassis, warm dark sage painted timber, cream horizontal flat top deck, brass corner guards, subtle rivets, terracotta lower trim. Side panel has a simple painted emblem of a cream bowl with three small vegetable marks, no writing. Viewed perfectly straight-on side elevation, absolutely NO visible top surface, perspective or 3D foreshortening. Clear horizontal FLAT TOP across entire chassis, all cargo is INSIDE, nothing protrudes above the deck because the deck will be a real jumping platform. Width about three times body height. NO wheels, no axle, no track, no handles, no legs: animated wheels will be drawn separately by the game beneath this body. Lower edge is a clean straight baseline. Entire body is a single solid chunky readable shape with only a few hand-painted grain details and softly brushed gouache texture, matching warm ivory, sage, terracotta and umber outline of reference. True transparent background outside object, entire object visible with a thin transparent margin, no scenery, no floor, no shadow plane, no people, no other objects, no text, no watermark. It will display at 160 by 58 pixels.",
+      "original": "C:/Users/yuiffy/.codex/generated_images/01a16797-598f-7d61-afa8-cedcb53ece36/exec-bcbf78c2-a7a2-43c9-986a-6230c683d377.png",
+      "reference": "docs/art/sui-delivery/environment/cafe-source-v1.png (style only)",
+      "file": "docs/art/sui-delivery/environment/market-cart-source-v1.png",
+      "sourceSha256": "a44af45aefc1351644ae21788f815bd38f9c18a4186a386619a78de8d7304a38",
+      "size": [
+        2079,
+        756
+      ],
+      "alphaBounds": [
+        0,
+        19,
+        2061,
+        756
+      ],
+      "placementAlphaThreshold": 200,
+      "placementBounds": [
+        95,
+        133,
+        1991,
+        624
+      ],
+      "runtime": "public/games/sui-spring/environment/market-cart-v1.webp",
+      "runtimeSha256": "8e67c4f32f0e42af465c37ba180ca6127b3688a4af1271c34748f307b983f453",
+      "runtimeBytes": 171084,
+      "placement": {
+        "origin": [
+          0.0456950456950457,
+          0.17592592592592593
+        ],
+        "scale": [
+          0.08438818565400844,
+          0.11812627291242363
+        ],
+        "anchor": "real cart surface x/y, top highlight at collision y; dynamic wheels use actual displacement",
+        "visibleThemes": [
+          "market",
+          "freight"
+        ],
+        "depth": 2.9
+      }
+    },
+    {
+      "group": "freight-station",
+      "prompt": "Use case: stylized-concept\nAsset type: transparent 2D side scrolling platformer environment sprite, newly authored modular freight station canopy.\nInput image: the provided cafe is a STYLE REFERENCE ONLY. Match its hand painted storybook surfaces, warm ochre wood, subdued sage roof, earthy contours and soft upper-left sunlight. Do not reproduce the cafe.\nSubject: one open-sided little timber freight station shelter for a spring town food delivery railway. Warm weathered heavy timber frame, sage green overlapping roof tiles with modest copper fasteners, cream stone feet, a hanging small unmarked brass bell under the left eave. Roof spans the complete shelter, two slender vertical posts only at far left and right, side diagonal braces close to posts.\nComposition: strictly flat front elevation, orthographic 2D, horizontal sprite roughly 3:2 overall. Entire silhouette with a little transparent margin. Main roof occupies upper 25 percent; two side posts descend to a shared horizontal baseline. LARGE TRANSPARENT OPEN CENTER below roof between posts, no wall or backdrop. Posts are behind the player. Bottom of posts has small stone feet; no platform, no floor, no rail, no crates, no table, no people. It will sit on separately rendered true collision platforms.\nStyle: detailed but clear game-ready painted illustration, same dark warm brown edge treatment as style reference, readable around 350 pixels wide.\nBackground MUST be genuine alpha transparency everywhere outside the shelter including the open center. No background, no sky, no ground, no cast shadow on ground, no text, no letters, no UI, no watermark. Single isolated shelter only.",
+      "original": "C:/Users/yuiffy/.codex/generated_images/01a16797-598f-7d61-afa8-cedcb53ece36/exec-b11ae07d-ac6e-4f62-9878-8d2e08df6161.png",
+      "reference": "docs/art/sui-delivery/environment/cafe-source-v1.png (style only)",
+      "file": "docs/art/sui-delivery/environment/freight-station-source-v1.png",
+      "sourceSha256": "43678f0dacc3b5879f3b9d660fa8b43fc6e115b6722859509bd4ea41e531997c",
+      "size": [
+        1536,
+        1024
+      ],
+      "alphaBounds": [
+        26,
+        37,
+        1518,
+        931
+      ],
+      "placementAlphaThreshold": 200,
+      "placementBounds": [
+        30,
+        93,
+        1506,
+        928
+      ],
+      "runtime": "public/games/sui-spring/environment/freight-station-v1.webp",
+      "runtimeSha256": "39988b59b5fd9e1126ff5d586a5259939a0b53f17ae59ed2e2c2bcd065b509e7",
+      "runtimeBytes": 168092,
+      "placement": {
+        "worldCanopies": [
+          [
+            585,
+            540,
+            270
+          ],
+          [
+            1585,
+            500,
+            400
+          ],
+          [
+            2895,
+            460,
+            300
+          ]
+        ],
+        "alphaLeft": 30,
+        "alphaBottom": 928,
+        "alphaWidth": 1476,
+        "depth": 0.8,
+        "openCenter": true
+      }
+    },
+    {
+      "group": "sorter-tower",
+      "prompt": "Use case: stylized-concept\nAsset type: transparent 2D side scrolling platformer mechanical control tower sprite.\nInput image: provided cafe is STYLE REFERENCE ONLY; match the warm hand painted storybook material, earthy outlines and upper-left sunlight. Do not reproduce a building.\nSubject: one tall slim stationary mechanical food-serving control tower. Industrial equipment made by a spring town craftsman: enamel sage-green cylindrical body on short cream stone pedestal, aged copper pipe on left side, dark green inset vertical instrument panel on upper third, little curved terracotta copper cap and side rivets. Panel contains THREE EMPTY DARK ROUND SOCKETS in vertical row; these are empty wells for lights drawn in realtime by game. No colored lit lamps in the asset. Bottom half is a simple beautiful metal casing with a small service hatch.\nComposition: strict flat front elevation, orthographic, entire tower isolated, a narrow tall sprite, height about 3.1 times width. Keep sides compact. The dark panel near top third must be clearly readable; three blank sockets centered along vertical axis. No pipes or arms sticking far outside the slim footprint.\nThis is a mechanical backdrop behind three separate live conveyor platforms, so DO NOT draw any conveyor belts, platforms, robot arms, dishes, food, table, base floor or scenery.\nStyle: hand painted storybook game prop, readable at world size about 120 by 375 pixels, muted forest-green and warm copper cream, avoid shiny 3D or plastic.\nBackground is genuine alpha transparency. No people, no face, no text, no letters, no UI, no watermark. Single isolated prop only.",
+      "original": "C:/Users/yuiffy/.codex/generated_images/01a16797-598f-7d61-afa8-cedcb53ece36/exec-f2aab1e9-cebd-496b-a617-9bc85ddc31b0.png",
+      "reference": "docs/art/sui-delivery/environment/cafe-source-v1.png (style only)",
+      "file": "docs/art/sui-delivery/environment/sorter-tower-source-v1.png",
+      "sourceSha256": "b853202a44d4f54b52c0ec849dbcea01e35e98705847cf0b1763311eff8000d9",
+      "size": [
+        1024,
+        1536
+      ],
+      "alphaBounds": [
+        0,
+        31,
+        996,
+        1504
+      ],
+      "placementAlphaThreshold": 200,
+      "placementBounds": [
+        251,
+        36,
+        721,
+        1497
+      ],
+      "runtime": "public/games/sui-spring/environment/sorter-tower-v1.webp",
+      "runtimeSha256": "3ca108e7ce49aac62e8a73b8548b0431e8d172471518bd69ee58ae2c09eec76d",
+      "runtimeBytes": 156492,
+      "placement": {
+        "worldOrigin": [
+          1785,
+          680
+        ],
+        "origin": [
+          0.5029296875,
+          0.974609375
+        ],
+        "scale": 0.25667351129363447,
+        "lightCentersSourceY": [
+          390,
+          535,
+          680
+        ],
+        "depth": 0.8
+      }
+    },
+    {
+      "group": "sorter-ladle",
+      "prompt": "Use case: stylized-concept\nAsset type: transparent 2D side scrolling platformer articulated robot end effector sprite.\nInput image: the provided cafe is a STYLE REFERENCE ONLY; match warm hand painted storybook materials and warm outlined silhouette, upper-left light.\nSubject: one isolated shallow mechanical serving ladle / oval paddle, pointing horizontally across the image, used as the moving end effector of a spring town food sorting machine. Wide shallow oval bowl viewed from side with a little visible interior, sage enamel outer surface, warm cream rim, copper rivets and a small circular metal pivot centered on the top edge. No long handle: game will supply the articulated arm. The bowl has a wide gentle convex underside. Symmetric left/right profile, not a long utensil. A small engraved bowl-shaped emblem at its center is acceptable but NO face.\nComposition: strict flat 2D side elevation; one oval object, width about 1.75 times height, generous transparent margin. Strong clean readable silhouette when displayed just 70 by 42 pixels. Keep contour simple and colors understated with painted material details. No food, no bowl contents, no arm, no support, no environmental decoration.\nBackground genuine alpha transparency. No text, no letters, no UI, no shadow on ground, no watermark.",
+      "original": "C:/Users/yuiffy/.codex/generated_images/01a16797-598f-7d61-afa8-cedcb53ece36/exec-304c422a-4d08-4ae3-a97a-598d4b0e24a8.png",
+      "reference": "docs/art/sui-delivery/environment/cafe-source-v1.png (style only)",
+      "file": "docs/art/sui-delivery/environment/sorter-ladle-source-v1.png",
+      "sourceSha256": "741b4f957901ec5fa095c119d4e2b0a4ba5468149fa3429627c1d8262e349181",
+      "size": [
+        1641,
+        958
+      ],
+      "alphaBounds": [
+        0,
+        32,
+        1622,
+        926
+      ],
+      "placementAlphaThreshold": 200,
+      "placementBounds": [
+        65,
+        232,
+        1574,
+        735
+      ],
+      "runtime": "public/games/sui-spring/environment/sorter-ladle-v1.webp",
+      "runtimeSha256": "2f267f85739e197d473406a36c83206e2dcb2b83a5201382ac882400b809b168",
+      "runtimeBytes": 123558,
+      "placement": {
+        "origin": [
+          0.49939061547836683,
+          0.5046972860125261
+        ],
+        "scale": [
+          0.04638833664678595,
+          0.08349900596421471
+        ],
+        "worldAnchor": "actual sweep collision center: x=1030+(1-timer/0.65)*510 during sweep, otherwise1050; y=680-min(2,stage)*120-22",
+        "depth": 3.5,
+        "hiddenWhen": "no serving machine or phase off"
+      }
+    }
+  ]
+}

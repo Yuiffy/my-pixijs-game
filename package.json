@@ -10,6 +10,9 @@
   "scripts": {
     "spring:test": "node --test scripts/tests/sui-spring.test.mjs",
     "spring:verify": "node scripts/verify-sui-spring.cjs",
+    "delivery:test": "node --test scripts/tests/sui-delivery.test.mjs scripts/tests/sui-delivery-feedback.test.mjs scripts/tests/sui-delivery-animation.test.mjs",
+    "delivery:verify": "node scripts/verify-sui-delivery.cjs",
+    "delivery:verify:campaign": "node scripts/verify-sui-delivery-campaign.cjs",
     "wayfinder:test": "node --test scripts/tests/wayfinder.test.mjs",
     "wayfinder:verify": "node scripts/verify-wayfinder.cjs",
     "reset:test": "node --test scripts/tests/reset-rush*.test.mjs",
