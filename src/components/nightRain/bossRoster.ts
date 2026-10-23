@@ -2,6 +2,7 @@ import type { EnemyKind } from './types';
 import { CHARACTER_APPEARANCES as A, type CharacterId } from './characterAppearance';
 
 export const BOSS_ROSTER: Partial<Record<EnemyKind, { name: string; legacy: string; previous?: string; hair: string; coat: string; trim: string; eye: string; character?: CharacterId; motif: string; first: string; second: string; tip: string }>> = {
+  bellkeeper: { name: '无声钟守 · 余响', legacy: '无声钟守 · 余响', hair: '#7d9a91', coat: '#456d68', trim: '#d3b46d', eye: '#ffe4a7', motif: 'bell', first: '止水听钟', second: '长夜三响', tip: '举槌停顿后才会落下，可弹反；低扫要跳过。金色震圈依次扩散，第二阶段三连响，跳过或退到圈外；抄经室止鸣绳能压住第三响。' },
   astronomer: { ...A.chu2u, character: 'chu2u', name: '羽啾 · 观星守望', legacy: '羽啾 · 观星守望', motif: 'star', first: '旧位观测', second: '三声归星', tip: '落星只记住旧位置；离开金圈。三枚星弹逐次发射，横移或弹反，第三发后近身反击。' },
   colossus: { ...A.rutice, character: 'rutice', name: '露缇 · 藏骨巨像', legacy: '露缇 · 藏骨巨像', motif: 'stone', first: '墓灯迟落', second: '刻名震地', tip: '露缇举槌后会长停顿；重砸收招很长，震地红环请跳跃或退开。' },
   sentinel: { name: '沐石 · 风息守望', legacy: '沐石 · 风息守望', hair: '#b9d4c7', coat: '#59877b', trim: '#bdcb9d', eye: '#d7edbe', motif: 'rock', first: '岩槌听雨', second: '风息回旋', tip: '沐石约为旅人的三倍高。退到槌尖外，等双手落地再靠近；回旋范围很大。' },

@@ -28,11 +28,11 @@ test('all river spawns, shrines, mechanisms and ferry landings stand on connecte
 
 test('actual completed v5 save migrates without changing the player, inventory or any old enemy', () => {
   const old = JSON.parse(fixture); const s = fresh();
-  assert.equal(s.worldVersion, 12); assert.deepEqual(s.player, old.player);
+  assert.equal(s.worldVersion, 13); assert.deepEqual(s.player, old.player);
   assert.deepEqual(s.enemies.slice(0, old.enemies.length), expectedLegacyEnemies(old.enemies));
   for (const key of ['rice', 'level', 'bankedRice', 'defeatedGuests', 'litLamps', 'collected', 'chapterGates', 'chapterComplete']) assert.deepEqual(s[key], old[key], key);
   assert.equal(s.enemies.length, world.ENEMY_SPAWNS.length);
-  assert.equal(s.enemies.length - old.enemies.length, valley.VALLEY_ENEMIES.length + haven.HAVEN_ENEMIES.length + world.AMBUSH_ENEMIES.length + 16);
+  assert.equal(s.enemies.length - old.enemies.length, valley.VALLEY_ENEMIES.length + haven.HAVEN_ENEMIES.length + world.AMBUSH_ENEMIES.length + 23);
   assert.deepEqual(s.valleyGates, []); assert.equal(s.valleyComplete, false);
   assert.ok(engine.loadGame(engine.saveGame(s)));
 });

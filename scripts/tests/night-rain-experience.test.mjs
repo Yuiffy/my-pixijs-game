@@ -98,6 +98,7 @@ test('every closed one-sided door advertises refusal on its wrong face and canno
     if (door.side === 'south') p.z -= door.d / 2 + 1;
     if (door.side === 'west') p.x += door.w / 2 + 1;
     if (door.side === 'east') p.x -= door.w / 2 + 1;
+    p.y = world.supportAt(p.x, p.z, p.y + 1) ?? p.y;
     assert.ok(world.canOccupy(p.x, p.z, p.y, s), l.id);
     place(s, p); step(s, 10); assert.equal(s.nearbyId, l.id, l.id);
     assert.match(s.prompt, /无法从这一侧打开/, l.id); engine.interact(s);
@@ -140,10 +141,10 @@ test('weapon forms actually alter reach, damage, posture, stamina and guard rath
 
 test('all bosses have unique identities and independently named attacks', () => {
   const s = fresh(); const characters = s.enemies.filter(e => BOSS_ROSTER[e.kind]);
-  assert.equal(characters.length, 12); assert.equal(new Set(characters.map(e => e.name)).size, 12);
+  assert.equal(characters.length, 13); assert.equal(new Set(characters.map(e => e.name)).size, 13);
   assert.ok(characters.every(e => e.name === BOSS_ROSTER[e.kind].name));
   const signatures = characters.flatMap(e => [0,1,2].map(attackIndex => engine.enemyAttack({...e,attackIndex,phase:2}).name));
-  assert.equal(new Set(signatures).size, 36);
+  assert.equal(new Set(signatures).size, 39);
   const gunner = characters.find(e => BOSS_ROSTER[e.kind].character === 'mizuki');
   assert.ok(engine.enemyAttack(gunner).projectile);
   assert.equal(engine.enemyAttack({...gunner,attackIndex:2}).skill,'drones');

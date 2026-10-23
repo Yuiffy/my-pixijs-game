@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>旅居之魂 · 测试存档</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; color: #eee8d6; background: #10272d; }
+    body { margin: 0; min-height: 100svh; background: radial-gradient(ellipse at 80% 0%, #314f50, transparent 65%); }
+    main { max-width: 760px; margin: auto; padding: 50px 24px; }
+    a { color: #e9c68a; text-underline-offset: 4px; }
+    .eyebrow { margin-top: 55px; color: #d8b67c; letter-spacing: .16em; }
+    h1 { font-family: Georgia, 'Songti SC', serif; font-size: clamp(30px, 6vw, 48px); font-weight: 500; margin: 15px 0; }
+    p { line-height: 1.8; color: #becbc5; }
+    article { border-top: 1px solid #81918a66; padding: 24px 0 30px; }
+    h2 { font-size: 21px; margin: 0 0 10px; font-weight: 500; }
+    .actions { display: flex; align-items: center; flex-wrap: wrap; gap: 20px; margin-top: 20px; }
+    button { font: inherit; color: #192f31; background: #e9c68a; border: 1px solid #e9c68a; padding: 12px 20px; cursor: pointer; border-radius: 3px; }
+    button:focus-visible, a:focus-visible { outline: 3px solid #fff4cd; outline-offset: 5px; }
+    button:disabled { opacity: .5; cursor: wait; }
+    #status { min-height: 2em; color: #f1d8a7; }
+    small { display: block; line-height: 1.8; color: #a5b6b0; }
+  </style>
+</head>
+<body>
+  <main>
+    <a href="/game/night-rain">← 返回游戏</a>
+    <p class="eyebrow">旅居之魂 · 试玩工具</p>
+    <h1>从想测试的旅途开始</h1>
+    <p>写入一个空的旅人档位，再到游戏里点击「继续雨夜旅程」。已有存档会保留；五个档位都满时不会写入。</p>
+    <article>
+      <h2>前两关已通 → 天镜原</h2>
+      <p>从第二关终点出发，向东推开旧渠入口，开始第三关。行装 +8、铁骨伞 +2，生命与药瓶全满。</p>
+      <div class="actions"><button data-save="after-two.json">载入第三关测试档</button><a href="after-two.json" download>下载 JSON</a></div>
+    </article>
+    <article>
+      <h2>前三关已通 → 沉钟修道院</h2>
+      <p>从天镜原归航台出发，向北推开垂星钟闸，开始第四关。保留第三关发现，第四关机关与敌人均未完成。</p>
+      <div class="actions"><button data-save="after-three.json">载入第四关测试档</button><a href="after-three.json" download>下载 JSON</a></div>
+    </article>
+    <p id="status" role="status" aria-live="polite"></p>
+    <small>这些是专门准备的测试档，并非你的通关记录。存档按浏览器和网址分别保存；请先将其他游戏标签页保存并返回标题，再载入测试档。</small>
+  </main>
+  <script>
+    const status = document.querySelector('#status');
+    const buttons = [...document.querySelectorAll('[data-save]')];
+    buttons.forEach(button => button.addEventListener('click', async () => {
+      buttons.forEach(item => { item.disabled = true; });
+      status.textContent = '正在准备存档……';
+      try {
+        const response = await fetch(button.dataset.save, { cache: 'no-store' });
+        if (!response.ok) throw new Error('下载失败，请稍后重试。');
+        const save = await response.text();
+        const parsed = JSON.parse(save);
+        if (parsed.version !== 1 || parsed.worldVersion !== 13 || !parsed.valleyComplete || parsed.bellComplete) throw new Error('测试存档不可用。');
+        const slot = [1, 2, 3, 4, 5].find(id => localStorage.getItem(`night-rain-v1-slot-${id}`) === null && !(id === 1 && localStorage.getItem('night-rain-v1')));
+        if (!slot) throw new Error('五个旅人档位已满，未写入。可以先下载 JSON 留作备用，或使用另一个浏览器测试。');
+        localStorage.setItem(`night-rain-v1-slot-${slot}`, save);
+        localStorage.setItem('night-rain-v1-active-slot', String(slot));
+        status.textContent = `已写入旅人 ${slot}，正在打开游戏……`;
+        window.location.assign('/game/night-rain');
+      } catch (error) {
+        status.textContent = error instanceof DOMException ? '浏览器无法保存存档，请允许此网站使用本地存储。' : error.message;
+        buttons.forEach(item => { item.disabled = false; });
+      }
+    }));
+  </script>
+</body>
+</html>

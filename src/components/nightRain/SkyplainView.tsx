@@ -11,15 +11,16 @@ export const skyBlend = (z: number) => THREE.MathUtils.smoothstep(-z, 525, 590);
 /** Atmosphere follows metres travelled, including walking backwards and lamp travel. */
 export function SkyAtmosphere({ stateRef }: { stateRef: MutableRefObject<GameState> }) {
   const { scene } = useThree();
-  const colors = useMemo(() => ({ rain: new THREE.Color('#334d5c'), dusk: new THREE.Color('#9d8d9e') }), []);
+  const colors = useMemo(() => ({ rain: new THREE.Color('#334d5c'), dusk: new THREE.Color('#9d8d9e'), morning: new THREE.Color('#819e9b') }), []);
   useFrame(() => {
     const { z } = stateRef.current.player; const t = skyBlend(z);
-    if (scene.background instanceof THREE.Color) scene.background.copy(colors.rain).lerp(colors.dusk, t);
+    const abbey = THREE.MathUtils.smoothstep(-z, 735, 790);
+    if (scene.background instanceof THREE.Color) scene.background.copy(colors.rain).lerp(colors.dusk, t).lerp(colors.morning, abbey);
     if (scene.fog instanceof THREE.Fog) {
-      scene.fog.color.copy(colors.rain).lerp(colors.dusk, t);
+      scene.fog.color.copy(colors.rain).lerp(colors.dusk, t).lerp(colors.morning, abbey);
       // Long-distance silhouettes become readable at the confluence, before arrival.
       const vista = THREE.MathUtils.smoothstep(-z, 420, 495);
-      scene.fog.near = 48 + 62 * vista; scene.fog.far = 165 + 315 * vista;
+      scene.fog.near = 48 + 62 * vista - 65 * abbey; scene.fog.far = 165 + 315 * vista - 220 * abbey;
     }
   });
   return null;
@@ -33,9 +34,12 @@ function Lamp({ at }: { at: [number, number, number] }) {
 }
 function SaltSky({ stateRef }: { stateRef: MutableRefObject<GameState> }) {
   const sky = useRef<THREE.Mesh>(null);
+  const dawn = useMemo(() => ({ nightTop: new THREE.Color('#676883'), nightLow: new THREE.Color('#d6b8ab'), top: new THREE.Color('#547b80'), low: new THREE.Color('#c9d7c0') }), []);
   const uniforms = useMemo(() => ({ opacity: { value: 0 }, zenith: { value: new THREE.Color('#676883') }, horizon: { value: new THREE.Color('#d6b8ab') } }), []);
   useFrame(({ camera }) => {
     uniforms.opacity.value = skyBlend(stateRef.current.player.z);
+    const t = THREE.MathUtils.smoothstep(-stateRef.current.player.z, 735, 790);
+    uniforms.zenith.value.copy(dawn.nightTop).lerp(dawn.top, t); uniforms.horizon.value.copy(dawn.nightLow).lerp(dawn.low, t);
     if (sky.current) { sky.current.position.copy(camera.position); sky.current.visible = uniforms.opacity.value > 0; }
   });
   return <mesh ref={sky} renderOrder={-100}><sphereGeometry args={[450, 24, 12]} /><shaderMaterial uniforms={uniforms} side={THREE.BackSide} depthWrite={false} transparent vertexShader="varying vec3 direction; void main(){direction=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}" fragmentShader="varying vec3 direction; uniform vec3 zenith; uniform vec3 horizon; uniform float opacity; void main(){float t=smoothstep(-0.12,0.65,direction.y);gl_FragColor=vec4(mix(horizon,zenith,t),opacity);}" /></mesh>;

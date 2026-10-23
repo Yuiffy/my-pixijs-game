@@ -82,13 +82,13 @@ test('first ignition only registers; subsequent rest is free, refills and resets
  assert.deepEqual(s.litLamps,['courtyard']);assert.equal(s.checkpoint,'courtyard');assert.match(s.prompt,/免费休息/);
  const restored=engine.loadGame(engine.saveGame(s));assert.ok(restored);assert.equal(restored.player.hp,37);assert.equal(restored.enemies[0].hp,0);
  engine.interact(s);assert.equal(s.player.hp,engine.maxHp(s));assert.equal(s.player.stamina,engine.maxStamina(s));assert.equal(s.player.flasks,3);assert.equal(s.restCount,1);assert.equal(s.rice,0);assert.ok(s.enemies[0].hp>0);
- assert.deepEqual(world.LANDMARKS.filter(l=>l.kind==='rest').map(l=>l.id),['courtyard','mill-lamp','lower-lamp','archive-lamp','royal-lamp','village-lamp','monastery-lamp','confluence-lamp','haven-lamp','crypt-lamp','cave-lamp','sky-lamp','sky-court-lamp','sky-home-lamp']);assert.deepEqual(Object.keys(world.REST_POINTS),['room','courtyard','mill-lamp','lower-lamp','archive-lamp','royal-lamp','village-lamp','monastery-lamp','confluence-lamp','haven-lamp','crypt-lamp','cave-lamp','sky-lamp','sky-court-lamp','sky-home-lamp']);
+ assert.deepEqual(world.LANDMARKS.filter(l=>l.kind==='rest').map(l=>l.id),['courtyard','mill-lamp','lower-lamp','archive-lamp','royal-lamp','village-lamp','monastery-lamp','confluence-lamp','haven-lamp','crypt-lamp','cave-lamp','sky-lamp','sky-court-lamp','sky-home-lamp','bell-porch-lamp','bell-court-lamp','bell-home-lamp']);assert.deepEqual(Object.keys(world.REST_POINTS),['room','courtyard','mill-lamp','lower-lamp','archive-lamp','royal-lamp','village-lamp','monastery-lamp','confluence-lamp','haven-lamp','crypt-lamp','cave-lamp','sky-lamp','sky-court-lamp','sky-home-lamp','bell-porch-lamp','bell-court-lamp','bell-home-lamp']);
 });
 
 test('v2 retired checkpoint migrates without moving, healing, restocking or reviving enemies',()=>{
  for(const oldLamp of ['temple-lamp','canal-lamp']){
   const s=fresh();Object.assign(s.player,{...world.interactionPoint(world.LANDMARKS.find(l=>l.id===oldLamp)),hp:31,flasks:1});s.enemies[0].hp=0;s.enemies[0].action='dead';
-  s.worldVersion=2;s.checkpoint=oldLamp;s.litLamps=[oldLamp];const loaded=engine.loadGame(engine.saveGame(s));assert.ok(loaded);assert.equal(loaded.worldVersion,12);assert.equal(loaded.checkpoint,'courtyard');assert.deepEqual(loaded.litLamps,['courtyard']);assert.deepEqual(loaded.player,s.player);assert.deepEqual(loaded.enemies,s.enemies);assert.equal(loaded.restCount,s.restCount);
+  s.worldVersion=2;s.checkpoint=oldLamp;s.litLamps=[oldLamp];const loaded=engine.loadGame(engine.saveGame(s));assert.ok(loaded);assert.equal(loaded.worldVersion, 13);assert.equal(loaded.checkpoint,'courtyard');assert.deepEqual(loaded.litLamps,['courtyard']);assert.deepEqual(loaded.player,s.player);assert.deepEqual(loaded.enemies,s.enemies);assert.equal(loaded.restCount,s.restCount);
   s.litLamps=[];assert.equal(engine.loadGame(engine.saveGame(s)),null);
  }
 });

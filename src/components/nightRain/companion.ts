@@ -1,3 +1,4 @@
+import { BELL_LANDMARKS, BELL_GATES, bellTarget } from './bellAbbey';
 import { SKY_LANDMARKS, SKY_GATES, skyTarget } from './skyplain';
 import type { GameState, Vec3, WorldAccess } from './types';
 import { canOccupy, playerBlocked, supportAt, interactionPoint, LANDMARKS } from './world';
@@ -39,11 +40,12 @@ const labels: Record<string, string> = {
   room: '旅馆',
   'drowned-warden': '镐筑潮庭 · 七海',
   'silent-abbot': '终场歌庭 · 阿梓',
+  'bell-keeper': '沉钟礼拜堂 · 无声钟守',
   'sky-astronomer': '环星观测院 · 羽啾',
   'river-serpent': '那伽沉殿 · 悠亚',
   'gate-captain': '双象门楼 · 栞栞',
   'rain-regent': '雨冠大殿 · 瑞娅',
-  ...Object.fromEntries([...SKY_LANDMARKS, ...CHAPTER_LANDMARKS, ...VALLEY_LANDMARKS, ...HAVEN_LANDMARKS, ...DUNGEON_LANDMARKS].map(l => [l.id, l.label.replace(/^(读|打开|收下|拾取|使用)/, '')])),
+  ...Object.fromEntries([...BELL_LANDMARKS, ...SKY_LANDMARKS, ...CHAPTER_LANDMARKS, ...VALLEY_LANDMARKS, ...HAVEN_LANDMARKS, ...DUNGEON_LANDMARKS].map(l => [l.id, l.label.replace(/^(读|打开|收下|拾取|使用)/, '')])),
   'crypt-colossus': '弃灯墓地 · 露缇',
 'cave-sentinel': '风息洞窟 · 沐石',
   'temple-lamp': '莲池旧灯',
@@ -76,6 +78,10 @@ boss: '花礼守着的夜市入口',
 export const targetLabel = (id: string | null) => (id ? labels[id] ?? id : '下一处发现');
 export function guideTargets(s: GameState) {
   return LANDMARKS.filter(l => {
+    if (BELL_LANDMARKS.some(h => h.id === l.id)) {
+      if (!s.skyComplete) return false;
+      if (BELL_GATES.some(g => g.id === l.id)) return !s.bellGates.includes(l.id);
+    }
     if (SKY_LANDMARKS.some(h => h.id === l.id)) {
       if (!s.valleyComplete) return false;
       if (SKY_GATES.some(g => g.id === l.id)) return !s.skyGates.includes(l.id);
@@ -115,6 +121,7 @@ export function mainTarget(s: GameState): string {
   const dungeon = undergroundId(s.player);
   if (dungeon) return dungeon === 'cave' ? !s.defeatedGuests.includes('cave-sentinel') ? 'cave-sentinel' : !s.collected.includes('stone-maul') ? 'stone-maul' : 'cave-exit' : !s.defeatedGuests.includes('crypt-colossus') ? 'crypt-colossus' : !s.collected.includes('grave-spear') ? 'grave-spear' : 'crypt-exit';
   const foyer = dungeonFoyer(s.player); if (foyer) return `${foyer}-entrance`;
+  if (s.skyComplete && s.player.z < -727 && !s.bellComplete) return bellTarget(s);
   if (s.valleyComplete && s.player.z < -490 && !s.skyComplete) return skyTarget(s);
   if (s.valleyComplete) return havenTarget(s);
   if (s.chapterComplete && !s.valleyComplete) {
@@ -229,6 +236,7 @@ function destinationFor(id: string): Vec3 | undefined {
   if (guardian) return { x: guardian.x, y: guardian.y, z: guardian.z - 3 };
   if (id === 'drowned-warden') return { x: -202, y: 2, z: -399 };
   if (id === 'silent-abbot') return { x: -92, y: 18, z: -414 };
+  if (id === 'bell-keeper') return { x: -44, y: 34, z: -848 };
   if (id === 'sky-astronomer') return { x: -40, y: 32, z: -668 };
   if (id === 'river-serpent') return { x: -150, y: 8, z: -506 };
   if (id === 'gate-captain') return { x: -53, y: 12, z: -127 };
@@ -263,7 +271,7 @@ export function updateCompanion(c: Companion, s: GameState, dt: number) {
     const seen = c.seen[l.id] ?? { nearest: Infinity, stage: 0 };
     seen.nearest = Math.min(seen.nearest, distance(p, l)); c.seen[l.id] = seen;
   }
-  if (c.targetId && (s.collected.includes(c.targetId) || s.defeatedGuests.includes(c.targetId) || s.valleyGates.includes(c.targetId) || s.skyGates.includes(c.targetId))) { c.targetId = null; c.path = []; c.status = 'following'; speak(c, s, '拿到了！每一段绕路，都藏着一点小惊喜。'); }
+  if (c.targetId && (s.collected.includes(c.targetId) || s.defeatedGuests.includes(c.targetId) || s.valleyGates.includes(c.targetId) || s.skyGates.includes(c.targetId) || s.bellGates.includes(c.targetId))) { c.targetId = null; c.path = []; c.status = 'following'; speak(c, s, '拿到了！每一段绕路，都藏着一点小惊喜。'); }
   if (c.targetId && c.status !== 'arrived') {
     if (danger) {
       if (c.status !== 'danger') speak(c, s, '先别急着跟我！前面有人，Q 锁定，等起手后再弹反或闪开。');
@@ -288,7 +296,7 @@ export function updateCompanion(c: Companion, s: GameState, dt: number) {
         } else if (!walkSegment(p, c.position, s, 0.6) && s.time - c.routeAt > 2) leadTo(c, s, c.targetId);
         else c.status = 'waiting';
       } else {
-        c.status = 'arrived'; speak(c, s, c.targetId === 'tide-note' ? '这就是潮汐港的潮桥！沿桥向东走进灯市，暖灯长阶通往米汀。' : ['boss', 'gate-captain', 'rain-regent', 'drowned-warden', 'silent-abbot', 'river-serpent', 'crypt-colossus', 'cave-sentinel', 'sky-astronomer'].includes(c.targetId) ? '前面就是守路人。留一点体力，我陪你慢慢试。' : `到了，${targetLabel(c.targetId)}就在这里。靠近后按 E 试试。`, 9);
+        c.status = 'arrived'; speak(c, s, c.targetId === 'tide-note' ? '这就是潮汐港的潮桥！沿桥向东走进灯市，暖灯长阶通往米汀。' : ['boss', 'gate-captain', 'rain-regent', 'drowned-warden', 'silent-abbot', 'river-serpent', 'crypt-colossus', 'cave-sentinel', 'sky-astronomer', 'bell-keeper'].includes(c.targetId) ? '前面就是守路人。留一点体力，我陪你慢慢试。' : `到了，${targetLabel(c.targetId)}就在这里。靠近后按 E 试试。`, 9);
       }
     }
   } else if (!c.targetId) {

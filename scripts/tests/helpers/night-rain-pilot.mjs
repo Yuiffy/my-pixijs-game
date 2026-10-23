@@ -38,6 +38,12 @@ export function chooseInput(s, destination, { parryOnly = false } = {}) {
   if (!s.lockedId) input.lock = true;
   const attack = enemyAttack(enemy); const sweep = !attack.parryable;
   if (p.action !== 'idle') return input;
+  const resonance = s.bossFields?.find(f => f.kind === 'resonance' && !f.hit && Math.abs(f.y - p.y) < 1 && gap(f, p) <= f.radius + .3 && f.delay + (gap(f, p) / f.radius) * f.duration - f.age > -.1 && f.delay + (gap(f, p) / f.radius) * f.duration - f.age < .7);
+  if (resonance) {
+    const arrival = resonance.delay + (gap(resonance, p) / resonance.radius) * resonance.duration - resonance.age;
+    if (arrival < .28 && p.jumpHeight === 0) input.jump = true;
+    return input;
+  }
   const hazard = s.bossFields?.find(f => {
     if(Math.abs(f.y-p.y)>=1) return false;
     if(['pine','freeze','leap','starfall'].includes(f.kind)) return gap(f,p)<f.radius+0.5;

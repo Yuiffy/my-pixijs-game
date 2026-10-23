@@ -27,6 +27,7 @@ import { ActionControls } from './controls';
 import { NightAudio } from './audio';
 import { inputHint, hintText, type HintAction } from './inputHints';
 import Interlude from './Interlude';
+import Cinematic, { TitleFilm } from './Cinematic';
 import { lootTier } from './loot';
 import { PLAYER_SKINS } from './CharacterStyle';
 import { nearbyDiscoveries } from './landmarkPresentation';
@@ -63,10 +64,13 @@ export default function NightRain() {
   const [recordedAt, setRecordedAt] = useState(-100);
   const [view, setView] = useState(0); const [panel, setPanelState] = useState<Panel>(null);
   const [ready, setReady] = useState(false); const [sceneError, setSceneError] = useState(false);
+  const sceneLoaded = useRef(false);
   const [sceneVersion, setSceneVersion] = useState(0); const [canResume, setCanResume] = useState(false);
   const [storageError, setStorageError] = useState(false);
   const [notice, setNotice] = useState<{ id: number; kind: 'lamp' | 'death' | 'area'; label: string } | null>(null);
   const noticeSerial = useRef(0); const noticeRef = useRef(notice); noticeRef.current = notice;
+  const [cinema, setCinema] = useState<'title' | 'opening' | null>(null);
+  const cinemaRef = useRef(cinema); cinemaRef.current = cinema;
   const [restartConfirm, setRestartConfirm] = useState(false);
   const confirmRef = useRef(false); confirmRef.current = restartConfirm;
   const redraw = useCallback(() => setView(v => v + 1), []);
@@ -98,7 +102,7 @@ export default function NightRain() {
   const queue = useCallback((action: Partial<GameInput>) => { if (!panelRef.current) pending.current = { ...pending.current, ...action }; }, []);
   const tick = useCallback((ms: number) => {
     const s = stateRef.current; const cc = companionRef.current;
-    if (s.mode !== 'playing' || s.paused) return;
+    if (!sceneLoaded.current || cinemaRef.current || s.mode !== 'playing' || s.paused) return;
     const held = keys.current;
     const pad = controls.current?.movement;
     const horizontal = Number(held.has('d') || held.has('arrowright')) - Number(held.has('a') || held.has('arrowleft')) + (pad?.x ?? 0);
@@ -115,7 +119,7 @@ sprint: pad?.sprint,
       aim: Math.atan2(-Math.sin(yaw), -Math.cos(yaw)),
     };
     if (action.interact && canForge(s)) { showPanel('lamp'); return; }
-    const previousLamps = s.litLamps.length; const previousRest = s.restCount; const previousCollected = s.collected.length; const previousDoors = Number(s.shortcut) + Number(s.templeGate) + Number(s.harborGate) + s.chapterGates.length + s.valleyGates.length + s.haven.gates.length + s.skyGates.length;
+    const previousLamps = s.litLamps.length; const previousRest = s.restCount; const previousCollected = s.collected.length; const previousDoors = Number(s.shortcut) + Number(s.templeGate) + Number(s.harborGate) + s.chapterGates.length + s.valleyGates.length + s.haven.gates.length + s.skyGates.length + s.bellGates.length;
     const previousPosition = { x: s.player.x, z: s.player.z };
     const previousFoyer = dungeonFoyer(s.player); const previousLift = s.liftRide; const
 previousDiscoveries = s.discoveredDungeons.length;
@@ -138,7 +142,7 @@ previousDiscoveries = s.discoveredDungeons.length;
       resetCamera(); save();
     }
     updateCompanion(cc, s, s.time - before);
-    if ((s.haven.echoes !== previousEchoes || s.litLamps.length !== previousLamps || s.restCount !== previousRest || s.collected.length !== previousCollected || previousDoors !== Number(s.shortcut) + Number(s.templeGate) + Number(s.harborGate) + s.chapterGates.length + s.valleyGates.length + s.haven.gates.length + s.skyGates.length) && save() && (s.restCount !== previousRest || s.litLamps.length !== previousLamps)) setRecordedAt(s.time);
+    if ((s.haven.echoes !== previousEchoes || s.litLamps.length !== previousLamps || s.restCount !== previousRest || s.collected.length !== previousCollected || previousDoors !== Number(s.shortcut) + Number(s.templeGate) + Number(s.harborGate) + s.chapterGates.length + s.valleyGates.length + s.haven.gates.length + s.skyGates.length + s.bellGates.length) && save() && (s.restCount !== previousRest || s.litLamps.length !== previousLamps)) setRecordedAt(s.time);
     if (cc.enabled && s.messageSerial !== previousMessage && (s.interpretation || s.messageKind === 'hint')) speak(cc, s, s.interpretation || s.message, 8);
     pending.current = { x: 0, z: 0 };
     // Public input is one action per advance, never a mutation hook.
@@ -166,7 +170,7 @@ previousDiscoveries = s.discoveredDungeons.length;
     const sound = new NightAudio(root.current); audio.current = sound;
     const target = window as GameWindow;
     target.nightRain = { getState: () => JSON.parse(JSON.stringify(stateRef.current)), input: action => { external.current = { ...action }; }, resetCamera, save };
-    target.render_game_to_text = () => JSON.stringify({ ...stateRef.current, discoveries: nearbyDiscoveries(stateRef.current, LANDMARKS), ferries: Object.keys(FERRY_ROUTES).map(id => ({ id, ...ferryStatus(stateRef.current, id) })), playerMotion: playerMotionPhase(stateRef.current), enemyTells: stateRef.current.enemies.filter(e => e.aggro && ['windup', 'attack', 'recover'].includes(e.action)).map(e => ({ id: e.id, ...enemyTell(e) })), presentation: noticeRef.current ? { kind: noticeRef.current.kind, label: noticeRef.current.label } : null, journey: { chapter: stateRef.current.valleyComplete ? 3 : stateRef.current.chapterComplete ? 2 : 1, skyPrisms: skyPrisms(stateRef.current), skyComplete: stateRef.current.skyComplete, sluices: riverSeals(stateRef.current), ferry: stateRef.current.collected.includes('ferry-winch'), complete: stateRef.current.valleyComplete }, coordinateSystem: '+x east, +z south, +y up; metres', camera: camera.current, companion: companionRef.current, panel: panelRef.current, saveSlot: slot.current, audio: sound.snapshot(), pickups: LANDMARKS.filter(l => ['cache', 'charm', 'flask'].includes(l.kind) && !stateRef.current.collected.includes(l.id)).map(l => ({ id: l.id, tier: lootTier(l) })), encounters: stateRef.current.enemies.filter(e => e.hp > 0).map(e => ({ id: e.id, role: enemyRole(e), label: ROLE_NAMES[enemyRole(e)] })), controls: { source: devices.source, family: devices.family, pointerLocked: devices.locked, altHeld: devices.altHeld, gamepadConnected: devices.gamepadConnected, look: devices.lookSettings } });
+    target.render_game_to_text = () => JSON.stringify({ ...stateRef.current, discoveries: nearbyDiscoveries(stateRef.current, LANDMARKS), ferries: Object.keys(FERRY_ROUTES).map(id => ({ id, ...ferryStatus(stateRef.current, id) })), playerMotion: playerMotionPhase(stateRef.current), enemyTells: stateRef.current.enemies.filter(e => e.aggro && ['windup', 'attack', 'recover'].includes(e.action)).map(e => ({ id: e.id, ...enemyTell(e) })), presentation: noticeRef.current ? { kind: noticeRef.current.kind, label: noticeRef.current.label } : null, journey: { chapter: stateRef.current.skyComplete ? 4 : stateRef.current.valleyComplete ? 3 : stateRef.current.chapterComplete ? 2 : 1, skyPrisms: skyPrisms(stateRef.current), skyComplete: stateRef.current.skyComplete, bellComplete: stateRef.current.bellComplete, sluices: riverSeals(stateRef.current), ferry: stateRef.current.collected.includes('ferry-winch'), complete: stateRef.current.valleyComplete }, coordinateSystem: '+x east, +z south, +y up; metres', camera: camera.current, companion: companionRef.current, panel: panelRef.current, saveSlot: slot.current, audio: sound.snapshot(), pickups: LANDMARKS.filter(l => ['cache', 'charm', 'flask'].includes(l.kind) && !stateRef.current.collected.includes(l.id)).map(l => ({ id: l.id, tier: lootTier(l) })), encounters: stateRef.current.enemies.filter(e => e.hp > 0).map(e => ({ id: e.id, role: enemyRole(e), label: ROLE_NAMES[enemyRole(e)] })), controls: { source: devices.source, family: devices.family, pointerLocked: devices.locked, altHeld: devices.altHeld, gamepadConnected: devices.gamepadConnected, look: devices.lookSettings } });
     target.advanceTime = ms => {
       if (!Number.isFinite(ms) || ms < 0) return;
       manualUntil.current = performance.now() + 1200;
@@ -183,6 +187,7 @@ previousDiscoveries = s.discoveredDungeons.length;
         if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) { event.preventDefault(); last?.focus(); } else if (!event.shiftKey && (document.activeElement === last || !dialog.contains(document.activeElement))) { event.preventDefault(); first?.focus(); }
         return;
       }
+      if (cinemaRef.current) return;
       if (confirmRef.current) { if (key === 'escape') { event.preventDefault(); setRestartConfirm(false); } return; }
       // Some browsers deliver Escape; others only emit pointerlockchange.
       if (key === 'escape' && document.pointerLockElement === root.current) { event.preventDefault(); if (!event.repeat) showPanel('pause'); return; }
@@ -202,12 +207,13 @@ previousDiscoveries = s.discoveredDungeons.length;
       if (key === 'shift' && keys.current.has(key) && !stateRef.current.player.dashDown && performance.now() - shiftSince.current < 200 && !Object.values(pending.current).some(Boolean)) queue({ dodge: true });
       keys.current.delete(key);
     };
-    const blur = () => { if (stateRef.current.mode === 'playing') showPanel('pause'); clearInput(); save(); };
+    const blur = () => { if (!cinemaRef.current && stateRef.current.mode === 'playing') showPanel('pause'); clearInput(); save(); };
     const visibility = () => { if (document.hidden) blur(); };
     window.addEventListener('keydown', keydown); window.addEventListener('keyup', keyup); window.addEventListener('blur', blur);
     document.addEventListener('visibilitychange', visibility);
     let frame = 0; let last = performance.now(); let lastUi = 0; let lastSave = 0;
     const loop = (now: number) => {
+      sound.setCinematic(!!cinemaRef.current || stateRef.current.mode === 'title');
       devices.poll(Math.min(100, now - last), now); sound.observe(stateRef.current);
       if (now > manualUntil.current) tick(Math.min(100, now - last)); last = now;
       if (now - lastUi > 80) { redraw(); lastUi = now; }
@@ -238,7 +244,9 @@ previousDiscoveries = s.discoveredDungeons.length;
     lastVoice.current = cc.serial;
     audio.current?.say(cc.subtitle, cc.skin);
   }, [view]);
-  const begin = (resume = false) => {
+  const begin = (resume = false, afterFilm = false) => {
+    if (!resume && !afterFilm) { sceneLoaded.current = false; setReady(false); clearInput(); cancelVoice(); controls.current?.release(); confirmRef.current = false; setRestartConfirm(false); setCinema('opening'); return; }
+    setCinema(null); audio.current?.setCinematic(false);
     const old = companionRef.current; const chosenSkin = stateRef.current.playerSkin;
     stateRef.current = resume && saved.current ? saved.current : createGame();
     stateRef.current.playerSkin = chosenSkin;
@@ -259,6 +267,7 @@ previousDiscoveries = s.discoveredDungeons.length;
     try { localStorage.setItem(`${STORAGE}-active-slot`, String(id)); saved.current = loadGame(localStorage.getItem(slotKey(id))); setCanResume(!!saved.current && saved.current.mode !== 'title'); if (saved.current) stateRef.current.playerSkin = saved.current.playerSkin; } catch { setStorageError(true); }
   };
   const title = () => {
+    sceneLoaded.current = false; setReady(false);
  save(); clearInput(); cancelVoice(); controls.current?.release(); stateRef.current = createGame(); showPanel(null);
     try { setSlotInfo(Array.from({ length: SLOT_COUNT }, (_, i) => { const data = loadGame(localStorage.getItem(slotKey(i + 1))); return data ? `${targetLabel(data.checkpoint)} · 行装 +${data.level} · ${data.collected.length} 处发现` : '尚未出门'; })); } catch { setStorageError(true); }
     selectSlot(slot.current); redraw();
@@ -279,8 +288,8 @@ previousDiscoveries = s.discoveredDungeons.length;
 )}
     </div>
   );
-  const error = useCallback(() => { setSceneError(true); showPanel('pause'); }, [showPanel]);
-  const sceneReady = useCallback(() => setReady(true), []);
+  const error = useCallback(() => { sceneLoaded.current = false; setSceneError(true); showPanel('pause'); }, [showPanel]);
+  const sceneReady = useCallback(() => { sceneLoaded.current = true; setReady(true); }, []);
   const boss = g.enemies.find(e => isBoss(e) && e.aggro && e.hp > 0);
   const locked = g.enemies.find(e => e.id === g.lockedId);
   const source = controls.current?.source ?? 'mouse'; const usingPad = source === 'gamepad';
@@ -312,22 +321,26 @@ role="presentation"
         onPointerUp={() => { drag.current = null; }}
 onPointerCancel={() => { drag.current = null; }}
         onWheel={e => { if (!panel) camera.current.distance = Math.max(3, Math.min(9, camera.current.distance + e.deltaY * 0.006)); }}>
-        <SceneBoundary key={sceneVersion} onError={error}><WorldView stateRef={stateRef} companionRef={companionRef} cameraControl={camera} onReady={sceneReady} onError={error} /></SceneBoundary>
+        {g.mode !== 'title' && !cinema && <SceneBoundary key={sceneVersion} onError={error}><WorldView stateRef={stateRef} companionRef={companionRef} cameraControl={camera} onReady={sceneReady} onError={error} /></SceneBoundary>}
       </div>
-      {!ready && !sceneError && <div className={styles.loading}>雨正在落下，旧城即将亮灯……</div>}
-      {g.mode === 'title' && (
-<section className={styles.title} data-menu-id="title" data-game-menu aria-label="雨夜寻味开始画面">
+      {g.mode !== 'title' && !cinema && !ready && !sceneError && <div className={styles.loading} role="status">雨正在落下，旧城即将亮灯……</div>}
+      {g.mode === 'title' && !cinema && <TitleFilm />}
+      {g.mode === 'title' && !cinema && (
+<section className={styles.title} data-menu-id="title" data-game-menu aria-label="旅居之魂开始画面">
         <div className={styles.titleNav}><Link href="/demos" className={styles.back}>← 返回游戏实验室</Link><GameShareButton gamePath="/game/night-rain" /></div>
-        <p className={styles.eyebrow}>岁己的旅居手记 · 长夜归灯 / 雾河回响</p>
-        <h1>雨夜<br /><em>寻味</em></h1>
-        <p className={styles.intro}>下播之后，穿过旧城寻找夜宵。<br />走过旧城与王寺，再循钟声进入雾河。</p>
+        <p className={styles.eyebrow}>岁己的旅居手记 · 长夜归灯</p>
+        <h1>旅居<br /><em>之魂</em></h1>
+        <p className={styles.intro}>下播之后，穿过旧城寻找夜宵。<br />从雨夜旧城，走到沉钟修道院。</p>
+        <button className={styles.filmReplay} onClick={() => { cancelVoice(); setCinema('title'); }}>重播入场 · 启声</button>
         {settings}
+        {soundSettings}
         <details className={styles.saveSlots}><summary>选择旅人 · 第 {slotView} 档 / {SLOT_COUNT} 档</summary>{Array.from({ length: SLOT_COUNT }, (_, i) => <button key={i} aria-pressed={slotView === i + 1} onClick={() => selectSlot(i + 1)}>旅人 {i + 1}<small>{slotInfo[i] ?? '尚未出门'}</small></button>)}</details>
-        {canResume && <button data-game-primary className={styles.primary} disabled={!ready} onClick={() => begin(true)}>继续雨夜旅程 →</button>}
-        <button data-game-primary={!canResume || undefined} className={canResume ? styles.secondary : styles.primary} disabled={!ready} onClick={() => { if (canResume) setRestartConfirm(true); else begin(); }}>出门找夜宵</button>
+        {canResume && <button data-game-primary className={styles.primary} onClick={() => begin(true)}>继续雨夜旅程 →</button>}
+        <button data-game-primary={!canResume || undefined} className={canResume ? styles.secondary : styles.primary} onClick={() => { if (canResume) setRestartConfirm(true); else begin(); }}>出门找夜宵</button>
         <p className={styles.fine}>点击开始捕获鼠标 · 按住 Alt 显示光标<br />支持标准手柄 · 按任意键连接，{hint('confirm')} 开始</p>
       </section>
 )}
+      {cinema && <Cinematic kind={cinema} settings={audio.current?.settings ?? { music: 0.32, effects: 0.65, narration: 0.85, muted: false }} done={() => { if (cinema === 'opening') begin(false, true); else setCinema(null); }} />}
       {g.mode !== 'title' && (
 <>
         <div className={styles.hud}>
@@ -337,7 +350,7 @@ onPointerCancel={() => { drag.current = null; }}
           <small>◈ {g.rice} 夜市钱 <span>归灯 · {g.checkpoint === "room" ? "旅馆" : targetLabel(g.checkpoint)}</span></small>
         </div>
         <nav className={styles.tools} aria-label="旅程工具"><GameShareButton gamePath="/game/night-rain" /><button onClick={() => showPanel(panel ? null : 'map')}>地图 {hint('map')}</button><button onClick={() => showPanel(panel ? null : 'companion')}>{c.enabled ? companionName(c.skin) : '宝宝模式'} {hint('companion')}</button><button aria-label="暂停" onClick={() => showPanel('pause')}>Ⅱ</button></nav>
-        <div className={styles.region} key={g.region}><small>{g.player.z < -530 ? '第三关 · 天镜原' : g.player.z < -278 ? '第二关 · 雾河回响' : g.player.z > 27 ? '归灯庭' : '雨夜旧城'}</small><h2>{g.region}</h2></div>
+        <div className={styles.region} key={g.region}><small>{g.player.z < -730 ? '第四关 · 沉钟修道院' : g.player.z < -530 ? '第三关 · 天镜原' : g.player.z < -278 ? '第二关 · 雾河回响' : g.player.z > 27 ? '归灯庭' : '雨夜旧城'}</small><h2>{g.region}</h2></div>
         {!panel && g.mode === 'playing' && (
 <>
           <button className={styles.flask} onClick={() => queue({ heal: true })} disabled={g.player.flasks === 0 || g.player.hp >= maxHp(g) || g.player.action !== 'idle'} aria-label={`喝药回血 ${g.player.flasks} / ${maxFlasks(g)}`} title={`恢复 ${healAmount(g)} 生命；雨灯休息补满`}>

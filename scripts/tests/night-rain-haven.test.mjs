@@ -39,10 +39,10 @@ const route = (s, targets) => {
 
 test('authentic v6 save migrates with all previous progress and new living enemies without replacing historic encounters', () => {
   const before = JSON.parse(fixture); const s = fresh();
-  assert.equal(s.worldVersion, 12); assert.deepEqual(s.player, before.player);
+  assert.equal(s.worldVersion, 13); assert.deepEqual(s.player, before.player);
   assert.deepEqual(s.enemies.slice(0, before.enemies.length), expectedLegacyEnemies(before.enemies));
   for (const key of ['rice', 'bankedRice', 'level', 'litLamps', 'checkpoint', 'collected', 'chapterGates', 'valleyGates', 'valleyComplete', 'defeatedGuests', 'deaths']) assert.deepEqual(s[key], before[key], key);
-  assert.equal(s.enemies.length - before.enemies.length, 24);
+  assert.equal(s.enemies.length - before.enemies.length, 31);
   assert.ok(s.enemies.slice(-6).every(e => e.hp === e.maxHp && !e.aggro));
   assert.deepEqual(s.haven, haven.freshHaven());
 });

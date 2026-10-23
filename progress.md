@@ -12,6 +12,214 @@ Original prompt: 那继续想办法提升一下；用户追加：搞定了就启
 
 最终指南docs/experiments/autochess-ai-20261023.md；基础训练复现ZIP保持原字节，新增autochess-ai-20261024-final.zip及逐项SHA索引，补齐看穿完整协议／结果、最终源码与工程证据。提交范围仅本次AI源码、训练／测试脚本、实验记录及本节；其他游戏修改保留。提交与推送结果以Git历史和origin/master为准。
 
+## 2026-10-23 · 看穿排序独立拒绝；已采用模型原训练器与ZIP复现通过
+
+Original prompt: 那继续想办法提升一下。
+
+收尾checkpoint：oracle observed两组当前32／21局，原67416本轮poll确认活；只做指纹／配置／Chrome运行时／errors／连续轨迹审计，oracle-observed-current-integrity.json。reference与ranked已完整并exit0，不再重启。
+
+离线备用补充：事先写oracle-specific-embeddings-training-protocol.json后，固定只用oracle90244–90251 train的505个含新棋子标签（423梯度／82内部验证），从accepted模型只训练3行、±.75坐标限制、lr.01／reg.03／max600／patience150／seed20261023。最优internal epoch=0，BCE .5439084768没有改善，最终全部运行数组／词表／特征／normalization与accepted模型逐值相同，直接离线拒绝，不开外部留出、不启动Chrome开发、不改主代码。oracle-specific-embeddings-offline-result.json保留结果。
+
+本节优先。看穿shared reference98000／98100各32完整，原session26295 exit0；ranked原session24796 exit0。完整配置、指纹、种子、逐轮胜场／终局完整性核对后，compare得到组均值-0.5／+1.34375，合并+0.421875胜、通关-2、早退持平、bootstrap正差66.62%、描述区间[-1.5,2.265625]，五项中三项失败，passed=false，拒绝，不接main、不扩样。完整acceptance-deep-ranked-values-oracle.json/.log。observed三棋子候选原67416仍活且进入第二组，继续不据partial判断；两份冻结协议、共享98对照均保留。main运行源码未变，仍已完成强度＋工程的新手／老手／长考，看穿原模型。
+
+已补强可复现交付：原始low trainer、missing embedding trainer、observed transform和冻结数据／reference在隔离reproduction-check重跑，全运行权重、旧权重、特征、词表、normalization和训练指标均精确相等；accepted-artifact-reproduction.json。不修改原脚本字节，其learner/transform SHA和生产JSON记录一致；重训绝对路径元数据及衍生hash差异明确保留，不冒称适配JSON整字节相同。
+
+新增docs/experiments/autochess-ai-20261023-reproduction.zip，377原始文件／3,413,139字节，SHA bc7f7a16e4a0afdd08b630c34e182c550e4b0bd0501f53c14e898403997e5853，包含已验收三档的原始脚本、冻结数据、source快照、全部已完成配对验收与失败首64新手，不包含未完成oracle。ZIP每项读回SHA核对全部通过。新增scripts/reproduce-autochess-ai.py：先核验ZIP／所有条目，只在明确新目录中复制必要输入并运行原脚本，校验每个运行数组与训练指标，拒绝覆盖现存工作。py_compile与真实ZIP重播34062均exit0；低档JSON整字节精确相同，适配runtime数值与训练指标精确相同，报告archive-reproduction-check/reproduction-report.json。无需因Python复现工具重复未改运行源码的Next构建。
+
+新增人工可读docs/experiments/autochess-ai-20261023.md，解释三档指标／预算／范围／失败保留／复现命令与oracle后续。研究JSON及ZIP索引已记录完整证据。无子代理／commit/push/deploy，四档目标仍active。下一步原67416收齐第二组，用已完成64对照按五门槛比较；通过才扩展oracle并重验最终构建，失败则保留三档并研究另一个有独立验收机会的方案，不按98调参。
+
+## 2026-10-23 · 长考新构建工程验收完成；看穿原独立评测继续
+
+Original prompt: 那继续想办法提升一下。
+
+最新完整性审计：oracle reference49/64、ranked55/64、observed19/64，只核对配置／原定fingerprint／Chrome60Hz runtime／无errors／种子顺序／逐轮胜场与终局一致，不看partial强度、不提前晋级；oracle-current-integrity-audit.json。main与隔离41文件import graph均06439b7c…，reference39文件及两个冻结候选41文件也均与原协议指纹一致，current-source-graph-integrity.json。三个原会话26295／24796／67416均已本轮poll确认活。
+
+本节优先。main 的 accepted 新手／老手值与现代长考三棋子模型已完成新构建工程验收：保留 Next ESLint 的隔离顺序 check→build、514/514规则、4模型回归与源／测试定向ESLint通过；此前实际Chrome seed90005完整32战30胜逐轮等价。生产.next-ai-deep-observed、4147新服务23760，默认平衡／老手、手机、档位持久化、开战／结算，以及真实打包Worker长考90005／老手90001／新手90001全部完成16战结算。10张成功PNG已sanity＋文本／DOM／canvas／errors交叉核对并全部逐张打开；原长考首轮被Google ad quality XHR的ERR_CONNECTION_CLOSED判失败，原日志与2图保留且已目检，未改生产或屏蔽报错的重跑通过。新手这局结算败，老手／长考胜，烟测不要求必胜。
+
+完整工程索引tmp/ai-20261023/deep-observed-engineering.json，成功报告／截图在deep-observed-browser/{settings,deep,veteran,novice}，首轮外部网络失败留deep-external-network-failure与deep-observed-browser-deep.log。main和隔离TS、两JSON、最终测试逐字节相同；对冻结accepted候选再次比对只差deep/oracle条件限制成deep，模型字节相同。工程检查不新增强度结论；四档目标仍未完，看穿仍原模型待98000／98100两组完整验收。
+
+离线joint静态备用模型已用固定权重一次评估external holdout，不调参：mixed-low／deep／oracle配对排序准确率60.904→61.128%、57.046→57.408%、56.730→56.917%，但最高启发式候选的平均真实标签在mixed-low／oracle下降、deep持平。仅标签级诊断，不能声称整局变强，暂不建立runtime候选；报告joint-static-external-holdout.json。研究汇总已纠正旧“未接高档”状态及过时会话。继续原oracle句柄26295／24796／67416收齐独立结果，不重启活进程、不据partial决定，无子代理／commit/push/deploy。
+
+## 2026-10-23 · 长考三棋子模型独立通过并接入；新生产浏览器验收中
+
+Original prompt: 那继续想办法提升一下。
+
+本节优先于下方同日旧状态。四档目标仍 active、未完成，无子代理、commit/push/deploy。main 现为 accepted 新手／老手 fast-values 加现代长考专用三棋子适配模型；此前“只有低档、没有高档运行源码变更”的记录已过时。默认平衡＋老手、操作间隔、候选／推理／战斗模拟／未来信息预算均保留。看穿尚未接入。
+
+chrome-observed-unit-embeddings 独立97000／97100各32局完整通过五门槛：组均值 +0.96875／+1.65625，合并 +1.3125 胜、通关 +1、早退持平，bootstrap 正差97.7%，描述区间[0.03125,2.640625]；不声称多候选研究后的全局95%显著。reference57770、candidate53894均exit0。完整结果 acceptance-observed-embeddings-deep.json。deep-ranked静态候选独立96000／96100已完整拒绝：均值-1.625、通关-5；acceptance-deep-ranked-values-deep.json，不扩样、不据验收组调参。
+
+main 的 goCombatModelMissingUnits.json 与冻结通过模型逐字节一致，仅 chu2u／sumire／viridis 有样本行；隐藏 akirinco 精确保留旧unknown回退。AutoChessAutopilot只对现代deep且默认scorer启用，一次推理换一次；oracle／低档／旧配置／注入scorer保留原路由。主import graph指纹06439b7ca8061163095319ceca67869615a0653c256d8dd3aac868c9698146db；实际Chrome seed90005完整32战30胜逐轮字段精确等于冻结候选。定向源ESLint、4项模型回归及其完整规则ESLint、514/514规则、隔离顺序check→build均通过，Next ESLint保持启用。测试脚本使用独立tsconfig，不关闭规则；原失败日志保留。隔离构建.next-ai-deep-observed。
+
+旧4147服务65050已结束，新生产服务23760启动且URL200。新build设置流通过，默认平衡／老手、手机、保存新手重载、恢复老手、真实开战与结算正常，4张PNG sanity／DOM／文本／canvas／errors全部交叉核对并逐张打开目检；归档tmp/ai-20261023/deep-observed-browser/settings。长考打包Worker seed90005正在session2368验证，随后验低档，不能拿旧fast-values截图支持新bundle。最终格式测试文件已同步隔离检出。
+
+看穿开发两候选完整32已结束：deep-ranked +0.375胜／通关+4；observed embeddings +1.65625／通关+3。两协议均在98000／98100任何对局前冻结；observed完整开发满足预定conditional launch才开跑。现共用同配对reference98000／98100各32局：reference26295、ranked24796、observed67416均已原句柄确认活，不重启、不按partial判断。此共享98协议替代之前未使用99预留；99仍未跑，可留fallback。协议与所有结论在docs/experiments/autochess-high-level-research-20261023.json。
+
+oracle新训练reference90244–90255共12局、256上下文／3093标签、实际60Hz重放全部匹配；90244–90251 train171／2071，90252–90255 external holdout85／1022，session21890 exit0。离线jointStaticValues已按事先协议完成，仅train、same-context same实际RNG成对、gap>=5、max32/context、三域等权、±25%上限、2200步／reg.12／lr.01／seed20261023；没有runtime候选或整局强度证据，外部留出未评。旧mixed-low split继承expectedContexts1026但过滤后761，未改冻结数据，导出器核对完整parent SHA与精确过滤entries/audits。若需要fallback只改oracle，保留accepted deep；先等现独立结果。
+
+下一步：完成新build长考与低档Worker截图逐张目检、更新工程索引；继续原句柄收齐oracle两组，检查fingerprint／runtime／配置／errors再跑比较并看passed；通过才可扩展oracle路由并重验最终组合。所有95/96/97/98验收种子不可调参。
+
+## 2026-10-23 · 模型默认调用与前瞻预算探针通过；独立报告完整性核对
+
+Original prompt: 那继续想办法提升一下。
+
+本节优先。main无新运行源码改动，仍仅accepted新手／老手fast-values，四档目标active，无commit/push/deploy。六个现存Chrome评测47440／36611／56394／95521／57770／53894逐句柄poll均活，不重启。长考两类候选独立组均未全部收齐；看穿两个完整32开发继续，不根据部分结果判断。
+
+新增verify-observed-runtime-budgets.mjs在独立Node探针进程对冻结fast-values与observed导出包裹默认factory与原score函数计数，实际调用Autopilot评分：高档每次新模型恰好1次／原模型0次，低档和隐藏go相反且评分与基线相同；多次切换保持隔离；oracle在round1／12／16／21／31的前瞻调用分别1／4／6／6／6，窗口与rolloutVariantLimit和基线完全一致；自定义注入只调用自己1次，未触碰新模型。报告observed-runtime-budgets-verification.json，全部断言通过；这是约束检查，不是强度验收。
+
+另按两份事先冻结协议核对当前已落盘prefix：reference／candidate各自fingerprint、32局／32战／deep配置、无errors、顺序种子、逐轮连续、累计胜场一致均通过，live-independent-integrity-audit.json记录观察时计数，不把partial算完成。真正最终结论仍要等两组全32并用compare工具检查passed；主代码未变，不重复此前已完成的check／build。文档已更新，当前下一步继续收齐长考独立和看穿完整开发。
+
+
+## 2026-10-23 · 三棋子模型独立长考验收启动；两类候选看穿完整开发
+
+Original prompt: 那继续想办法提升一下。
+
+本节优先。main仍accepted新手／老手fast-values，没有高档运行源码变更，无commit/push/deploy，四档目标active。原missing-unit嵌入候选8+24全部完成，session51528 exit0，合并32局19.3125→19.90625（+0.59375胜）、通关17→20、早退持平，bootstrap正差64.09%，描述区间[-2.59375,3.75]，波动大，仅开发证据。14局增胜／10局少胜，其余持平；不拿首8的+2替代完整结果。
+
+使用已去除隐藏无样本akirinco附加行的chrome-observed-unit-embeddings做独立验收；其保持14355条打分与所有保留ID权重逐值一致，实际Chrome90005的完整32战轨迹也与原候选精确一致。先保存observed-embeddings-deep-protocol.json，冻结fingerprint73667846de6149259697e1cefa4f073b9e5183a0db01626c6403dc966373c719，全新97000／97100各32局，原五门槛、不扩样、不按验收种子调参；reference session57770、candidate53894各顺序两组，报告accept-{reference,observed-embeddings}-deep-{97000,97100}.json/.log。协议明确完整32开发测于前身，此精确导出只有一局实战路径等价，不能冒称它已有32局直接开发结果；独立验收实际测此新导出。
+
+看穿：同一observed模型完整32局开发已启动session95521，90000起，dev-observed-embeddings-oracle-32.json/.log；deep-ranked静态值完整32局看穿session56394也继续，dev-deep-ranked-values-oracle-32.json。两者共用完整dev-reference-oracle-32.json，不重跑基线、分别判断，不把长考开发提升当看穿通过。deep-ranked长考独立96000／96100仍reference47440、candidate36611，候选已进入第二组，尚未收齐两组。已拒绝campaign独立64局（均值+0.5但通关-5／三门槛未过），不再晋级。
+
+当前六个Chrome runner（20逻辑核、64GB机器；无音频／鼠标控制）：47440 ranked长考reference、36611 ranked长考candidate、56394 ranked看穿开发、95521 observed看穿开发、57770 observed长考reference、53894 observed长考candidate。只poll原句柄，不重启活进程；97000／97100已用于独立验收，不得调参。看穿后续新独立组预留98000／98100给ranked，99000／99100给observed，尚未开始。研究汇总docs/experiments/autochess-high-level-research-20261023.json已更新。
+
+
+observed导出实际Chrome验真补充：session76479正常exit0，seed90005长考32战／30胜，所有逐轮与最终字段均与原缺失嵌入候选首8中的该局精确一致（非仅胜负相同），runtime一致。新冻结源fingerprint73667846de6149259697e1cefa4f073b9e5183a0db01626c6403dc966373c719，报告dev-observed-embeddings-deep-parity-90005.json与observed-embeddings-chrome-parity.json。只是一局实际路径等价证据，不能替代独立强度。若原完整32开发有收益，下一步直接对该已修正导出写新协议并以97000／97100独立验收；oracle排序dev32（56394）仍完整续跑，不能以首8部分结果宣称通过。
+
+## 2026-10-23 · 前16战估值长考独立拒绝；看穿排序开始完整32局
+
+Original prompt: 那继续想办法提升一下。
+
+本节优先。campaign-values两组95000／95100长考独立全部完成，reference40857与candidate54411均exit0；按原协议合并：两组均值-0.6875／+1.6875，合并+0.5胜，但通关-5、bootstrap正差72.72%，三项门槛未过，passed=false，拒绝main，不扩样、不按验收种子调参。acceptance-campaign-values-deep.json保留完整结论，不能用合计均值正数掩盖失败。
+
+chrome-deep-ranked-values看穿完整32开发已启动session56394，90000–90031，dev-deep-ranked-values-oracle-32.json/.log；基线dev-reference-oracle-32.json完整且相同runtime。保持长考96000／96100独立reference47440／candidate36611运行；缺失嵌入原候选只补剩24局session51528。当前四个真实Chrome runner均已核对，无重复启动。main仍accepted新手／老手fast-values，没有新的运行改动、commit/push/deploy，四档目标仍active。
+
+为了不改变隐藏无训练样本akirinco的unknown回退，新增freeze-observed-unit-adaptation.py仅从适配模型删除该未训练行，保留chu2u／sumire／viridis与全部其他权重，冻结chrome-observed-unit-embeddings，原chrome-missing-unit-embeddings绝不改动。JS逐值检查14355条train＋external holdout与原研究模型完全相同；逐ID保留行／所有其他权重相同，24个隐藏棋子双方／星级／站位例子精确回到正式原模型，确认akirinco不在SHOP_UNITS。observed模型SHA976f6adec7571c6885abf8a58ff8548a1c894d94d4686eee40ca0bdcc0002b59。该导出尚未有精确fingerprint的整局结果，不能把原候选实战冒充此新导出的直接整局证据；若原32开发有收益，先跑实际Chrome等价轨迹，再冻结新导出以97000／97100独立验收。完整记录在docs/experiments/autochess-high-level-research-20261023.json。
+
+
+续跑更新：campaign长考reference两组已完整退出（40857 exit0），candidate54411仍在第二组，尚不判验收。deep-ranked独立candidate已启动session36611，96000→96100顺序各32，对照47440同顺序；先前“待启动”已失效。缺失棋子模型首8完整+2胜、通关+1，但收益主要集中单局，不能晋级；只补90008起剩24局session51528，dev-missing-unit-embeddings-deep-24.json，随后与原8合并。候选隔离检查：两个冻结变体均仅Autopilot和各自新增JSON不同，其他80文件逐字节一致，预算模块原样。
+
+训练覆盖补充：四个缺词中只有sumire523／viridis446／chu2u837条样本；隐藏akirinco不在SHOP_UNIT_IDS且train／holdout均0条，不声称学到了它。该未训练附加行仅因Float32导出比旧unk最多差5e-7；本次冻结研究源不再改，若未来晋级应让隐藏无样本棋子精确保留原unknown回退并验证等价。不能把“四个新行”误写成四个棋子均有训练证据。当前四个Chrome runner：54411 campaign独立、47440 reference96独立、36611 ranked96独立、51528 missing-embedding开发；后续空槽优先跑同一deep-ranked的oracle90000首8开发，oracle基线dev-reference-oracle-32.json完整、同指纹与runtime，不重跑基线。新手／老手main TS与JSON再次逐字节核对仍为accepted fast-values。
+
+## 2026-10-23 · 长考排序候选完整开发通过，进入新独立组；四个缺失棋子嵌入适配
+
+Original prompt: 那继续想办法提升一下。
+
+本节优先。main仍仅新手＋老手已验收的chrome-fast-values，未改运行源码，无commit/push/deploy；四档目标active。低档训练的chrome-ranked-values完整8+24合并后长考32局-0.375胜、通关+1、bootstrap正差37.21%，拒绝，不能沿用首8的正收益。session24526正常退出。长考训练的chrome-deep-ranked-values完整32局19.3125→20.71875（+1.40625）、通关17→20、早退持平、bootstrap正差83.57%，描述区间[-1.34375,4.21875]；仅开发证据。session93172正常退出，原8+24均保留，合并检查通过。
+
+先冻结deep-ranked-values-deep-protocol.json，candidate fingerprint1339fc8400633a666359730a6d905fa10729022df076d3272c40a863b07eac8c，使用全新96000／96100各32局，原五门槛、不扩样、不据验收种子调参。reference session47440已启动并顺序两组；candidate待当前四个Chrome评测之一退出后启动。此前campaign-values长考95000／95100独立验收reference40857／candidate54411仍活且已进入第二组，不重启、不提前判通过。看穿尚未验证同一排序候选。
+
+train-missing-unit-embeddings.py仅训练旧v3模型缺少的akirinco／chu2u／sumire／viridis四个24维行；仅使用低档train＋高档train，不用external holdout、开发、验收种子。全部旧46行与其他权重、42特征名称／投影、normalization逐值保留，新行有界±1.5。内部1576／119样本，BCE0.9331→0.6056，不是强度证据。JS实际打分器验证8661条旧棋子样本逐值完全相等，1695条含新棋子评分有限且变化；动态切换高低档隔离、自定义注入单调用、异常后round恢复通过。独立3999条holdout仅小幅改善（胜负准确率66.07%→66.84%），不据此晋级。
+
+冻结chrome-missing-unit-embeddings候选从accepted fast-values派生，只在goModelPlacementsScoreAtRound的现代deep／oracle且默认scorer时换用适配模型，一次推理替换一次、不动经济／候选／预演／未来信息预算，低档与隐藏go保留；starter／augment子规划器仍旧模型，保留旧敌军ordinal编码。原始LF候选定向pnpm exec eslint --no-ignore配独立research tsconfig通过，未禁任何规则。长考首8开发session24446，dev-missing-unit-embeddings-deep-8.json/.log，尚不能宣称强度通过。模型SHA fea9580a1cb5a39aebc685eedc82929b2a257e8ef76aec15d79ce5f0e09eb17c。证据已追加docs/experiments/autochess-high-level-research-20261023.json。后续独立种子预留97000／97100，96000／96100已开始读取不得调参。
+
+
+
+## 2026-10-23 · 长考前16战估值候选独立验收；高档排序学习续跑
+
+Original prompt: 那继续想办法提升一下。
+
+本节优先。main仍只有通过强度＋工程的chrome-fast-values（新手／老手），没有再改运行源码，无commit/push/deploy，四档目标active。已完成的高档失败：全静态值看穿32局-1.1875胜、通关-2；audit-win-floor长考32局-1.0625、通关持平。均拒绝。险胜低于10000是真实评分现象，但降低开战审计拒绝边界减少了对弱胜阵容的补强，后续实战回退，不能以正确性名义发布。上述session93139／34971均已正常退出。
+
+chrome-campaign-values（学习值只在高档round<=16生效，新手／老手仍全程，经济原值）长考开发32局+0.84375胜、通关+3，bootstrap正差75.55%，不是独立显著性结论。先保存campaign-values-deep-protocol.json，冻结fingerprintfb683daf5b03ce01a3ae96940dd2ddb33472f520e4cd7311c0694eb313a622ce，以全新95000／95100各32局按原五门槛独立验收，不扩样、不据验收种子调参。reference session40857、candidate session54411各顺序两组；已进入第一组。文件accept-{reference,campaign-values}-deep-{95000,95100}.json。看穿尚未测同一阶段限制候选，不能默认一起接入。
+
+新高档训练集：reference长考90232–90243共12局实际Chrome诊断，238上下文全部重放匹配，2817候选标签；driver／源指纹校验通过。split-deep-chrome-labels.py按整局种子将90232–90239（157上下文／1832标签）train，90240–90243（81／985）external holdout；未训练任何开发／验收种子。session81475已顺序完成采集＋标注并正常退出，勿重跑。规则指纹仍52e393c178bfa44b0cdeaf93b2681fb9babd8f7ef5e3ae2820c0844dd01a4c2d。
+
+新增tmp离线train-ranked-unit-values.py用同一上下文、同actual RNG的候选成对排序（至少5分差，至多64对／上下文），静态值有界±50%，不增加运行时NN或预演；严格把branch键纳入上下文，避免混不同RNG。旧低档训练集拟合版本chrome-ranked-values长考首8局+1.125胜、通关持平；完整32须只补90008起24局session24526，dev-chrome-ranked-values-deep-24.json。新长考训练集分类值版本chrome-deep-values首8局-0.375、通关+1，开发方向拒绝。长考训练集成对版本chrome-deep-ranked-values首8局+2.125、通关持平，收益集中两局；正在补90008起24局，dev-chrome-deep-ranked-values-deep-24.json，session93172。全部候选均保留原低档值，仅高档使用另一个静态表，经济不改。8+24须用merge工具合并，不能当8局已过强度验收。
+
+三份新静态TS冻结副本直接lint仅20727条CRLF linebreak-style错误；未改冻结字节、未关闭规则，使用独立research TSConfig＋ESLint.lintText检查规范化LF文本，全部规则通过，static-research-eslint-lf.log。生产main定向与完整Next构建ESLint仍保持通过状态。失败候选的工程检查不等于强度达标。
+
+完整新研究汇总与数据SHA在docs/experiments/autochess-high-level-research-20261023.json。95000／95100已用于长考独立验收，后续新候选预留96000／96100；不得用任何已读验收组调参。
+
+
+## 2026-10-23 · 新手＋老手工程完成；高档继续开发
+
+Original prompt: 那继续想办法提升一下。
+
+本节优先。main为通过独立强度的chrome-fast-values（新手＋老手）；TS／JSON与冻结候选逐字节一致，main完整import graph fingerprint也为7c2e6135db28b917dcee895a7778a6da10877d441abdecf6cfb5dd84bdbe23d2，seed90000逐轮轨迹与冻结老手开发一致。定向ESLint、2项静态值边界／战斗经济隔离、510规则、隔离顺序check→build均通过。重启隔离4147（server session65050），URL200，新生产build默认平衡＋老手、手机、保存新手重载、恢复老手、真实开战结算通过；真实打包novice与veteran各seed90001 Worker均到16战并结算，新手败、老手胜（烟测不要求必胜）。8张PNG sanity／状态／DOM／canvas／错误交叉核对并逐张打开目检，报告和截图分别留在tmp/ai-20261023/fast-values-browser/{settings,novice,veteran}/，错误及失败HTTP为空；中断初始Worker的ERR_ABORTED诊断保留。完整证据索引docs/experiments/autochess-chrome-values-20261023.json。
+
+Python终局测试不能再假设旧老手90001失败。尝试用Chrome中失败的deep90001作Node夹具，实际Node跑到32导致测试失败（fast-values-python-tests.log保留）；已改为实际Node验证的novice90001：16战败、5HP、reward-0.4，维持全部原终局断言。最终13＋1项通过，日志fast-values-python-tests-final.log与fast-values-unit-label-tests.log。隔离检出已同步Python测试，运行源码未再改，无需因Python测试重建。
+
+高档全静态值变体chrome-all-values的长考90000起完整32局：平均19.3125→19.03125（-0.28125）、通关17→20，指标混合，拒绝长考晋级；不按少数翻胜或通关+3掩盖平均回退。该runner session93139已顺序进入看穿32局，仍需收完整结果，不重复启动。
+
+冻结实验chrome-rank-only源于fast-values：保留旧NN正常运营信心／未来估值，仅在高档现有精算阶段的当前候选排序调用换新NN，同一调用换权重，无额外推理。session74035已完整退出，长考开发首8局平均差-0.75、通关持平，bootstrap正差13.68%，拒绝该开发方向，不进入main、不作总体强度声称。dev-rank-only-deep-8-comparison.json保留结果；reference首8从完整32切出且保留原fingerprint。对tmp冻结副本尝试eslint --no-ignore失败原因是主tsconfig不包含tmp文件，并非main lint失败；该候选未做工程验收。
+
+另冻结audit-win-floor（基于fast-values），仅将tick中的正式开战审计拒绝条件audit.score<10000改为<5000，不改模型信心／安全余量／候选／推演预算。scorePreparedAutoChessCombat真实胜局减耗时可以低于10000：已审计1026个真实Chrome上下文中有3个（最低9986.6918），实际败局最高-0.4599。训练替代标签另有141条险胜低于旧切线。此次只检验减少误判胜局后重开运营是否改善高档，并无强度结论。session34971运行长考90000起完整32局，dev-audit-win-floor-deep-32.json/.log；PID47008最后确认活。旧chrome-all-values看穿session93139／PID17312也确认活，已过90013，勿重复启动，勿把partial当完整。工程验收完毕的main仍只fast-values，不包含这两个高档变体。
+
+整体四档目标仍active且未完成，无commit/push/deploy。后续新候选独立预留95000／95100；94000／94100已用老手验收，及所有先前验收组均不得调参。
+
+
+## 2026-10-23 · 老手新候选独立64局通过，已接入待工程验收
+
+Original prompt: 那继续想办法提升一下。
+
+此节优先于下方同日旧状态。老手 chrome-fast-values 独立94000／94100两组32局已全部完成且进程正常退出；组均值+0.6875／+0.625胜，通关差0／+3，早退差0／+1；合并+0.65625胜、通关+3、早退+1，bootstrap正差93.57%，描述区间[-0.1875,1.5]，五项预定门槛全过，不宣称95%显著。完整比较在 tmp/ai-20261023/acceptance-fast-values-veteran.json，保留全新种子冻结协议且未扩样。
+
+main已接入：unitScore combatOnly条件由仅novice改为novice或veteran，运行TS／JSON与冻结通过的 chrome-fast-values 以及隔离检出逐字节一致；更新静态值回归为新手＋老手战斗值启用、两档经济值与高档不变，2项通过。定向ESLint session26745待poll。隔离生产旧server session32284已Ctrl-C结束，隔离依序check→build session86179，main全规则session67106；严禁tsc与build并跑。build完成后启动4147，再复验默认手机／持久化与novice、veteran真实打包Worker，不拿旧新手截图支持新运行组合。无commit/push/deploy，整体目标仍active。
+
+长考／看穿 chrome-all-values 开发session93139仍活，长考32局之后顺序看穿32局，不能重复启动或改冻结源。该高档变体尚未接main。此前六张新手-only工程图已逐张打开检查，报告与失败首轮日志均保留，详见下节。
+
+
+## 2026-10-23 · 新手工程验收完成，老手新候选独立验收中
+
+Original prompt: 那继续想办法提升一下。
+
+本节优先于下方同日记录。整体四档稳定提升仍未完成，goal active，无 commit/push/deploy。主运行源码仍只有已通过扩样强度门槛的新手静态战力值；默认平衡＋老手及各档预算保持原值。
+
+新手工程已完成：定向 ESLint、规则 510/510、静态值隔离 2 项、Python MuZero 13 项与险胜标签 CLI 1 项通过；隔离检出依序 check→build 通过，保留 Next ESLint。main／隔离检出／冻结 accepted 源码 TS 与值表逐字节一致；默认老手开发 32 局与 reference 完整逐轮轨迹一致。隔离生产 URL http://127.0.0.1:4147/game/autochess 返回200。第一次 UI 验收出现 ERR_CONNECTION_CLOSED，原日志没有请求 URL，不能宣称根因已知；给隔离测试增加 request URL／console location 诊断后，未改运行源码的复验通过，默认平衡＋老手、手机、保存新手重载、恢复老手、真实开战结算均正常，错误与失败 HTTP 为空。随后 novice／seed90001 真实打包 Worker 烟测抵达16战并正常结算失败（不要求该种子获胜），错误与失败 HTTP 为空；停止初始 Worker 时日志有一条 worker chunk 的 ERR_ABORTED，保留原始诊断。六张 PNG 均通过 sanity／文本状态／DOM／canvas 核对，已全部逐张打开目检。报告已复制至 tmp/ai-20261023/novice-{model-refresh,ai-worker}-report.json，截图在隔离检出 .tmp/autochess/，工程结论与 SHA 在 docs/experiments/autochess-chrome-values-20261023.json。
+
+老手新候选 chrome-fast-values 仅把同一廉价战力值启用到老手选阵与启发式候选排序，购买仍原值、旧 NN 与四个模型候选不变。开发90000–90031已完成，13.40625→14.71875胜、通关9→13。独立前先保存 fast-values-veteran-protocol.json，冻结 fingerprint7c2e6135db28b917dcee895a7778a6da10877d441abdecf6cfb5dd84bdbe23d2；全新94000／94100各32局，维持全部五门槛、不得扩样、不以验收种子调参。reference进程session54546与candidate session35345各自顺序跑两组，必须核对现存状态再继续，勿重启活进程。结果文件 accept-{reference,fast-values}-veteran-{94000,94100}.json。
+
+另冻结 chrome-all-values 将同一静态值用于四个可见档，先做长考90000起32局，再看穿90000起32局开发，进程session93139；没有接入main，不重跑已完成对局。长考／看穿仍需开发和独立强度验收，不以新手工程完成或老手开发收益替代。所有已使用的独立种子均不可用于调参。
+
+
+## 2026-10-23 · Chrome 新手候选通过 128 局，工程验收中
+
+Original prompt: 那继续想办法提升一下。
+
+本节优先于下方同日历史记录。整体目标仍为四档稳定改善，默认平衡＋老手、候选／模型／模拟／未来信息与操作间隔均不变，不使用子代理。当前只有新手出现可晋级候选，尚未完成整体目标，也没有 commit/push。
+
+真实 Chrome 训练标签已完成：冻结 reference 新手与老手 90200–90231 共 64 局、1026 个上下文、11,538 条 60Hz 候选标签；每个上下文先重放实际部署，1026 次均与原整局胜负一致。按整局种子划分 train 90200–90223（8524 条），external holdout 90224–90231（3014 条）。脚本、数据、源／输入 SHA 在 `tmp/ai-20261023/chrome-labels*`；模型／单位值均未使用开发与验收种子训练。统一规则指纹为 52e393c178bfa44b0cdeaf93b2681fb9babd8f7ef5e3ae2820c0844dd01a4c2d。
+
+拒绝的结果：新模型外部留出胜负准确率 67.35%→80.56%，但老手开发 32 局 13.40625→12.75、通关 9→6；长考完整 32 局 19.3125→18.71875，通关持平 17，故不替换正式模型。model-disagreement 精算覆盖完整 32 局仅 +0.28125 胜、通关持平、bootstrap 正差 61.28%，暂不晋级。新手 counter-formation 完整 32 局 12.53125／6，相比 12.84375／7 回退，拒绝。上述评测与标签进程均已结束，不要按旧句柄重启。
+
+新手静态单位值：仅用于新手选上场阵容与廉价战力比较，购买／经济的 unitScore 仍用原费用，其他档完全保留原值，无神经网络推理或新增模拟。训练值相对费用限制 ±50%。同时发现旧单位值训练器把 10000 以下的险胜误标为输；本次标签包含 141 条这种胜局，阈值改为区分胜负两簇的 5000。主源码已接入与冻结 `chrome-unit-values/` 完全相同的 TS 与 JSON，训练器也与记录的 learner SHA 对应；定向 ESLint 在重新确认，既有快速羁绊／零隐藏模拟两项回归已通过。
+
+新手开发 90000–90031：12.84375／7→13.78125／12。冻结后独立 92000／92100 两组各 32 局：平均差 +1.59375／+0.03125，合并 +0.8125、通关 +3，但早退 +2 超预定 +1，原 64 局结论保留为 failed。随后先写 `expanded-novice-protocol.json`，固定不改候选，增加 93000／93100 两组并保留原组，不再扩样、不挑组，也不放宽任何绝对门槛。128 局结果：四组均值差均为正（+1.59375、+0.03125、+1.25、+0.46875）；合并 +0.8359375 胜、通关差 0、早退 +1、配对 bootstrap 区间 [0.265625,1.4296875]，正差比例 99.85%，五项门槛均通过。证据 `acceptance-expanded-chrome-unit-values-novice.json`；这是固定候选扩样的描述性不确定性，不宣称新的独立 95% 显著性检验。
+
+接下来：补上静态值预算／经济隔离与训练标签回归，完整自走棋规则、定向 ESLint、隔离检出 check→build、安装版静音 Chrome 的默认／持久化／手机与真实新手 Worker 验收（截图 sanity、文本／DOM／画布／错误核对并逐张打开）。主目录有其他聊天未完成游戏修改，隔离在 `D:/workspace/myrepo/my-pixijs-game-ai-values-verify`，先核实创建状态，只同步本任务文件，不复制 node_modules。管理工具创建 operation d981720f-9c32-4364-905d-4c1fd3aab4f6 已查不到，artifact／git worktree 中也没有对应目录，已改用明确路径的 Git detached checkout；不可同时再发 managed create。
+
+后续仍须继续改善老手／长考／看穿，不以新手单档通过代替原目标。91000／91100 已用于失败老手验收，92000／92100／93000／93100 已用于新手验收；这些组不再用于调参，后续新候选预留 94000／94100 等全新种子。
+
+
+## 2026-10-23 · 继续改善托管 AI（进行中）
+
+最新接续：trait-shortlist 老手独立 91000／91100 各 32 局已完成，第一组 -0.5625 胜／通关 -4，第二组 +0.125／+2，合并 -0.21875／-2，五项门槛全部失败。已正式拒绝，不接入、不按这些验收种子调参；后续若有全新候选，使用全新独立 92000／92100 组。`acceptance-trait-shortlist-veteran.json` 保存完整对照。站位修正看穿完整开发同样回退：22.53125／19→21.5／17。原四个高档进程均已正常结束。
+
+新增 model-disagreement 冻结实验：当 20Hz 候选全败但模型看好另一队时，用既有精算名额的最后一位覆盖该队，精算数量不变。前 8 局胜场 +1.125 但通关 -1，未晋级；只补跑 90008 起 24 局，session27315，完成后用现有 merge 工具合并 8＋24，不重跑已完成八局。新手按当前可见敌人的客串技能选择 split_flanks 的独立候选正在开发 32 局，session1196；不与旧首领信心候选叠加。
+
+转向真实 Chrome 标签：冻结 reference 新手／老手 90200–90231 的完整 64 局诊断快照均已完成（训练种子，不是验收）。老手第 12 战 25 次 safe 判定仅 4 次实际赢，说明评分误差值得处理，但这只是诊断。`tmp/ai-20261023/chrome-labels.cjs` 用安装版静音 Chrome Worker 从真实快照为当前库存的至多 16 个替代阵容补 60Hz 标签，每个上下文先重放实际部署并检查胜负与原整局一致；未增加网页决策预算。小样本 smoke 与输入源码／驱动指纹匹配检查通过。完整标签进程 session88904，预期 1026 个上下文，逐 20 上下文原子落盘。源码不含新运行策略。计划全量完成后按训练种子划分 90200–90223 train、90224–90231 external holdout；不得把 90000 开发或任何验收对局加入训练。
+
+
+接续核对（同日）：站位单改完整长考开发 32 局从 19.3125 胜／17 通关降至 17.46875／13；老手无均值收益且通关少 2。训练器 `parse_units` 也一直按 ordinal 编码敌方，因此不能把实际几何位置直接换到旧权重输入；已撤回主 TS 的该行修改，几何回归移至 `tmp/ai-20261023/autochess-model-layout.experimental.test.mjs`，仍对冻结 enemy-layout 通过。要修正必须联动训练数据与模型，不以正确性名义发布退步版本。看穿对照仍按原四个进程中的 oracle 两个等待完整收尾。
+
+新增独立候选 trait-shortlist：老手仍只评分四队，保留启发式前两队，再优先加入不同已激活羁绊档位的队伍，剩余槽按原排序填充；无额外模拟或未来信息。开发 90000 起 32 局：保留原 ordinal 输入的候选 14 胜／12 通关，对照 13.40625／9；叠加站位修正的版本 13.96875／11，不采用该叠加。冻结 `trait-shortlist-ordinal/` 后开始 91000／91100 各 32 局老手独立验收，参考进程 session1209、候选 session96926，报告 `accept-{reference,trait-shortlist}-veteran-{91000,91100}.json`。现在已经触及这些验收种子，不得再用于调参。
+
+新手首领信心留量 15% 仅开发均值 12.90625（参考 12.84375），通关同为 7，没有足够收益，暂不晋级。主运行源码目前恢复已发布状态，仅保留评测驱动的可选诊断改动；无 commit/push。上述进程的旧句柄已有完成者，不应重复启动。
+
+
+Original prompt: 那继续想办法提升一下。
+
+用户重新授权继续优化，覆盖 10 月 17 日的停止要求；本轮从当前已发布修复后的源码重新建立真实 Chrome 基线。默认平衡＋老手、各档候选／模型／预演／未来信息与操作间隔保持不变，不使用子代理。开发种子使用 90000 起，独立验收预留 91000／91100（每组 32 局，不用于调参）。不沿用历史进程或把旧 Node 收益视作浏览器收益。
+
+先增加 Chrome 评测的可选只读诊断记录，保存实际开战金币、等级、棋盘／候补／商店、天赋和本轮操作，不增加战斗模拟或改变决策。研究当前经济与选阵错误，候选只在冻结副本实验；正式策略仍须整局收益、规则测试、check → build 及实际网页 Worker 验证。
+
+本轮目录 `tmp/ai-20261023/`，`reference/` 冻结当前发布后的源码，所有实验只复制 `src/components/autoChessGame`，不复制 node_modules。已否决或暂缓：调整小天赋偏好、只放宽理财升本、终关清空保护存款、提高升本风险额度、优先成熟开局、固定分散后排；有的短样本改善但扩大后回退，不能接入。候选 shortlist 调整实际上对现代档位无效（现代模型只用一个 go_canonical 站位），不保留此改动。
+
+发现并新增真实回归：模型把敌军数组下标当站位，遗漏 `formationIndex`，导致第 12／21／26 关模型输入与引擎真实位置不一致。`autochess-model-layout.test.mjs` 先在第 12 关初濑实际坐标上失败（y=180 vs 345），正式 TS 改为 `unit.formationIndex ?? index` 后通过；覆盖三档、四关、零号位置与默认下标回退、前瞻 round 恢复、一次模型调用且不增加 rollout。定向源 ESLint 已通过。此为正确性修复，尚未宣称强度晋级。
+
+已完成开发：老手 90000–90031，参考与修正平均均 13.40625 胜，通关 9→7，故不能称老手增强；高档最初 4 局只供选型，完整 32 局对照仍在运行。新手路径不调用模型，当前修正不改变其行为。尚未使用 91000／91100 独立验收组，不按这些组调参。
+
+目前真实进程（只按本节句柄核对，不依赖更早历史）：58636 reference deep、98165 enemy-layout deep、66811 reference oracle、64871 enemy-layout oracle，各自 90000 起 32 局，报告 `dev-{reference,enemy-layout}-{deep,oracle}-32.json`，同名前缀 `.log`。旧 4 局 oracle 17517 若仍在只需等待其收尾，不能当完整 32 局。驱动已冻结于当前 `scripts/evaluate-autochess-chrome.cjs`；诊断还包含实际开战前 simulation snapshot 与只读升级决策记录，后续不同驱动指纹不得混合验收。尚未 commit/push，不自动部署。
+
 ## 2026-10-17 · 训练经验归档与可用流程修复发布
 
 Original prompt: 把训练中总结的经验和进展一起 commit 推送到远端，有可用的提升也推送到 master；用户明确 master 推送即触发部署。训练保持停止，未恢复长时间训练或强度评测。
@@ -1190,3 +1398,382 @@ Original prompt: 做类似2D马里奥的精致横版跳跃游戏，灵活惯性�
 ## 2026-10-23 · 横版游戏原型归档与分类末尾排序
 
 用户试玩反馈：「确实能玩了不过感觉非常的demo呀…不是一个正经游戏」，授权commit和push，并要求不要放游戏列表前排。将《春日第一封信》放到「动作与探索」分类默认顺序的最后，保留真实推出日期与显式日期排序的含义，其他游戏顺序不动。文档明确当前是可玩原型，自动通关不等于成熟游戏的趣味性已经达标。本轮提交范围为前述横版游戏的源文件、主角素材与预览、测试脚本、开发记录，以及本次排序；不包含临时Next类型include或本机验证产物。发布前按仓库要求执行定向ESLint、游戏库6项回归和默认分类末尾断言，完整check后顺序build，保留Next构建ESLint。推送沿用现有origin/master。
+
+## 2026-10-23 · 春日第一单：首单里程碑
+
+Original prompt: 根据 01a16784-f80e-7b03-9294-3092cdd713cb 完善横版跳跃游戏。
+
+按参考会话最终方向制作配送动作冒险《春日第一单》。首单阁楼热汤包含托盘起手/命中/收招、面团挑起后一次借力踩踏、可恢复目标、低门与高路旧招牌、宽托盘改装、修理师分面包给猫、预告下陷反弹棚、轨道餐车、花匠交付/花盆和木梯变化。普通无倒计时、近处重试、五段练习、可选95秒热气重跑、奖励幂等、保存检查点与餐箱、多指触摸/失焦/暂停及手机视口。旧四关和旧档保留于 /game/sui-spring/archive，新档独立版本2。游戏库动作分类默认末尾。
+
+12/12新规则和14/14旧规则通过；修改源ESLint、完整check后顺序build通过，Next构建ESLint启用。游戏库5/6回归，唯一失败为其他任务未登记的新liuzhou路由，未干涉该任务。静音安装Chrome生产完整首单普通输入路线/支线/高路/餐车/交付/重跑/练习/触摸/恢复/旧归档验证通过，最终19张截图全部逐张打开目检，像素sanity/文本/DOM/画布宽高比/浏览器错误交叉验证，错误为空。证据.tmp/sui-delivery/production/report.json。当前环境为程序绘制基础美术与岁己既有两张素材，自动作者路线约24秒，均不代表最终美术质量或真人趣味时长。
+
+完整四街区十二单元目标保持active。接下来抽取关卡配置，继续面包房后门、分阶段烘炉蟹及隔热反弹，再建设集市/雨檐/剧场与真正餐会结局；全篇存档、声音/动画精修与真人验证仍待完成。详见docs/sui-delivery-progress.md及docs/sui-spring-direction.md。本轮未提交/推送/部署，首单生产试玩http://127.0.0.1:4139/game/sui-spring。保护工作区其他Night Rain/Liuzhou修改。
+
+
+## 2026-10-23 · 旅居之魂：归灯影像、沉钟修道院与性能
+
+Original prompt: 继续扩展旅居之魂；用 1000 积分预算制作标题进入音画与新档 OP，继续设计实现精致一关，测试并优化性能。
+
+完成约 8 秒标题入场与 18 秒新档 OP，含生成环境音轨、字幕、音量/静音、跳过、失焦暂停、减少动态、坏媒体回退与视频卸载；标题与影像期间暂停持续 3D 绘制。两次 Dreamina Seedance 2.5 720p 任务成功，报价上限 144 + 324 = 468 / 1000 积分，最终净结算未审计，未追加生成。网页两视频 4.60 MB，完整 prompt/身份/原件与网页哈希见 docs/night-rain-cinema-job.json。抽帧与实际播放目检、离线音量验证完成，无人工听辨评价。
+
+第四章“沉钟修道院”从天镜原终点向北无缝连接，15 处高低地面、下库止水机关、可选抄经室/止鸣绳、东侧单向回环近门、三处归灯、原创首领“无声钟守·余响”与晨钟结尾。首领两/三连震圈可跳，支路只压住第三响。版本13旧档迁移追加七敌并保留原进度；地图、指引、手记、奖励幂等、休息/旅行和结尾后探索接通。
+
+静态旧城/修道院按空间与材质合并，停止原静态模型每帧矩阵更新；敌人远处三网格剪影，48/58米滞回恢复近景。旧城同视角 draw call 4694→2116（约-55%），几何体6326→2863。同机开发RAF均值31.23→49.95，最终生产73.65/P95 19.2ms；开发与生产开销不同，不把全部差值归功于渲染改动。新关生产移动/首领约154 RAF FPS，390px约143；无上限RAF不等于屏幕实显，手机是桌面Chrome模拟。六组短采样无>33.5ms帧；实际设备和长期最差情况未覆盖。
+
+185/185规则通过，包含完整普通输入路线、支路/回环/首领/跳波/迁移/读档；最终修改源ESLint、完整check后顺序build通过，构建ESLint保留。静音安装Chrome生产片头五组、16幅区域/窄屏/地图/减少动态、普通输入全关零死亡HP196/即时开门存档/暂停/结尾/读档/旅行、六组性能和连续三次真实WebGL丢失后重建通过，报告错误为空；采用的44张全页截图逐张打开目检，PNG sanity/文本状态/DOM/画布/错误交叉核对。重建后位置与进度保留、单画布无残留视频，GC后堆102.1→97.5MB、几何体2862→2175、纹理197→182，三轮未见单调累积；不代表长期无泄漏。
+
+证据 tmp/night-cinema-production/report.json、tmp/night-bell-final/report.json、tmp/night-bell-journey-final/report.json、tmp/night-performance-final/report.json、tmp/night-render-recovery/report.json；门禁 tmp/night-expansion-all-rules.log、tmp/night-expansion-check-final.log、tmp/night-expansion-build-final.log。设计/数据/限制见 docs/night-rain-bell-abbey.md。只停止本任务4126开发服务并移除自己的三条tsconfig类型include，保留其他任务路径与改动。最终生产试玩 http://127.0.0.1:4127/game/night-rain，使用 .next-night-expansion-final。本轮未提交/推送/部署；本轮实现完成，无必需待办，真人初见难度与趣味仍待试玩反馈。
+
+## 2026-10-23 · 春日第一单：四单与隔热成长
+
+继续同一完整四街区目标，抽取levels.ts每单配置及machinery.ts独立机关。新增面包房低梁面案/卷边烤盘挑升与携带/面粉架/晾面棚/后门小桥；烘炉蟹低扫预告、排气升盘、登背挑开三个实际阀门、三阶段移位/转向/高低落点、炉前重试、关炉保存/合照板和交付隔热包边；集市首单轨道摊车/低梁/金圈热弹/反弹铃铛开闸/捷径。增加逐单解锁订单菜单、完成直接下一单、每单热气纪录/练习/一次报酬、兼容原v2首单存档的关卡/闸门/关炉字段。主动选单与标题继续明确区分：选单从取餐台重开，继续恢复歇脚点与餐箱。
+
+22项规则含四单满血零死亡的公开六按钮完整路线；无游戏状态修改。静音系统Chrome开发连贯四单26张及首单回归19张通过，页面错误为空；目检发现并修复第三阀门标识/碰撞不一致、登背镜头裁炉和移动摊车支撑，最终开发证据.tmp/sui-delivery/campaign-final-dev/report.json。最终生产证据待追加。旧四关14项通过；游戏库唯一失败为其他任务Liuzhou未生成preview.png，不干涉其任务，仅保持本游戏在默认动作分类末尾。完整目标仍active，后续运货餐车/分餐机/雨檐/剧场/真实餐会结局/美术动画声音与真人验证必须继续。
+
+## 2026-10-23 · 春日第一单：六单生产验收
+
+新增升坡运货餐车、中途反弹发车站、卸货台与交付便道；新增三层不同方向分餐带、先缩臂再扫的预告、逐层反弹开关/侧踏板、三带停稳后的盘桥和街坊午饭。当前午饭场面不是完整游戏终局。部分停带即时保存，乱序开关清洗为连续前缀；普通重访保持开放，热气与练习重启机关，防止旧档没有弹丸的软锁。目检修复烤炉预告镜头裁掉左侧观察台岁己的问题。
+
+定向ESLint、28/28配送规则、14/14旧关与6/6游戏库通过；完整check后顺序build通过，Next构建ESLint保持。最终生产静音安装Chrome六单48张与首单回归19张，共67张截图逐张打开目检；像素sanity/DOM/画布/文本状态交叉核对通过，错误为空。包含正常六按钮完整路线、热气重跑、全屏、真实中途站与部分停带档案竖屏继续/R重试、触控/设置/归档。证据.tmp/sui-delivery/{market-release,market-first-release}/report.json，构建.next-sui-delivery-market-final，试玩http://127.0.0.1:4142/game/sui-spring。六单作者输入约124秒，不等于真人时长或趣味证据。未提交/推送/部署，保护其他任务改动。
+
+完整目标保持active：继续雨棚接力/温室晚餐/抢食鸟，以及剧场三单与岁己有座位的真实餐会；美术动画、声音、关系与装饰消费、真人验证仍需完成。
+
+## 2026-10-23 · 柳州开放街区首章《江风有回音》
+
+Original prompt: 以真实柳州地图制作开放式3D游戏，可以先还原小片区域；类似GTA，可跑街、骑车、开车、与路人NPC互动和推进主线，主要角色为岁己、栞栞、米汀、七海。
+
+新增 /game/liuzhou 并登记游戏库。实际下载OSM东门—文惠桥两岸约990×1180米范围，保留159条way与来源ID；按真实道路中心线/已有建筑轮廓搭建，双桥各约587/592米。参考广西新闻网桥梁航拍与东门城楼照片，图片仅供本地参考；程序化简化重建城楼、红色三跨桥拱、柳江、山体与街道。162栋体量包含虚构填充，建筑高度/立面/岸线/山体均非实测，剧情与店铺原创。ODbL署名及派生数据库下载已提供；来源与取舍见 docs/liuzhou-research.md。
+
+React Three Fiber场景、固定60Hz独立模拟、Rapier碰撞、跟随/拖动/缩放镜头；四角色切换、步行/跑步/跳跃、两辆自行车与两辆汽车、油门/倒车/刹车/停稳上下车、铃声与喇叭。九位NPC含巡游市民，近距离交谈。六步首章串起栞栞约定、骑车取粉、米汀交付、驾车过桥找七海、北岸步行采样与东门会合；完成后继续自由探索。提供地图/地标手账、本地自动存档、失焦暂停、触屏控制，以及本地合成流水/脚步/发动机/车铃音，不使用TTS。
+
+修改源定向ESLint、12/12规则与游戏库测试通过；完整pnpm run check后顺序pnpm run build通过，保留Next构建ESLint，仅既有RPG/武侠unused警告。开发与生产安装版静音Chrome完整主线通过：规划器仅发正常行走/油门/转向/刹车/E输入，无传送或任务进度修改，实际累计骑行约252米、驾车约1.66公里。四角色、存档重载、地图手账、暂停/静音、手机横竖屏、多指前进加跳及触摸取消通过。生产报告错误为空，13张全页截图全部逐张打开目检，并与像素sanity/文字状态/DOM/画布尺寸交叉核对。生产证据 .tmp/liuzhou-production/report.json；开发证据 .tmp/liuzhou/report.json；门禁 tmp/liuzhou/{eslint-final,check-final,build,rules-final}.log。
+
+仅移除本任务两个tsconfig临时类型include，停止本任务4130开发服务，保留生产试玩 http://127.0.0.1:4131/game/liuzhou（.next-liuzhou-build），并保护其他任务改动与服务。本轮未提交/推送/部署。
+
+完整目标保持active：当前为可玩首章，简化低多边形美术、街道活动较稀疏；仍需提高真实街巷/地标/建筑立面精度，完善人物与载具动画、交通流/NPC日程、更丰富的运送采样玩法及后续主线。目前没有室内、警察追逐、战斗或车辆损坏；手机只做桌面Chrome模拟，真人趣味与真机性能尚待反馈。
+
+## 2026-10-23 · 旅居之魂快速测试存档
+
+用户希望直接载入已通前两关的存档，方便测试后续内容。新增独立静态入口 /games/night-rain/test-saves/index.html，提供前两关完成→天镜原、前三关完成→沉钟修道院两档及JSON下载。读取真实章节基线并经saveGame/loadGame校验，设置有效雨灯检查点、行装+8、铁骨伞+2、满生命与药瓶；后续章节保持未完成。写入首个空档位，预留旧版档迁移位置，五档全满则不写入。
+
+静音安装Chrome验证两档安装/继续/刷新恢复、已有档位逐字保留、旧档迁移、满档存储不变、JSON下载与320px布局，错误为空。5张整页截图均像素sanity并打开目检，游戏状态/DOM/画布交叉核对，证据tmp/night-test-saves/report.json。HTML按仓库ESLint通过；两个Node脚本因不在tsconfig内，单独使用ESLint recommended校验通过。只新增静态文件、生成器、验证脚本与文档，未改游戏源码；当前4127生产服务已按原构建.next-night-expansion-final重启以识别新public文件，未重新构建、提交或部署。用法见docs/night-rain-test-saves.md。
+
+## 2026-10-23 · 柳州街区车流与真实建筑轮廓
+
+继续柳州开放3D街区目标。加入七辆环境汽车，沿罗池路—中山东路—培新路—曙光东路双向及文惠双桥—南岸共三条闭合路线运行。车道偏移与弯道取自现有OSM道路，转弯减速、车距排队、交叉方向优先、玩家/路人/停放车辆让行，障碍移开后恢复；暂停及交谈冻结。车流是游戏编排，不冒充柳州实际通行方向或实测交通。环境车暂不能接管驾驶，四辆原有载具继续可用。
+
+汽车补前轮转向、轮毂滚动和制动灯，自行车补轮辐转动、身体倾斜与踏步，动画读取实际移动距离；路人被阻挡时停止步态。旧档保留玩家/停车位置，加载时只让环境车流避开恢复位置生成，运行中不传送。默认北岸停车移出桥头车道。地图显示车流位置。
+
+修正此前轴对齐建筑盒侵占街道：原始OSM建筑多边形直接挤出，凹形庭院保持可进入，Rapier用三角棱柱分解保留实体墙；填充建筑仍为虚构。建筑朝向采用最小面积包围矩形用于布局，玩家进出/路人/测试导航使用真实多边形。镜头沿实际轮廓及挑檐检查遮挡，修复转头穿进店铺挑檐；开发Strict Mode/Fast Refresh共用单次WASM初始化promise，避免重复初始化破坏既有物理对象。
+
+定向ESLint、17/17柳州与游戏库规则通过；新增逐米路线河道/建筑净空、七车八分钟连续多圈且无传送/互撞/永久队列、行人刹停后恢复、暂停与对话冻结、凹形庭院与旧档生成避让。完整pnpm run check通过后顺序pnpm run build通过，保留Next构建ESLint，仅既有RPG/武侠unused警告。日志 tmp/liuzhou/traffic-{eslint,rules,check,build}.log。
+
+开发与生产安装版静音Chrome完整主线均通过，规划器补上正常倒车退让后再寻路，全程只发普通移动/油门/转向/刹车/E，不修改坐标或任务。交通专项通过普通输入步行拦车/让开/恢复行驶、地图/暂停、进入L形建筑庭院/实体翼墙不可穿越、驾驶刹车灯/车轮里程、骑行踏步。四角色、两次过桥、存档、手机横竖屏/多指/取消和声音开关保持通过，所有最终报告错误为空。开发13+5、生产13+7共38张最终全页截图逐张打开目检，像素sanity/文字状态/DOM/画布/错误交叉核对。证据 .tmp/liuzhou-traffic-{story-dev,dev,story-production,production}/report.json。早期验证发现测试导航会顶住排队车，已补正常倒车；第一次墙体断言阈值误用旧包围盒，改为检验实际多边形和真实阻挡后通过。
+
+生产试玩仍为 http://127.0.0.1:4131/game/liuzhou，已切换 .next-liuzhou-traffic-build。只停止本任务4130开发服务，移除本任务两条tsconfig临时include；保留其他线程服务/改动/类型路径。本轮未提交、推送或部署。
+
+完整目标保持active。交通目前是七车固定循环与简单优先/排队，尚无完整信号灯、广泛路网或主动绕障；道路被玩家停车堵住会形成队列。真实街景立面/地标细化、伙伴与市民日程、可重复活动和更丰富主线仍需继续；当前美术仍是简化低多边形，真机性能与真人趣味尚未验证。具体来源、玩法和限制见 docs/liuzhou-research.md。
+
+## 2026-10-23 · 柳州邻里送餐与结算存档
+
+继续柳州开放3D街区目标。主线取餐后，粉店开放可重复的「邻里送餐」，叔叔、游客、买菜居民三位轮换；每单基础¥12，90秒有效游戏时间内另加¥6，凉了仍可交付。¥32永久保温餐篮将热气延长到150秒并作用于当前订单；步行/骑行/开车均可送，角色和载具显示餐盒，地图与场景以青色标记收餐人，手账显示完成单数、升级与最近收据。可在粉店取消但没有报酬。最后一页通过按钮或数字键明确接单/购买/取消，E仅继续/收起，避免连按误购买。暂停及交谈冻结热气，刷新恢复已用时间。
+
+主线¥24取餐费、章末¥40奖励改为读完对话时与任务阶段同次保存，修复中途刷新重复扣款/领奖；旧余额保留。接单/购买/取消即时保存，收餐结算以订单ID防重，报酬、完成数、收据和清单同时提交，并清洗非有限存档计数。镜头改为检查真实墙体及挑檐高度，近墙时寻找邻近开放角度，修复读档后被挑檐地面投影挤近；叔叔从填充建筑内移到净空人行道，增加全部NPC初始/会合位置净空回归。地图建筑改用实际多边形。
+
+修改源定向ESLint、27/27柳州/车流/活动/镜头/出生点及游戏库规则通过；完整pnpm run check后顺序pnpm run build通过，Next构建ESLint保持启用，仅既有RPG/武侠unused警告。门禁日志 tmp/liuzhou/life-{eslint-final,rules-final,check-final,build-final}.log。最终开发完整主线+三单+手机23张、生产同组23张、生产车流/真实建筑碰撞/车辆动画7张，共53张全页截图全部逐张打开目检，像素sanity/文字状态/DOM/画布尺寸与浏览器错误交叉核对，三份最终报告错误为空。浏览器为静音安装版Chrome并禁用测试语音；主线与收餐路程使用普通移动/转向/刹车/E输入，覆盖结算前刷新、保温篮/暖冷报酬/取消/重复操作、有效计时冻结、手机横竖屏触摸与存档恢复。证据 .tmp/liuzhou-life-final-dev/report.json、.tmp/liuzhou-life-production/report.json、.tmp/liuzhou-life-traffic-production/report.json。
+
+生产试玩 http://127.0.0.1:4131/game/liuzhou 已更新到 .next-liuzhou-life-build，收尾确认返回200；本任务4130开发服务停止，仅移除自己的两条tsconfig临时类型include，保留其他任务类型路径、改动和服务。本轮未提交/推送/部署。功能、来源与测试方法见 docs/liuzhou-research.md。
+
+完整目标保持active。目前只有三位轮换收餐人和一项保温升级，尚非成熟城市经济或大规模GTA体验。简化美术、稀疏街区活动、角色动画、市民日程、真实街巷与地标精度、更丰富主线仍需开发；手机仅桌面Chrome模拟，真机性能和真人趣味测试仍待完成。
+
+
+## 2026-10-23 · 春日第一单：九单生产验收
+
+Original prompt: 根据 01a16784-f80e-7b03-9294-3092cdd713cb 完善横版跳跃游戏。持续目标 active，未提交/推送/部署。
+
+补齐阵雨屋顶三单：挑钩雨棚与一秒收拢预告、蒸汽冲刺末段、接水载人浮台与排水花床、固定预告小鸟掠行和鸟巢面包交换。第六单交付必得一次空中冲刺，落地恢复；修正地面同帧跳冲导致悬浮，必须离地后重按。部分棚钩/系带与实际检查点立即保存，低处继续浮台重置到可搭乘高度；热气重新启动机关，报酬不重复。
+
+34/34配送规则、旧四关与游戏库20/20通过；定向ESLint、完整 pnpm run check → pnpm run build 顺序通过（.next-sui-delivery-rain-final）。静音安装Chrome生产验证共99张截图，三份报告 rain-release(32)、rain-first-release(19)、rain-market-release(48) 位于 .tmp/sui-delivery；全部逐张打开目检，sanity/DOM/画布/文本交叉核对，错误[]。九单公开输入均满血零死亡，不冒充真人趣味或初见时长。生产4143，后续继续暮色剧场三单及可走到桌边实际入座的结局，仍需美术/动画/声音/关系与真人试玩。
+
+## 2026-10-23 · 春日第一单：十二单与可入座餐会
+
+Original prompt: 根据 01a16784-f80e-7b03-9294-3092cdd713cb 完善横版跳跃游戏。完整目标保持active，未提交/推送/部署。
+
+补齐暮色剧场三单：挑绳扣启动往返载人滑轮吊台，经过低梁与反弹热铃打开布景桥；两篮晚饭分两处交付，第一篮摆上桌后出现食客、幕布收起并打开真实夹层桥；终章先低处反弹热铃、搭台挑绞盘、冲向高处等四瓣冠轮张开后挑停。三组件顺序和窗口不同，部分进度立即保存。停机后机械臂成为餐桥，亲手摆合菜，再走到红椅子E放下餐箱坐下，才完成终章。六位街坊围桌，起身/再坐不重复领奖；已完成存档可直接回到实际餐会，保留resume为空。版本2增量兼容，普通单无倒计时。
+
+补温室浮台的可见积水升降井；吊台下降预告移到侧边避免角色遮挡；桌前行走角色在桌前显示，入座后处于桌后；露医生素材与剧场热铃提示改正。坐姿仍是原素材调整高度并用桌面遮挡，不冒充独立动画。程序绘图和两帧角色仍需精修。
+
+41/41配送规则、旧四关与游戏库20/20回归、定向ESLint通过。最终完整pnpm run check后顺序pnpm run build通过（.next-sui-delivery-theater-polish），Next构建ESLint保持启用。共享门禁中只对liuzhou/Scene.tsx等价乘除表达式补括号，其余并行Night Rain/Liuzhou工作保留。只清理本任务Next类型include。
+
+静音安装Chrome生产 .tmp/sui-delivery/theater-polish-release/report.json 验证通过，错误[]：新档十二单普通按钮输入满血零死亡，无坐标/生命/无敌/订单改写；吊台全升降周期、两篮饭、三部件、摆饭后走到红椅子入座、起身再坐与刷新重访、四份真实剧场断点竖屏恢复/R重试、三单热气重跑及奖励幂等。45张全页截图全部逐张打开目检，像素sanity/DOM/画布/文本交叉核对。修正前十二单生产构建的剧场45张与首单/触控/整备/旧归档19张也已逐张目检，报告 theater-release、theater-first-release。最终门禁日志 .tmp/sui-delivery/theater-polish-{check,build}.log，当前试玩 http://127.0.0.1:4145/game/sui-spring。
+
+十二单主线已连接，完整目标尚未达成。下一阶段需完善独立动作/命中落点与机关声音反馈、四区空间和材质美术、居民关系与支路回报、零钱对应的餐馆装饰/纪念外观，并做真人初见难度和主动重玩观察。自动路线不证明真人两至三小时体验、趣味性或真机性能。详见docs/sui-delivery-progress.md与docs/sui-spring-direction.md。
+
+## 2026-10-23 · 柳州第二章《把今天留给明天》
+
+继续同一真实柳州开放3D街区目标。首章后由栞栞明确按钮开启第二章，独立evening字段兼容已有v1存档；E只读完/收起，不自动接任务。新增粉店外「锅沿的节拍」、文惠桥北侧「桥头的远行」、金沙角附近「留给明天的水声」三个任意顺序采样点。下车站稳六秒，移动/跳跃重置、近处行车暂缓但保留进度，走远或上车取消；暂停/交谈冻结，完整片段立即保存，半段刷新丢弃。不申请麦克风，不录真实音频。
+
+回东门找米汀选择街巷或江水先开口，再由七海启动28秒江边放映。实际场景加入幕布、音箱、灯架和放映机，四段程序绘制明信片、字幕、伙伴手臂动作及原创合成短旋律。音源使用HRTF空间定位，听者读取真实镜头；竖屏观演镜头退后以保留幕布和伙伴。可暂停、暂离、刷新后继续、换编排与重看；首次完成与¥28奖励同次保存，重看不重复支付，观演冻结送餐热气。叔叔新增回忆，收餐结算对话优先。修正采样进度与提示重叠，音符结束后断开振荡器与增益节点。
+
+35/35柳州/车流/送餐/第二章/游戏库规则通过，源与测试脚本定向ESLint通过；完整pnpm run check后顺序pnpm run build通过，Next构建ESLint保持启用，仅既有RPG/武侠unused警告。门禁tmp/liuzhou/evening-{rules,eslint-source-final,eslint-tests,check-final,build-final}.log。最终开发29张、生产完整主线+三单+第二章+手机39张，共68张全页截图全部逐张打开目检，像素sanity/文本状态/DOM/画布交叉核对，报告错误[]。证据.tmp/liuzhou-evening-final-dev/report.json、.tmp/liuzhou-evening-production-final/report.json。普通输入完成路线，覆盖不同采样顺序、中途刷新、两种编排、暂停/续看、结算与重看幂等、手机横竖屏字幕和触摸。
+
+生产Web Audio真实节点证明实时新增4个振荡器，音源[28,2,-34]、实际镜头听者[28,4.5,-7]，播放增益1；静音和暂停时声部自动化目标0，总输出实际增益降至0.00882/0.00424。测试浏览器静音并禁用语音。初版强化断言读取上游AudioParam旧处理值而超时，隔离复现总输出已静音，改为验证真实归零调用与总输出衰减后完整重跑通过，游戏音频代码未因该测试误判修改。
+
+生产试玩http://127.0.0.1:4131/game/liuzhou使用.next-liuzhou-evening-build，进程87220保留；4130开发服务已停。仅移除本任务evening-dev/evening-build两条tsconfig临时类型include，保留其他任务配置与改动。未提交/推送/外部部署。功能与限制见docs/liuzhou-evening.md、docs/liuzhou-research.md。
+
+完整目标保持active。新增的是小规模街区故事，程序化简化人物/建筑、稀疏活动和七车固定循环仍需发展；真实街巷立面和地标精度、人物动画、市民日程、更丰富的自由活动与真人/真机测试仍待继续。自动路线和桌面触摸模拟不证明真人趣味、长期体验或真机性能。
+
+## 2026-10-23 · 春日第一单：小馆布置与开场角色替换
+
+Original prompt: 根据 01a16784-f80e-7b03-9294-3092cdd713cb 完善横版跳跃游戏。完整目标保持active，未提交/推送/外部部署。
+
+配送零钱现在可添置红格桌布24、门口黑板48、暖灯串72、窗边香草架36，随第1/3/6/8单解锁。小馆插画与实际首单出餐台同步布置，免费收起/摆上，不改变动作属性。花盆、炉前合照、香草和自己的碗随主线留下，小猫关联面包支线；六位街坊按实际相遇出现，后续台词随温室/小鸟/剧场变化。小馆可从顶部、整备、送达回执打开，暂停配送并保持位置/餐箱/检查点。版本2旧档不丢进度，读档先重建收入再校验解锁/预算和一次性支出，排除重复/未知/未解锁/未拥有摆放记录。
+
+用户试玩后明确要求开场不要再用四时小路；已将修理师换为栞栞，首单标牌、面包支线、第三单交付、头像、两处合照与餐会人物全部同步，保存字段沿用角色职责以兼容旧档。复用已有shiori极简图，没有生成新角色图。并修正灯串遮住厨房标牌、320px导航折行、手机横屏小馆插画过高。
+
+47/47配送规则与旧四关/游戏库20/20通过；定向ESLint及脚本ESLint通过。完整pnpm run check后顺序pnpm run build通过（.next-sui-delivery-home-final），保留Next构建ESLint。共享门禁补Night Rain/Cinematic.tsx两处格式、Liuzhou/Scene.tsx相邻JSX节点Fragment，保留其他线程功能和改动。日志.tmp/sui-delivery/home-{rules,eslint-final,check-final,build-final}.log。
+
+静音安装版Chrome开发home-ready-dev和生产home-production两份report.json均通过、错误[]，各16张全页截图共32张全部逐张打开目检，像素sanity/DOM/画布/文字状态交叉核对。两次新档十二单正常公开输入连跑、途中四件真实UI购买共180零钱、后续结算不退回花费、免费摆放/刷新、居民选择/变化、厨房实景、面板冻结/关闭/焦点、结局重访、390/320px竖屏及844×390横屏均通过。开场实际支线为栞栞，未请求komichi素材。早期开发验证就绪等待存在首帧竞态（canvas尚未出现），已改为等实际画布和可操作标题按钮，完整重跑通过。
+
+用户原试玩地址http://127.0.0.1:4145/game/sui-spring已更新至小馆最终构建。小馆目前是暂停布置与街坊后续界面，没有独立室内行走/经营；仍需独立动作动画、四区美术材质、声音反馈、可操作关系支线与真人初见/主动重玩观察。自动满血零死亡不证明真人趣味或真机性能。详见docs/sui-delivery-progress.md。
+
+## 2026-10-23 · 柳州键鼠修复与市民日程
+
+玩家反馈左右反向、希望参考《旅居之魂》的隐藏鼠标转视角。修正步行相机右向量、自行车/汽车左右转向与前轮姿态，倒车保持正常反向转弯。加入独立 StreetControls：点击进入/继续/画面捕获，直接移动鼠标转视角；Esc 释放并暂停，Alt 按住临时显示鼠标，松开恢复；地图/手账/对话/放映主动释放，关闭后恢复；失焦清空输入、暂停并释放，触屏和捕获失败保留拖动后备。
+
+用户随后要求测试不要动电脑鼠标。原生 Pointer Lock 即使在 headless Chrome 也可能影响 Windows 光标，已停止该路径。全部柳州自动浏览器验证改为独立文档内虚拟捕获和浏览器局部输入，不再调用系统捕获；正常玩家操作保留原生捕获。规则写入 AGENTS.md，测试报告明确标注虚拟捕获，不作为原生系统捕获证明。
+
+同时完成先前五位普通市民的散步、停留、拍照、伸展、买菜小规模日程，路线避开建筑、让行车辆/绕开停放车辆，近处停下面向玩家，对话随活动变化，收餐时等待；地图显示位置。路线/时钟/距离随 v1 保存，兼容旧档并清洗异常状态。日程为虚构玩法，不代表真实居民生活。
+
+37/37 柳州规则通过，源与测试定向 ESLint 通过，完整 pnpm run check 后顺序 pnpm run build 通过（.next-liuzhou-controls-build），Next 构建 ESLint 保持启用。共享工作区 Sui Delivery 的少量格式、Set 迭代兼容和弹簧特效落点字段构建阻塞已修正，47/47 配送回归通过，其余并行工作保留。门禁 tmp/liuzhou/controls-{gate-source,check,build}-final.log。
+
+最终开发操作7张、市民14张、首章/三单/第二章完整回归39张共60张，以及生产操作7张、市民14张共21张全页截图全部逐张打开目检；像素 sanity/文字状态/DOM/画布/错误交叉核对，报告错误[]。最终报告 .tmp/liuzhou-controls-virtual-dev/report.json、.tmp/liuzhou-citizens-virtual-final-dev/report.json、.tmp/liuzhou-controls-virtual-regression-dev/report.json、.tmp/liuzhou-controls-virtual-production/report.json、.tmp/liuzhou-citizens-virtual-production/report.json。静音安装Chrome，禁用语音和系统鼠标捕获。
+
+原试玩 http://127.0.0.1:4131/game/liuzhou 已更新至 .next-liuzhou-controls-build，生产进程98656；仅清理本任务两个临时 tsconfig 类型 include。未提交、推送或外部部署。详见 docs/liuzhou-controls-and-citizens.md。完整城市目标仍未完成：简化人物/建筑、小规模日程、移动横屏对话遮挡部分角色、真实地标精度和真人/真机手感仍需发展，自动路线不证明趣味或真机性能。
+
+## 2026-10-23 · 春日第一单：材质声音与动作反馈
+
+Original prompt: 根据 01a16784-f80e-7b03-9294-3092cdd713cb 完善横版跳跃游戏。完整目标保持active，未提交/推送/外部部署。
+
+新增配送专用audio.ts，替换原先共用的少数提示音。托盘挑面团、金属烤盘、热弹反射、石地/木板/金属/棚布实际落地、棚布压紧与弹出、餐车发车/到站、热弹发射、锅炉排气、蒸汽冲刺、雨槽/水台、小鸟和吊台/冠轮预告按材质与行为分声，四区短旋律分组。feedback.ts/FeedbackView.ts在实际发生位置画柔软圆环/借力上箭头、金属短环、贴地扩散线、蒸汽气环和危险三角；静音仍可读，减少动态保留静态短符号。没有改跳跃/攻击窗口/机关时序，没有加入命中停顿、镜头震动或新美术素材。
+
+反馈与待播队列分别限32/48条，旧事件淘汰，渲染最多消费8条近期音效；同类短时间合并，远处机关衰减/丢弃，最多24声部。声音节点结束自动断开，静音/暂停/失焦/页面退出立即清理；交付时停止旋律但允许完成提示结束，视觉反馈继续衰减而物理与计时停止。旧原型继续使用原SpringAudio，新版仍兼容v2存档。
+
+pnpm run delivery:test含新增8项反馈/声音规则，共55/55；旧四关和当前游戏库28/28，总83项通过。修改源与脚本定向ESLint通过，完整pnpm run check后顺序pnpm run build通过（.next-sui-delivery-feedback-final），构建ESLint保持启用。日志.tmp/sui-delivery/feedback-{all-rules,regression,eslint,script-eslint,check,build}.log。完整检查发现的theater映射局部命名遮蔽已改正，之后完整检查与构建通过。
+
+安装版静音Chrome开发feedback-dev和生产feedback-production两份report.json均通过、错误[]。各12张全页PNG共24张全部逐张打开目检，像素sanity/文字状态/DOM/画布交叉核对。两次从新档正常七按钮输入完成十二单和实际终章入座，验证材质图形、暂停冻结/立即释放声音、静音时保留画面、减少动态、390×844与844×390视口、刷新保留静音设置。浏览器真实WebAudio手势解锁，12种音效在OfflineAudioContext独立渲染均有RMS输出、波形哈希不同、单个效果峰值<0.3、结束声部0；不冒充人工听辨或整段混音审美。测试浏览器--mute-audio并禁用speech，玩家普通设置不受影响。初次脚本使用错误的设置按钮名称而超时，改正选择器后两套完整重跑通过，未改游戏流程来规避验证。
+
+用户原试玩http://127.0.0.1:4145/game/sui-spring已更新为本轮构建，HTTP200，保留进程129084（工具session67981）。停止本任务4138开发和4146验证服务，仅清理自己的feedback-dev/feedback-final两条tsconfig类型include，保留其他任务路径/改动/服务。本轮对完整目标有实际进展，目标保持active；独立人物动作、环境美术、可操作关系支线、人工听辨及真人初见/主动复玩仍需继续。自动路线不证明真人趣味或真机性能。详见docs/sui-delivery-progress.md。
+
+## 2026-10-23 · 旅居之魂标题播放卡顿与待机循环
+
+用户反馈本地标题视频刚开始卡、随后静止，并要求入场后切独立循环视频。旧生产包实测首屏3D场景构建产生10.9秒主线程长任务，视频缓冲完整且掉帧统计为0，但页面恢复时8秒片已经结束；旧实现没有结束后循环逻辑。标题/OP期间现在不创建3D画布，实际进入游戏后才构建并显示加载提示，场景就绪前冻结游戏步进。去掉video JSX/effect重复指定src。
+
+8秒标题入场自然结束后，0.65秒淡入独立4秒待机循环；复用原片尾6–8秒，以光流补帧放慢、1秒循环溶接，1280×720/24fps、无声、800196字节，无新增生成或积分。预载但不同时播放两片，后台/减少动态暂停，重播/进入游戏清理媒体；原带声音重播和18秒新档OP保留。制作脚本scripts/create-night-rain-title-loop.mjs，来源与哈希补入docs/night-rain-cinema-job.json。
+
+开发和生产静音安装Chrome自然播放超过19秒并跨两次循环、后台暂停/恢复和重播/卸载通过。生产首次playing约0.459秒，入场结束到循环playing约0.5毫秒，唯一长任务60ms，循环累计260帧/掉帧0；仅为同机单次局部样本。五种媒体回归（桌面/320px/减少动态/坏媒体/声音属性）、两个测试存档续玩刷新与旧档/满档保护、连续三次真实WebGL丢失重建均通过，全部报告错误[]。前后对比2张、开发媒体12张、生产媒体12张+循环1张+存档5张+恢复1张，共33张采用截图全部打开目检，PNG sanity/状态/DOM/画布交叉核对通过。
+
+185/185规则、修改源ESLint、独立Node脚本ESLint recommended、完整pnpm run check后顺序pnpm run build通过，Next构建ESLint保持启用。证据tmp/night-title-stutter/{before,after-dev-final,production,cinema-dev,cinema-production,test-saves-production,recovery-production}/report.json，门禁check.log/build.log/rules.log。本任务4126开发服务停止，只清理自己的两条Next类型路径，保留并行柳州类型路径与其他修改；4127生产服务改为.next-night-title-loop-release。未提交、推送或部署。
+
+
+## 2026-10-23 · 春日第一单：独立主角动画交付
+
+同一完整目标继续active，未提交/推送/外部部署。上轮只核对开场栞栞已生效，本轮继续完成已制作动画的生产截图验收、文档同步和实际试玩服务交付。
+
+主角16张独立姿态已接入：四帧跑步、起跳/上升/下落/落地、托盘起手/接触/伸展/收招，以及刹停/受伤/递餐/坐姿。保留批准待机图，托盘/餐箱分层；原模拟、攻击有效帧/冷却/机关时序不变。修复重试护盾误作受伤、松键惯性刹停姿态与递餐朝向。原图/提示词/来源在docs/art/sui-delivery与docs/sui-delivery-art.json；归一脚本和48/64/96px预览保留。没有修改旧归档/自走棋素材，开场角色仍是栞栞。
+
+62项配送规则与旧四关/游戏库28项共90项通过；源/脚本定向ESLint、完整check→build顺序通过，保留构建ESLint，日志.tmp/sui-delivery/animation-*.log。轻托盘测试枚举随后由basic校正为真实quick，7项动画规则和脚本lint重验通过，未改运行源码。开发animation-dev与生产animation-production的report.json均passed、errors[]，各23张全页PNG共46张全部逐张打开目检，像素sanity/DOM/Canvas/文字及真实Phaser纹理帧镜像锚点一致。两次新档十二单正常输入满血零死亡，含实际面团/反弹/冲刺、宽隔热托盘空中攻击、暂停、受伤/R重试、手机横竖屏与终章真实坐姿。
+
+用户原地址http://127.0.0.1:4145/game/sui-spring已切到.next-sui-delivery-animation-final，HTTP200、页面入口及动画JS与已验证4146构建完全一致，四张图集200。当前隐藏Node PID17228；旧4145服务50748已核实后替换，测试4138父47980/子34468和4146的28116已核实后关闭。只清理本任务animation-dev/final两条tsconfig类型include，保留其他任务路径。后续重新管理服务须再次确认PID/命令行/端口，不信任历史PID。
+
+docs/sui-delivery-progress.md和sui-spring-direction.md已同步。剩余四区建筑/地面/材质与环境美术、敌人与居民在场动作、可操作关系支线、人工听辨及真人初见/主动复玩观察仍需继续；自动路线不证明真人趣味或目标时长，不能将主角动画里程碑当作完整游戏完成。
+
+## 2026-10-23 · 东门城楼登台与测试鼠标隔离
+
+延续柳州开放3D街区目标。将原点以北约65米的旧城楼移到导入OSM historic site 205661090附近，以《城中文史》第十四辑搜索索引摘录中的五开间、面阔16.44米和进深10.41米校正正殿比例，并参考既有本地照片重做青砖台基、红木窗棂、双层檐口和瓦面。PDF全文下载失败，只有索引摘录；台基尺寸、高度、拱洞、西侧阶梯及具体位置仍是玩法近似，没有宣称测绘复原。
+
+真实Rapier拱洞可穿过，31级台阶可连续走到平台，栏杆留出西侧入口；可在平台跳跃、暂停、收录、刷新恢复及原路下楼。dongmen.ts共享实体用于物理、镜头和导航；恢复只认支持面高度，旧档落入新墙时移到东侧净空地，车辆也检查；互动过滤楼上楼下高度差。镜头可抬头至-0.65并检查城楼实体/地下，初始朝向指向新城楼。模型仍简化，正殿封闭。
+
+用户再次强调不要影响系统鼠标。本轮审计所有柳州测试入口，新增scripts/lib/liuzhou-test-browser.cjs；主验证、车流、送餐、第二章、市民和登台的桌面/触屏上下文都在创建页面前模拟requestPointerLock/exitPointerLock/pointerLockElement，禁用测试语音。全程静音无头安装Chrome，输入仅发给独立浏览器，未使用桌面鼠标工具；正常玩家原生Pointer Lock保持。操作专项首次因测试指针从进入按钮移到起点也计入基准而失败，修正取样起点后完整通过，未更改游戏响应规避断言。
+
+41/41柳州规则通过，修改源/脚本定向ESLint通过；完整pnpm run check后顺序pnpm run build通过（.next-liuzhou-dongmen-build），保留Next构建ESLint，仅其他游戏既有unused警告。日志tmp/liuzhou/dongmen-{rules-final,eslint-source-final,quiet-tests-eslint,check-final,build-final}.log。
+
+采用的最终证据：开发登台.tmp/liuzhou-dongmen-ready-final-dev/report.json（12张）；生产登台liuzhou-dongmen-production（12张）、两章/三单/手机完整回归liuzhou-dongmen-regression-production（39张）、操作liuzhou-dongmen-controls-final-production（7张）、车流与真实庭院碰撞liuzhou-dongmen-traffic-production（7张），后四者也位于.tmp下。共77张全页PNG全部逐张打开检查，像素sanity、文字状态、DOM/画布及错误交叉核对，全部errors=[]。较早开发完整回归39张未采用作目检证据，其他中间失败/被中断报告也不作为最终通过证据。
+
+原试玩http://127.0.0.1:4131/game/liuzhou已更新至本轮生产构建，最终HTTP200，进程46296。停止自己的4130开发父子进程25432/8608，只移除本轮两个tsconfig临时类型include，保留其他线程路径与源码。未提交、推送或外部部署。来源和实现说明见docs/liuzhou-dongmen.md，隔离测试入口见docs/liuzhou-controls-and-citizens.md。
+
+完整城市目标仍未完成。当前初始画面看到城楼侧背，人物/街景依然简化；手机靠粉店挑檐的极近视角仍可能遮挡角色，横屏对话遮挡也待优化；普通第三人称低角度会放大角色或载具。更多真实立面、独立人物动作、城市活动、原生鼠标真人手感、真机性能与趣味验证仍需继续。自动路线通过不证明真人体验。
+
+## 2026-10-23 · 春日第一单：首街建筑与平台材质交付
+
+Original prompt: 根据 01a16784-f80e-7b03-9294-3092cdd713cb 完善横版跳跃游戏。完整目标保持active，未提交、推送或外部部署。上轮只核实栞栞替换的现状，没有继续推进待验收环境；本轮重新读取参考会话和当前文件，完成环境验收、修正测试漏拍、同步文档并更新试玩服务，属于实际进展。
+
+新增BreakfastView.ts：首单小馆/面包房/阁楼三张透明手绘外墙，置于平台与交互物后方，阁楼窗台接合真实阳台，石基/支柱接地。前三单沿原surface增加石缝、木纹/钉和街面土层，碰撞与机关/输入/存档时序不改。切换关卡销毁外墙，装饰与支线继续可见。内置image_gen.imagegen原图在docs/art/sui-delivery/environment，完整提示词/来源/哈希在docs/sui-delivery-environment-art.json；runtime三张WebP共1,048,122字节，quality90且alpha逐字节相同，无Dreamina操作。
+
+62/62配送规则、源/脚本定向ESLint、完整check→build顺序通过，保留构建ESLint，日志.tmp/sui-delivery/environment-{rules,source-eslint,script-eslint-final,check,build}.log。开发environment-first-dev-final19张+environment-dev-final14张、生产environment-first-production19张+environment-production14张，四份report.json均passed/errors[]，66张最终截图全部逐张打开检查，像素sanity/DOM/画布/文字状态交叉核对。覆盖首单全路/栞栞支线/装备/暂停/重试/热气/真实旧档/三指触控及横竖屏/旧归档，十二单正常输入逐段相同位置满血零死亡、实际入座、跨区清理，以及实际购买四件装饰后回首街的三种视口。
+
+首轮浏览器启动时编码文件未写完导致图片失败，编码完成后新上下文重跑通过，不隐藏加载错误。环境脚本误写rain-canopies漏拍，改真实rain-relay并校验完整14张名单，开发和生产完整重跑通过。两个验证入口都模拟Pointer Lock、禁speech、静音，无系统鼠标或正常游戏设置改动。
+
+4145已更新到.next-sui-delivery-environment-final，HTTP200；environment-live-report.json确认页面脚本清单和13个实际脚本/美术文件与验收4146的SHA相同。保留隐藏Node PID8784；旧4145的17228、测试4146的45728、4138父27140/子44588均核实命令/端口后停止。只移除本轮environment-dev/final两条tsconfig路径，保留其他线程源码、类型与服务。
+
+docs/sui-delivery-progress.md和docs/sui-spring-direction.md已同步。仍需后院小门/修理屋/室内和其他三街区完整环境、敌人/居民动作、可操作关系支线、手机竖屏地下留白调整、人工听辨和真人初见/主动复玩。不能把首街三建筑里程碑或自动通关当作完整目标完成。
+
+## 2026-10-23 · 旅居之魂斜坡冲刺跳跃穿透修复
+
+用户截图位于第三关天镜原「废台螺旋外阶」。先用普通冲刺/跳跃输入稳定复现：z=-610.688310，脚底18.189300而坡面18.234848，旧落地查询只接受上一瞬间脚底以下的地面，水平向上坡移动后漏掉坡面并继续坠落。world.rampLandingAt现在检查移动前后的脚底线段是否从连续坡面上方穿过；engine.updateFall以该接触高度落地，保留原摔落伤害与重力。起点位于坡下或坡侧不吸附到上表面。没有增加全局地面吸附容差。
+
+新增night-rain-slope.test.mjs四项回归，含36组上下坡/斜向/接缝/16、40、80ms步长组合、相对坡面上升时接触、下方/侧方不吸附和真实高落差死亡；旧版首项先失败，修复后全部189/189 Night Rain规则通过。源定向ESLint、独立Node脚本recommended ESLint通过；脚本使用项目TS解析器会因不在tsconfig中报错，改用临时独立脚本配置验证，未修改项目lint门禁。完整pnpm run check后顺序pnpm run build通过，构建ESLint保持开启，日志tmp/night-slope/{rules,check,build,eslint-scripts}.log。
+
+scripts/verify-night-rain-slope.cjs在静音安装Chrome独立上下文中注入文档内虚拟Pointer Lock、禁语音，使用真实W/Shift/Space键及advanceTime，未修改运行中物理状态。开发与生产各验证上坡、下坡、坡顶三场景，每20ms核对脚底/支持面/生命和游戏模式，实际起跳速度>5且最后落地；两份report.json passed=true、errors=[]。各六张截图共12张均已逐张打开目检并交叉核对PNG sanity/DOM/画布/状态，报告tmp/night-slope/{dev,production}/report.json。
+
+原试玩http://127.0.0.1:4127/game/night-rain已更新为.next-night-slope-release，隐藏Node PID3588保留，最终HTTP200；4126开发服务停止，仅移除本任务两条tsconfig临时类型include，保留其他任务路径和改动。刷新原游戏页面即可载入修复，不会主动覆盖用户存档。未提交、推送或外部部署。
+
+## 2026-10-23 · 柳州粉摊、长椅与镜头实体完成
+
+延续柳州开放3D街区目标，用户关于测试不能影响系统鼠标的要求持续有效。本轮所有桌面、手机上下文继续在创建页面前通过quietContext模拟Pointer Lock，输入只发给独立静音无头Chrome，禁用语音，未使用系统鼠标工具或原生捕获。正常玩家保留点击隐藏鼠标和自由转视角。
+
+粉摊原2.4米高实心柜体降为1.1米，补台面、汤锅、碗和雨棚支柱；street.ts统一柜体/台面/雨棚/招牌/支柱及六张长椅的渲染、真实Rapier和镜头实体。柜台和长椅可阻挡步行/车辆，旧档落入新增家具时移到净空处并保留章节余额，市民避开家具；一位散步居民的长椅旁停点移到空地。镜头平滑后每帧再检查到玩家的线段，避免插值穿过柜体、建筑或城楼。尺寸属于虚构玩法，没有宣称地方实测。
+
+44/44柳州规则通过；源和脚本定向ESLint通过，完整pnpm run check后顺序pnpm run build通过（.next-liuzhou-street-build），Next构建ESLint保留。日志tmp/liuzhou/street-{rules,eslint-final,tests-eslint-verified,check,build}.log。没有在完成门禁后更改游戏运行源码。
+
+开发专项.tmp/liuzhou-street-final-dev/report.json（9张）、生产家具liuzhou-street-production（9张）、完整两章/三单/手机liuzhou-street-regression-production（39张）、城楼liuzhou-street-dongmen-production（12张）、操作liuzhou-street-controls-production（7张）共76张全页截图全部逐张打开检查，像素sanity、文字状态、DOM/画布交叉核对，报告errors=[]。生产粉摊96个真实渲染帧视线均避开静态家具；绕行、柜台和长椅碰撞、先跳上座面再跳过靠背、正常保存后手机恢复/拖动/交谈通过。城楼穿洞/登台/跳跃/存档/下楼和虚拟鼠标生命周期、A/D方向、骑行右转、Esc/Alt/地图/交谈/失焦回归通过。
+
+中间测试失败保留，未改游戏动作绕过断言：靠背高1.4米高于站立跳跃，改为从较低座面分两跳；三米城市导航不能解析贴着小长椅的绕行，专项改用普通输入明确绕过椅端；连续零间隔CDP拖动后触摸不产生兼容click，经同位置独立诊断及正常间隔拖动后交谈验证，修正测试事件时序。脚本直接套TS工程ESLint导致文件不在project内，最终改用已有Node/browser recommended配置通过。较早失败截图/报告不算最终通过证据。
+
+原试玩http://127.0.0.1:4131/game/liuzhou已更新为本轮构建，最终HTTP200，隐藏Node PID51676。仅核实后替换本任务旧生产46296；合并动态停止/启动命令曾被自动审批拒绝，之后分开只读核实固定PID、停止确定进程、隐藏启动的方式通过，未扩大进程范围。4130开发父21752/子37472已核实后关闭；仅移除三个本任务Next类型路径，保留其他任务修改/服务。没有提交、推送或外部部署。
+
+完整目标保持active。后方极近粉摊视角仍可能被大招牌占据画面，动态汽车/其他人物仍可能遮挡角色；手机横屏对话、低角度人物放大、初始城楼侧背、简化人物街景、真实立面和更多城市活动仍需继续。自动路线不证明真人手感、趣味或真机性能。实现与证据详见docs/liuzhou-street.md。
+
+## 2026-10-23 · 春日第一单：后院门楼与栞栞修理屋交付
+
+Original prompt: 根据 01a16784-f80e-7b03-9294-3092cdd713cb 完善横版跳跃游戏。继续同一完整目标，保持active；用户最新要求开场替换四时小路已持续采用栞栞，本轮再次核实实际4145支线与图片请求。未提交、推送或外部部署。
+
+首单补两张透明手绘外墙：门楼上房保留真实低路与支柱，栞栞修理屋左侧开放工作间，NPC/工作台/小猫、前景晒饼棚与高路仍清楚。最终支柱从y550接入横梁，修正首轮截图细缝；碰撞/机关/存档/输入未改。内置image_gen.imagegen生成，无Dreamina操作；原图docs/art/sui-delivery/environment/{gatehouse,workshop}-source-v1.png，运行WebP两张502910字节、五张合计1551032。quality90编码alpha逐字节相同，完整提示词/来源/尺寸/边界/放置与SHA在docs/sui-delivery-environment-art.json版本2。
+
+首单验证增加新档门楼低路：正常短跳进门内平台，y606头顶有净空，正常输入退出并保持满血零死亡。62/62配送规则、修改源/脚本定向ESLint通过；完整check→build最终顺序通过，构建目录.next-sui-delivery-street-final、Next ESLint保持启用。前两次构建/check因并行柳州导航新增lint错误失败；等其修正后重跑通过，未代改其他任务。门禁日志.tmp/sui-delivery/street-{source-eslint-final,script-eslint,rules,check-release-final,build-release-final}.log。
+
+开发street-first-dev-final20张+street-environment-dev14张，生产street-first-production20张+street-environment-production14张，均在.tmp/sui-delivery/且四份report.json均passed/errors[]。68张最终全页PNG全部逐张打开检查，像素sanity/DOM/画布/文字状态交叉核对。覆盖低路/高路/栞栞面包支线/棚布/餐车/真实交付、装备/重试/热气/旧档/三指触控/手机横竖屏/旧归档；两次十二单正常输入逐段相同位置满血零死亡并实际入座、五张HTTP200、跨区清理和四装饰回访。独立安装Chrome静音禁speech、Pointer Lock测试内模拟，未影响系统鼠标或正常玩家音量。
+
+原试玩http://127.0.0.1:4145/game/sui-spring切到验收包，隐藏Node PID52832保留。street-live-report.json确认15个实际脚本/美术SHA与4146一致，HTTP200。切换后再次正常输入实测栞栞支线，opening-npc-live-report.json passed/errors[]，仅请求shiori无komichi，额外一张当前试玩PNG已打开目检。旧4145进程8784、4146进程2324、4138父52508/子25840核实后停止，仅删除自己的street-dev/final两条tsconfig include；保留其他任务修改和服务。docs/sui-delivery-progress.md及docs/sui-spring-direction.md已同步五建筑现状。
+
+剩余：面包房室内/后门、烤炉区域与首领、其余三街区/远景、敌人与居民动作、各区可操作关系支线、手机竖屏地下留白、人工听辨和真人初见/主动复玩。完整目标未完成；自动路线不证明真人趣味、目标时长或真机性能。
+
+## 2026-10-23 · 柳州街区导航与鼠标隔离确认
+
+延续柳州开放3D街区目标，完整目标未完成。本轮新增navigation.ts三米网格A*和独立worker，按步行/骑行/汽车半径避开建筑、河道、城楼与街边家具，优先道路、偏离重算，台上提示先回街面。地图M可临时选择五个地标，跟随任务时优先当前送餐，否则指向章节目标；小地图/全图/文字状态共用实际路线和剩余距离，手机横竖屏保留目的地名称，不变更存档格式。
+
+最终规则50/50、源与脚本定向ESLint通过；完整pnpm run check后顺序pnpm run build通过，保留Next构建ESLint，构建.next-liuzhou-navigation-final。门禁日志tmp/liuzhou/navigation-{rules-verified,eslint-final,scripts-eslint-verified,check-verified,build-verified}.log。完整检查发现共享nightRain/fanEnemies.ts一处no-confusing-arrow，仅为表达式补括号，保留其他线程改动。开发完整回归一次ERR_NO_BUFFER_SPACE未算通过；旧生产回归虽然退出0，目检发现显示路径累积反向轨迹、近店距离虚增，已改为投影独立基础路线，并新增连续移动和真实到店短距离断言，之后重新通过最终门禁与浏览器验证。
+
+最终生产专项.tmp/liuzhou-navigation-final-production/report.json九张与完整两章/三单/手机回归.tmp/liuzhou-navigation-final-regression/report.json三十九张，均退出0/errors[]，合计48张全部逐张打开目检，像素sanity/DOM/画布/文字状态交叉核对。中间报告不作最终验收。现有低视角人物放大、动态载具遮挡、初始城楼侧背与手机横屏交谈覆盖人物仍待后续完善；静态路线不是真实交通导航，无自动驾驶、转弯半径优化或跨楼层导航。
+
+用户再次要求测试不要抢占或移动系统鼠标。本轮核实所有柳州测试入口都用scripts/lib/liuzhou-test-browser.cjs的quietContext，在创建页面前模拟Pointer Lock，只对独立无头安装Chrome发浏览器输入，静音禁speech；测试已经结束，保留正常游戏原生鼠标捕获。原生锁定即使无头也可能影响Windows光标，后续自测继续隔离，禁止桌面鼠标操作。
+
+原试玩http://127.0.0.1:4131/game/liuzhou已切换为验收构建，隐藏Node PID14340，HTTP200；live-report.json确认九个本地Next脚本列表/SHA与验收4132一致。核实后停止旧4131进程51676和临时预览4132的19392，只清理navigation-dev/build/final三条临时tsconfig类型include，保留其他线程路径、源码与服务。未提交、推送或外部部署。详见docs/liuzhou-navigation.md；完整城市内容、人物动作、原生鼠标真人手感、真机性能和趣味仍需继续，自动路线不等于完整目标完成。
+
+## 2026-10-23 · 春日第一单：面包房室内与后门交付
+
+继续根据01a16784-f80e-7b03-9294-3092cdd713cb完善横版游戏，完整目标保持active。上一轮只重复核实已完成的开场栞栞替换，没有推进完整作品；本轮收尾已实现的第二单环境、方向切换镜头修复，并实际更新原试玩服务，未将局部验收当作完整完成。
+
+新增BakeryView.ts及四张透明手绘环境：厨房后墙、石砌烤炉、冷却面包架、后院服务窗。真实低梁/升降烤盘/面粉架/晒棚/后门落脚与NPC交付保持可读，切关清理旧装饰。内置image_gen.imagegen素材原图保存在docs/art/sui-delivery/environment，完整提示词/尺寸/来源/放置/SHA在docs/sui-delivery-environment-art.json版本3。未使用Dreamina；四张WebP共1186860字节，九张共2737892，quality90/method6/exact=True且alpha逐字节一致。
+
+修复宽屏切竖屏时暂停/送达/手动状态镜头不更新导致角色出画：ResizeObserver调用resizeDeliveryViewport立即按原规则重新构图，正常步进仍保留平滑。新增规则覆盖四关、三种状态及三种宽高，确认角色/落脚可见、镜头在世界范围内，除viewport/camera外所有物理、机关、计时和存档状态不变。
+
+63/63配送规则与旧游戏28项共91项通过，源/脚本定向ESLint通过，完整pnpm run check后顺序pnpm run build通过，保留Next构建ESLint。日志.tmp/sui-delivery/kitchen-{rules-final,regression,source-eslint-final,script-eslint-final,check-release,build-release}.log。并行柳州源lint阻塞已由其任务修正后重跑完整门禁通过，没有绕过错误或修改其玩法。
+
+开发kitchen-resize-dev及生产kitchen-production的report.json均passed/errors=[]，各21张共42张最终全页截图全部逐张打开目检。两次新档十二单正常输入、逐段精确位置、满血零死亡、真实终章入座、四装饰回访、跨区清理、烤盘与后门到达时手机横竖屏切换均通过；九图HTTP200，PNG sanity/文字/DOM/画布/错误交叉核对。中间发现角色出画的报告不作为修复后验收。静音安装Chrome，禁speech，测试内模拟Pointer Lock，没有系统鼠标操作或正常玩家音量改动。
+
+原试玩http://127.0.0.1:4145/game/sui-spring更新到.next-sui-delivery-kitchen-final，隐藏Node PID50832，HTTP200。kitchen-live-report.json证明22个实际入口/动态游戏/Phaser块及环境图SHA与验收4146完全相同。切换后栞栞面包支线正常输入复测passed/errors=[]，仅加载shiori无komichi，额外当前截图已打开。旧4145进程52832、4138父41532/子29152及4146进程56352核实命令/端口后关闭。只清理自己的kitchen-dev/final两条tsconfig include，保留其他任务路径、源码及服务。未提交、推送或外部部署。
+
+完整目标尚未完成：烘炉蟹区域、其余三街区环境、敌人/居民独立动作、各区可操作关系、手机竖屏地下留白、人工听辨和真人初见/主动复玩仍待继续。自动通关不能证明真人趣味、目标时长或真机性能。详见docs/sui-delivery-progress.md。
+
+## 2026-10-23 · 柳州四位人物关节动作与骑行统一
+
+延续真实柳州开放 3D 街区目标，完整目标仍 active。用户要求测试不要动系统鼠标持续有效：本轮重新核实无残留柳州测试进程，所有自动浏览器上下文继续经 quietContext 在页面创建前模拟 Pointer Lock，使用独立静音无头安装 Chrome、禁语音和浏览器虚拟输入；没有桌面鼠标操作，正常游戏继续支持点击隐藏鼠标与直接转视角。
+
+新增 actorMotion.ts 和 ActorView.tsx，主角/剧情 NPC/五位市民/自行车骑手共用髋膝踝、肩肘关节模型。先查看四张原画像，保留岁己猫耳帽/双卷发/紫衣、栞栞贝雷帽/侧辫/开衫、米汀银蓝长发/浅色帽衣和七海棕发/耳机/深色制服形状。步频跟随实际位移，跳跃/下落/落地读取物理状态；脚跟随实际踏板曲柄，手到车把，原拍照/伸展/购物/放映动作和道具继续可用。初始视角略抬高，减少旧低角度人物放大。仍是程序化简模，未宣称精细角色完成。
+
+首轮规则的路径长度断言误用净位移，修为逐步累积；首轮浏览器发现全局零高度地面受控制器接触间隙影响，误判下落并积累负垂直速度。现将已被既有地面限制支撑且非上升的角色视为 grounded 并清零速度，保留真实跳跃和高处接触。测试检查器仅对 rider 节点查踏板，避免普通人物从整张场景误找到其他车的踏板。最后源 ESLint 条件回调需要括号，修正后才执行完整门禁，无规则绕过。
+
+56/56 柳州规则、最终源和独立 Node/browser 脚本 ESLint 通过；完整 pnpm run check 后顺序 pnpm run build 通过，Next 构建 ESLint 保持开启，构建 .next-liuzhou-actors-final。日志 tmp/liuzhou/actors-{rules-verified,eslint-source-verified,eslint-scripts-verified,check,build}.log。React 检查确认几何/材料复用释放和 refs 帧更新，未把模拟迁入 React 状态。
+
+开发专项 .tmp/liuzhou-actors-dev-v2/report.json 19 张已逐张目检，但早于最后三处模型/检查器调整；最终生产五份报告 actors-production19、actors-regression-production39、actors-controls-production7、actors-dongmen-production12、actors-citizens-production14，均在 .tmp/liuzhou-* 下、errors=[]、脚本退出0，共91张全页PNG全部逐张打开检查，与像素 sanity/DOM/画布/文字状态交叉核对。实际骑手脚底到踏板0.025米设计侧偏、手到车把零误差。覆盖四角色走跑/跳落/暂停/交谈/骑车/上下车、两章与三单、存档/手机多点触控、A/D和鼠标虚拟生命周期、31级台阶与完整下楼、五市民活动/道具及准确日程读档。旧失败报告保留，不作最终证据。
+
+原试玩 http://127.0.0.1:4131/game/liuzhou 切到验收包，隐藏Node PID14808，HTTP200；.tmp/liuzhou-actors-production/live-report.json 核对九个本地Next脚本清单与SHA和4132验收一致。未主动操作用户当前页面或存档。核实后停止旧4131进程14340、开发4130父17596/子42796、验收4132进程45252，仅移除 actors-dev/final 两条临时类型include，保留新增配送oven等其他线程路径/源码/服务。未提交、推送或外部部署。详见 docs/liuzhou-actors.md。
+
+剩余：完整城市立面/高度与更多活动、精细角色美术、上下车过渡、动作平滑与逐级台阶脚底贴合、滑行停止蹬踏、动态人物/车辆遮挡、交谈取景、手机横屏对话遮挡、真实鼠标/手机性能与趣味验证。对话时HUD仍可能显示之前移动速度，人物姿态已静止；初始城楼侧背仍待改善。自动通过不等于完整开放世界完成。
+
+## 2026-10-24 · 春日第一单：烘炉蟹分层美术与庭院交付
+
+继续同一春日配送完整目标，保持active。用户要求开场换掉四时小路已采用栞栞，当前试玩再次从新档正常输入验证支线、角色和对话，仅请求shiori、无komichi，opening-npc-live-report.json passed/errors[]，截图已打开目检。未提交、推送或外部部署。
+
+新增OvenView.ts，砖铜炉壳跟随真实首领位置、左右钳子跟随蓄力/低扫范围，两个烘焙屋构成庭院；阀门、眼睛、腿、排气与预警保持实时绘制，危险热背和实际可站立浅色边沿区分。关完三阀隐藏钳子并显示面包，跨区清理外墙/隐藏首领图层；移除取餐台后遮挡新建筑的旧灰盒墙。未修改碰撞、机关时序或存档。内置image_gen.imagegen生成，无Dreamina操作，原图在docs/art/sui-delivery/environment/{oven-crab-shell,oven-crab-claw,oven-courtyard}-source-v1.png，运行WebP三图639320字节、12张环境图共3377212字节；quality90/method6/exact=True，全部alpha逐字节相同，原始提示词/来源/尺寸/边界/放置/SHA在docs/sui-delivery-environment-art.json版本4。
+
+63/63配送规则与旧游戏28项共91项通过，源/脚本定向ESLint通过，完整pnpm run check后顺序pnpm run build通过，Next构建ESLint保持开启。日志.tmp/sui-delivery/oven-{rules,regression,source-eslint-final,script-eslint-final,check-release,build-release}.log，生产构建.next-sui-delivery-oven-final。开发oven-dev-final与生产oven-production各25张最终全页PNG，报告passed/errors[]，50张全部逐张打开目检，与像素sanity、DOM、画布、文字状态和真实Phaser图像诊断交叉检查。覆盖十二单正常输入精确位置/满血零死亡、真实钳子扫击、三阶段烤盘/左右登背/逐个关阀、横竖屏登背、关炉交付、跨区清理、真实餐会及四装饰回访；12张图片HTTP200。独立安装Chrome静音、禁speech、模拟Pointer Lock，不控制系统鼠标。
+
+原4145服务先前已停止，本轮恢复为已验收包，隐藏Node PID13556，HTTP200；oven-live-report.json确认25个实际脚本/动态游戏和Phaser块/环境文件SHA与4146验收相同。核实命令和端口后停止本任务4146验证PID43004，4138已停止；仅移除自己的oven-dev/final两条tsconfig include，保留其他任务路径和服务。docs/sui-delivery-progress.md与方向稿已同步。
+
+完整作品未完成。其他三街区环境、远景、敌人/居民动作、各区可操作关系支线、手机竖屏地下留白、人工听辨与真人初见/主动复玩仍待继续；自动路线不证明真人趣味、目标时长或真机性能。
+
+## 2026-10-24 · 春日第一单：午市摊位、食铺与运货餐车交付
+
+Original prompt: 根据 01a16784-f80e-7b03-9294-3092cdd713cb 完善横版跳跃游戏。上轮完成炉蟹验收、4145恢复和栞栞复验，属于实际进展。本轮重读参考会话与方向稿，继续完整目标，不把美术里程碑当作作品完成；未提交、推送或外部部署。
+
+新增MarketView.ts：第四单用五个蔬菜摊台替换旧大色块摊位，二层食铺服务窗台对齐真实y500交付台，底边对齐y680街面；移除入口旧灰墙、重复悬空摊柱与终点灰盒。第四/五单餐车独立车身跟随真实cart surface，车轮辐条角度由真实位移计算、停站即停，保留实时车顶边和车轮；后续地区隐藏车身并销毁摊台/食铺，首单旧车不变。已有石木平台与街面材质扩展至集市三单，无物理、路线、计时、机关与存档改动。仅test=1增加只读真实Phaser诊断。
+
+内置image_gen.imagegen生成三图，无Dreamina操作。原图docs/art/sui-delivery/environment/{market-produce,market-canteen,market-cart}-source-v1.png，运行WebP在public/games/sui-spring/environment，同名-v1.webp；三图867946字节，15张总计4245158字节。quality90/method6/exact=True，全部15张源/运行SHA及alpha逐字节一致复验；完整提示词、来源、尺寸、透明边界与放置在docs/sui-delivery-environment-art.json版本5。
+
+63/63配送规则、源/脚本定向ESLint通过，完整pnpm run check后顺序pnpm run build通过，保留Next构建ESLint，构建.next-sui-delivery-market-final。日志.tmp/sui-delivery/market-{rules,source-eslint,script-eslint,check-release,build-release}.log。开发market-dev与生产market-production各28张全页PNG，报告passed/errors[]，56张全部逐张打开目检，与像素sanity、DOM、画布、文字状态和真实渲染图像交叉检查。两次十二单正常输入精确位置、满血零死亡，覆盖移动摊车、反弹开关、交付前窗口、斜轨启停/发车/低梁/卸货、三处横竖屏、跨区清理、实际餐会入座及四装饰回访，15图HTTP200。Chrome静音禁speech、模拟Pointer Lock，不控制系统鼠标。最初一条ESLint混合运算错误已补括号，修正后再过门禁，没有绕过规则。
+
+原试玩4145切到验收包，隐藏Node PID35344，HTTP200；market-live-report.json确认28个实际页面脚本、动态游戏/Phaser块和素材SHA与已验收4146一致。更新后新档栞栞支线再次passed/errors[]、仅shiori无komichi，当前截图已打开。核实命令/端口后停止旧4145的13556、验收4146的44712和开发4138父17896/子45568，只移除market-dev/final两条临时类型路径，保留其他任务新增night-stall-release路径和改动/服务。方向稿与制作状态同步。
+
+完整目标保持active。货运站台/分餐机与其余两区环境、远景、敌人/居民动作、关系支线、手机竖屏地下留白、人工听辨和真人初见/主动复玩仍待继续；自动路线不能证明真人趣味或真机性能。
+
+## 2026-10-24 · 旅居之魂全关卡普通兵粉丝外观补齐
+
+用户指出新关卡小兵回到斗笠胡子默认人形。根因是 FAN_ENEMIES 仅登记早期 11 名专属粉丝，后续 62 名普通兵缺少映射。本轮补齐四章、伏兵和支线地牢的全部 73 名普通兵，使用现有獭獭栞、脆鲨、饼干岁、机巧兔和蛙蛙 FanStyle；13 名首领保留各自模型。新换装带原岗位名，未生成新美术。55m 外继续使用无斗笠胡子的通用性能剪影，48m 内恢复完整粉丝造型。
+
+新增 cosmeticOnly 和 combatFanOf，把外观身份与原 11 名专属粉丝招式分开；新换装仍使用原兵种武器、攻击、巡逻和图鉴描述。加载既有 v13 存档时仅迁移已知旧名字，保留敌人生命/死亡、玩家、探索和图鉴记录，任意非法名字继续拒绝。两份公开测试存档保持兼容，无需重开或覆盖存档。只读复核指出 role 图鉴按首个同类敌人取标题会误显示别的粉丝名，已将 bestiaryName 同样改用 combatFanOf，并增加真实同 key 代表项的名称回归断言。
+
+scripts/tests/night-rain-fan-roster.test.mjs 四项覆盖全部普通兵/无首领误映射、现有 v13 状态与严格校验、兵种招式/图鉴名称和巨躯分类、两份下载存档。最终 193/193 Night Rain 规则通过；源与独立 Node 脚本定向 ESLint 通过；完整 pnpm run check 后顺序 pnpm run build 通过，保留构建 ESLint。最终日志 tmp/night-fan-roster/{rules-final,eslint-final,eslint-scripts-final,check-final,build-final}.log，构建 .next-night-fan-release，BUILD_ID GzINeQ9DqUcJdTKnIwqDq。
+
+scripts/verify-night-rain-fans.cjs 在静音安装 Chrome 独立上下文中通过真实 localStorage/继续界面加载旧 v13 存档，逐个验证第三、四关 13 名普通兵。开发 dev-final/report.json 与最终实际 4127 生产 production/report.json 均 passed=true、errors=[]；两组共 26 张全页截图全部逐张打开目检，交叉核对 PNG sanity、DOM、画布尺寸、完整敌人状态、HP 和错误。开发中间版本提钟钩镰卫头部裁切仅是测试取景，已按高差调整镜头并重拍；中间证据不作最终验收。禁用测试语音、静音浏览器并使用文档内虚拟 Pointer Lock，未捕获或移动系统鼠标。
+
+原 4127 进程在续作时已不再监听；本轮启动最终隐藏 Node PID46496，原游戏与测试存档入口最终均 HTTP200。试玩 http://127.0.0.1:4127/game/night-rain 可刷新后继续旧档；测试入口 http://127.0.0.1:4127/games/night-rain/test-saves/index.html 保留。仅清理自己的 fan-dev/release 两条 tsconfig 类型 include，保留其他线程源码、路径及服务。未提交、推送或外部部署。
+
+## 2026-10-24 · 柳州交谈取景与手机对话布局
+
+延续柳州开放3D街区目标，完整作品未完成。本轮为交谈记录稳定 speakerId，双方停止并相向；旁白不再因为头像拉向远处NPC。新增 conversationCamera.ts，按两人全身、建筑碰撞和头部静态视线选择侧面或相对侧镜头；通过对话框实际DOM尺寸移动相机光轴，交谈结束恢复原yaw/pitch/zoom，放映前清除投影偏移。桌面和竖屏底部台词可滚动，低矮横屏移到右侧，按钮至少44px；交谈隐藏任务/小地图/速度等HUD。ResizeObserver和动画监听正确清理，取景求解缓存，无逐帧React状态更新；实际模型投影检查器只在test=1安装。
+
+60/60柳州规则、修改源和独立Node/browser脚本ESLint通过，完整pnpm run check后顺序pnpm run build通过，保留构建ESLint。验收包.next-liuzhou-conversation-final，BUILD_ID 3wFRDMha0RoqVAznQF-sl；日志tmp/liuzhou/conversation-{rules,source-eslint,scripts-eslint,check,build}.log。开发最终专项12张、生产conversation-production12张/controls7张/regression39张，采用截图均逐张打开检查，与像素sanity、DOM/画布、文字状态和错误交叉核对。三份生产report.json均errors=[]，覆盖真实模型不被对话框覆盖、暂停/冻结/恢复、触摸购买、A/D与虚拟鼠标锁定、两章故事和三次送餐。evening-02-neighbor-memory截图居民已离开，只显示靠近提示，不作为可选回忆对话证据；实际居民交谈由收件人镜头覆盖。
+
+续作时4130/4131/4132服务已停止，恢复原4131到验收包，隐藏Node PID12648。试玩http://127.0.0.1:4131/game/liuzhou HTTP200；.tmp/liuzhou-conversation-production/live-report.json确认22个实际Next入口/动态块/样式SHA与验收包磁盘一致，1440×900画布、589 draw calls、无浏览器错误。所有自动上下文创建页面前通过quietContext模拟Pointer Lock，独立静音无头安装Chrome、禁speech，只用浏览器事件，没有控制系统鼠标或连接用户实际页面。正常游戏保留原生鼠标锁定及音量。仅移除自己的conversation-dev/final两条tsconfig include，保留其他任务修改与服务；未提交、推送或外部部署。详见docs/liuzhou-conversation.md。
+
+限制：动态人车仍可能遮挡身体，粉店镜头可见自行车遮腿；狭窄空间取景、程序化简模/独立表情与口型、城市细节和更多活动仍待制作。自动验证不证明原生鼠标真人手感、真机性能或趣味。
+## 2026-10-24 · 春日第一单：货运站棚与分餐机制作中
+
+Original prompt: 根据01a16784-f80e-7b03-9294-3092cdd713cb完善横版跳跃游戏。上一轮仅复核已有栞栞替换，没有推进完整游戏，本轮重新读取参考会话与方向稿，继续货运站/分餐机环境与真实机关形象，完整目标active。新建FreightView.ts；内置image_gen.imagegen生成开放站棚、控制塔、机械餐勺三图并保存原图/WebP/完整提示词至环境清单v6。三处站棚基脚对齐装货/中途/卸货真实平台；餐勺跟随实际扫击中心、关闭时隐藏，三灯按真实停机进度更新；跨区销毁/隐藏。63/63规则、源及脚本定向ESLint通过。后续还需浏览器检查、完整check→build与正式试玩更新。保留其他任务服务和改动，未提交/推送/部署。
+
+
+## 2026-10-24 · 柳州与旅居之魂共用镜头，修复首次遮挡反转
+
+Original prompt: 首次转视角时角色与镜头之间出现阻碍会奇怪转动、反转；旅居之魂也一起排查修复，考虑共用引擎。用户明确自测不得动系统鼠标。
+
+柳州旧生产包沿普通步行复现：请求约90°却变为159°；原因是resolveCamera寻找替代开阔角并被Scene写回输入yaw。移除避障改写朝向，两款游戏共用gameCamera/boom.ts的视线裁短与径向平滑；遇障立即收近，清障平滑拉远，快速半转不再经世界坐标插值穿过角色。旅居之魂未发现同样yaw回写，修其世界位置平滑和0.65米碰撞下限，保留战斗锁定/升降/过场。柳州交谈双人构图与骑行无输入回正保留。独立无头安装Chrome统一quietContext在页面前模拟Pointer Lock，静音禁speech，只发送浏览器内输入，未连接用户标签或触碰系统鼠标。
+
+镜头规则7/7，夜雨规则194/194通过。源定向ESLint、完整pnpm run check后顺序pnpm run build通过，Next ESLint保持开启，验收.next-shared-camera-final / BUILD_ID KMcvnqgBdyxkvhuZtcVqW。收尾补充lint因本地.bin/eslint入口缺失改用node node_modules/eslint/bin/eslint.js，源码/脚本均exit0，未改依赖。完整柳州当前69/71：旧存档高度13.24对13.2、车辆里程推进阶段3对4两项失败，保留日志，没有修改无关地形/任务来掩盖。
+
+生产camera-liuzhou7图/388采样、camera-night11图/344采样、controls7图、conversation12图，报告在.tmp/shared-camera-{liuzhou,night,controls,conversation}-production/report.json，均errors=[]、exit0，37张全页截图全部逐张目检并与PNG sanity/DOM/canvas/文字状态核对。夜雨使用合法保存夹具，不冒称完整徒步通关。开发夜雨11图与旧复现3图亦逐张检查。紧贴墙时人物仍可能占满画面，未加入角色淡出；模拟锁定不证明原生锁定真人手感。
+
+原试玩4131柳州与4127旅居之魂更新到验收包，隐藏Node PID27568/45380，HTTP200；.tmp/shared-camera-live-report.json确认进入游戏后的22/21个实际入口/动态游戏/样式资源SHA与验收目录一致，passed=true/errors=[]。初版live检查误等标题页canvas，修正等待时机后通过，初报告保留。核实端口/命令后只停止旧12648/46496和自有4132预览29252；保留其他任务4130及服务。清理自己camera-final/shared-camera-dev/shared-camera-final三条临时tsconfig include，保留其他路径。未提交、推送、外部部署。详见docs/liuzhou-camera.md；并行地形任务后续源码编辑不计入本冻结包验证，完整城市目标仍未完成。
+
+## 2026-10-24 · 旅居之魂长帧修复与全项目提交验收
+
+用户反馈跑动、转镜头时随机静止几秒；随后明确要求本项目全部未提交改动提交并合入 master。原 4127 正式包在第三关旧测星台正常走过 z=-630 时，点光源 88→90 使全场受光材质重编译：一次 13892.2ms 帧、13894ms 主线程长任务，getProgramInfoLog 13835.5ms、24 个新 shader；存档写入最多 0.3ms。属于游戏侧可复现问题。
+
+BellAbbeyView 两灯与 CompanionView 精灵灯始终挂载，按原条件只切换亮度，保留原光色、坐标和范围；StaticDistrict 外保留真实可更新灯引用。仅固定灯数的中间包还有 1816.2ms 首次材质停顿，故 Scene 在加载层内异步预编译全部可见/隐藏材质，首帧 render 后才开放模拟；demand 唤醒、失败提示、卸载/上下文丢失时取消旧完成通知一并处理。正常游戏音量和原生 Pointer Lock 保留。
+
+开发最终六段跑动/转镜头最大帧 16.4ms，精灵开关最大 59.6ms；全部零新 shader、零长任务。4 张截图逐张打开目检。另测加载预热期间真实 context loss，旧编译完成后即使解除暂停模拟仍停在 time=0；重载后恢复，再连续三次正常恢复，单画布/位置/堆与资源检查通过，2 张截图均已打开。独立安装 Chrome 静音、禁 speech、页面创建前模拟 Pointer Lock，不操作系统鼠标。
+
+用户要求全项目统一提交后，保留并验收魂游第四章、片头/标题循环、测试存档、粉丝兵种、斜坡修复、共享镜头与柳州完整源码/资源/文档。柳州旧测试改用实际地面高程；补修非桥梁存档的原始 y 覆盖已恢复平台高度，增加任意超高存档不得悬空断言；远景代码补运算括号和 ES5 兼容数组遍历。273/273 Night Rain、柳州、共享相机规则通过；修改文件与脚本定向 ESLint 通过；主工作区完整 pnpm run check 后顺序 pnpm run build 通过，保留构建 ESLint。日志 tmp/night-stalls/{rules-all-final,check-all-final,build-all-final}.log，正式构建 .next-night-stall-final，BUILD_ID caSMyvU795TzlKakE-kpQ。
+
+较早隔离 C 盘 worktree 因跨盘依赖路径构建失败，该包未采用；归档时影响共享依赖，已通过离线 force/frozen-lockfile/ignore-scripts 重建全部依赖，确认 React/React DOM 可解析并重跑全部门禁。临时 worktree 已归档，失败中间报告不作为最终证据。最终提交移除新增机器本地临时构建类型 include，保留既有 TypeScript 配置。实际 4127 已启动当前正式包，生产长帧专项结果见 docs/night-rain-frame-stalls.md。

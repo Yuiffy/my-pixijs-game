@@ -36,6 +36,7 @@ export class NightAudio {
   private windAt = -10;
   private quiet = false;
   private disposed = false;
+  private cinematic = false;
   private voiceSerial = 0;
   private listeners: (() => void)[] = [];
 
@@ -87,13 +88,13 @@ export class NightAudio {
   }
   private volumes() {
     if (!this.context) return;
-    const now = this.context.currentTime; const muted = this.settings.muted || document.hidden;
+    const now = this.context.currentTime; const muted = this.settings.muted || document.hidden || this.cinematic;
     this.decks.forEach((deck, i) => deck.gain.gain.setTargetAtTime(muted || i !== this.deck ? 0 : this.settings.music * (this.quiet ? 0.28 : 1) * (this.voiceLine ? 0.4 : 1), now, 0.3));
     this.voiceGain?.gain.setTargetAtTime(muted ? 0 : this.settings.narration, now, 0.02);
   }
   private music(next: Track) {
     this.track = next;
-    if (!this.unlocked || !this.decks.length || document.hidden) return;
+    if (this.cinematic || !this.unlocked || !this.decks.length || document.hidden) return;
     if (this.decks[this.deck].track !== next) {
       this.deck = 1 - this.deck;
       const deck = this.decks[this.deck]; deck.audio.pause(); deck.audio.src = `${ROOT}${next}.mp3`; deck.track = next;
@@ -111,7 +112,7 @@ export class NightAudio {
   }
   say(text: string, skin: CompanionSkin) {
     this.cancelVoice();
-    if (!this.unlocked || this.settings.muted || !this.settings.narration || !this.narration || document.hidden) return;
+    if (this.cinematic || !this.unlocked || this.settings.muted || !this.settings.narration || !this.narration || document.hidden) return;
     const id = VOICES[text];
     if (!id) { this.status = '这句以字幕显示'; return; }
     const serial = ++this.voiceSerial;
@@ -123,7 +124,7 @@ export class NightAudio {
   cancelVoice() { this.voiceSerial += 1; this.narration?.pause(); this.voiceLine = ''; this.volumes(); }
   private event(name: string) { this.events += 1; this.recent.push(name); if (this.recent.length > 12) this.recent.shift(); }
   sound(name: string) {
-    if (!this.context || !this.unlocked || this.quiet || document.hidden || this.settings.muted || !this.settings.effects) return;
+    if (this.cinematic || !this.context || !this.unlocked || this.quiet || document.hidden || this.settings.muted || !this.settings.effects) return;
     const pitches: Record<string, [number, number, number]> = { light: [480, 100, 0.1], heavy: [240, 45, 0.22], hit: [160, 60, 0.1], parry: [1800, 640, 0.3], block: [720, 260, 0.16], dodge: [280, 100, 0.12], jump: [190, 350, 0.13], heal: [380, 900, 0.45], pickup: [880, 1320, 0.38], lamp: [440, 880, 0.7], death: [160, 35, 0.8], step: [90, 50, 0.035], menu: [600, 750, 0.07], shot: [1100, 200, 0.16] };
     const [from, to, duration] = name === 'chain' ? [960, 370, 0.12] : name === 'wind' ? [145, 210, 1.5] : pitches[name] ?? pitches.hit; const now = this.context.currentTime;
     const osc = this.context.createOscillator(); const gain = this.context.createGain();
@@ -133,9 +134,10 @@ export class NightAudio {
     osc.onended = () => { osc.disconnect(); gain.disconnect(); }; this.event(name);
   }
   observe(s: GameState) {
+    if (this.cinematic) return;
     const quiet = s.paused || s.mode === 'title' || s.mode === 'dead';
     if (this.quiet !== quiet) { this.quiet = quiet; this.volumes(); if (quiet) this.cancelVoice(); }
-    const combat = s.enemies.some(e => e.hp > 0 && e.aggro && ['boss', 'nana', 'azi', 'captain', 'regent', 'warden', 'abbot', 'serpent', 'elegist', 'colossus', 'sentinel', 'astronomer'].includes(e.kind));
+    const combat = s.enemies.some(e => e.hp > 0 && e.aggro && ['boss', 'nana', 'azi', 'captain', 'regent', 'warden', 'abbot', 'serpent', 'elegist', 'colossus', 'sentinel', 'astronomer', 'bellkeeper'].includes(e.kind));
     this.music(combat ? 'boss' : s.mode === 'interlude' || s.region.includes('归灯庭') ? 'haven' : 'exploration');
     const { action } = s.player;
     if (action !== this.lastAction && ['dodge', 'heal'].includes(action)) this.sound(action);
@@ -160,8 +162,9 @@ export class NightAudio {
   snapshot() {
     let rms = 0;
     if (this.analyser && this.samples) { this.analyser.getFloatTimeDomainData(this.samples); rms = Math.sqrt(this.samples.reduce((sum, v) => sum + v * v, 0) / this.samples.length); }
-    return { unlocked: this.unlocked, context: this.context?.state ?? 'locked', track: this.track, voiceLine: this.voiceLine, settings: this.settings, events: this.events, recent: this.recent, rms, status: this.status };
+    return { unlocked: this.unlocked, context: this.context?.state ?? 'locked', track: this.track, voiceLine: this.voiceLine, settings: this.settings, cinematic: this.cinematic, events: this.events, recent: this.recent, rms, status: this.status };
   }
+  setCinematic(active: boolean) { if (active === this.cinematic) return; this.cinematic = active; if (active) this.suspend(); this.volumes(); }
   suspend() { this.decks.forEach(d => d.audio.pause()); this.cancelVoice(); }
   reset() { this.lastFx = 0; this.lastProjectile = 0; this.chainAt = -10; this.windAt = -10; this.lastPosition = null; this.lastAction = ''; this.lastSwing = ''; this.lastMode = ''; this.cancelVoice(); }
   dispose() { this.disposed = true; this.listeners.forEach(fn => fn()); this.suspend(); this.decks.forEach(d => { d.audio.removeAttribute('src'); d.audio.load(); }); this.narration?.removeAttribute('src'); this.context?.close().catch(() => {}); }

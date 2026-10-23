@@ -1,3 +1,4 @@
+import { BELL_STRUCTURES } from './bellAbbey';
 import { SKY_STRUCTURES } from './skyplain';
 import { BUILDING_SOLIDS } from './overhaulWorld';
 import { CHAPTER_HOUSES, CHAPTER_STRUCTURES } from './chapter';
@@ -57,6 +58,7 @@ export const STRUCTURES:Solid[] = [
   ...VALLEY_STRUCTURES,
   ...HAVEN_STRUCTURES,
   ...SKY_STRUCTURES,
+  ...BELL_STRUCTURES,
 ];
 function worldPart(h:House, p:Solid):Solid {
  const yaw = h.rotation ?? 0; const c = Math.cos(yaw); const s = Math.sin(yaw); const [x, y, z] = p.position;

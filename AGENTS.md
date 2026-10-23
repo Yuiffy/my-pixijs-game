@@ -59,5 +59,10 @@
 
 ## Quiet browser self-tests
 
+- Automated browser tests must not capture, warp, or move the user's system mouse.
+  On Windows, native Pointer Lock can affect the system cursor even in headless
+  Chrome. Stub Pointer Lock inside disposable test contexts and use browser-only
+  mouse events for its lifecycle tests. Keep normal gameplay Pointer Lock intact.
+
 - Automated self-tests must not play audible TTS (for example, “下播啦”) or other test audio on the user's computer. Launch test browsers with `--mute-audio` and disable the speech API, or stub `speechSynthesis.speak` when testing speech behavior.
 - Keep these changes in the test environment; preserve the user's normal gameplay audio settings.

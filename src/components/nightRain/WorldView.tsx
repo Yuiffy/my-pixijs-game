@@ -7,13 +7,17 @@ import type { CameraControl, Enemy, EnemyKind, GameState, Surface } from "./type
 import { enemyMotion } from "./enemyCombat";
 import EnemyStrike, { EnemyWeaponTell } from "./EnemyStrike";
 import GroundWarning from "./GroundWarningView";
-import { HOUSES, STRUCTURES, houseParts, architectureIntervals, type House } from './architecture';
+import { HOUSES, STRUCTURES, houseParts, type House } from './architecture';
+import { constrainNightCamera } from './camera';
+import { followCameraBoom } from '../gameCamera/boom';
 import { CharacterStyle, GuestStyle, GuestWeapon, PLAYER_SKINS } from './CharacterStyle';
 import ChapterView from "./ChapterView";
 import HavenView from "./HavenView";
 import { HAVEN_GATES } from "./haven";
+import BellAbbeyView from "./BellAbbeyView";
 import SkyplainView, { SkyAtmosphere, skyBlend } from "./SkyplainView";
 import { SKY_GATES } from "./skyplain";
+import { BELL_GATES } from "./bellAbbey";
 import ValleyView from "./ValleyView";
 import { VALLEY_GATES } from "./valley";
 import GeometryBatch, { type StoneBox } from "./GeometryBatch";
@@ -27,7 +31,7 @@ import { characterAppearance, type CharacterAppearance } from './characterAppear
 import RainEffects, { ShrineWisps } from './RainEffects';
 import TerritoryView from './TerritoryView';
 import FanStyle from './FanStyle';
-import { fanOf, FAN_COLORS } from './fanEnemies';
+import { combatFanOf, fanOf, FAN_COLORS } from './fanEnemies';
 import BossFieldView from './BossFieldView';
 import { bossLeapHeight, bossCloaked } from './bossFields';
 import BossStyle, { BossWeapon } from './BossStyle';
@@ -39,6 +43,8 @@ import InterludeView from './InterludeView';
 import DungeonView from './DungeonView';
 import DiscoveryView from './DiscoveryView';
 import ProjectileView from './ProjectileView';
+import RenderMetrics from './RenderMetrics';
+import StaticDistrict from './StaticDistrict';
 import { DUNGEONS, giantScale, undergroundId } from './dungeons';
 import { ARMORS } from './equipment';
 import { combatPose, rollPose, CHARGE_TIME } from './combat';
@@ -546,7 +552,7 @@ function CityContent() {
     return shape;
   }, []);
   return (
-    <group name="night-city">
+    <StaticDistrict name="night-city">
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, -1.25, 0]}
@@ -774,7 +780,7 @@ function CityContent() {
           color={i % 4 ? "#477b83" : "#baac72"}
         />
       ))}
-    </group>
+    </StaticDistrict>
   );
 }
 
@@ -843,7 +849,7 @@ function ObstacleArt({ stateRef }: { stateRef: StateRef }) {
       {OBSTACLES.map((o, i) => {
         if (o.kind === 'chest' || o.kind === 'shrine') return null;
         if (o.kind === "gate") {
-          const gate = [...CHAPTER_GATES, ...VALLEY_GATES, ...HAVEN_GATES, ...SKY_GATES].find(g => g.id === o.gateId);
+          const gate = [...CHAPTER_GATES, ...VALLEY_GATES, ...HAVEN_GATES, ...SKY_GATES, ...BELL_GATES].find(g => g.id === o.gateId);
           const yaw = gate?.side === 'west' ? Math.PI / 2 : gate?.side === 'east' ? -Math.PI / 2 : gate?.side === 'south' ? Math.PI : 0;
           const width = Math.max(o.w, o.d); const depth = Math.min(o.w, o.d);
           return (
@@ -1107,7 +1113,34 @@ export function Actor({
   stateRef,
   enemyId,
 }: { stateRef: StateRef; enemyId?: string }) {
-  return enemyId ? <LegacyActor stateRef={stateRef} enemyId={enemyId} /> : <PlayerActor stateRef={stateRef} />;
+  const [detailed, setDetailed] = useState(() => {
+    const e = stateRef.current.enemies.find(enemy => enemy.id === enemyId);
+    return !e || Math.hypot(e.x - stateRef.current.player.x, e.z - stateRef.current.player.z) < 55;
+  });
+  useFrame(() => {
+    if (!enemyId) return;
+    const e = stateRef.current.enemies.find(enemy => enemy.id === enemyId);
+    if (!e) return;
+    const distance = Math.hypot(e.x - stateRef.current.player.x, e.z - stateRef.current.player.z);
+    if (detailed && distance > 58) setDetailed(false);
+    else if (!detailed && distance < 48) setDetailed(true);
+  });
+  return enemyId ? detailed ? <LegacyActor stateRef={stateRef} enemyId={enemyId} /> : <DistantEnemy stateRef={stateRef} enemyId={enemyId} /> : <PlayerActor stateRef={stateRef} />;
+}
+
+/** Beyond readable combat range, retain the moving silhouette with three meshes. */
+function DistantEnemy({ stateRef, enemyId }: { stateRef: StateRef; enemyId: string }) {
+  const root = useRef<THREE.Group>(null);
+  const spawn = ENEMY_SPAWNS.find(e => e.id === enemyId)!;
+  const palette = BOSS_ROSTER[spawn.kind];
+  const size = enemyModelScale(spawn);
+  useFrame(() => {
+    const s = stateRef.current; const e = s.enemies.find(enemy => enemy.id === enemyId);
+    if (!root.current || !e) return;
+    root.current.visible = e.hp > 0 && Math.hypot(e.x - s.player.x, e.z - s.player.z) < 150;
+    root.current.position.set(e.x, e.y, e.z); root.current.rotation.y = e.facing;
+  });
+  return <group ref={root} scale={size}><mesh position={[0, 0.8, 0]} castShadow><coneGeometry args={[0.38, 1.5, 6]} /><meshStandardMaterial color={palette?.coat ?? '#697870'} /></mesh><mesh position={[0, 1.7, 0]}><sphereGeometry args={[0.21, 6, 4]} /><meshStandardMaterial color={palette?.hair ?? '#927f6a'} /></mesh><mesh position={[0.42, 1, 0.14]} rotation={[0.2, 0, -0.2]}><boxGeometry args={[0.065, 1.7, 0.065]} /><meshStandardMaterial color={palette?.trim ?? '#b7a477'} metalness={0.35} /></mesh></group>;
 }
 
 function LegacyActor({
@@ -1139,7 +1172,7 @@ function LegacyActor({
   const kind: EnemyKind | "player" = enemyId
     ? (ENEMY_SPAWNS.find((e) => e.id === enemyId)?.kind ?? "prowler")
     : "player";
-  const boss = ["boss", "nana", "azi", "captain", "regent", "warden", "abbot", "serpent", "elegist", "colossus", "sentinel", "astronomer"].includes(kind ?? "");
+  const boss = ["boss", "nana", "azi", "captain", "regent", "warden", "abbot", "serpent", "elegist", "colossus", "sentinel", "astronomer", "bellkeeper"].includes(kind ?? "");
   const lancer = !BOSS_ROSTER[kind as EnemyKind] && ["lancer", "captain", "regent", "monk", "abbot", "serpent", "elegist"].includes(kind ?? "");
   const namedBoss = kind === "player" ? undefined : BOSS_ROSTER[kind];
   const shioriBoss = namedBoss?.character === 'shiori';
@@ -1147,6 +1180,7 @@ function LegacyActor({
   const player = kind === "player";
   const characterPalette: CharacterAppearance | null = player ? PLAYER_SKINS[appearance] : namedBoss?.character ? characterAppearance(namedBoss.character) : kind === 'nana' || kind === 'azi' ? characterAppearance(kind) : null;
   const fan = enemyId ? fanOf({ id: enemyId }) : undefined;
+  const combatFan = enemyId ? combatFanOf({ id: enemyId }) : undefined;
   const guard = kind === "guard";
   const role = enemyId ? enemyRole({ id: enemyId, kind: kind as EnemyKind }) : null;
   const ranged = role === 'crossbow' || role === 'slinger';
@@ -1173,6 +1207,10 @@ function LegacyActor({
       : undefined;
     const actor = enemy ?? state.player;
     if (!root.current || !body.current) return;
+    if (enemy) {
+      root.current.visible = Math.abs(enemy.x - state.player.x) < 110 && Math.abs(enemy.z - state.player.z) < 110;
+      if (!root.current.visible) { lastPosition.current.set(actor.x, actor.y, actor.z); return; }
+    }
     const speed =
       Math.hypot(
         actor.x - lastPosition.current.x,
@@ -1541,8 +1579,8 @@ function LegacyActor({
             {kind === 'reaver' && <mesh position={[0.19, 1.05, 0]} rotation={[0, 0, -0.6]}><torusGeometry args={[0.3, 0.05, 6, 12, Math.PI]} /><meshStandardMaterial color="#c1cdc3" metalness={0.6} /></mesh>}
             {!namedBoss && ['monk', 'abbot'].includes(kind ?? '') && <mesh position={[0, 1.9, 0]}><torusGeometry args={[0.2, 0.04, 6, 12]} /><meshStandardMaterial color="#d6ba7c" metalness={0.6} /></mesh>}
             {!namedBoss && guest && <GuestWeapon kind={kind as "nana" | "azi"} />}
-            {fan === 'shark' && <GuestWeapon kind="nana" />}
-            {lancer && fan !== 'shark' && <group position={[0, 1.8, 0]}><mesh castShadow><coneGeometry args={[0.12, 0.6, 4]} /><meshStandardMaterial color={kind === 'regent' ? '#e5bd67' : '#cbd4cf'} metalness={0.65} roughness={0.32} /></mesh><Block position={[0, -0.25, 0]} size={[0.35, 0.045, 0.06]} color="#b9a16b" /></group>}
+            {combatFan === 'shark' && <GuestWeapon kind="nana" />}
+            {lancer && combatFan !== 'shark' && <group position={[0, 1.8, 0]}><mesh castShadow><coneGeometry args={[0.12, 0.6, 4]} /><meshStandardMaterial color={kind === 'regent' ? '#e5bd67' : '#cbd4cf'} metalness={0.65} roughness={0.32} /></mesh><Block position={[0, -0.25, 0]} size={[0.35, 0.045, 0.06]} color="#b9a16b" /></group>}
             {kind === "duelist" && (
               <Block
                 position={[0, 0.5, 0]}
@@ -1650,17 +1688,28 @@ function CameraRig({
   const { camera, scene } = useThree();
   const ray = useMemo(() => new THREE.Raycaster(), []);
   const direction = useMemo(() => new THREE.Vector3(), []);
+  const aim = useMemo(() => new THREE.Vector3(), []);
   const target = useMemo(() => new THREE.Vector3(), []);
   const desired = useMemo(() => new THREE.Vector3(), []);
   const first = useRef(true);
+  const boomDistance = useRef<number>();
   const lastReset = useRef(-1);
   const skyCinema = useRef(0);
   const reducedMotion = useRef(false);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('test') !== '1') return;
+    const testWindow = window as Window & { nightRainCamera?: () => { position: number[]; target: number[]; forward: number[] } };
+    testWindow.nightRainCamera = () => ({ position: camera.position.toArray(), target: target.toArray(), forward: camera.getWorldDirection(new THREE.Vector3()).toArray() });
+    return () => { delete testWindow.nightRainCamera; };
+  }, [camera, target]);
   useEffect(() => { const preference = window.matchMedia('(prefers-reduced-motion: reduce)'); const update = () => { reducedMotion.current = preference.matches; }; update(); preference.addEventListener('change', update); return () => preference.removeEventListener('change', update); }, []);
   useFrame((_, dt) => {
     const state = stateRef.current;
     const p = state.player;
     const controls = cameraControl.current;
+    if (state.mode === 'interlude' && state.bellComplete) {
+      desired.set(-65, 49, -870); target.set(-44, 43, -891); camera.position.copy(desired); camera.lookAt(target); first.current = true; return;
+    }
     if (state.mode === 'interlude' && state.skyComplete) {
       skyCinema.current += Math.min(dt, 0.05);
       const t = reducedMotion.current ? 0 : THREE.MathUtils.smoothstep(skyCinema.current, 0, 11);
@@ -1701,46 +1750,30 @@ function CameraRig({
       p.y + 1.3 + p.jumpHeight + Math.max(0, Math.sin(pitch)) * distance,
       p.z + Math.cos(yaw) * Math.cos(pitch) * distance,
     );
-    // Keep the eye above real decks and shorten the boom before collision volumes.
-    for (let t = 0.12; t <= 1; t += 0.07) {
-      const x = THREE.MathUtils.lerp(target.x, desired.x, t);
-      const z = THREE.MathUtils.lerp(target.z, desired.z, t);
-      const y = THREE.MathUtils.lerp(target.y, desired.y, t);
-      const deck = SURFACES.some(s => {
-        if (x < s.x1 || x > s.x2 || z < s.z1 || z > s.z2) return false;
-        const top = s.y + (((s.endY ?? s.y) - s.y) * (z - s.z1)) / (s.z2 - s.z1);
-        return y < top + 0.3 && y > top - 0.78;
-      });
-      const obstacle = OBSTACLES.some(
-        (o) => o.kind !== 'shrine' && !gateOpen(o, state) &&
-          Math.abs(x - o.x) < o.w / 2 + 0.2 &&
-          Math.abs(z - o.z) < o.d / 2 + 0.2 &&
-          y > o.y &&
-          y < o.y + o.h + 0.3,
-      );
-      const wall = architectureIntervals(x, z).some(h => y > h.bottom - 0.2 && y < h.top + 0.2);
-      if (deck || obstacle || wall) {
-        desired.lerpVectors(target, desired, Math.max(0.1, t - 0.08));
-        break;
-      }
-    }
+    // Both games share radial collision/extension rules; world geometry and
+    // combat lock-on remain adapters owned by this game.
+    aim.subVectors(target, desired).normalize();
+    const clipped = constrainNightCamera(target, desired, state);
+    desired.set(clipped.x, clipped.y, clipped.z);
     // Also test actual static artwork: parapets, awnings and roof edges must not
     // slice through the camera when the player turns beside a ledge.
-    const city = scene.getObjectByName(undergroundId(p) || state.liftRide ? 'optional-dungeons' : 'night-city');
-    let obstructed = false;
+    const city = scene.getObjectByName(undergroundId(p) || state.liftRide ? 'optional-dungeons' : 'night-city-batches');
     if (city) {
       direction.subVectors(desired, target); const length = direction.length();
-      ray.set(target, direction.normalize()); ray.near = 0.15; ray.far = length;
-      const hit = ray.intersectObject(city, true)[0];
-      if (hit) { desired.copy(target).addScaledVector(direction, Math.max(0.65, hit.distance - 0.2)); obstructed = true; }
+      if (length > 0.15) {
+        ray.set(target, direction.normalize()); ray.near = 0.15; ray.far = length;
+        const abbey = p.z < -730 ? scene.getObjectByName('bell-abbey-stone-batches') : undefined;
+        const hit = ray.intersectObjects(abbey ? [city, abbey] : [city], true)[0];
+        if (hit) desired.copy(target).addScaledVector(direction, Math.max(0, hit.distance - 0.2));
+      }
     }
     const reset = controls.reset !== lastReset.current;
     lastReset.current = controls.reset;
-    if (first.current || reset || obstructed) {
-      camera.position.copy(desired);
-      first.current = false;
-    } else camera.position.lerp(desired, 1 - Math.exp(-dt * 10));
-    camera.lookAt(target);
+    const boom = followCameraBoom(target, desired, boomDistance.current, dt, first.current || reset);
+    boomDistance.current = boom.distance;
+    first.current = false;
+    camera.position.set(boom.x, boom.y, boom.z);
+    camera.lookAt(camera.position.x + aim.x, camera.position.y + aim.y, camera.position.z + aim.z);
   });
   return null;
 }
@@ -1786,17 +1819,31 @@ function Moonlight({ stateRef }: { stateRef: StateRef }) {
 }
 
 function Scene({ stateRef, cameraControl, onReady, onError, companionRef }: WorldProps) {
-  const { gl } = useThree();
+  const { gl, scene, camera, invalidate } = useThree();
+  const shadersReady = useRef(false);
+  const pendingReady = useRef(false);
+  // Wait for hidden districts too; their first appearance must not compile during play.
+  useFrame(() => {
+    if (!shadersReady.current) return;
+    gl.render(scene, camera);
+    // Keep the loading screen through the first geometry, texture and shadow upload.
+    if (pendingReady.current && !gl.getContext().isContextLost()) { pendingReady.current = false; onReady?.(); }
+  }, 1);
   useEffect(() => {
     const canvas = gl.domElement;
+    let cancelled = false; shadersReady.current = false; pendingReady.current = false;
     const lost = (event: Event) => {
       event.preventDefault();
+      cancelled = true; shadersReady.current = false; pendingReady.current = false;
       onError?.("画面连接中断，请重新加载这一晚。");
     };
     canvas.addEventListener("webglcontextlost", lost);
-    onReady?.();
-    return () => canvas.removeEventListener("webglcontextlost", lost);
-  }, [gl, onReady, onError]);
+    gl.compileAsync(scene, camera).then(() => {
+      if (cancelled) return;
+      shadersReady.current = true; pendingReady.current = true; invalidate();
+    }).catch(() => { if (!cancelled) onError?.("画面准备失败，请重新加载这一晚。"); });
+    return () => { cancelled = true; shadersReady.current = false; pendingReady.current = false; canvas.removeEventListener("webglcontextlost", lost); };
+  }, [gl, scene, camera, invalidate, onReady, onError]);
   return (
     <>
       <color attach="background" args={["#334d5c"]} />
@@ -1807,6 +1854,7 @@ function Scene({ stateRef, cameraControl, onReady, onError, companionRef }: Worl
       <City />
       <ValleyView stateRef={stateRef} />
       <SkyplainView stateRef={stateRef} />
+      <BellAbbeyView stateRef={stateRef} />
       <SkyAtmosphere stateRef={stateRef} />
       <Sign text="天镜原 →" subtext="循旧渠 · 看见金环" position={[-145, 11, -533]} width={3} />
       <Sign text="盐池支路 ←   折光桥 →" subtext="霞镜在东 · 星盐在西" position={[-120, 20.6, -572]} width={3} />
@@ -1832,13 +1880,15 @@ function Scene({ stateRef, cameraControl, onReady, onError, companionRef }: Worl
       <BossFieldView stateRef={stateRef} />
       <TerritoryView stateRef={stateRef} />
       <CameraRig stateRef={stateRef} cameraControl={cameraControl} />
+      <RenderMetrics />
     </>
   );
 }
 
-function WorldView(props: WorldProps) {
+function WorldView({ suspended, ...props }: WorldProps & { suspended?: boolean }) {
   return (
     <Canvas
+      frameloop={suspended ? 'demand' : 'always'}
       shadows
       dpr={[1, 1.5]}
       camera={{ fov: 54, near: 0.08, far: 650, position: [2, 10, 24] }}

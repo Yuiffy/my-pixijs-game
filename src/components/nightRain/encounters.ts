@@ -3,6 +3,8 @@ import type { Enemy } from './types';
 export type EnemyRole = 'skirmisher' | 'bulwark' | 'blade' | 'pike' | 'reaper' | 'staff' | 'crossbow' | 'slinger' | 'boss';
 // Authored assignments reuse validated posts and sightlines. No random spawning.
 export const RANGED_POSTS: Record<string, 'crossbow' | 'slinger'> = {
+  'bell-store-slinger': 'slinger',
+  'bell-gallery-bow': 'crossbow',
   'sky-pool-slinger': 'slinger',
   'sky-bridge-bow': 'crossbow',
   'canal-guard': 'crossbow', // First ranged lesson: a lone sentry, long retreat, a turning side route.
@@ -13,7 +15,7 @@ export const RANGED_POSTS: Record<string, 'crossbow' | 'slinger'> = {
   'crypt-bow': 'crossbow', // Pillars and the west loop give two ways past its firing lane.
   'cave-slinger': 'slinger', // Optional side reward; the entry pike cannot see around this bend.
 };
-export function isBoss(e: Pick<Enemy, 'kind'>) { return ['boss', 'nana', 'azi', 'captain', 'regent', 'warden', 'abbot', 'serpent', 'elegist', 'colossus', 'sentinel', 'astronomer'].includes(e.kind); }
+export function isBoss(e: Pick<Enemy, 'kind'>) { return ['boss', 'nana', 'azi', 'captain', 'regent', 'warden', 'abbot', 'serpent', 'elegist', 'colossus', 'sentinel', 'astronomer', 'bellkeeper'].includes(e.kind); }
 export function enemyRole(e: Pick<Enemy, 'id' | 'kind'>): EnemyRole {
   if (isBoss(e)) return 'boss';
   if (RANGED_POSTS[e.id]) return RANGED_POSTS[e.id];

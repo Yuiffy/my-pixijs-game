@@ -1,0 +1,106 @@
+{
+  "items": [
+    {
+      "key": "title",
+      "nodeId": "node_nrtt1e2026",
+      "prompt": "原创黑暗奇幻动作游戏的标题入场影片，8秒，16:9，精致克制的电影CG，手工材质、柔和胶片颗粒、幽蓝雨雾与古铜暖金。没有文字、标志、字幕或UI。开头极近景：一滴雨从青铜残钟的裂纹坠落，撞在黑色积水里，金色涟漪向外扩散。镜头缓缓后拉，显露被藤蔓和无数熄灭纸灯包围的巨大悬钟；残破的东南亚旧城石阶从画面右下延伸到钟下，一把收拢的深蓝旅行伞静靠在石阶上。远方金色圆环横亘山雾，雨水映着微弱灯火。第5秒钟纹亮起，一盏暖金雨灯被风点燃，光沿水波向镜头扩散；结尾停在明暗分明的残钟与雨灯构图，中心偏左保留空白供游戏后期叠加标题。镜头慢而有重量，气氛苍凉、庄严又有人间烟火；可辨认的铜锈、湿石、伞布，不要漆黑画面。声音：清晰的一记低沉青铜钟击、细密雨声、短促布料风声与低音弦乐余响，无人声，无现成游戏旋律。音画同时渐弱，不要黑屏结尾。",
+      "submitId": "d40b7395-a76f-4a9b-8540-a0b9e451a797",
+      "status": "succeeded",
+      "resourceId": "607e8280-6b39-4d5a-9356-700ec4a3802d",
+      "quotedMaximumCredits": 144,
+      "original": {
+        "bytes": 19503134,
+        "sha256": "3c790cb92750188a334fea276e55a97d075fccd489e40e0d1ea773c780c97a88"
+      },
+      "delivery": {
+        "path": "public/games/night-rain/cinema/title.mp4",
+        "bytes": 1658834,
+        "sha256": "140a7ecf364327e7873488fe2e4de93083f9a68f24ccd3354a0d245c2c2976ab",
+        "durationSeconds": 8.08,
+        "streams": [
+          {
+            "codec_type": "video",
+            "codec_name": "h264",
+            "width": 1280,
+            "height": 720,
+            "duration": "8.016667"
+          },
+          {
+            "codec_type": "audio",
+            "codec_name": "aac",
+            "duration": "8.080000",
+            "sample_rate": "44100",
+            "channels": 2
+          }
+        ]
+      }
+    },
+    {
+      "key": "op",
+      "nodeId": "node_nr0p1e2026",
+      "prompt": "原创黑暗奇幻动作RPG的开场序章，18秒，16:9电影构图，风格化写实CG、手工材质、细腻胶片、深靛蓝与铜金色，庄严神秘但保留温暖生活感。没有文字、标志、字幕、UI。主题：一个旅人下播后出门找夜宵，却走入以雨灯为路标的古城。不要出现清晰人脸，主角仅用背影、手和物件叙事。0-4秒：雨夜的泰国旧城旅馆，木桌上笔记本屏幕的柔光慢慢熄灭，戴深蓝手套的手轻轻合上电脑；窗外暖金灯火映在湿玻璃。4-8秒：匹配剪辑到木门开启，镜头跟随一位披深蓝短披肩、背旅行袋、持收拢蓝伞的纤细旅人背影走下湿石阶，古老金塔隐藏在雨雾中。8-12秒：低机位沿雨水运河前推，熄灭的纸灯一盏盏点亮；远处桥头一名古铜盔甲守卫抬起长枪，只是威严剪影。12-15秒：广角揭示悬在云上的巨大断裂金环、雾河与残钟修道院，雨水逆光如星屑，场景规模宏大。15-18秒：回到旅人的蓝伞、湿石与一盏暖金雨灯的近景，旅人提起伞走入画面深处，结尾灯芯轻颤，与游戏开始的旅馆台阶衔接。剪辑自然清晰，动作克制真实，光线可读，不要大段黑屏或突然闪白。原声音轨：雨声、笔记本合盖、木门吱呀、石阶脚步、孤独青铜钟、低沉弦乐和极轻空灵合唱作为无词音色；最后留温暖微小的灯火声。不要对白，不要现成作品音乐。",
+      "submitId": "8d8947d7-e3e1-4f87-8482-24f4de694e7c",
+      "status": "succeeded",
+      "resourceId": "42399e08-ddf4-4b1d-802f-de057829ef51",
+      "quotedMaximumCredits": 324,
+      "original": {
+        "bytes": 27725581,
+        "sha256": "20c5e6f8fa9b652fb77a55f64ad7e9b9135c2ae2b8aeeeeedb3d582f0496a4cb"
+      },
+      "delivery": {
+        "path": "public/games/night-rain/cinema/opening.mp4",
+        "bytes": 2945487,
+        "sha256": "0bbaa2833f7c3872ccec6493c3945597a8ae70e9afd7ee2e3434b0d9a1dacc2b",
+        "durationSeconds": 18.088005,
+        "streams": [
+          {
+            "codec_type": "video",
+            "codec_name": "h264",
+            "width": 1280,
+            "height": 720,
+            "duration": "18.016667"
+          },
+          {
+            "codec_type": "audio",
+            "codec_name": "aac",
+            "duration": "18.088005",
+            "sample_rate": "44100",
+            "channels": 2
+          }
+        ]
+      }
+    }
+  ],
+  "projectId": "185970ea-fb57-4d1b-9aec-107b60674793",
+  "budget": 1000,
+  "authorizedCeiling": 468,
+  "resolution": "720p",
+  "model": "seedance_2.5",
+  "mode": "t2v",
+  "countPerNode": 1,
+  "aspectRatio": "16:9",
+  "completedDate": "2026-10-23",
+  "budgetNote": "Two submitted jobs quoted maximum 144 + 324 = 468 credits within the user-authorized 1000. Final net settlement was not audited. No additional generation submitted.",
+  "packaging": {
+    "video": "libx264 CRF 24 medium, yuv420p, faststart",
+    "audio": "AAC 96k",
+    "totalVideoBytes": 5404517,
+    "captions": [
+      "title.vtt",
+      "opening.vtt"
+    ],
+    "inspection": "Downloaded original files and contact sheets inspected; runtime Chrome playback/mute/skip covered by cinema verifier. Offline volume maxima title -6.9 dBFS, opening -4.6 dBFS. No human listening review.",
+    "ambientLoop": {
+      "path": "public/games/night-rain/cinema/title-loop.mp4",
+      "bytes": 800196,
+      "sha256": "d608d4c14bf035a52467442e191d17531c29d0ef17cf2b7cc4869d162c64c4af",
+      "durationSeconds": 4,
+      "width": 1280,
+      "height": 720,
+      "fps": 24,
+      "audio": false,
+      "source": "Existing title.mp4 at 6–8 seconds, slowed with optical-flow interpolation and a 1-second cyclic dissolve; no new generation or credits.",
+      "recipe": "node scripts/create-night-rain-title-loop.mjs"
+    }
+  }
+}

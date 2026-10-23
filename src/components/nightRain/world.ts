@@ -1,3 +1,4 @@
+import { BELL_SURFACES, BELL_OBSTACLES, BELL_LANDMARKS, BELL_ENEMIES, BELL_REST_POINTS } from './bellAbbey';
 import { SKY_SURFACES, SKY_OBSTACLES, SKY_LANDMARKS, SKY_ENEMIES, SKY_REST_POINTS } from './skyplain';
 import { BUILDING_SURFACES, BUILDING_LANDMARKS, BUILDING_REST_POINTS, REMOTE_LEVERS } from './overhaulWorld';
 import { architectureBlocked, architectureSupport, architectureIntervals } from './architecture';
@@ -59,6 +60,7 @@ export const SURFACES: Surface[] = [
   ...DUNGEON_SURFACES,
   ...DUNGEON_FOYERS,
   ...SKY_SURFACES,
+  ...BELL_SURFACES,
 ];
 
 export const OBSTACLES: Obstacle[] = [
@@ -90,6 +92,7 @@ export const OBSTACLES: Obstacle[] = [
   ...HAVEN_OBSTACLES,
   ...DUNGEON_OBSTACLES,
   ...SKY_OBSTACLES,
+  ...BELL_OBSTACLES,
 ];
 
 export const LANDMARKS: Landmark[] = [
@@ -121,6 +124,7 @@ export const LANDMARKS: Landmark[] = [
   ...HAVEN_LANDMARKS,
   ...DUNGEON_LANDMARKS,
   ...SKY_LANDMARKS,
+  ...BELL_LANDMARKS,
 ].map(l => ({ ...l, ...(REMOTE_LEVERS[l.id] ?? {}) })) as Landmark[];
 
 export const AMBUSH_ENEMIES: (Vec3 & { id: string; kind: EnemyKind; name: string; facing: number })[] = [
@@ -147,6 +151,7 @@ export const ENEMY_SPAWNS: (Vec3 & { id: string; kind: EnemyKind; name: string; 
   ...AMBUSH_ENEMIES,
   ...DUNGEON_ENEMIES,
   ...SKY_ENEMIES,
+  ...BELL_ENEMIES,
 ];
 
 export const SPAWN: Vec3 = { x: 1.8, y: 6, z: 15.5 };
@@ -161,6 +166,7 @@ export const REST_POINTS: Record<string, Vec3> = {
   ...HAVEN_REST_POINTS,
   ...DUNGEON_REST_POINTS,
   ...SKY_REST_POINTS,
+  ...BELL_REST_POINTS,
 };
 // A guide stops beside a solid shrine; interaction itself is allowed from any clear side.
 export function interactionPoint(l: Landmark): Vec3 {
@@ -172,11 +178,11 @@ export function interactionPoint(l: Landmark): Vec3 {
 }
 
 export function gateOpen(o: Obstacle, access: WorldAccess): boolean {
-  if (o.kind === 'gate' && o.gateId && !['harbor', 'temple'].includes(o.gateId)) return typeof access !== 'boolean' && (!!access.skyGates?.includes(o.gateId) || !!access.chapterGates?.includes(o.gateId) || !!access.valleyGates?.includes(o.gateId) || !!access.haven?.gates.includes(o.gateId));
+  if (o.kind === 'gate' && o.gateId && !['harbor', 'temple'].includes(o.gateId)) return typeof access !== 'boolean' && (!!access.bellGates?.includes(o.gateId) || !!access.skyGates?.includes(o.gateId) || !!access.chapterGates?.includes(o.gateId) || !!access.valleyGates?.includes(o.gateId) || !!access.haven?.gates.includes(o.gateId));
   return o.kind === 'gate' && (o.gateId === 'harbor' ? typeof access !== 'boolean' && !!access.harborGate : o.gateId === 'temple' ? typeof access !== 'boolean' && access.templeGate : typeof access === 'boolean' ? access : access.shortcut);
 }
 
-export const WORLD_BOUNDS = { x1: -295, x2: 130, z1: -735, z2: 163, minY: -46, maxY: 50 };
+export const WORLD_BOUNDS = { x1: -295, x2: 130, z1: -905, z2: 163, minY: -46, maxY: 65 };
 
 function spatialIndex<T>(items: T[], bounds: (item: T) => { x1: number; x2: number; z1: number; z2: number }) {
   const buckets = new Map<string, T[]>();
@@ -271,6 +277,22 @@ export function supportAt(x:number, z:number, ceiling = Infinity):number | null 
     if (x < s.x1 || x > s.x2 || z < s.z1 || z > s.z2) continue;
     const y = s.y + (((s.endY ?? s.y) - s.y) * (z - s.z1)) / (s.z2 - s.z1);
     if (y <= ceiling + 0.001 && (best === null || y > best))best = y;
+  }
+  return best;
+}
+
+/** Catch a feet segment crossing a continuous ramp, including horizontal uphill motion. */
+export function rampLandingAt(from: Vec3, to: Vec3): number | null {
+  let best: number | null = null;
+  for (const s of nearbySurfaces(to.x, to.z)) {
+    if (s.endY === undefined || s.endY === s.y
+      || from.x < s.x1 || from.x > s.x2 || from.z < s.z1 || from.z > s.z2
+      || to.x < s.x1 || to.x > s.x2 || to.z < s.z1 || to.z > s.z2) continue;
+    const slope = (s.endY - s.y) / (s.z2 - s.z1);
+    const before = s.y + slope * (from.z - s.z1);
+    const after = s.y + slope * (to.z - s.z1);
+    // Starting below a ramp must never teleport the player onto its upper face.
+    if (from.y >= before - 0.001 && to.y <= after && (best === null || after > best)) best = after;
   }
   return best;
 }

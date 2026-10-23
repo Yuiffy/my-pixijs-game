@@ -18,7 +18,7 @@ function Field({ stateRef, index }: { stateRef: MutableRefObject<GameState>; ind
   const song = useRef<THREE.Group>(null);
 
   const data = useMemo(() => {
-    const buffers = createAreaWarningBuffers(5.2);
+    const buffers = createAreaWarningBuffers(8.4);
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.BufferAttribute(buffers.positions, 3).setUsage(THREE.DynamicDrawUsage));
     geometry.setDrawRange(0, 0);
@@ -33,12 +33,12 @@ function Field({ stateRef, index }: { stateRef: MutableRefObject<GameState>; ind
     const active = fieldActive(f); const color = FIELD_COLORS[f.kind];
     root.current.position.set(f.x, f.y, f.z);
     if (floor.current) {
-      floor.current.visible = ['pine', 'freeze', 'leap', 'quake', 'starfall'].includes(f.kind);
+      floor.current.visible = ['pine', 'freeze', 'leap', 'quake', 'starfall', 'resonance'].includes(f.kind);
       if (floor.current.visible) {
-        const radius = f.kind === 'quake' && active ? Math.max(0.05, ((f.age - f.delay) / f.duration) * f.radius) : f.radius;
+        const radius = (f.kind === 'quake' || f.kind === 'resonance') && active ? Math.max(0.05, ((f.age - f.delay) / f.duration) * f.radius) : f.radius;
         const key = `${radius},${f.id},${f.x},${f.y},${f.z},${f.radius},${state.shortcut},${state.templeGate},${state.harborGate},${state.chapterGates},${state.valleyGates},${state.haven.gates}`;
         if (key !== data.last) {
-          data.geometry.setDrawRange(0, writeAreaWarning(data.buffers, { ...f, facing: 0 }, state, { range: radius, arc: Math.PI, innerRange: f.kind === 'quake' && active ? Math.max(0, radius - 0.5) : 0 }));
+          data.geometry.setDrawRange(0, writeAreaWarning(data.buffers, { ...f, facing: 0 }, state, { range: radius, arc: Math.PI, innerRange: (f.kind === 'quake' || f.kind === 'resonance') && active ? Math.max(0, radius - 0.5) : 0 }));
           data.geometry.attributes.position.needsUpdate = true; data.last = key;
         }
         const mat = floor.current.material as THREE.MeshBasicMaterial;

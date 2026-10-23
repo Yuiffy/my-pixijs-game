@@ -13,6 +13,11 @@ const spell = (name: string, skill: BossSkill, changes: Partial<EnemyAttack> = {
  * Ground effects deliberately have their own post-cast warning window. */
 export function bossAttack(e: Enemy): EnemyAttack | null {
   const index = e.attackIndex % 3; const second = e.phase === 2;
+  if (e.kind === 'bellkeeper') return [
+    strike('余响 · 悬槌迟钟', { damage: 46, range: 3.7, windup: 1.7, recovery: 2.1, style: 'overhead', lunge: 0.7 }),
+    strike('危 · 断声低扫', { damage: 38, range: 4.4, windup: 1.45, recovery: 2, style: 'sweep', arc: 2, parryable: false, jumpable: true, lunge: 0 }),
+    spell('危 · 长夜连钟', 'resonance', { damage: second ? 34 : 29, range: 8.4, windup: 1.25, recovery: 5.4, style: 'overhead', jumpable: true }),
+  ][index];
   switch (bossCharacter(e.kind)) {
     case 'chu2u': return [
       spell('羽啾 · 宇宙观测', 'starfall', { range: 10, damage: second ? 37 : 31, windup: 1.2, recovery: 2.3 }),

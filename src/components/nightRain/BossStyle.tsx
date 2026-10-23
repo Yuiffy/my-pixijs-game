@@ -20,6 +20,7 @@ export default function BossStyle({ kind }: { kind: EnemyKind }) {
       <Gem at={[0, 1.465, 0.24]} size={[0.025, 0.012, 0.012]} color="#b07878" />
       <mesh position={[0, 0.7, 0]}><cylinderGeometry args={[0.28, b.motif === 'flower' ? 0.45 : 0.37, 0.36, 12]} /><meshStandardMaterial color={b.coat} /></mesh>
       <mesh position={[0, 1.18, 0.25]}><boxGeometry args={[0.22, 0.35, 0.03]} /><meshStandardMaterial color={b.trim} /></mesh>
+      {b.motif === 'bell' && <group><mesh position={[0, 1.74, 0]}><cylinderGeometry args={[0.28, 0.39, 0.35, 12, 1, true]} /><meshStandardMaterial color={b.trim} metalness={0.65} roughness={0.4} /></mesh><Gem at={[0, 1.5, 0.25]} size={[0.48, 0.42, 0.05]} color={b.coat} /><mesh position={[0, 1.62, 0.29]}><torusGeometry args={[0.13, 0.025, 6, 20]} /><meshStandardMaterial color={b.trim} /></mesh></group>}
       {(b.motif === 'stone' || b.motif === 'rock') && <group><Gem at={[0, 1.16, 0.22]} size={[0.35, 0.34, 0.15]} color={b.trim} /><Gem at={[-0.36, 1.25, 0]} size={[0.2, 0.2, 0.23]} color={b.trim} /><Gem at={[0.36, 1.25, 0]} size={[0.2, 0.2, 0.23]} color={b.trim} /><mesh position={[0, 1.94, 0]}><octahedronGeometry args={[0.22]} /><meshStandardMaterial color={b.eye} emissive={b.eye} emissiveIntensity={0.25} /></mesh></group>}
     </group>
   );
@@ -37,6 +38,7 @@ export function BossWeapon({ kind }: { kind: EnemyKind }) {
       {b.character === 'rhea' && <mesh position={[0, 1.4, 0]}><octahedronGeometry args={[0.25]} /><meshStandardMaterial color="#d4f1fb" metalness={0.5} roughness={0.15} /></mesh>}
       {(b.character === 'yua' || b.character === 'chu2u') && <group position={[0, 1.45, 0]}><mesh rotation={[0.3, 0, 0]}><torusGeometry args={[0.24, 0.035, 6, 20]} /><meshStandardMaterial color={b.trim} /></mesh><Gem at={[0, 0, 0]} size={[0.13, 0.13, 0.13]} color="#e0eefb" /></group>}
       {b.character === 'sumi' && <mesh position={[0, 1.53, 0]}><coneGeometry args={[0.14, 0.4, 8]} /><meshStandardMaterial color="#242436" /></mesh>}
+      {kind === 'bellkeeper' && <group position={[0, 1.4, 0]}><mesh rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[0.23, 0.3, 0.7, 10]} /><meshStandardMaterial color={b.trim} metalness={0.6} roughness={0.45} /></mesh><mesh rotation={[0, 0, Math.PI / 2]}><torusGeometry args={[0.3, 0.03, 6, 20]} /><meshStandardMaterial color={b.eye} emissive={b.eye} emissiveIntensity={0.4} /></mesh></group>}
       {(kind === 'colossus' || kind === 'sentinel') && <mesh position={[0, 1.4, 0]}><boxGeometry args={[0.65, 0.5, 0.45]} /><meshStandardMaterial color={b.trim} roughness={0.8} /></mesh>}
     </group>
   );

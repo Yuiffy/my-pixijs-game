@@ -16,6 +16,7 @@ export default function CompanionView({
   const cookie = useRef<THREE.Group>(null);
   const otter = useRef<THREE.Group>(null);
   const sparks = useRef<THREE.Group>(null);
+  const light = useRef<THREE.PointLight>(null);
   const pose = useCallback(
     () => ({
       time: stateRef.current.time,
@@ -39,6 +40,10 @@ export default function CompanionView({
       s.mode === 'interlude' ? s.player.z + 0.5 : c.position.z,
     );
     root.current.scale.setScalar(s.mode === 'interlude' ? 0.7 : 1);
+    if (light.current) {
+      light.current.position.copy(root.current.position);
+      light.current.intensity = c.enabled ? 0.65 : 0;
+    }
     const heading = Math.atan2(
       camera.position.x - c.position.x,
       camera.position.z - c.position.z,
@@ -55,6 +60,9 @@ export default function CompanionView({
     if (sparks.current) sparks.current.rotation.y = s.time * 0.5;
   });
   return (
+    <>
+    {/* Hiding the mascot must not change the world's shader light count. */}
+    <pointLight ref={light} color="#ffdfb5" intensity={0} distance={2.5} />
     <group ref={root} name="travel-companion">
       <group ref={cookie}>
         <CompanionModel skin="biscuit" pose={pose} />
@@ -77,7 +85,7 @@ export default function CompanionView({
           </mesh>
         ))}
       </group>
-      <pointLight color="#ffdfb5" intensity={0.65} distance={2.5} />
     </group>
+    </>
   );
 }

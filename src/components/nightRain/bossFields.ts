@@ -4,8 +4,8 @@ import { bossAttack } from './bossCombat';
 import { canOccupy, lineClear, projectileBlocked, supportAt, WORLD_BOUNDS } from './world';
 
 export const MAX_BOSS_FIELDS = 16;
-export const FIELD_COLORS: Record<BossSkill, string> = { starfall: '#ffd287', starcards: '#92deff', pine: '#8fce78', shield: '#79d9ef', drones: '#d7aaff', leap: '#ffad67', freeze: '#98ddff', counter: '#ffc75b', song: '#ff905b', beam: '#df91ff', crossbeam: '#df91ff', dragon: '#78d2b9', quake: '#efa590', gust: '#d3dba8' };
-export const FIELD_HINTS: Record<BossSkill, string> = { starfall: '落点已锁定 · 离开金圈', starcards: '三次迟发 · 横移 / 弹反 · 第三发后反击', pine: '离开松苗 · 跳跃可脱离缠绕', shield: '重击破盾 / 绕背', drones: '横移躲弹 · 近身重击打断', leap: '离开落点 · 落地后反击', freeze: '离开冻域 · 敌我同时停止', counter: '镐亮别贪刀 · 绕背反击', song: '侧翼接近 · 重击打断歌唱', beam: '向侧面走 · 跳跃躲不开光束', crossbeam: '两道光束错开发射 · 向侧面走', dragon: '追踪墨迹 · 留出闪避体力', quake: '跳过扩散震波', gust: '观察风弹 · 侧移或弹反' };
+export const FIELD_COLORS: Record<BossSkill, string> = { resonance: '#f4cf85', starfall: '#ffd287', starcards: '#92deff', pine: '#8fce78', shield: '#79d9ef', drones: '#d7aaff', leap: '#ffad67', freeze: '#98ddff', counter: '#ffc75b', song: '#ff905b', beam: '#df91ff', crossbeam: '#df91ff', dragon: '#78d2b9', quake: '#efa590', gust: '#d3dba8' };
+export const FIELD_HINTS: Record<BossSkill, string> = { resonance: '听钟跳过震圈 · 最后一响后反击', starfall: '落点已锁定 · 离开金圈', starcards: '三次迟发 · 横移 / 弹反 · 第三发后反击', pine: '离开松苗 · 跳跃可脱离缠绕', shield: '重击破盾 / 绕背', drones: '横移躲弹 · 近身重击打断', leap: '离开落点 · 落地后反击', freeze: '离开冻域 · 敌我同时停止', counter: '镐亮别贪刀 · 绕背反击', song: '侧翼接近 · 重击打断歌唱', beam: '向侧面走 · 跳跃躲不开光束', crossbeam: '两道光束错开发射 · 向侧面走', dragon: '追踪墨迹 · 留出闪避体力', quake: '跳过扩散震波', gust: '观察风弹 · 侧移或弹反' };
 const gap = (a: Vec3, b: Vec3) => Math.hypot(a.x - b.x, a.z - b.z);
 export const fieldActive = (f: BossField) => f.age >= f.delay && f.age < f.delay + f.duration;
 export const inField = (f: BossField, p: Vec3) => Math.abs(p.y - f.y) < 1 && gap(f, p) <= f.radius;
@@ -30,6 +30,7 @@ export function castBossSkill(s: GameState, e: Enemy): boolean {
   const p = s.player;
   const position = targeted && canOccupy(p.x, p.z, p.y, s) && lineClear(e, p, s) ? p : e;
   const field: BossField = { id: s.nextEffectId++, owner: e.id, kind, x: position.x, y: position.y, z: position.z, facing: e.facing, age: 0, delay: 0.9, duration: 0.5, radius: 1.8, length: attack.range, damage: attack.damage, next: 0, hit: false };
+  if (kind === 'resonance') { field.radius = 8.4; field.delay = 0.85; field.duration = 1.4; }
   if (kind === 'starfall') { field.radius = e.phase === 2 ? 2.8 : 2.1; field.delay = 1.5; field.duration = 0.35; }
   if (kind === 'starcards') { field.delay = 0.5; field.duration = 2.6; field.next = 0.5; }
   if (kind === 'pine') { field.radius = 1.55; field.duration = 3.2; }
@@ -43,7 +44,9 @@ export function castBossSkill(s: GameState, e: Enemy): boolean {
   if (kind === 'beam' || kind === 'crossbeam') {
     field.delay = 1.1; field.duration = 0.45; field.radius = 0.65;
   }
-  const fields = kind === 'crossbeam'
+  const fields = kind === 'resonance'
+    ? Array.from({ length: e.phase === 2 && !s.collected.includes('bell-silence') ? 3 : 2 }, (_, i) => ({ ...field, id: i === 0 ? field.id : s.nextEffectId++, delay: field.delay + i * 1.15 }))
+    : kind === 'crossbeam'
     ? [{ ...field, kind: 'beam' as const, facing: field.facing - 0.42 }, { ...field, kind: 'beam' as const, id: s.nextEffectId++, facing: field.facing + 0.42, delay: 1.6 }]
     : [field];
   for (const f of fields) {
@@ -124,7 +127,7 @@ export function updateBossFields(s: GameState, dt: number, callbacks: Callbacks)
     if (f.kind === 'shield') hits = !f.hit && inField(f, p);
     if (f.kind === 'starfall') hits = !f.hit && inField(f, p);
     if (f.kind === 'leap') hits = !f.hit && inField(f, p);
-    if (f.kind === 'quake') {
+    if (f.kind === 'quake' || f.kind === 'resonance') {
       const radius = ((f.age - f.delay) / f.duration) * f.radius;
       hits = !f.hit && Math.abs(gap(f, p) - radius) < 0.4 && Math.abs(f.y - p.y) < 1;
     }
@@ -134,7 +137,7 @@ export function updateBossFields(s: GameState, dt: number, callbacks: Callbacks)
       const across = dx * Math.cos(f.facing) - dz * Math.sin(f.facing);
       hits = !f.hit && along >= 0 && along <= f.length && Math.abs(across) < f.radius && Math.abs(p.y - f.y) < 1;
     }
-    if (hits && lineClear(f, p, s)) { f.hit = true; callbacks.hit(e, f, f.kind === 'quake' || f.kind === 'pine'); }
+    if (hits && lineClear(f, p, s)) { f.hit = true; callbacks.hit(e, f, f.kind === 'quake' || f.kind === 'resonance' || f.kind === 'pine'); }
   }
   s.bossFields = s.bossFields.filter(f => f.age < f.delay + f.duration);
 }
@@ -146,7 +149,7 @@ export function validBossFields(s: GameState): boolean {
     if (!f || !Object.hasOwn(FIELD_COLORS, f.kind) || ids.has(f.id)) return false;
     ids.add(f.id);
     const owner = s.enemies.find(enemy => enemy.id === f.owner);
-    return !!owner && (!!bossCharacter(owner.kind) || owner.kind === 'sentinel')
+    return !!owner && (!!bossCharacter(owner.kind) || owner.kind === 'sentinel' || owner.kind === 'bellkeeper')
       && [f.id, f.x, f.y, f.z, f.facing, f.age, f.delay, f.duration, f.radius, f.length, f.damage, f.next].every(Number.isFinite)
       && Number.isInteger(f.id) && f.id >= 0 && typeof f.hit === 'boolean'
       && f.x >= WORLD_BOUNDS.x1 && f.x <= WORLD_BOUNDS.x2 && f.z >= WORLD_BOUNDS.z1 && f.z <= WORLD_BOUNDS.z2

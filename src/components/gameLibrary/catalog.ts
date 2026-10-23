@@ -98,6 +98,14 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
         updateDate: '2026-10-04',
       },
       {
+        title: '江风有回音 · 柳州',
+        href: '/game/liuzhou',
+        description: '沿真实道路探索东门街区，骑车取粉、开过文惠桥，与岁己、栞栞、米汀和七海收集城市的声音。',
+        image: '/games/liuzhou/preview.png',
+        meta: '3D 开放街区 · 步行 / 骑行 / 驾车 · 首章开发中',
+        releaseDate: '2026-10-23',
+      },
+      {
         title: '岁己 · 春日第一单',
         href: '/game/sui-spring',
         description: '挑起面团借力登高，搭乘餐车、穿过雨棚，再登上剧场吊台，停稳宴席机。四区十二单，最后坐到街坊为你留下的红椅子。',

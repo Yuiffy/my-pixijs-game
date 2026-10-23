@@ -18,12 +18,12 @@ function encounter(kind, index = 1, distance = 2) {
   return { s, e };
 }
 
-test('twelve location keys map to unique characters; later chapters host Nana and Azi', () => {
-  assert.equal(Object.keys(BOSS_ROSTER).length, 12);
+test('thirteen location keys map to unique characters; later chapters host Nana and Azi', () => {
+  assert.equal(Object.keys(BOSS_ROSTER).length, 13);
   assert.equal(BOSS_ROSTER.boss.character, 'harei');
   assert.equal(BOSS_ROSTER.warden.character, 'nana');
   assert.equal(BOSS_ROSTER.abbot.character, 'azi');
-  assert.equal(new Set(Object.values(BOSS_ROSTER).map(b => b.name)).size, 12);
+  assert.equal(new Set(Object.values(BOSS_ROSTER).map(b => b.name)).size, 13);
 });
 
 test('ordinary enemy windups cast every distinct field, without immediate generic cone damage', () => {
@@ -109,7 +109,7 @@ test('v10 migration keeps progress and health while retiring old attack contact 
   const restored=engine.loadGame(JSON.stringify(s));assert.ok(restored);
   assert.equal(restored.player.hp,41);assert.equal(restored.rice,57);assert.equal(restored.shortcut,true);
   const boss=restored.enemies.find(e=>e.kind==='boss');assert.equal(boss.hp,137);assert.equal(boss.posture,61);assert.equal(boss.action,'recover');
-  assert.deepEqual(restored.bossFields,[]);assert.equal(restored.worldVersion,12);
+  assert.deepEqual(restored.bossFields,[]);assert.equal(restored.worldVersion, 13);
 });
 
 test('current saves preserve field clocks and reject malformed or oversized hazard data', () => {

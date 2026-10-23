@@ -1,6 +1,7 @@
+import { BELL_ENEMIES, BELL_GATES, BELL_LORE } from './bellAbbey';
 import { SKY_ENEMIES, SKY_GATES, SKY_LORE, skyPrisms } from './skyplain';
 import type { Action, AttackId, Effect, Enemy, EnemyKind, GameInput, GameState, Player, Vec3, WorldAccess } from './types';
-import { ceilingAt, deckBlocks, playerBlocked, projectileBlocked, supportAt, canOccupy, REST_POINTS, ENEMY_SPAWNS, AMBUSH_ENEMIES, LANDMARKS, lineClear, regionAt, SPAWN, WORLD_BOUNDS } from './world';
+import { ceilingAt, deckBlocks, playerBlocked, projectileBlocked, supportAt, rampLandingAt, canOccupy, REST_POINTS, ENEMY_SPAWNS, AMBUSH_ENEMIES, LANDMARKS, lineClear, regionAt, SPAWN, WORLD_BOUNDS } from './world';
 import { enemyRole, isBoss } from './encounters';
 import { DUNGEON_BOSSES, DUNGEON_ENEMIES, DUNGEON_PORTALS, DUNGEONS, giantScale, undergroundId } from './dungeons';
 import { discoverDungeon, liftPosition, migrateUnderground, updateLift, validLift } from './dungeonTravel';
@@ -16,7 +17,7 @@ import { riverSeals, VALLEY_BOSSES, VALLEY_ENEMIES, VALLEY_GATES, VALLEY_LORE } 
 import { enemyAttack, enemyTiming, ENEMY_STRIKE_TIME, ENEMY_CONTACT_TIME } from './enemyCombat';
 
 import { bossDefense, bossLeapHeight, castBossSkill, frozenByBoss, interruptBossChannel, snaredByBoss, updateBossFields, validBossFields } from './bossFields';
-import { FAN_ENEMIES, fanOf } from './fanEnemies';
+import { FAN_ENEMIES, combatFanOf, fanOf } from './fanEnemies';
 import { BOSS_ROSTER } from './bossRoster';
 import { BUILDING_SOLIDS, BUILDING_SURFACES, REMOTE_LEVERS } from './overhaulWorld';
 import { WEAPONS, chargeCredit, chargeTime, weaponAttack, weaponUnlocked } from './weapons';
@@ -28,6 +29,7 @@ export { enemyAttack } from './enemyCombat';
 // The simulation contains no browser, rendering, wall-clock or random state.
 // All times are seconds, except the public stepGame argument (milliseconds).
 const STATS: Record<EnemyKind, { hp: number; posture: number; damage: number; speed: number; reward: number }> = {
+  bellkeeper: { hp: 1420, posture: 280, damage: 44, speed: 1.9, reward: 900 },
   astronomer: { hp: 1250, posture: 250, damage: 40, speed: 2.1, reward: 720 },
   colossus: { hp: 530, posture: 190, damage: 34, speed: 1.45, reward: 220 },
   sentinel: { hp: 720, posture: 220, damage: 39, speed: 1.3, reward: 300 },
@@ -117,11 +119,13 @@ bankedRice: 0,
 level: 0,
 charm: false,
 shortcut: false,
-    worldVersion: 12,
+    worldVersion: 13,
 gear: { armor: 'traveler', talisman: 'none' },
 weaponLevel: 0,
 weapon: 'umbrella',
 haven: freshHaven(),
+bellGates: [],
+bellComplete: false,
 skyGates: [],
 skyComplete: false,
 valleyGates: [],
@@ -178,7 +182,7 @@ feet = p.y + p.jumpHeight;
     }
   }
 }
-function updateFall(s:GameState, dt:number):void {
+function updateFall(s:GameState, dt:number, from:Vec3):void {
   const p = s.player; const
 before = p.y + p.jumpHeight;
   p.jumpVelocity -= 18 * dt; let after = before + p.jumpVelocity * dt;
@@ -187,8 +191,10 @@ before = p.y + p.jumpHeight;
     if (ceiling !== null) { after = ceiling - 1.65 - 0.002; p.jumpVelocity = 0; }
   }
   p.fallPeak = Math.max(p.fallPeak, before);
-  const floor = supportAt(p.x, p.z, before + 0.001);
-  if (p.jumpVelocity < 0 && floor !== null && after <= floor) {
+  const ramp = rampLandingAt(from, { x: p.x, y: after, z: p.z });
+  const support = supportAt(p.x, p.z, before + 0.001);
+  const floor = ramp === null ? support : support === null ? ramp : Math.max(ramp, support);
+  if ((p.jumpVelocity < 0 || ramp !== null) && floor !== null && after <= floor) {
     const damage = fallDamage(p.fallPeak - floor);
     p.y = floor; p.jumpHeight = 0; p.jumpVelocity = 0; p.landing = 0.18;
     p.lastGround = { x: p.x, y: floor, z: p.z }; p.fallPeak = floor;
@@ -223,6 +229,7 @@ function killEnemy(s: GameState, e: Enemy): void {
   s.kills += 1; s.rice += STATS[e.kind].reward;
   const entry = bestiaryKey(e); if (!s.bestiary.includes(entry)) s.bestiary.push(entry);
   effect(s, e, 'reward', `+${STATS[e.kind].reward} 夜市钱`);
+  if (e.kind === 'bellkeeper') { s.defeatedGuests.push(e.id); say(s, '钟槌落地 · 长夜的余响终于停歇', 8, 'event', '礼拜堂后方的晨雨放灯台已安静。亲手敲钟，为没有声音的人留一盏灯。'); }
   if (e.kind === 'astronomer') { s.defeatedGuests.push(e.id); say(s, '羽啾收起星图 · 归航有光', 8, 'event', '登上观测院后方长阶，把雾河的归水灯送入星环。'); }
   if (DUNGEON_BOSSES.includes(e.id)) { s.defeatedGuests.push(e.id); say(s, `${e.name} · 守望已息`, 8, 'event', '守望者身后的金光遗物已经可以收下。副本入口仍可返回，也可以在雨灯旁行旅。'); }
   if (s.lockedId === e.id) s.lockedId = null;
@@ -400,9 +407,10 @@ function updatePlayer(s: GameState, dt: number, input: GameInput): void {
   }
   if (isAirborne(p)) {
     // Air steering retains horizontal momentum while real parapets/doors remain solid.
+    const from = { x: p.x, y: p.y + p.jumpHeight, z: p.z };
     p.airX += (x * 3.55 - p.airX) * Math.min(1, dt * 1.8); p.airZ += (z * 3.55 - p.airZ) * Math.min(1, dt * 1.8);
     move(s, p, p.airX * dt, p.airZ * dt);
-    updateFall(s, dt);
+    updateFall(s, dt, from);
     if (s.mode !== 'playing') return;
   }
   const spec = p.attack ? weaponAttack(s, p.attack) : null;
@@ -477,7 +485,7 @@ function updateEnemy(s: GameState, e: Enemy, dt: number): void {
   // Enemies return to their posts rather than pursuing through floors or the entire level.
   if (e.aggro && (homeDistance > (['regent', 'serpent', 'elegist'].includes(e.kind) ? 22 : e.kind === 'captain' ? 18 : e.kind === 'boss' ? 11 : 10) || dist > 15 || (e.kind === 'boss' && p.z > -35.5))) { e.aggro = false; e.action = 'idle'; e.timer = 0.8; e.posture = 0; }
   if (!e.aggro) {
-    if (fanOf(e) === 'shark' && homeDistance < 2.2 && dist > 7) {
+    if (combatFanOf(e) === 'shark' && homeDistance < 2.2 && dist > 7) {
       const target = { ...e.spawn, z: e.spawn.z + Math.sin(s.time * 0.35) * 1.2 };
       e.facing = facingToward(e, target); e.action = 'chase';
       if (distance(e, target) > 0.12) move(s, e, Math.sin(e.facing) * dt * 0.65, Math.cos(e.facing) * dt * 0.65);
@@ -508,7 +516,7 @@ function updateEnemy(s: GameState, e: Enemy, dt: number): void {
     if (!e.hitDone && e.timer <= ENEMY_STRIKE_TIME - ENEMY_CONTACT_TIME) {
       e.hitDone = true;
       if (attack.support) {
-        for (const ally of s.enemies) if (alive(ally) && fanOf(ally) === 'biscuit' && distance(e, ally) < 3.5 && Math.abs(e.y - ally.y) < 1 && lineClear(e, ally, s)) {
+        for (const ally of s.enemies) if (alive(ally) && combatFanOf(ally) === 'biscuit' && distance(e, ally) < 3.5 && Math.abs(e.y - ally.y) < 1 && lineClear(e, ally, s)) {
           ally.hp = Math.min(ally.maxHp, ally.hp + 12); effect(s, ally, 'heal', '分饼');
         }
       } else if (castBossSkill(s, e)) {
@@ -559,8 +567,8 @@ const BASE_DOORS = [
   { id: 'harbor-gate', x: 29, z: -8, y: 0, w: 4.1, d: 0.7, side: 'north' },
 ] as const;
 export function closedDoor(s: GameState, id: string) {
-  if ((id === 'shortcut' && s.shortcut) || (id === 'temple-gate' && s.templeGate) || (id === 'harbor-gate' && s.harborGate) || s.chapterGates.includes(id) || s.valleyGates.includes(id) || s.haven.gates.includes(id) || s.skyGates.includes(id)) return undefined;
-  return [...BASE_DOORS, ...CHAPTER_GATES, ...VALLEY_GATES, ...HAVEN_GATES, ...SKY_GATES].find(d => d.id === id);
+  if ((id === 'shortcut' && s.shortcut) || (id === 'temple-gate' && s.templeGate) || (id === 'harbor-gate' && s.harborGate) || s.chapterGates.includes(id) || s.valleyGates.includes(id) || s.haven.gates.includes(id) || s.skyGates.includes(id) || s.bellGates.includes(id)) return undefined;
+  return [...BASE_DOORS, ...CHAPTER_GATES, ...VALLEY_GATES, ...HAVEN_GATES, ...SKY_GATES, ...BELL_GATES].find(d => d.id === id);
 }
 export function wrongDoorSide(s: GameState, id: string): boolean {
   const gate = closedDoor(s, id); const p = s.player;
@@ -578,7 +586,7 @@ function nearLandmark(s: GameState, l: typeof LANDMARKS[number]): boolean {
   if (!door) return nearControl(s, l, l.id);
   // Interact with the visible door from either face, including its full width.
   const point = { x: Math.max(door.x - door.w / 2, Math.min(door.x + door.w / 2, s.player.x)), y: door.y, z: Math.max(door.z - door.d / 2, Math.min(door.z + door.d / 2, s.player.z)) };
-  const access = { ...s, shortcut: s.shortcut || l.id === 'shortcut', templeGate: s.templeGate || l.id === 'temple-gate', harborGate: s.harborGate || l.id === 'harbor-gate', chapterGates: [...s.chapterGates, l.id], valleyGates: [...s.valleyGates, l.id], skyGates: [...s.skyGates, l.id], haven: { ...s.haven, gates: [...s.haven.gates, l.id] } };
+  const access = { ...s, shortcut: s.shortcut || l.id === 'shortcut', templeGate: s.templeGate || l.id === 'temple-gate', harborGate: s.harborGate || l.id === 'harbor-gate', chapterGates: [...s.chapterGates, l.id], valleyGates: [...s.valleyGates, l.id], skyGates: [...s.skyGates, l.id], bellGates: [...s.bellGates, l.id], haven: { ...s.haven, gates: [...s.haven.gates, l.id] } };
   return nearControl(s, l, l.id) || (distance(point, s.player) < 2.6 && Math.abs(door.y - s.player.y) < 0.8 && lineClear(s.player, point, access));
 }
 
@@ -592,7 +600,7 @@ function updatePrompt(s: GameState): void {
   const broken = s.enemies.find(e => e.action === 'stagger' && inCone(s, s.player, e, 2.55, 1.65));
   if (broken) { s.prompt = '破架处决'; s.nearbyId = broken.id; return; }
   const landmark = LANDMARKS.filter(l => (l.kind === 'ferry' || havenAvailable(s, l.id)) && (!s.collected.includes(l.id) || l.kind === 'note' || l.kind === 'npc'))
-    .filter(l => !(l.kind === 'shortcut' && (SKY_GATES.some(g => g.id === l.id) ? s.skyGates.includes(l.id) : HAVEN_GATES.some(g => g.id === l.id) ? s.haven.gates.includes(l.id) : VALLEY_GATES.some(g => g.id === l.id) ? s.valleyGates.includes(l.id) : CHAPTER_GATES.some(g => g.id === l.id) ? s.chapterGates.includes(l.id) : l.id === 'harbor-gate' ? s.harborGate : l.id === 'temple-gate' ? s.templeGate : s.shortcut)) && nearLandmark(s, l))
+    .filter(l => !(l.kind === 'shortcut' && (BELL_GATES.some(g => g.id === l.id) ? s.bellGates.includes(l.id) : SKY_GATES.some(g => g.id === l.id) ? s.skyGates.includes(l.id) : HAVEN_GATES.some(g => g.id === l.id) ? s.haven.gates.includes(l.id) : VALLEY_GATES.some(g => g.id === l.id) ? s.valleyGates.includes(l.id) : CHAPTER_GATES.some(g => g.id === l.id) ? s.chapterGates.includes(l.id) : l.id === 'harbor-gate' ? s.harborGate : l.id === 'temple-gate' ? s.templeGate : s.shortcut)) && nearLandmark(s, l))
     .sort((a, b) => distance(a, s.player) - distance(b, s.player))[0];
   if (landmark) {
     s.nearbyId = landmark.id;
@@ -636,6 +644,8 @@ export function interact(s: GameState): void {
   if (nearbyId === 'bloodstain' && s.bloodstain) { s.rice += s.bloodstain.rice; s.bloodstain = null; effect(s, s.player, 'reward', '失物归还'); say(s, '找回了夜市钱。今晚还吃得起！'); updatePrompt(s); return; }
   const landmark = LANDMARKS.find(l => l.id === nearbyId);
   if (!landmark) return;
+  if (landmark.id.startsWith('bell-') && wrongDoorSide(s, landmark.id)) { say(s, '无法从这一侧打开 · 门闩在另一侧'); return; }
+  if (landmark.id.startsWith('bell-') && interactBell(s, landmark.id)) { updatePrompt(s); return; }
   if (landmark.id.startsWith('sky-') && wrongDoorSide(s, landmark.id)) { say(s, '无法从这一侧打开 · 门闩在另一侧'); return; }
   if (landmark.id.startsWith('sky-') && interactSky(s, landmark.id)) { updatePrompt(s); return; }
   const portal = DUNGEON_PORTALS[landmark.id];
@@ -793,7 +803,7 @@ export function equipWeapon(s: GameState, weapon: GameState['weapon']): boolean 
 export function continueExploring(s: GameState): void {
   if (s.mode !== 'ending' && s.mode !== 'interlude') return;
   s.mode = 'playing'; s.paused = false; s.lockedId = null; clearHeldActions(s);
-  say(s, s.haven.ending ? '灯有了归处，你也有。' : s.skyComplete ? '星环已亮，走过的路仍在身后。' : s.valleyComplete ? '灯随河流，路仍相连。' : s.chapterComplete ? '钟声翻过后山，雾河里的灯还在等你。' : '吃饱了。北口香料街尽头，王寺的灯还亮着。', 9, 'lore', s.haven.ending ? '沿灯库东侧归廊回庭，打开后门。阿莲、弥音和温叔都想听听你的回答。' : s.skyComplete ? '沿长阶回到归航星灯，可行旅至此前点亮的雨灯；盐原支路、雾河两岸与归灯庭仍可继续探索。' : s.valleyComplete ? '旅馆南桥通向归灯庭。旧寺西侧书房和盐仓背后的船坞，还留着关于未归之人的线索。' : s.chapterComplete ? '从钟台东侧的后山门进入第二关「雾河回响」。新区域与王寺直接相连，原有战斗和探索进度保留。' : '从夜市西北角向北，沿香料水街进入织坊下城。榕树下有新的雨灯。'); updatePrompt(s);
+  say(s, s.haven.ending ? '灯有了归处，你也有。' : s.bellComplete ? '无声的人也有了回声。晨雨已落在归途。' : s.skyComplete ? '星环已亮，走过的路仍在身后。' : s.valleyComplete ? '灯随河流，路仍相连。' : s.chapterComplete ? '钟声翻过后山，雾河里的灯还在等你。' : '吃饱了。北口香料街尽头，王寺的灯还亮着。', 9, 'lore', s.haven.ending ? '沿灯库东侧归廊回庭，打开后门。阿莲、弥音和温叔都想听听你的回答。' : s.bellComplete ? '晨雨归灯可行旅回此前点亮的雨灯；抄经室与旧城仍等你回访。' : s.skyComplete ? '沿长阶回到归航星灯，可行旅至此前点亮的雨灯；盐原支路、雾河两岸与归灯庭仍可继续探索。' : s.valleyComplete ? '旅馆南桥通向归灯庭。旧寺西侧书房和盐仓背后的船坞，还留着关于未归之人的线索。' : s.chapterComplete ? '从钟台东侧的后山门进入第二关「雾河回响」。新区域与王寺直接相连，原有战斗和探索进度保留。' : '从夜市西北角向北，沿香料水街进入织坊下城。榕树下有新的雨灯。'); updatePrompt(s);
 }
 
 /** Travel is available only beside a lit, safe lamp and never grants a free heal. */
@@ -833,8 +843,15 @@ export function getObjective(s: GameState): string {
   if (s.liftRide) return s.liftRide.direction === 'down' ? '升降台下行 · 雨声渐远' : '升降台上行 · 返回地面';
   const dungeon = undergroundId(s.player);
   if (dungeon) return `${DUNGEONS[dungeon].name} · 可自由探索支路，乘升降台返回地面`;
+  if (s.skyComplete && s.player.z < -727) {
+    if (s.bellComplete) return '第四关完成 · 晨雨余响 · 雨灯仍通向你走过的每一条路';
+    if (!s.bellGates.includes('bell-entry')) return '第四关 · 归航台北侧的垂星长阶通向沉钟修道院';
+    if (!s.collected.includes('bell-clapper')) return '沉钟修道院 · 沿西廊下到淹钟下库，松开止水闩';
+    if (!s.bellGates.includes('bell-door')) return '沿提钟长阶返回上层 · 东廊可开近路与雨灯，北侧进入礼拜堂';
+    return s.defeatedGuests.includes('bell-keeper') ? '到礼拜堂后方，敲响为无声之人留下的晨钟' : '沉钟礼拜堂 · 挑战无声钟守 · 余响';
+  }
   if (s.valleyComplete && s.player.z < -490) {
-    if (s.skyComplete) return '第三关完成 · 天镜归航 · 可在归航星灯行旅，回访雾河与归灯庭';
+    if (s.skyComplete) return '天镜归航 · 归航台北侧的垂星长阶已通向第四关沉钟修道院';
     if (!s.skyGates.includes('sky-entry')) return '第三关 · 沉殿归水灯东侧，循旧渠前往天镜原';
     if (s.defeatedGuests.includes('sky-astronomer')) return '沿拾星长阶登上归航台，将归水灯送入星环';
     if (s.skyGates.includes('sky-door')) return '环星观测院 · 挑战羽啾 · 观星守望';
@@ -953,7 +970,7 @@ export function loadGame(raw: string | null): GameState | null {
     const legacyMotion = s.motionVersion === undefined;
     const legacyPlayerMotion = legacyMotion || (s.motionVersion as number) === 1;
     if (!legacyMotion && ![1, 2].includes(s.motionVersion)) return null;
-    if (s.worldVersion !== undefined && ![2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].includes(s.worldVersion)) return null;
+    if (s.worldVersion !== undefined && ![2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].includes(s.worldVersion)) return null;
     const oldWorld = s.worldVersion === undefined; const oldDistrict = (s.worldVersion ?? 0) < 4; const oldChapter = (s.worldVersion ?? 0) < 5; const oldValley = (s.worldVersion ?? 0) < 6; const oldHaven = (s.worldVersion ?? 0) < 7;
     if (oldWorld) { s.templeGate = false; s.flaskUpgrade = false; s.litLamps = s.checkpoint === 'courtyard' ? ['courtyard'] : []; }
     if ((s.worldVersion as number) === 2) {
@@ -978,7 +995,15 @@ export function loadGame(raw: string | null): GameState | null {
     if (oldRoster) s.bossFields = [];
     const oldSky = (s.worldVersion ?? 0) < 12;
     if (oldSky) { s.skyGates = []; s.skyComplete = false; }
-    s.worldVersion = 12;
+    const oldBell = (s.worldVersion ?? 0) < 13;
+    if (oldBell) { s.bellGates = []; s.bellComplete = false; }
+    s.worldVersion = 13;
+    if (!Array.isArray(s.bellGates) || new Set(s.bellGates).size !== s.bellGates.length || s.bellGates.some(id => !BELL_GATES.some(g => g.id === id)) || typeof s.bellComplete !== 'boolean') return null;
+    if (s.bellGates.includes('bell-entry') && !s.skyComplete) return null;
+    if ((s.collected?.some(id => id.startsWith('bell-')) || s.litLamps?.some(id => id.startsWith('bell-')) || s.bellGates.length) && !s.bellGates.includes('bell-entry')) return null;
+    if (s.bellGates.includes('bell-door') && !s.collected?.includes('bell-clapper')) return null;
+    if (s.defeatedGuests?.includes('bell-keeper') && !s.bellGates.includes('bell-door')) return null;
+    if (s.bellComplete !== s.collected?.includes('bell-heart') || (s.bellComplete && !s.defeatedGuests?.includes('bell-keeper'))) return null;
     if (!Array.isArray(s.skyGates) || new Set(s.skyGates).size !== s.skyGates.length || s.skyGates.some(id => !SKY_GATES.some(g => g.id === id)) || typeof s.skyComplete !== 'boolean') return null;
     if (s.skyGates.includes('sky-entry') && !s.valleyComplete) return null;
     if ((s.collected?.some(id => id.startsWith('sky-')) || s.litLamps?.some(id => id.startsWith('sky-'))) && !s.skyGates.includes('sky-entry')) return null;
@@ -989,7 +1014,7 @@ export function loadGame(raw: string | null): GameState | null {
     if (!finite(s.weaponLevel, 0, 2) || !Number.isInteger(s.weaponLevel) || !Object.hasOwn(WEAPONS, s.weapon) || !weaponUnlocked(s, s.weapon) || (s.weaponLevel === 2 && !s.bossDefeated)) return null;
     if (!Array.isArray(s.valleyGates) || new Set(s.valleyGates).size !== s.valleyGates.length || s.valleyGates.some(id => !VALLEY_GATES.some(g => g.id === id)) || typeof s.valleyComplete !== 'boolean') return null;
     if (!Array.isArray(s.chapterGates) || new Set(s.chapterGates).size !== s.chapterGates.length || s.chapterGates.some(id => !CHAPTER_GATES.some(g => g.id === id)) || typeof s.chapterComplete !== 'boolean') return null;
-    if (typeof s.harborGate !== 'boolean' || !Array.isArray(s.defeatedGuests) || s.defeatedGuests.some(id => !['nana-tide', 'azi-stage', 'gate-captain', 'rain-regent', ...VALLEY_BOSSES, 'last-lamplighter', ...DUNGEON_BOSSES, 'sky-astronomer'].includes(id)) || new Set(s.defeatedGuests).size !== s.defeatedGuests.length) return null;
+    if (typeof s.harborGate !== 'boolean' || !Array.isArray(s.defeatedGuests) || s.defeatedGuests.some(id => !['nana-tide', 'azi-stage', 'gate-captain', 'rain-regent', ...VALLEY_BOSSES, 'last-lamplighter', ...DUNGEON_BOSSES, 'sky-astronomer', 'bell-keeper'].includes(id)) || new Set(s.defeatedGuests).size !== s.defeatedGuests.length) return null;
     if (s.chapterGates.includes('archive-door') && !s.defeatedGuests.includes('gate-captain')) return null;
     if (s.chapterComplete !== s.collected?.includes('chapter-bell') || (s.chapterComplete && (!s.defeatedGuests.includes('rain-regent') || !s.collected.includes('food')))) return null;
     if (s.valleyGates.includes('valley-entry') && !s.chapterComplete) return null;
@@ -1061,7 +1086,13 @@ export function loadGame(raw: string | null): GameState | null {
       if (role && (enemy.name === role.previous || enemy.name === role.legacy)) enemy.name = role.name;
     }
     if (oldSky) addMissing(SKY_ENEMIES.map(e => e.id));
+    if (oldBell) addMissing(BELL_ENEMIES.map(e => e.id));
     if (!Array.isArray(s.enemies) || s.enemies.length !== ENEMY_SPAWNS.length) return null;
+    // These known names also occur in current v13 saves made before uniforms were complete.
+    for (const enemy of s.enemies) {
+      const uniform = FAN_ENEMIES[enemy?.id];
+      if (uniform?.cosmeticOnly && enemy.name === uniform.previous) enemy.name = uniform.name;
+    }
     if (oldRoster && Array.isArray(s.bestiary)) for (const e of s.enemies) { if (fanOf(e) && e.hp === 0 && !s.bestiary.includes(bestiaryKey(e))) s.bestiary.push(bestiaryKey(e)); }
     if (!Array.isArray(s.bestiary) || new Set(s.bestiary).size !== s.bestiary.length || s.bestiary.some(id => !s.enemies.some(e => bestiaryKey(e) === id || `role:${enemyRole(e)}` === id))) return null;
     for (let i = 0; i < s.enemies.length; i += 1) {
@@ -1128,5 +1159,26 @@ function interactSky(s: GameState, id: string): boolean {
     say(s, '第三关 · 天镜归航', 18, 'event', '归水灯升入金环。回头看，玫瑰盐池、引水渠和雾河连成了同一条归途。获得300夜市钱；旁边的归航星灯可以返回已点亮的雨灯。'); return true;
   }
   if (SKY_LORE[id]) { if (!s.collected.includes(id)) s.collected.push(id); say(s, SKY_LORE[id][0], 12, 'lore', SKY_LORE[id][1]); return true; }
+  return false;
+}
+
+function interactBell(s: GameState, id: string): boolean {
+  const gate = BELL_GATES.find(g => g.id === id);
+  if (gate) {
+    if (id === 'bell-entry' && !s.skyComplete) { say(s, '金环的归水灯尚未亮起。', 7, 'lore', '先完成天镜原的归航，再循北侧长阶听钟。'); return true; }
+    if (id === 'bell-door' && !s.collected.includes('bell-clapper')) { say(s, '堂门的钟链仍被水库锁住。', 7, 'lore', '从眺台西侧下到淹钟下库，找到止水闩。'); return true; }
+    if (!s.bellGates.includes(id)) s.bellGates.push(id);
+    say(s, `${gate.name}已开启`, 7, 'event', id === 'bell-return' ? '眺台与钟庭已接通。之后再来，不必绕行下库。' : id === 'bell-entry' ? '第四关 · 沉钟修道院。终点在眼前，路却先向脚下延伸。' : '金色震圈可以跳过。钟守落槌之后，听清余响再出手。'); return true;
+  }
+  if (id === 'bell-clapper' || id === 'bell-silence') {
+    if (!s.collected.includes(id)) { s.collected.push(id); effect(s, s.player, 'reward', id === 'bell-clapper' ? '钟链松开' : '止鸣绳'); }
+    say(s, id === 'bell-clapper' ? '水退半尺 · 礼拜堂的钟链松开了' : '无声的字句，被编进了止鸣绳', 9, 'lore', id === 'bell-clapper' ? '从下库东端登上提钟长阶。上层东廊有归灯与回眺台的近门。' : '钟守第二阶段的第三道震圈会被压住。它仍会落槌，记得留出反击的体力。'); return true;
+  }
+  if (id === 'bell-heart') {
+    if (!s.defeatedGuests.includes('bell-keeper')) { say(s, '钟守还在等待最后一位听钟的人。'); return true; }
+    if (!s.bellComplete) { s.bellComplete = true; s.collected.push(id); s.rice += 420; s.mode = 'interlude'; s.lockedId = null; s.projectiles = []; s.bossFields = []; }
+    return true;
+  }
+  if (BELL_LORE[id]) { if (!s.collected.includes(id)) s.collected.push(id); say(s, BELL_LORE[id][0], 12, 'lore', BELL_LORE[id][1]); return true; }
   return false;
 }

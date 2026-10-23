@@ -138,7 +138,7 @@ test('v9 underground saves migrate once, retaining health, equipment, enemy stat
   for (const enemy of raw.enemies) { back(enemy); back(enemy.spawn); }
   for (const fx of raw.effects) back(fx);
   const migrated = e.loadGame(JSON.stringify(raw)); assert.ok(migrated);
-  assert.equal(migrated.worldVersion, 12); assert.deepEqual(migrated.player, current.player);
+  assert.equal(migrated.worldVersion, 13); assert.deepEqual(migrated.player, current.player);
   assert.deepEqual(migrated.enemies, current.enemies); assert.deepEqual(migrated.bloodstain, current.bloodstain);
   assert.deepEqual(migrated.gear, current.gear); assert.ok(migrated.discoveredDungeons.includes('crypt'));
   assert.deepEqual(e.loadGame(e.saveGame(migrated)), migrated);

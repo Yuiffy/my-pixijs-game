@@ -7,6 +7,11 @@ const note = (model: DiscoveryModel, role: DiscoveryRole = 'lore', height = 2.1)
 
 // Keep the original progress IDs and note kind: existing saves remain readable.
 export const NOTE_PRESENTATIONS: Record<string, Presentation> = {
+  'bell-vista': note('sign', 'clue'),
+  'bell-boss-note': note('book', 'clue'),
+  'bell-clapper': note('winch', 'mechanism', 3.1),
+  'bell-silence': note('book', 'mechanism'),
+  'bell-heart': note('bell', 'mechanism', 3.8),
   'sky-note': note('stele'),
   'sky-boss-note': note('book', 'clue'),
   'sky-prism-rose': { ...note('mirror', 'mechanism', 3.1), offset: 0 },
@@ -59,7 +64,7 @@ export function discoveryPhase(s: GameState, id: string): DiscoveryPhase {
     return s.haven.recruits.length === 2 && s.valleyComplete ? 'ready' : 'sealed';
   }
   if (s.collected.includes(id)) return 'complete';
-  const guardian = id === 'sky-heart' ? 'sky-astronomer' : id === 'mill-sluice' || id === 'ferry-winch' ? 'drowned-warden' : id === 'monastery-sluice' ? 'silent-abbot' : id === 'river-heart' ? 'river-serpent' : id === 'chapter-bell' ? 'rain-regent' : id === 'dawn-bell' ? 'nana-tide' : null;
+  const guardian = id === 'bell-heart' ? 'bell-keeper' : id === 'sky-heart' ? 'sky-astronomer' : id === 'mill-sluice' || id === 'ferry-winch' ? 'drowned-warden' : id === 'monastery-sluice' ? 'silent-abbot' : id === 'river-heart' ? 'river-serpent' : id === 'chapter-bell' ? 'rain-regent' : id === 'dawn-bell' ? 'nana-tide' : null;
   if (guardian && !s.defeatedGuests.includes(guardian)) return 'sealed';
   if (id === 'chapter-bell' && !s.collected.includes('food')) return 'sealed';
   return 'ready';

@@ -19,11 +19,11 @@ test('new spawns, lamp landings and interactions occupy their real visible floor
 test('v11 migration appends only this region and preserves the full losing combat state', () => {
   const s = riverCompleted(); s.player.hp = 33; s.player.flasks = 1; s.deaths = 4;
   s.enemies[0].hp = 20; const old = structuredClone(s); old.worldVersion = 11;
-  delete old.skyGates; delete old.skyComplete; old.enemies = old.enemies.filter(e => !e.id.startsWith('sky-'));
+  delete old.skyGates; delete old.skyComplete; old.enemies = old.enemies.filter(e => !e.id.startsWith('sky-') && !e.id.startsWith('bell-'));
   const restored = engine.loadGame(JSON.stringify(old)); assert.ok(restored);
   assert.deepEqual(restored.player, old.player); assert.equal(restored.deaths, 4);
   assert.deepEqual(restored.enemies.slice(0, old.enemies.length), old.enemies);
-  assert.equal(restored.enemies.length - old.enemies.length, 8);
+  assert.equal(restored.enemies.length - old.enemies.length, 15);
   assert.deepEqual(engine.loadGame(engine.saveGame(restored)), restored);
   for (const corrupt of [s => s.skyGates.push('bad'), s => s.skyGates.push('sky-door'), s => s.skyComplete = true, s => { s.skyGates.push('sky-entry'); s.valleyComplete = false; }]) {
     const bad = riverCompleted(); corrupt(bad); assert.equal(engine.loadGame(engine.saveGame(bad)), null);

@@ -8,7 +8,7 @@ import { dungeonFoyer, dungeonPoint, undergroundId } from './dungeons';
 import { ferryStatus } from './ferries';
 
 const VIEWS = [
-  { name: '全城', box: '-298 -740 430 909' },
+  { name: '全城', box: '-298 -910 430 1079' },
   { name: '旧城与潮港', box: '-40 -88 108 112' },
   { name: '织坊与高墙', box: '-131 -187 141 151' },
   { name: '藏经院与王寺', box: '-155 -302 115 174' },
@@ -20,8 +20,10 @@ const VIEWS = [
   { name: '弃灯墓地', box: '-53 -31.5 36 67' },
   { name: '风息洞窟', box: '-165 -324 48 66' },
   { name: '天镜原', box: '-163 -739 159 216' },
+  { name: '沉钟修道院', box: '-127 -905 116 180' },
 ];
 const labels = [
+  { x: -46, z: -755, text: '沉钟眺台' }, { x: -73, z: -822, text: '淹钟下库' }, { x: -111, z: -801, text: '无声抄经室' }, { x: -21, z: -803, text: '归声高廊' }, { x: -44, z: -867, text: '沉钟礼拜堂' }, { x: -44, z: -898, text: '晨雨放灯台' },
   { x: 96, z: 17, text: '弃灯墓地' }, { x: 101, z: 78, text: '露缇 · 独一遗物' }, { x: 100, z: 91, text: '风息洞窟' }, { x: 103, z: 150, text: '沐石 · 独一遗物' },
   { x: -110, z: -547, text: '苇光隘口' }, { x: -89, z: -573, text: '落霞盐阶' }, { x: -141, z: -606, text: '玫瑰盐池' }, { x: -141, z: -640, text: '旧测星台' }, { x: -67, z: -614, text: '折光桥' }, { x: -41, z: -671, text: '环星观测院' }, { x: -43, z: -731, text: '天镜归航台' },
   { x: -8, z: 38, text: '归灯庭' }, { x: -8, z: 108, text: '无名灯库' }, { x: -8, z: 156, text: '末灯' },
@@ -43,7 +45,7 @@ const labels = [
 ];
 
 export default function WorldMap({ state }: { state: GameState }) {
-  const locate = () => { const dungeon = undergroundId(state.player) ?? dungeonFoyer(state.player); return dungeon ? dungeon === 'crypt' ? 9 : 10 : state.player.z > 27 ? 6 : state.player.x < -249 ? 7 : state.player.x < -42 && state.player.z > -40 ? 8 : state.player.z < -530 ? 11 : state.player.z < -435 ? 5 : state.player.z < -278 ? 4 : state.player.z < -185 ? 3 : state.player.x < -42 || state.player.z < -110 ? 2 : 1; };
+  const locate = () => { const dungeon = undergroundId(state.player) ?? dungeonFoyer(state.player); return dungeon ? dungeon === 'crypt' ? 9 : 10 : state.player.z > 27 ? 6 : state.player.x < -249 ? 7 : state.player.x < -42 && state.player.z > -40 ? 8 : state.player.z < -730 ? 12 : state.player.z < -530 ? 11 : state.player.z < -435 ? 5 : state.player.z < -278 ? 4 : state.player.z < -185 ? 3 : state.player.x < -42 || state.player.z < -110 ? 2 : 1; };
   const [view, setView] = useState(locate);
   const scale = view === 0 ? 2.4 : 1;
   const onLayer = (p: { y: number; z: number }) => ((view === 9 || view === 10) ? p.y < -10 && (p.z < -200) === (view === 10) : p.y >= -10);
@@ -51,12 +53,12 @@ export default function WorldMap({ state }: { state: GameState }) {
   return (
     <>
       <div className={styles.mapTabs} aria-label="地图区域">
-        {VIEWS.map((v, i) => (i === 11 || i < 9 || state.discoveredDungeons.includes(i === 9 ? 'crypt' : 'cave') ? <button key={v.name} aria-pressed={view === i} onClick={() => setView(i)}>{v.name}</button> : null))}
+        {VIEWS.map((v, i) => (i >= 11 || i < 9 || state.discoveredDungeons.includes(i === 9 ? 'crypt' : 'cave') ? <button key={v.name} aria-pressed={view === i} onClick={() => setView(i)}>{v.name}</button> : null))}
         <button onClick={() => setView(locate())}>定位自己</button>
       </div>
       <svg viewBox={VIEWS[view].box} className={styles.map} role="img" aria-label={`${VIEWS[view].name}手绘地图：白色箭头为当前位置，金色菱形为归灯，红线为未开启的门`}>
         {SURFACES.filter(s => onLayer({ y: s.y, z: s.z1 })).map(s => <rect key={s.id} x={s.x1} y={s.z1} width={s.x2 - s.x1} height={s.z2 - s.z1} fill={state.visited.includes(s.name) ? s.y >= 12 ? '#9c8b69' : '#7b7862' : '#344b50'} stroke="#b6a783" strokeWidth=".2" />)}
-        {labels.map((l, i) => (i < 4 ? dungeonPoint(i < 2 ? 'crypt' : 'cave', { ...l, y: 0 }) : { ...l, y: 0 })).filter(onLayer).map(l => <text key={l.text} x={l.x} y={l.z} textAnchor="middle" fontSize={view >= 6 ? 3.2 : view >= 4 ? 6 : 3.6 * scale} fill="#eee0c2" stroke="#142c32" strokeWidth=".45" paintOrder="stroke">{l.text}</text>)}
+        {labels.map((l, i) => (i >= 6 && i < 10 ? dungeonPoint(i < 8 ? 'crypt' : 'cave', { ...l, y: 0 }) : { ...l, y: 0 })).filter(onLayer).map(l => <text key={l.text} x={l.x} y={l.z} textAnchor="middle" fontSize={view >= 6 ? 3.2 : view >= 4 ? 6 : 3.6 * scale} fill="#eee0c2" stroke="#142c32" strokeWidth=".45" paintOrder="stroke">{l.text}</text>)}
         {OBSTACLES.filter(o => onLayer(o) && o.kind === 'gate').map((o, i) => <line key={i} x1={o.x - (o.w > o.d ? o.w / 2 : 0)} y1={o.z - (o.d > o.w ? o.d / 2 : 0)} x2={o.x + (o.w > o.d ? o.w / 2 : 0)} y2={o.z + (o.d > o.w ? o.d / 2 : 0)} stroke={gateOpen(o, state) ? '#85d7af' : '#ef8876'} strokeWidth={0.85 * scale} />)}
         {LANDMARKS.filter(l => onLayer(l) && l.kind === 'rest' && (state.litLamps.includes(l.id) || state.visited.includes(regionAt(l.x, l.z, l.y)))).map(l => <g key={l.id} transform={`translate(${l.x} ${l.z}) scale(${scale})`}><title>{l.label} · {state.litLamps.includes(l.id) ? '已点亮' : '未点亮'}</title><path d="M0 -1.4 1.1 0 0 1.4 -1.1 0Z" fill={state.litLamps.includes(l.id) ? state.checkpoint === l.id ? '#ffdd86' : '#d9b97f' : 'none'} stroke={state.litLamps.includes(l.id) ? '#10292e' : '#85c8dc'} strokeWidth={state.litLamps.includes(l.id) ? '.25' : '.5'} /></g>)}
         {LANDMARKS.filter(l => onLayer(l) && ferryStatus(state, l.id) && (ferryStatus(state, l.id)!.ready || state.visited.includes(regionAt(l.x, l.z, l.y)))).map(l => {
