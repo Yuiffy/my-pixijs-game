@@ -1,0 +1,47 @@
+{
+  "schema": "autochess-ai-reproduction-archive-index-v1",
+  "path": "docs\\experiments\\autochess-ai-20261023-reproduction.zip",
+  "bytes": 3413139,
+  "sha256": "bc7f7a16e4a0afdd08b630c34e182c550e4b0bd0501f53c14e898403997e5853",
+  "archivedFiles": 377,
+  "everyArchiveEntryDigestVerified": true,
+  "reproduction": {
+    "schema": "autochess-accepted-artifact-reproduction-v1",
+    "passed": true,
+    "exactOriginalScripts": true,
+    "isolatedReproduction": "tmp\\ai-20261023\\reproduction-check\\tmp\\ai-20261023",
+    "runtimeWeightsFeaturesVocabNormalizationExactlyEqual": true,
+    "adaptationTrainingMetricsExactlyEqual": true,
+    "lowStaticValuesTrainingMetricsExactlyEqual": true,
+    "originalLowModelSha256": "e6f691411c02a36ebcb8424b22d0f4a3ea51e8a1a3ebf734bd0383a660ca8be0",
+    "originalAdaptedModelSha256": "976f6adec7571c6885abf8a58ff8548a1c894d94d4686eee40ca0bdcc0002b59",
+    "originalEmbeddingLearnerSha256": "0c49c7d5212e75737c186b0cfd9f0696a045a012175bd1150332356dcd9d04ec",
+    "originalStaticLearnerSha256": "9eebba7921ae5555fe785f1bbb522448fc5af005b9b92e2a5ae7341803a5627a",
+    "originalTransformSha256": "c84f8f566ca326b644a7d0432bf73b77dac251f424dcc4e7cac44e82a5e721d0",
+    "python": "3.12.4",
+    "torch": "2.11.0+cu128",
+    "device": "cpu",
+    "jsonByteIdenticalClaim": false,
+    "caveat": "Absolute path metadata and parent/export hashes from isolated retraining differ. All runtime numerical arrays and actual learned values, vocabularies, features, normalization and training metrics are exact."
+  },
+  "scope": "Accepted novice/veteran values and deep embedding adaptation: original trainer bytes, frozen label datasets, source snapshots and complete strength reports. Oracle remains pending and no oracle acceptance prefixes are archived.",
+  "portableHarness": {
+    "path": "scripts/reproduce-autochess-ai.py",
+    "sha256": "919a1b6c7e5cbf6c1c403a0e8c3715adc66ced5426b4456cfa1183e2d7baacae",
+    "actualArchiveReplay": "passed",
+    "report": {
+      "schema": "autochess-accepted-artifact-reproduction-v1",
+      "passed": true,
+      "archiveSha256": "bc7f7a16e4a0afdd08b630c34e182c550e4b0bd0501f53c14e898403997e5853",
+      "allArchivedDigestsVerified": true,
+      "workDirectory": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\ai-20261023\\archive-reproduction-check",
+      "python": "3.12.4 (tags/v3.12.4:8e8a4ba, Jun  6 2024, 19:30:16) [MSC v.1940 64 bit (AMD64)]",
+      "torch": "2.11.0+cu128",
+      "runtimeWeightsFeaturesVocabNormalizationExactlyEqual": true,
+      "trainingMetricsExactlyEqual": true,
+      "staticArtifactBytesExactlyEqual": true,
+      "adaptedArtifactByteIdentityClaim": false,
+      "scope": "Exact numerical and training-metric reproduction; absolute path metadata and derived parent hashes differ in a scratch checkout. This is not new game-strength evidence."
+    }
+  }
+}

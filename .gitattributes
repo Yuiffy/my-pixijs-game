@@ -17,6 +17,10 @@
 *.mako text eol=lf
 *.tsx  text eol=lf
 
+# Preserve the checked-out bytes used by the frozen AI evaluation fingerprints.
+scripts/evaluate-autochess-chrome.cjs text eol=lf
+src/components/autoChessGame/ai/chromeUnitValues.json text eol=crlf
+
 # 通用二进制一次写全，省得日后踩坑
 # (binary == -text -diff)
 *.png  binary

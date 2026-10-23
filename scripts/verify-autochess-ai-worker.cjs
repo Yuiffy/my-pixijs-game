@@ -4,9 +4,13 @@ const { writeFileSync } = require('node:fs');
 // Exercise the shipped Worker with the real browser bridge, using a controlled
 // clock so the smoke test does not require sixteen rounds of wall-clock delays.
 module.exports = async ({ page, state, capture, screenshots, errors, failedResponses }) => {
+  const thinkingLevel = process.env.AUTOCHESS_WORKER_LEVEL || 'deep';
+  const fixtureSeed = Number(process.env.AUTOCHESS_WORKER_SEED || '86200');
+  assert.ok(['novice', 'veteran', 'deep', 'oracle'].includes(thinkingLevel));
+  assert.ok(Number.isInteger(fixtureSeed));
   const { loadTypescriptModule } = await import('./tests/helpers/load-typescript-module.mjs');
   const { EngineBridge } = await loadTypescriptModule('src/components/autoChessGame/phaser/EngineBridge.ts');
-  const fixture = new EngineBridge(86200, 1, { simulation: true, battleStepHz: 60 });
+  const fixture = new EngineBridge(fixtureSeed, 1, { simulation: true, battleStepHz: 60 });
   fixture.setConsoleLogging(false);
   await page.waitForFunction(() => Boolean(window.autoChessAI));
   // Observe the URL actually constructed by the app; do not hard-code a bundle.
@@ -24,11 +28,11 @@ module.exports = async ({ page, state, capture, screenshots, errors, failedRespo
   await page.waitForFunction(() => Boolean(window.__auditWorkerUrl));
   await page.locator('.rift-toolbar button.is-autoplay').click();
   await page.evaluate(() => { window.Worker = window.__auditNativeWorker; });
-  const result = await page.evaluate(async snapshot => {
+  const result = await page.evaluate(async ({ snapshot, thinkingLevel }) => {
     const bridge = window.autoChessAI.bridge;
     bridge.setConsoleLogging(false);
     bridge.engine.restoreSimulationSnapshot(snapshot);
-    bridge.setAutopilotStrategy('balanced', 'normal', 'balanced', 'deep');
+    bridge.setAutopilotStrategy('balanced', thinkingLevel === 'oracle' ? 'oracle' : 'normal', 'balanced', thinkingLevel);
     const worker = new Worker(window.__auditWorkerUrl);
     let now = 1000;
     const rounds = [];
@@ -48,7 +52,7 @@ module.exports = async ({ page, state, capture, screenshots, errors, failedRespo
         const s = bridge.engine.state;
         const reply = await decide({ type: 'decide', id: tick + 1, now: now += 2400,
           enabled: true, startFromTitle: s.phase === 'title',
-          configuration: { style: 'balanced', level: 'deep' },
+          configuration: { style: 'balanced', level: thinkingLevel },
           snapshot: bridge.engine.getSimulationSnapshot() });
         if (reply.action) {
           actions.push({ round: s.round, gold: s.gold, action: reply.action });
@@ -65,7 +69,7 @@ module.exports = async ({ page, state, capture, screenshots, errors, failedRespo
       }
       throw new Error('Worker did not reach the target battle');
     } finally { worker.terminate(); }
-  }, fixture.engine.getSimulationSnapshot());
+  }, { snapshot: fixture.engine.getSimulationSnapshot(), thinkingLevel });
   assert.equal(result.rounds.length, 15);
   assert.ok(result.actions.filter(a => a.round === 16).length > 0);
   await page.evaluate(() => window.advanceTime(0));
@@ -73,6 +77,7 @@ module.exports = async ({ page, state, capture, screenshots, errors, failedRespo
   const deployed = await state();
   assert.equal(deployed.round, 16);
   assert.equal(deployed.phase, 'battle');
+  assert.equal(deployed.interface.autoplayThinkingLevel, thinkingLevel);
   await page.evaluate(() => window.autoChessAI.skipBattle());
   const settled = await state();
   assert.equal(settled.phase, 'result');

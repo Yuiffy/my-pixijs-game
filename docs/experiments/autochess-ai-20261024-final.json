@@ -1,0 +1,673 @@
+{
+  "schema": 1,
+  "date": "2026-10-24",
+  "scope": "Immutable supplement to original20261023 training archive: final all-four source, complete oracle acceptance/rejected rival, final quiet browser evidence, sequential commit gate. Does not contain a Git commit ID; publication is recorded in Git history.",
+  "sourceFingerprint": "73667846de6149259697e1cefa4f073b9e5183a0db01626c6403dc966373c719",
+  "baseArchiveSha256": "bc7f7a16e4a0afdd08b630c34e182c550e4b0bd0501f53c14e898403997e5853",
+  "files": [
+    {
+      "path": "executed-browser-harness/scripts/lib/autochess-screenshot.cjs",
+      "bytes": 3529,
+      "sha256": "118fc9c4780cf14901c8301aeb33d8a0bc66abdaef5900f657db31955c9216c8"
+    },
+    {
+      "path": "executed-browser-harness/scripts/tests/helpers/load-typescript-module.mjs",
+      "bytes": 2890,
+      "sha256": "588884c3e8fa91f9eb5d6f565cb1c4306298fa16eaa13d84e955a73db9f74dc6"
+    },
+    {
+      "path": "executed-browser-harness/scripts/verify-autochess-ai-worker.cjs",
+      "bytes": 5247,
+      "sha256": "f988e6728d3ecde0273017c0b3401c4c4ba860f7fcc2e6b796bdc8ab155d0a22"
+    },
+    {
+      "path": "executed-browser-harness/scripts/verify-autochess-model-refresh.cjs",
+      "bytes": 3448,
+      "sha256": "bc4e09f6554a40ad7f79152b65af57b237e54de717af1dea0ba73c89120ed362"
+    },
+    {
+      "path": "executed-browser-harness/verify-autochess.cjs",
+      "bytes": 29374,
+      "sha256": "fccdcd5bb2044d11865b18e3c710fee7ef07aa752fa6544de5a8c2e4c2db4a20"
+    },
+    {
+      "path": "final-main-source/.gitattributes",
+      "bytes": 979,
+      "sha256": "695d0f0bd18ebbade827e8651e7f53a01e784fa6febc7c6943c2c0610f68d2d2"
+    },
+    {
+      "path": "final-main-source/scripts/evaluate-autochess-chrome.cjs",
+      "bytes": 7970,
+      "sha256": "a0ebdb1c4479a3a127cf3233cddf13f4e9a13fffb7de810ecac73f24da22b971"
+    },
+    {
+      "path": "final-main-source/scripts/reproduce-autochess-ai.py",
+      "bytes": 6019,
+      "sha256": "919a1b6c7e5cbf6c1c403a0e8c3715adc66ced5426b4456cfa1183e2d7baacae"
+    },
+    {
+      "path": "final-main-source/scripts/tests/autochess-missing-unit-model.test.mjs",
+      "bytes": 5918,
+      "sha256": "a0372db6ff7a8866711aa928c1688ae7874d2bac11de0907b13cc97c7204d57a"
+    },
+    {
+      "path": "final-main-source/scripts/tests/autochess-novice-values.test.mjs",
+      "bytes": 2685,
+      "sha256": "3efd67211ea64c9e0b341b1f3b0ccd5c06eae9c21bd356d0161022366018c403"
+    },
+    {
+      "path": "final-main-source/scripts/tests/test_autochess_muzero.py",
+      "bytes": 9436,
+      "sha256": "634156f418e045d49cdb10e6a2a423291e487bec25076b5e5970b76ce1a74ee4"
+    },
+    {
+      "path": "final-main-source/scripts/tests/test_autochess_unit_values.py",
+      "bytes": 1743,
+      "sha256": "3f4c8706037984d226f20fbe0a0980136c76ff73e25cfae08bfee3cd35fda370"
+    },
+    {
+      "path": "final-main-source/scripts/train-autochess-unit-values.py",
+      "bytes": 4462,
+      "sha256": "9eebba7921ae5555fe785f1bbb522448fc5af005b9b92e2a5ae7341803a5627a"
+    },
+    {
+      "path": "final-main-source/scripts/verify-autochess-ai-worker.cjs",
+      "bytes": 5247,
+      "sha256": "f988e6728d3ecde0273017c0b3401c4c4ba860f7fcc2e6b796bdc8ab155d0a22"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/ai/AutoChessAutopilot.ts",
+      "bytes": 276850,
+      "sha256": "e94add167351f651fac4507398614dd81f7cf381d85b26f58bc4cc3c4a29b718"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/ai/autopilotPolicy.ts",
+      "bytes": 15384,
+      "sha256": "340ac5370c336c12590cbf421663ea96cae3c44a47543bd0cfe146d352542721"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/ai/chromeUnitValues.json",
+      "bytes": 1888,
+      "sha256": "e6f691411c02a36ebcb8424b22d0f4a3ea51e8a1a3ebf734bd0383a660ca8be0"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/ai/goCombatModel.json",
+      "bytes": 241478,
+      "sha256": "8c246b1ed0ad52d2d76ecb969a064e2c738321a9ce3d8cbb50842c48872c0e28"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/ai/goCombatModelMissingUnits.json",
+      "bytes": 244442,
+      "sha256": "976f6adec7571c6885abf8a58ff8548a1c894d94d4686eee40ca0bdcc0002b59"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/ai/goCombatScenario.ts",
+      "bytes": 1347,
+      "sha256": "6582e007dddf3c333cd3b2fdca03f7771c6b2822260454c998bb8335892b635c"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/ai/goStrategy.ts",
+      "bytes": 3849,
+      "sha256": "3e091ca2b39a4d574ed609842b850719238d0ee118c330ce1c93b13345f68e08"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/ai/goValueModel.ts",
+      "bytes": 9708,
+      "sha256": "beab4ca9fb7d476c9089ff53f803abe95e76751425f4b3f9a41e058cea35d0f4"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/ai/lateGamePlan.ts",
+      "bytes": 2189,
+      "sha256": "368884ab5312e8189604566edabeacd7810161aea620f4db07ec04f664163d6d"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/ai/rolloutCacheSchema.ts",
+      "bytes": 434,
+      "sha256": "4001dbe654b8c065fe9b30efb12235cfae961645ce8e500e12abd6f439215ba1"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/ai/rolloutCombat.ts",
+      "bytes": 1221,
+      "sha256": "7aaf35780b47a8682fa5da53a51e6ff51889d549c00e4a900ed34d776ce4c790"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/ai/seer2Strategy.ts",
+      "bytes": 4999,
+      "sha256": "d4a671b7369fcae1eca122fa505fa4598e1883c2646463b336f7ade847cfcb16"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/ai/seerPlanner.ts",
+      "bytes": 43042,
+      "sha256": "1b88e50049f914b15dc73220135d84306caf7c125c53011e47c2e0d198157393"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/ai/unitCombatFeatures.ts",
+      "bytes": 2041,
+      "sha256": "84f2b2ec0152e5235830accf982f4e5b1603a2c6d5f85808ab1641c211388893"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/core/battleDebrief.ts",
+      "bytes": 5420,
+      "sha256": "900ff29bed802478913a3f035401c8b830b9ab42377039e6ce9b505079964c26"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/core/battleGeometry.ts",
+      "bytes": 3144,
+      "sha256": "e14ee6de6c6e570799146be2a6bb840c5d209ec70847c3e1240e373234faab0e"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/core/data/shop.ts",
+      "bytes": 1542,
+      "sha256": "276ef5c5514096881b3f224a49dc899f6fb7606d872a01cf22f1164e853ff850"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/core/data/talents.ts",
+      "bytes": 4267,
+      "sha256": "5c7e4fa55002f82fad098ffeb4c06d55deb69dbce321682ffb987280efcefe27"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/core/data/traits.ts",
+      "bytes": 8732,
+      "sha256": "9de52be531e715a78f85fcc23d2a9608ae351dbe32b9a14ae353aca9f63c8de6"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/core/data/types.ts",
+      "bytes": 10653,
+      "sha256": "7738670d226953b078d00b83a74cb370a5a6f38e62d12b89b3fc7926d397d09a"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/core/data/units.ts",
+      "bytes": 60593,
+      "sha256": "c8216cc18f5b1d29d942d9fe25767060399ac49c4fc4f40a320332ffe8d0b2cf"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/core/data/waves.ts",
+      "bytes": 15691,
+      "sha256": "45af3ded4b9731a0792fce3334420da92f121bcdd3854216a96fd085a62a96a1"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/core/engine/AutoChessEngine.ts",
+      "bytes": 168292,
+      "sha256": "f6af396404d18c4118eecf3f3c2c86e2fcc79bbfd497487d04c59f13ddc78467"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/core/engine/abilities/AbilitySystem.ts",
+      "bytes": 47256,
+      "sha256": "1a5d1360405d8925afc7eb3a65399b20e572ffcfb7525b64d3bfcefcf612c343"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/core/engine/combatResolution.ts",
+      "bytes": 14483,
+      "sha256": "12d22d7a0b0bf30fa5ee3832b46537cedebb9d43e039f133cc1a14d2b4b485de"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/core/engine/combatSetup.ts",
+      "bytes": 25290,
+      "sha256": "a2196cbb6cb465a6c834a13e49f8e30fd60d755f08282bbfde17527140d8045d"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/core/engine/progression.ts",
+      "bytes": 12141,
+      "sha256": "1eb45e85b0610348667f84167f932d27c42dd62c56367c17784a89c1469674d5"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/core/engine/projectiles.ts",
+      "bytes": 39816,
+      "sha256": "38d33de9aaeb9d3833f3ed30eda517aad1ff305a9936f7e97e8f4e51ddbc922c"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/core/engine/random.ts",
+      "bytes": 726,
+      "sha256": "2cb69d0018b7f0333deddf3ededced3e42e195102bf13d26aefa7f4d7acd8fb8"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/core/engine/roster.ts",
+      "bytes": 14258,
+      "sha256": "059017b3a4290f2797dde63ae2072ac2a35397a4f001625d8db5e798e69ed989"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/core/engine/runRules.ts",
+      "bytes": 822,
+      "sha256": "d6177c7a2c8ebd564a655ae5b3e6349516e43f6b03b32e50ec0cea200188789e"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/core/engine/runSave.ts",
+      "bytes": 9718,
+      "sha256": "24a807de49905c192d1a2d220d6fec705d579ce8acebc5e978bfad39b4e0610d"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/core/engine/singing.ts",
+      "bytes": 2517,
+      "sha256": "9743232f84e66afdc02e31bfece07ebd0eeffe462b063fbace4139d0bc487cfd"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/core/engine/state.ts",
+      "bytes": 1658,
+      "sha256": "ef685434291ad500aa4c52deeb65ca33ea2852a0a239cd78687d57a554384b51"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/core/engine/textState.ts",
+      "bytes": 18087,
+      "sha256": "ff1132292f647628faf81f9fc4da2d7c0d92c566626d309eca762e8668052eb8"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/core/formation.ts",
+      "bytes": 2591,
+      "sha256": "c7d817d293c43667a15176dfc90ea93972b10df0f4b234402af39048a493ca3b"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/core/gameData.ts",
+      "bytes": 182,
+      "sha256": "2fa34c09fad1a50dbe086ea1310e3f15e5c596b8f6f60dbbfe4e33ecec4899e5"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/core/gameEngine.ts",
+      "bytes": 42,
+      "sha256": "a5acdd8ef62d527c094b1b02b0f1a65d5ab7c54a375891fd1f981f50caf74c9b"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/core/motionPaths.ts",
+      "bytes": 1247,
+      "sha256": "45fe27589d45335af3f20f5d0ebb9e3d3afed947a41889b2cb2ba568e8cb9cc9"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/phaser/EngineBridge.ts",
+      "bytes": 26812,
+      "sha256": "c90a9d383ac0491b8e310ab1b26d5b1b4a74b71d42d79e74a64b1dac6e22d267"
+    },
+    {
+      "path": "final-main-source/src/components/autoChessGame/version.ts",
+      "bytes": 26981,
+      "sha256": "da99e6884d230bd9e04da6120255b00e523568b98dac2a5efddf96104d231768"
+    },
+    {
+      "path": "tmp/ai-20261023/accept-deep-ranked-values-oracle-98000.json",
+      "bytes": 210149,
+      "sha256": "02ba0c1c16a19dd3980bf57b131483d3d77e2f7c033a84cf0570662d4be1f74b"
+    },
+    {
+      "path": "tmp/ai-20261023/accept-deep-ranked-values-oracle-98000.log",
+      "bytes": 2795,
+      "sha256": "8bba2f3f9d328bf4184066085a562f8955da0f89eb67b819b9083b5a9776f5c9"
+    },
+    {
+      "path": "tmp/ai-20261023/accept-deep-ranked-values-oracle-98100.json",
+      "bytes": 207008,
+      "sha256": "cecf839147d2088d2a3ec3dd5eef9bb0ed73967be144f00bd9d8b392ecaeb987"
+    },
+    {
+      "path": "tmp/ai-20261023/accept-deep-ranked-values-oracle-98100.log",
+      "bytes": 2801,
+      "sha256": "ffdd8d63a7b54f110fbbb63050fa6b55e6927df976f85db33f998347500c4788"
+    },
+    {
+      "path": "tmp/ai-20261023/accept-observed-embeddings-oracle-98000.json",
+      "bytes": 234796,
+      "sha256": "bca905588752ee23cf2dcd397fe4c2110c70922c1578e796aaaa58285b9349a5"
+    },
+    {
+      "path": "tmp/ai-20261023/accept-observed-embeddings-oracle-98000.log",
+      "bytes": 2796,
+      "sha256": "aaaa105336798b01eeed05b0cb9e5b54a15cc80df8df9fd23aedb06fec68a046"
+    },
+    {
+      "path": "tmp/ai-20261023/accept-observed-embeddings-oracle-98100.json",
+      "bytes": 220132,
+      "sha256": "c4e0939945b55b01315413c892ab0e7ba3e54b4f3c1d7a57eaa86050f4edb98e"
+    },
+    {
+      "path": "tmp/ai-20261023/accept-observed-embeddings-oracle-98100.log",
+      "bytes": 2786,
+      "sha256": "5e26f633317463f3f18403fd2cbaedd32dda522f9c1511958c3b0428fc9fe0e0"
+    },
+    {
+      "path": "tmp/ai-20261023/accept-reference-oracle-98000.json",
+      "bytes": 215320,
+      "sha256": "cbd2f21d94af02460826dec21f3d6bdce44dd83edd6c86a94f059641f79399e8"
+    },
+    {
+      "path": "tmp/ai-20261023/accept-reference-oracle-98000.log",
+      "bytes": 2797,
+      "sha256": "fac55d9b50b0867a04953674798c562821d3877b1e3c1b16f62512171a379919"
+    },
+    {
+      "path": "tmp/ai-20261023/accept-reference-oracle-98100.json",
+      "bytes": 195272,
+      "sha256": "23e738f75d26997589e244175d4f3de6511129880a930623bdcc0cb3b2b0c964"
+    },
+    {
+      "path": "tmp/ai-20261023/accept-reference-oracle-98100.log",
+      "bytes": 2803,
+      "sha256": "f884553f84f636fe0e285f6c46e5857c73aeff20b29c5753cfaaacd5272be8da"
+    },
+    {
+      "path": "tmp/ai-20261023/acceptance-deep-ranked-values-oracle.json",
+      "bytes": 3307,
+      "sha256": "7baf3b380167bef6b274f1c7c36af603912ec8de4c6b09f138d4fd7d2dae91e4"
+    },
+    {
+      "path": "tmp/ai-20261023/acceptance-deep-ranked-values-oracle.log",
+      "bytes": 3309,
+      "sha256": "4aa155fa5c986ca0de52f9315d8337ddf87c7f52284313f666df267202e3f39a"
+    },
+    {
+      "path": "tmp/ai-20261023/acceptance-observed-embeddings-oracle.json",
+      "bytes": 3277,
+      "sha256": "499342f99ed519a26944765778f6b3922cee1e77a34ca5eb4f6180d2b3114a29"
+    },
+    {
+      "path": "tmp/ai-20261023/acceptance-observed-embeddings-oracle.log",
+      "bytes": 3279,
+      "sha256": "587773855603bce6ee4186427b1e130876814417073e690c016184b4beda5c37"
+    },
+    {
+      "path": "tmp/ai-20261023/accepted-artifact-reproduction.json",
+      "bytes": 1205,
+      "sha256": "0d4feed9a149c78d4df7a1bfd895f4b4003bb23f1c95cb0d39323ce162a57e3f"
+    },
+    {
+      "path": "tmp/ai-20261023/archive-reproduction-check/reproduction-report.json",
+      "bytes": 822,
+      "sha256": "1064c973f2183b092055d8c0019828f677954c5eb20276fa8abf0e173cecd8d7"
+    },
+    {
+      "path": "tmp/ai-20261023/final-all-model-tests-eslint-fixed.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tmp/ai-20261023/final-all-model-tests-eslint.log",
+      "bytes": 1570,
+      "sha256": "b685d5ac885b0dbaaaa6faeae6d54ef8c397064d001586ca4dbe28ab5dbc7e9a"
+    },
+    {
+      "path": "tmp/ai-20261023/final-commit-build.log",
+      "bytes": 6735,
+      "sha256": "39199993fe7de239de47be2495435ce6d39ba50d899893343f73f3791a8e62e8"
+    },
+    {
+      "path": "tmp/ai-20261023/final-commit-check.log",
+      "bytes": 2758,
+      "sha256": "9443e93d41f31c6d4802d27c640c7bd30a5dd45b7fde37567e5eeb1ead042af1"
+    },
+    {
+      "path": "tmp/ai-20261023/final-commit-gate.json",
+      "bytes": 3023,
+      "sha256": "ed5bba633a6fe07861791a5d2548ce8cc0839a912cccf54d799a1bd750dc579b"
+    },
+    {
+      "path": "tmp/ai-20261023/final-commit-model-tests.log",
+      "bytes": 729,
+      "sha256": "26d494538ab2017a6376fc70a941b0e408346b6e2feaa5b0fb8d058e0e98a557"
+    },
+    {
+      "path": "tmp/ai-20261023/final-engineering.json",
+      "bytes": 3813,
+      "sha256": "09b41efdd63a73f70b720cc8d86a5488d42340a863e300234a94a10a1e7b0833"
+    },
+    {
+      "path": "tmp/ai-20261023/final-git-checkout-parity.json",
+      "bytes": 239,
+      "sha256": "52147cd407377d61d9384a812e46ecb5e52a5ba12d56d5ae6594e8ed3d83749e"
+    },
+    {
+      "path": "tmp/ai-20261023/final-low-browser-parity.json",
+      "bytes": 1141,
+      "sha256": "9840b5bb99d096b20f1ebfdf9f73afbdda5731f2d9d288f4b65f249971901835"
+    },
+    {
+      "path": "tmp/ai-20261023/final-main-autochess-tests.log",
+      "bytes": 49361,
+      "sha256": "7ada10fb1d4e58a4a7ad459a93205acd2e0855488e9766334ef206b526d56113"
+    },
+    {
+      "path": "tmp/ai-20261023/final-main-oracle-chrome-parity.json",
+      "bytes": 9068,
+      "sha256": "f79d072179da220922393277367c6d052d69ec12dba84a3e4acd91e3011ff191"
+    },
+    {
+      "path": "tmp/ai-20261023/final-main-oracle-chrome-parity.log",
+      "bytes": 87,
+      "sha256": "928814710efcf01934b3c079d742826af598fb56acbe2870b6e391a28ddc82b4"
+    },
+    {
+      "path": "tmp/ai-20261023/final-main-source-eslint.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tmp/ai-20261023/final-python-muzero-tests.log",
+      "bytes": 117,
+      "sha256": "ed84b46f457f407c5482043e25c72e4a3dae77503f58f4b1115a688a9fef9d3b"
+    },
+    {
+      "path": "tmp/ai-20261023/final-python-unit-value-tests.log",
+      "bytes": 103,
+      "sha256": "bdc6d3040e9c2a5fc7df5b28faa284b21a963d382528d4d506e7f2d174340cb9"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser-audit.json",
+      "bytes": 6582,
+      "sha256": "ad0f9f114f935ad54495d8fb976adaac3e052fca7778882bb7090481d787cb86"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser-novice.log",
+      "bytes": 1139,
+      "sha256": "2a30fbfc293be6a41c8a7062a79b22873a02c31a075f99c48485f80c3a451550"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser-settings.log",
+      "bytes": 235019,
+      "sha256": "70941e12711b62c522216d649b844fd90f3091cf972588e74198ebfaabee369b"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser/build.json",
+      "bytes": 274,
+      "sha256": "44d0c9f2518ba5326c424d408db7688464437631ef32b6c218e90d76026acee1"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser/deep/ai-worker-boss-deployed.png",
+      "bytes": 371694,
+      "sha256": "d1b724de2e252e2b1f53a79596f30a29564e2ca8f435ba4c92f813da490cf6eb"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser/deep/ai-worker-boss-result.png",
+      "bytes": 199836,
+      "sha256": "8e4eb0832c8101515081bcaade8b5b4f77481cf0f4b1cc46efed243db1faa5fd"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser/deep/ai-worker-report.json",
+      "bytes": 622263,
+      "sha256": "ffff40b3b7c78c0c828e8d2efe40a9ba7490a263076e5c4fdcacc3f8e843f470"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser/deep/browser.log",
+      "bytes": 434,
+      "sha256": "baaa74acd411b75f9e0bfad3535b1b7b9b8b8b51934ec848d64490ac0475b07e"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser/novice-first-network-failure/ai-worker-boss-deployed.png",
+      "bytes": 297908,
+      "sha256": "afb2c103e45d119b150916e70615befb20ec126a17276369730aafc82ca05677"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser/novice-first-network-failure/ai-worker-boss-result.png",
+      "bytes": 196373,
+      "sha256": "4802b4c27c5e948cf718d61082b912882f0562975c0bba88080e69ab2dc9bf3f"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser/novice-first-network-failure/browser.log",
+      "bytes": 1139,
+      "sha256": "2a30fbfc293be6a41c8a7062a79b22873a02c31a075f99c48485f80c3a451550"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser/novice/ai-worker-boss-deployed.png",
+      "bytes": 297896,
+      "sha256": "47c50f5ddb3f71ff9ce20843d050e721646ba488e5cb20478db137d64981da51"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser/novice/ai-worker-boss-result.png",
+      "bytes": 196370,
+      "sha256": "006217e9d10ea82800fcbad6ff3d110c4f17c68d9879d9651f7854bd78da9f06"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser/novice/ai-worker-report.json",
+      "bytes": 591406,
+      "sha256": "eb33b7280a087489231726a811c90086287ab6850b8376c50010fa30d35dd760"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser/novice/browser.log",
+      "bytes": 583,
+      "sha256": "1186a62e5890e2a6af6e3fca3565d79a6b2aa133600d5373b3f89a759f41ac7f"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser/oracle/ai-worker-boss-deployed.png",
+      "bytes": 314808,
+      "sha256": "0962babfe9000a05776666bb90dc56c6a8987081220b5ac148a4030884a61a71"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser/oracle/ai-worker-boss-result.png",
+      "bytes": 192157,
+      "sha256": "f6bc0f2db63cbb360c97df01ce6476fbf461d3121aa17dad42dc2fede3eff8d6"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser/oracle/ai-worker-report.json",
+      "bytes": 608383,
+      "sha256": "a13faab4304c3252bf17c564cf861ec9871a70c53d2de42c46d3858aba2143c4"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser/oracle/browser.log",
+      "bytes": 581,
+      "sha256": "cce7dada4cbe1bbf7e4a053d0df9c221d221307d816b772594d49453da652acd"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser/settings/model-refresh-autopilot-battle.png",
+      "bytes": 130156,
+      "sha256": "c5d7ea7c7679e0dd5d1597e8c76fc3e02b0d529429e8e715753b038b7d519286"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser/settings/model-refresh-default-desktop.png",
+      "bytes": 302039,
+      "sha256": "999eacd4b983ce54a19d0c398b54d33bf72332266191b850c26214db83e8a059"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser/settings/model-refresh-default-mobile.png",
+      "bytes": 67158,
+      "sha256": "94e9b997291f62512cec9602e2c408717cc0680ddea967e809c11946d77f7a02"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser/settings/model-refresh-report.json",
+      "bytes": 234673,
+      "sha256": "21557a2ec4f6f617ccbcd12eb88de2eb46a376fbda2551313a0fe1ad4c9a9fbd"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser/settings/model-refresh-result.png",
+      "bytes": 132424,
+      "sha256": "212a58612aaa9c3320ff264b0d87d6e3e30baa3b3e570b38641ae664d7350028"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser/veteran/ai-worker-boss-deployed.png",
+      "bytes": 354369,
+      "sha256": "83f9759f40d7f2d9eafb9fb3c9f53eba59cff103ea5e80a66d0aea755ae342e7"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser/veteran/ai-worker-boss-result.png",
+      "bytes": 198101,
+      "sha256": "1f670f53549a8600fee5d173b3e5808f14739facc0479493184f180614d87e6a"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser/veteran/ai-worker-report.json",
+      "bytes": 639731,
+      "sha256": "901c6b8c892ab90ea6d215f291e3f2fb05cb872e5045132f14c306c5e8dc7c82"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser/veteran/browser.log",
+      "bytes": 581,
+      "sha256": "c7b3487dab58e8cdb97a39db3226a58f5f764e9a52271585abcede8e7634d36a"
+    },
+    {
+      "path": "tmp/ai-20261023/final-source-integrity.json",
+      "bytes": 30412,
+      "sha256": "5e54196c2f0b7135f6162de574d7742114c37ac417d6d21da1ca64e166415d15"
+    },
+    {
+      "path": "tmp/ai-20261023/joint-static-external-holdout.json",
+      "bytes": 1839,
+      "sha256": "f13bc63e0014ec8331c39e11ce74b2776e316ccc5670d34b61be30de58f32428"
+    },
+    {
+      "path": "tmp/ai-20261023/joint-static-training-protocol.json",
+      "bytes": 1379,
+      "sha256": "2bca1a30a09b83fcf2e7b0bf7d3c475e647553ba52ce8b02fc44fd78d8a4d23c"
+    },
+    {
+      "path": "tmp/ai-20261023/observed-runtime-budgets-verification.json",
+      "bytes": 2112,
+      "sha256": "1959fe8b85e05546c7c896bfe68cee9fa1f126fd9d07b7a076dae516eca88d1c"
+    },
+    {
+      "path": "tmp/ai-20261023/oracle-observed-eligibility.json",
+      "bytes": 1157,
+      "sha256": "e5976e76300775fb3dd93bf3ce277cf06c0add3072a2ac40c0acbc887e8576b7"
+    },
+    {
+      "path": "tmp/ai-20261023/oracle-observed-embeddings-protocol.json",
+      "bytes": 1609,
+      "sha256": "3710a6cfbf9174a138feaf61dbc03ee65dad263e84fa59e6f0bf0c1dabd927f3"
+    },
+    {
+      "path": "tmp/ai-20261023/oracle-observed-isolated-autochess-tests.log",
+      "bytes": 49388,
+      "sha256": "34b22feb21fa7f9e0aba41e01333f55a4cc763af250502ae6a03ac513fc77ff9"
+    },
+    {
+      "path": "tmp/ai-20261023/oracle-observed-isolated-build.log",
+      "bytes": 7576,
+      "sha256": "a9b3de6ead2ed201b920f46ec1f98986489a0d8630bd7bfa14114ce8bb2cfd1f"
+    },
+    {
+      "path": "tmp/ai-20261023/oracle-observed-isolated-check.log",
+      "bytes": 3145,
+      "sha256": "f8575f4706f6c6093645c3c2445be74a130596f8d0bc5bd475b1ca68a9908be8"
+    },
+    {
+      "path": "tmp/ai-20261023/oracle-observed-isolated-tests-eslint-crlf.log",
+      "bytes": 12156,
+      "sha256": "31e2c980e6bfa62b05dd8b9428412e0dd54b2ac5963c266bb6a3f09e5ecfdfd9"
+    },
+    {
+      "path": "tmp/ai-20261023/oracle-ranked-values-protocol.json",
+      "bytes": 2242,
+      "sha256": "72b2fc888ee00eb4514006b5048c38988aea18bdd247cd028fd650e64404e477"
+    },
+    {
+      "path": "tmp/ai-20261023/oracle-specific-embeddings-offline-result.json",
+      "bytes": 957,
+      "sha256": "eb46c0c3c2cae446ba96d7da1622597d03179a3e032e367cfd358c3ed3379ab2"
+    },
+    {
+      "path": "tmp/ai-20261023/oracle-specific-embeddings-training-protocol.json",
+      "bytes": 1477,
+      "sha256": "fed03642973f4a35796c009ffb92d21bd64670d860923ec77cef9ff76d27133b"
+    },
+    {
+      "path": "tmp/ai-20261023/quiet-browser-preload.cjs",
+      "bytes": 2030,
+      "sha256": "9c7df0065b08d7e88e83093784c6c2db0a02653fbf1f5151887895ce0ede5e21"
+    },
+    {
+      "path": "tmp/ai-20261023/train-oracle-specific-embeddings.py",
+      "bytes": 5099,
+      "sha256": "531f6724d0febd1941a6e8be41c4cdee6927f7bd8054fca8bfd73535b7f956aa"
+    },
+    {
+      "path": "tmp/ai-20261023/verify-observed-runtime-budgets.mjs",
+      "bytes": 4350,
+      "sha256": "463345fed3454ae2291307fe557f930e2854cad54e47cc186fecd2cfe1ca69d7"
+    }
+  ],
+  "archive": "docs/experiments/autochess-ai-20261024-final.zip",
+  "archiveBytes": 3956676,
+  "archiveSha256": "f040110c3b47c9fba6377d8ebe317170d66b80b3a31368d5d16a5c2e72a915de",
+  "allEntriesReadBackAndVerified": true
+}

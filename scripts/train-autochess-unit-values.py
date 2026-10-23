@@ -48,7 +48,7 @@ def main():
             for token in enemy.split(","):
                 id, star = token.split(":")
                 features[ix[id]] -= star_power[int(star)] * modifier ** 2 / 100
-            rows.append((features, float(score >= 10000), "/".join(parts[:-2])))
+            rows.append((features, float(score >= 5000), "/".join(parts[:-2])))
     contexts = sorted({r[2] for r in rows})
     random.Random(args.seed).shuffle(contexts)
     holdout = set(contexts[:len(contexts) // 5])

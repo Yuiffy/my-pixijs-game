@@ -1,3 +1,5 @@
+import chromeUnitValues from "./chromeUnitValues.json";
+import missingUnitModel from "./goCombatModelMissingUnits.json";
 import {
   FINANCE_INTEREST_CAP,
   NORMAL_INTEREST_CAP,
@@ -66,8 +68,10 @@ import {
 } from "./rolloutCacheSchema";
 import { scorePreparedAutoChessCombat } from "./rolloutCombat";
 import {
+  createGoCombatScorer,
   scoreGoCombatCandidate,
   type GoCombatScorer,
+  type GoModelData,
 } from "./goValueModel";
 import {
   goCombatRandomPanelSignature,
@@ -78,6 +82,8 @@ import {
   selectGoOpportunityTargets,
   type GoOpportunityTarget,
 } from "./goStrategy";
+
+const scoreMissingUnitCandidate = createGoCombatScorer(missingUnitModel as GoModelData);
 
 const STARTER_PREFERENCE: StarterId[] = [
   "ranger_start",
@@ -2187,7 +2193,7 @@ export class AutoChessAutopilot {
     });
   }
 
-  private unitScore(unit: OwnedUnit, roster: OwnedEntry[]) {
+  private unitScore(unit: OwnedUnit, roster: OwnedEntry[], combatOnly = false) {
     const definition = UNIT_DEFS[unit.id];
     const uniquePartners = new Set(
       roster
@@ -2199,7 +2205,10 @@ export class AutoChessAutopilot {
     const lateGameWeight = Math.max(0, Math.min(1, (this.bridge.engine.state.round - 8) / 12));
     const lateGameStarWeight = unit.star === 3 ? 1 : unit.star === 2 ? 0.5 : 0.08;
     const lateGameScore = this.targetPriority(unit.id) * lateGameWeight * lateGameStarWeight;
-    return definition.cost * 12 * STAR_POWER[unit.star]
+    const value = combatOnly && (this.thinkingLevel === "novice" || this.thinkingLevel === "veteran")
+      ? (chromeUnitValues.values as Partial<Record<UnitId, number>>)[unit.id] ?? definition.cost * 12
+      : definition.cost * 12;
+    return value * STAR_POWER[unit.star]
       + unit.star * 6
       + uniquePartners * 7
       + Math.max(0, duplicateCount) * 4
@@ -2219,7 +2228,7 @@ export class AutoChessAutopilot {
       return this.fastLineupUids.map((uid) => byUid.get(uid)!);
     }
     const ranked = [...roster].sort(
-      (left, right) => this.unitScore(right.unit, roster) - this.unitScore(left.unit, roster)
+      (left, right) => this.unitScore(right.unit, roster, true) - this.unitScore(left.unit, roster, true)
         || left.unit.uid - right.unit.uid,
     );
     const selected = ranked.slice(0, cap);
@@ -2274,7 +2283,7 @@ export class AutoChessAutopilot {
     const ranged = lineup.length - melee;
     const roleScore = melee > 0 && ranged > 0 ? 18 : melee === 0 ? -60 : -12;
     const duplicatePenalty = (lineup.length - uniqueIds.size) * 12;
-    return lineup.reduce((score, { unit }) => score + this.unitScore(unit, lineup), 0)
+    return lineup.reduce((score, { unit }) => score + this.unitScore(unit, lineup, true), 0)
       + traitScore
       + roleScore
       - duplicatePenalty;
@@ -2305,7 +2314,12 @@ export class AutoChessAutopilot {
     state.round = Math.max(1, Math.floor(round));
     try {
       const wave = this.bridge.engine.currentWave;
-      return this.goCombatScorer({
+      const scorer = this.modernConfiguration
+        && (this.thinkingLevel === "deep" || this.thinkingLevel === "oracle")
+        && this.goCombatScorer === scoreGoCombatCandidate
+        ? scoreMissingUnitCandidate
+        : this.goCombatScorer;
+      return scorer({
         starter: state.starter,
         augments: state.augments,
         waveTag: wave.tag,

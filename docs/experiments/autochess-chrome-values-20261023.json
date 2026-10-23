@@ -1,0 +1,472 @@
+{
+  "schema": "autochess-chrome-values-experiment-v1",
+  "date": "2026-10-23",
+  "status": "all-four-levels-strength-and-final-engineering-passed",
+  "overallFourLevelGoalComplete": true,
+  "defaults": {
+    "style": "balanced",
+    "thinkingLevel": "veteran"
+  },
+  "protocol": {
+    "runtime": {
+      "browser": "155.0.8059.85",
+      "engine": "Chrome Worker",
+      "hz": 60,
+      "rolloutHz": 20
+    },
+    "battlesPerGame": 32,
+    "clearMeans": "Won campaign round 16; does not mean survived round 32",
+    "developmentSeeds": [
+      90000,
+      90031
+    ],
+    "trainingSeeds": [
+      90200,
+      90223
+    ],
+    "externalHoldoutSeeds": [
+      90224,
+      90231
+    ],
+    "trainingContexts": 1026,
+    "trainingEntries": 11538,
+    "acceptanceGroups": {
+      "candidate": "chrome-unit-values",
+      "groups": [
+        92000,
+        92100,
+        93000,
+        93100
+      ],
+      "runsPerGroup": 32,
+      "decisionAfterAllGroups": true,
+      "sourceFrozen": true,
+      "allGroupsMeanImprove": true,
+      "combinedMeanAtLeast": 0.25,
+      "combinedClearDeltaAtLeast": 0,
+      "combinedEarlyEndDeltaAtMost": 1,
+      "bootstrapPositiveAtLeast": 0.8,
+      "original64Passed": false,
+      "reason": "Fixed-candidate sample extension; keep every original game and all absolute thresholds. No further sample extension if this fails."
+    },
+    "original64Failed": {
+      "bothGroupsImprove": true,
+      "meanAtLeastQuarterWin": true,
+      "noFewerClears": true,
+      "earlyEndsWithinOne": false,
+      "bootstrapPositiveAtLeast80Percent": true
+    },
+    "retainedAllOriginalGames": true,
+    "uncertainty": "Descriptive paired bootstrap after one prospectively capped sample extension; not a fresh 95% hypothesis test."
+  },
+  "novice": {
+    "scope": "Static combat values for selecting and comparing novice lineups; purchase values retain the cost baseline. No neural inference, rollouts, future information or action-interval change. Strength evidence uses balanced preference.",
+    "groups": [
+      {
+        "seed": 92000,
+        "meanWinDelta": 1.59375,
+        "clearDelta": 4,
+        "earlyEndDelta": 1
+      },
+      {
+        "seed": 92100,
+        "meanWinDelta": 0.03125,
+        "clearDelta": -1,
+        "earlyEndDelta": 1
+      },
+      {
+        "seed": 93000,
+        "meanWinDelta": 1.25,
+        "clearDelta": 0,
+        "earlyEndDelta": 0
+      },
+      {
+        "seed": 93100,
+        "meanWinDelta": 0.46875,
+        "clearDelta": -3,
+        "earlyEndDelta": -1
+      }
+    ],
+    "combined": {
+      "runs": 128,
+      "meanWinDelta": 0.8359375,
+      "clearDelta": 0,
+      "earlyEndDelta": 1,
+      "pairedBootstrap95": [
+        0.265625,
+        1.4296875
+      ],
+      "bootstrapPositiveFraction": 0.9985
+    },
+    "checks": {
+      "allGroupsImprove": true,
+      "meanAtLeastQuarterWin": true,
+      "noFewerClears": true,
+      "earlyEndsWithinOne": true,
+      "bootstrapPositiveAtLeast80Percent": true
+    },
+    "passed": true,
+    "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+    "candidateFingerprint": "f2035572ad202169cd7cd969d6bdcc487997a633918595a7ad15364e3051a334",
+    "rulesFingerprint": "52e393c178bfa44b0cdeaf93b2681fb9babd8f7ef5e3ae2820c0844dd01a4c2d",
+    "learnerSha256": "9eebba7921ae5555fe785f1bbb522448fc5af005b9b92e2a5ae7341803a5627a",
+    "maximumRelativeValueChange": 0.5
+  },
+  "otherLevels": {
+    "veteran": "Independent64-game strength plus complete integrated engineering passed; main candidate fingerprint equals frozen accepted source.",
+    "deep": "Observed three-unit embeddings accepted64: +1.3125 wins, clears+1; integrated with final all-four engineering.",
+    "oracle": "Same frozen observed model accepted64: +2.953125 wins, clears+3; integrated with original enemy ordinal encoding."
+  },
+  "rejectedLayoutReason": "Old trainer encodes enemy array ordinals. Changing inference alone disagrees with the training contract; exact-position experiment regressed deep and oracle.",
+  "trainingLabelFix": {
+    "oldCutoff": 10000,
+    "newCutoff": 5000,
+    "affectedTrueWinsBelowOldCutoff": 141,
+    "meaning": "The formal combat score has separate loss and win clusters; a close win can be less than 10000."
+  },
+  "localEvidence": [
+    {
+      "path": "tmp\\ai-20261023\\acceptance-chrome-unit-values-novice.json",
+      "sha256": "f0137f5281ef1fc51b476c4a395bc6f53e9b9c17590f488b1d585f5569d8b53c"
+    },
+    {
+      "path": "tmp\\ai-20261023\\expanded-novice-protocol.json",
+      "sha256": "757d270cc6b2a8fda63d1e07433eccd50642351693df999f2b1038bd1c8d2327"
+    },
+    {
+      "path": "tmp\\ai-20261023\\acceptance-expanded-chrome-unit-values-novice.json",
+      "sha256": "c2666798e4cfa7b81c4b79d9479c362b13f4bd30ac2989166dae8e1a6c3f58c0"
+    },
+    {
+      "path": "tmp\\ai-20261023\\acceptance-trait-shortlist-veteran.json",
+      "sha256": "71a17cba0a10649bebb3631f6bdc1150a1ad1b97fcfc4eec3a43f4344b4b2cb7"
+    },
+    {
+      "path": "tmp\\ai-20261023\\chrome-live-model-heldout-comparison.json",
+      "sha256": "5f4b28164898f068c32bf95c3601bea65d824f01571849e991ce5973a6595048"
+    },
+    {
+      "path": "tmp\\ai-20261023\\dev-chrome-live-model-deep-comparison.json",
+      "sha256": "322b0d1259a562b4186ec7e5dda714e624aa069bcb4d337868d22b57e88606e2"
+    },
+    {
+      "path": "tmp\\ai-20261023\\chrome-labels-live.json",
+      "sha256": "5201c34eaa2621172879d77ebc66d72b783b0af08136a51fbcf2a7f42504d246"
+    },
+    {
+      "path": "tmp\\ai-20261023\\chrome-labels-train.json",
+      "sha256": "d50198db534b9f9f00083e765198e8882fe6fad4824a1ed2f2dba64d48777143"
+    },
+    {
+      "path": "tmp\\ai-20261023\\chrome-labels-holdout.json",
+      "sha256": "569d5a9b8e2f97f819493e1983a36dfe7d8a5ee3d788a5df876ff1c707301e91"
+    },
+    {
+      "path": "tmp\\ai-20261023\\novice-model-refresh-report.json",
+      "sha256": "6faf476c972511f159471d60c14fa9c59a0a0c7179a842ed8417370abde47f7d"
+    },
+    {
+      "path": "tmp\\ai-20261023\\novice-ai-worker-report.json",
+      "sha256": "8e108d7dcf76353b6be865f711047c86fe18a1f11e24b89df62a4e917a3cb684"
+    },
+    {
+      "path": "tmp\\ai-20261023\\fast-values-veteran-protocol.json",
+      "sha256": "87206fa4eab992c7ca695c989925ad6b533d9b2013770f284f6b7dda9610284c"
+    },
+    {
+      "path": "tmp\\ai-20261023\\acceptance-fast-values-veteran.json",
+      "sha256": "fff017e6109c609f0767b5b9546df7773c7bdd295c1f4a2b4a2415b77f95d415"
+    },
+    {
+      "path": "tmp\\ai-20261023\\fast-values-browser\\settings\\model-refresh-report.json",
+      "sha256": "ed95076ebcf68a12bb8b5520733a6b588eb6c5e6c246687e151a275976ba56cd",
+      "screenshotsInspected": 4
+    },
+    {
+      "path": "tmp\\ai-20261023\\fast-values-browser\\novice\\ai-worker-report.json",
+      "sha256": "a82c8b8fb16ecdbd8b7357dc84dc9b3dced2a9d372459d53d59b92dde1f24d9c",
+      "screenshotsInspected": 2,
+      "bossWon": false
+    },
+    {
+      "path": "tmp\\ai-20261023\\fast-values-browser\\veteran\\ai-worker-report.json",
+      "sha256": "44cf6bd2144a859c0e3918a65620e7c40b4410fbed7953fec20aa653fb2a8040",
+      "screenshotsInspected": 2,
+      "bossWon": true
+    },
+    {
+      "path": "tmp\\ai-20261023\\main-fast-values-veteran-parity.json",
+      "sha256": "bc2e2005d266d5288332906086b10522940aaea7843b2dd29c44afcf1afb30b2"
+    },
+    {
+      "path": "tmp\\ai-20261023\\dev-all-values-deep-comparison.json",
+      "sha256": "812b582c486a446d80e10438420f18841f5af154bf88ca6584c8b10b1977411b"
+    }
+  ],
+  "runtimeArtifacts": [
+    {
+      "path": "src/components/autoChessGame/ai/AutoChessAutopilot.ts",
+      "sha256": "e94add167351f651fac4507398614dd81f7cf381d85b26f58bc4cc3c4a29b718"
+    },
+    {
+      "path": "src/components/autoChessGame/ai/chromeUnitValues.json",
+      "sha256": "e6f691411c02a36ebcb8424b22d0f4a3ea51e8a1a3ebf734bd0383a660ca8be0"
+    },
+    {
+      "path": "src/components/autoChessGame/ai/goCombatModelMissingUnits.json",
+      "sha256": "976f6adec7571c6885abf8a58ff8548a1c894d94d4686eee40ca0bdcc0002b59"
+    }
+  ],
+  "engineering": {
+    "rules": "510/510 passed",
+    "sourceEslint": "passed",
+    "fullCheck": "passed in isolated checkout",
+    "build": "passed after full check for integrated novice+veteran, isolated checkout, Next ESLint retained",
+    "browser": "passed installed muted Chrome on integrated production build: default balanced/veteran, mobile, saved novice/reload, restored veteran, bundled novice and veteran Workers through round16/result; all8 PNGs individually opened",
+    "browserFirstAttempt": "failed with ERR_CONNECTION_CLOSED; URL not captured in original logger. With request URL/location diagnostics, unchanged runtime passed clean rerun. Root cause not established; original failure retained. Worker smoke logged one ERR_ABORTED worker-chunk request when stopping initial worker; no console/page/HTTP failures.",
+    "pythonTests": "13 MuZero and 1 label CLI passed after fixture adjustment; novice90001 verified in actual Node environment loses boss with5HP and negative terminal reward. Previous deep90001 assumption based on Chrome was wrong: Node ran to32; failed log retained.",
+    "unitValueTests": "2 passed; bounds/provenance and novice combat/economy/other-level isolation",
+    "defaultVeteranRegression": "Main complete imported-module fingerprint equals independently accepted frozen fast-values source, and seed90000 full trajectory identical. Veteran intentionally improved; old novice-only parity is historical.",
+    "verifiedSourceMatchesFrozen": true,
+    "screenshotInspectionCount": 8,
+    "noviceOnlyEvidence": "Retained historical novice build/browser passes. Main now also enables veteran values; combined check/build/UI revalidation in progress.",
+    "browserReports": {
+      "settings": {
+        "path": "tmp\\ai-20261023\\fast-values-browser\\settings\\model-refresh-report.json",
+        "sha256": "ed95076ebcf68a12bb8b5520733a6b588eb6c5e6c246687e151a275976ba56cd",
+        "screenshotsInspected": 4
+      },
+      "novice": {
+        "path": "tmp\\ai-20261023\\fast-values-browser\\novice\\ai-worker-report.json",
+        "sha256": "a82c8b8fb16ecdbd8b7357dc84dc9b3dced2a9d372459d53d59b92dde1f24d9c",
+        "screenshotsInspected": 2,
+        "bossWon": false
+      },
+      "veteran": {
+        "path": "tmp\\ai-20261023\\fast-values-browser\\veteran\\ai-worker-report.json",
+        "sha256": "44cf6bd2144a859c0e3918a65620e7c40b4410fbed7953fec20aa653fb2a8040",
+        "screenshotsInspected": 2,
+        "bossWon": true
+      }
+    },
+    "historicalLowOnlyPhase": true,
+    "supersededBy": "tmp/ai-20261023/final-engineering.json"
+  },
+  "veteran": {
+    "groups": [
+      {
+        "level": "veteran",
+        "runs": 32,
+        "meanWinDelta": 0.6875,
+        "pairedBootstrap95": [
+          -0.40625,
+          1.90625
+        ],
+        "bootstrapPositiveFraction": 0.875,
+        "moreWins": 11,
+        "fewerWins": 10,
+        "clearDelta": 0,
+        "earlyEndDelta": 0,
+        "deltas": [
+          -3,
+          3,
+          -2,
+          2,
+          2,
+          0,
+          7,
+          0,
+          0,
+          -2,
+          12,
+          5,
+          3,
+          0,
+          0,
+          1,
+          3,
+          -6,
+          -2,
+          0,
+          -3,
+          0,
+          0,
+          2,
+          6,
+          0,
+          -2,
+          0,
+          -2,
+          -1,
+          -1,
+          0
+        ],
+        "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+        "candidateFingerprint": "7c2e6135db28b917dcee895a7778a6da10877d441abdecf6cfb5dd84bdbe23d2"
+      },
+      {
+        "level": "veteran",
+        "runs": 32,
+        "meanWinDelta": 0.625,
+        "pairedBootstrap95": [
+          -0.625,
+          1.84375
+        ],
+        "bootstrapPositiveFraction": 0.8378,
+        "moreWins": 15,
+        "fewerWins": 9,
+        "clearDelta": 3,
+        "earlyEndDelta": 1,
+        "deltas": [
+          2,
+          0,
+          0,
+          1,
+          7,
+          0,
+          -3,
+          2,
+          1,
+          0,
+          5,
+          7,
+          0,
+          6,
+          1,
+          -1,
+          0,
+          2,
+          2,
+          -5,
+          0,
+          7,
+          -1,
+          -11,
+          -3,
+          -1,
+          1,
+          1,
+          0,
+          4,
+          -3,
+          -1
+        ],
+        "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+        "candidateFingerprint": "7c2e6135db28b917dcee895a7778a6da10877d441abdecf6cfb5dd84bdbe23d2"
+      }
+    ],
+    "combined": {
+      "level": "veteran",
+      "runs": 64,
+      "meanWinDelta": 0.65625,
+      "pairedBootstrap95": [
+        -0.1875,
+        1.5
+      ],
+      "bootstrapPositiveFraction": 0.9357,
+      "moreWins": 26,
+      "fewerWins": 19,
+      "clearDelta": 3,
+      "earlyEndDelta": 1,
+      "deltas": [
+        -3,
+        3,
+        -2,
+        2,
+        2,
+        0,
+        7,
+        0,
+        0,
+        -2,
+        12,
+        5,
+        3,
+        0,
+        0,
+        1,
+        3,
+        -6,
+        -2,
+        0,
+        -3,
+        0,
+        0,
+        2,
+        6,
+        0,
+        -2,
+        0,
+        -2,
+        -1,
+        -1,
+        0,
+        2,
+        0,
+        0,
+        1,
+        7,
+        0,
+        -3,
+        2,
+        1,
+        0,
+        5,
+        7,
+        0,
+        6,
+        1,
+        -1,
+        0,
+        2,
+        2,
+        -5,
+        0,
+        7,
+        -1,
+        -11,
+        -3,
+        -1,
+        1,
+        1,
+        0,
+        4,
+        -3,
+        -1
+      ],
+      "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+      "candidateFingerprint": "7c2e6135db28b917dcee895a7778a6da10877d441abdecf6cfb5dd84bdbe23d2"
+    },
+    "checks": {
+      "bothGroupsImprove": true,
+      "meanAtLeastQuarterWin": true,
+      "noFewerClears": true,
+      "earlyEndsWithinOne": true,
+      "bootstrapPositiveAtLeast80Percent": true
+    },
+    "passed": true,
+    "protocol": "tmp/ai-20261023/fast-values-veteran-protocol.json",
+    "scope": "Same bounded static combat values extended to veteran heuristic lineup construction/ordering only; original economy values, NN, four model candidates and simulation budgets retained."
+  },
+  "highLevelResearch": {
+    "latestEvidence": "docs/experiments/autochess-high-level-research-20261023.json",
+    "allStaticOracle": "Rejected complete32 development: mean-1.1875, clears-2.",
+    "auditWinFloorDeep": "Rejected complete32 development: mean-1.0625, clears unchanged. A lower audited win/loss boundary removes conservative investment that helped future fights; no correctness-based promotion.",
+    "campaignValuesDeep": "Rejected independent64: +0.5 wins but clears-5.",
+    "rankedValues": "Rejected complete independent deep64 and oracle64; no runtime promotion.",
+    "acceptedObservedEmbeddings": "Final main enables modern deep/oracle with default scorer. See final engineering and high-level index."
+  },
+  "completedOn": "2026-10-24",
+  "finalEngineering": "tmp/ai-20261023/final-engineering.json",
+  "finalSupplement": "docs/experiments/autochess-ai-20261024-final.json",
+  "runtimeArtifactsAtLowOnlyAcceptance": [
+    {
+      "path": "src\\components\\autoChessGame\\ai\\AutoChessAutopilot.ts",
+      "sha256": "8ab1cfbdce37d6705af2b59befff3f91e9d613678dea013ee2e2ec56eff2059f"
+    },
+    {
+      "path": "src\\components\\autoChessGame\\ai\\chromeUnitValues.json",
+      "sha256": "e6f691411c02a36ebcb8424b22d0f4a3ea51e8a1a3ebf734bd0383a660ca8be0"
+    }
+  ]
+}

@@ -1,0 +1,2658 @@
+{
+  "schema": "autochess-high-level-research-v1",
+  "date": "2026-10-23",
+  "overallGoalComplete": true,
+  "mainRuntime": "Accepted novice/veteran combat-only static values and modern deep/oracle observed-unit embeddings with default scorer. Legacy/custom scorers retain original paths; default balanced/veteran and existing computation budgets preserved.",
+  "rejected": {
+    "allStaticOracle": {
+      "level": "oracle",
+      "runs": 32,
+      "meanWinDelta": -1.1875,
+      "pairedBootstrap95": [
+        -3.90625,
+        1.40625
+      ],
+      "bootstrapPositiveFraction": 0.1861,
+      "moreWins": 10,
+      "fewerWins": 10,
+      "clearDelta": -2,
+      "earlyEndDelta": 0,
+      "deltas": [
+        10,
+        0,
+        0,
+        0,
+        0,
+        16,
+        10,
+        1,
+        -12,
+        -2,
+        -1,
+        1,
+        11,
+        -16,
+        1,
+        0,
+        -12,
+        1,
+        0,
+        -1,
+        -1,
+        -17,
+        1,
+        0,
+        0,
+        -16,
+        4,
+        -16,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+      "candidateFingerprint": "2b66f6fe6bf5e2ed221b04bcef69fea2b8cb82d8b5d9e892d7ce8ee8736b21c2"
+    },
+    "auditWinFloorDeep": {
+      "level": "deep",
+      "runs": 32,
+      "meanWinDelta": -1.0625,
+      "pairedBootstrap95": [
+        -2.46875,
+        0.03125
+      ],
+      "bootstrapPositiveFraction": 0.0325,
+      "moreWins": 1,
+      "fewerWins": 3,
+      "clearDelta": 0,
+      "earlyEndDelta": 0,
+      "deltas": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        -16,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        -9,
+        0,
+        0,
+        -10,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+      "candidateFingerprint": "22c0b9ef91e365c6785573b97878deed154e493f4a983972a02f45bd854b5981"
+    },
+    "highOnlyClassificationDevelopment8": {
+      "level": "deep",
+      "runs": 8,
+      "meanWinDelta": -0.375,
+      "pairedBootstrap95": [
+        -5.375,
+        4.625
+      ],
+      "bootstrapPositiveFraction": 0.4273,
+      "moreWins": 2,
+      "fewerWins": 4,
+      "clearDelta": 1,
+      "earlyEndDelta": 0,
+      "deltas": [
+        0,
+        -1,
+        -2,
+        -3,
+        0,
+        4,
+        -14,
+        13
+      ],
+      "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+      "candidateFingerprint": "9e09b8e7ebf6f8be0aa66a640fe739503f95377b12aa03ba90170ab848b5c5e5"
+    },
+    "rankedLowTrainingDeep": {
+      "level": "deep",
+      "runs": 32,
+      "meanWinDelta": -0.375,
+      "pairedBootstrap95": [
+        -2.71875,
+        1.9375
+      ],
+      "bootstrapPositiveFraction": 0.3721,
+      "moreWins": 8,
+      "fewerWins": 14,
+      "clearDelta": 1,
+      "earlyEndDelta": 0,
+      "deltas": [
+        14,
+        0,
+        -2,
+        -3,
+        0,
+        4,
+        -4,
+        0,
+        -1,
+        -13,
+        0,
+        0,
+        -14,
+        0,
+        -6,
+        -1,
+        -14,
+        -9,
+        14,
+        -1,
+        -1,
+        -4,
+        10,
+        0,
+        0,
+        2,
+        4,
+        0,
+        1,
+        13,
+        -1,
+        0
+      ],
+      "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+      "candidateFingerprint": "46cc3add94679f659adc4c15194c79e6c8f396994925a1c4ff3e633287695223"
+    },
+    "campaignValuesDeepIndependent": {
+      "groups": [
+        {
+          "level": "deep",
+          "runs": 32,
+          "meanWinDelta": -0.6875,
+          "pairedBootstrap95": [
+            -3.21875,
+            1.875
+          ],
+          "bootstrapPositiveFraction": 0.298,
+          "moreWins": 8,
+          "fewerWins": 13,
+          "clearDelta": -6,
+          "earlyEndDelta": 0,
+          "deltas": [
+            -2,
+            -3,
+            9,
+            0,
+            13,
+            -1,
+            -12,
+            -3,
+            2,
+            -2,
+            7,
+            0,
+            -11,
+            -6,
+            0,
+            -11,
+            -17,
+            -1,
+            12,
+            0,
+            16,
+            0,
+            -5,
+            0,
+            7,
+            0,
+            -16,
+            0,
+            0,
+            0,
+            2,
+            0
+          ],
+          "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+          "candidateFingerprint": "fb683daf5b03ce01a3ae96940dd2ddb33472f520e4cd7311c0694eb313a622ce"
+        },
+        {
+          "level": "deep",
+          "runs": 32,
+          "meanWinDelta": 1.6875,
+          "pairedBootstrap95": [
+            0,
+            3.5625
+          ],
+          "bootstrapPositiveFraction": 0.9739,
+          "moreWins": 10,
+          "fewerWins": 7,
+          "clearDelta": 1,
+          "earlyEndDelta": 0,
+          "deltas": [
+            16,
+            0,
+            1,
+            -3,
+            4,
+            0,
+            1,
+            12,
+            0,
+            0,
+            0,
+            -1,
+            0,
+            5,
+            0,
+            -3,
+            15,
+            0,
+            9,
+            0,
+            -9,
+            0,
+            0,
+            1,
+            -1,
+            0,
+            0,
+            0,
+            -1,
+            0,
+            9,
+            -1
+          ],
+          "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+          "candidateFingerprint": "fb683daf5b03ce01a3ae96940dd2ddb33472f520e4cd7311c0694eb313a622ce"
+        }
+      ],
+      "combined": {
+        "level": "deep",
+        "runs": 64,
+        "meanWinDelta": 0.5,
+        "pairedBootstrap95": [
+          -1.09375,
+          2.09375
+        ],
+        "bootstrapPositiveFraction": 0.7272,
+        "moreWins": 18,
+        "fewerWins": 20,
+        "clearDelta": -5,
+        "earlyEndDelta": 0,
+        "deltas": [
+          -2,
+          -3,
+          9,
+          0,
+          13,
+          -1,
+          -12,
+          -3,
+          2,
+          -2,
+          7,
+          0,
+          -11,
+          -6,
+          0,
+          -11,
+          -17,
+          -1,
+          12,
+          0,
+          16,
+          0,
+          -5,
+          0,
+          7,
+          0,
+          -16,
+          0,
+          0,
+          0,
+          2,
+          0,
+          16,
+          0,
+          1,
+          -3,
+          4,
+          0,
+          1,
+          12,
+          0,
+          0,
+          0,
+          -1,
+          0,
+          5,
+          0,
+          -3,
+          15,
+          0,
+          9,
+          0,
+          -9,
+          0,
+          0,
+          1,
+          -1,
+          0,
+          0,
+          0,
+          -1,
+          0,
+          9,
+          -1
+        ],
+        "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+        "candidateFingerprint": "fb683daf5b03ce01a3ae96940dd2ddb33472f520e4cd7311c0694eb313a622ce"
+      },
+      "checks": {
+        "bothGroupsImprove": false,
+        "meanAtLeastQuarterWin": true,
+        "noFewerClears": false,
+        "earlyEndsWithinOne": true,
+        "bootstrapPositiveAtLeast80Percent": false
+      },
+      "passed": false
+    },
+    "deepRankedIndependent": {
+      "groups": [
+        {
+          "level": "deep",
+          "runs": 32,
+          "meanWinDelta": -2.75,
+          "pairedBootstrap95": [
+            -5.6875,
+            0.21875
+          ],
+          "bootstrapPositiveFraction": 0.0359,
+          "moreWins": 11,
+          "fewerWins": 13,
+          "clearDelta": -6,
+          "earlyEndDelta": 0,
+          "deltas": [
+            0,
+            -13,
+            -16,
+            0,
+            -16,
+            0,
+            2,
+            0,
+            0,
+            -16,
+            1,
+            16,
+            -1,
+            1,
+            -12,
+            0,
+            2,
+            -14,
+            -12,
+            -5,
+            6,
+            3,
+            3,
+            0,
+            -3,
+            12,
+            -12,
+            -14,
+            -14,
+            1,
+            13,
+            0
+          ],
+          "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+          "candidateFingerprint": "1339fc8400633a666359730a6d905fa10729022df076d3272c40a863b07eac8c"
+        },
+        {
+          "level": "deep",
+          "runs": 32,
+          "meanWinDelta": -0.5,
+          "pairedBootstrap95": [
+            -2.59375,
+            1.46875
+          ],
+          "bootstrapPositiveFraction": 0.3156,
+          "moreWins": 12,
+          "fewerWins": 8,
+          "clearDelta": 1,
+          "earlyEndDelta": 0,
+          "deltas": [
+            1,
+            -17,
+            1,
+            -15,
+            5,
+            -4,
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            7,
+            0,
+            0,
+            0,
+            -9,
+            0,
+            0,
+            -1,
+            0,
+            1,
+            -13,
+            -1,
+            0,
+            12,
+            2,
+            1,
+            10,
+            0,
+            3,
+            -1
+          ],
+          "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+          "candidateFingerprint": "1339fc8400633a666359730a6d905fa10729022df076d3272c40a863b07eac8c"
+        }
+      ],
+      "combined": {
+        "level": "deep",
+        "runs": 64,
+        "meanWinDelta": -1.625,
+        "pairedBootstrap95": [
+          -3.453125,
+          0.1875
+        ],
+        "bootstrapPositiveFraction": 0.0385,
+        "moreWins": 23,
+        "fewerWins": 21,
+        "clearDelta": -5,
+        "earlyEndDelta": 0,
+        "deltas": [
+          0,
+          -13,
+          -16,
+          0,
+          -16,
+          0,
+          2,
+          0,
+          0,
+          -16,
+          1,
+          16,
+          -1,
+          1,
+          -12,
+          0,
+          2,
+          -14,
+          -12,
+          -5,
+          6,
+          3,
+          3,
+          0,
+          -3,
+          12,
+          -12,
+          -14,
+          -14,
+          1,
+          13,
+          0,
+          1,
+          -17,
+          1,
+          -15,
+          5,
+          -4,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          7,
+          0,
+          0,
+          0,
+          -9,
+          0,
+          0,
+          -1,
+          0,
+          1,
+          -13,
+          -1,
+          0,
+          12,
+          2,
+          1,
+          10,
+          0,
+          3,
+          -1
+        ],
+        "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+        "candidateFingerprint": "1339fc8400633a666359730a6d905fa10729022df076d3272c40a863b07eac8c"
+      },
+      "checks": {
+        "bothGroupsImprove": false,
+        "meanAtLeastQuarterWin": false,
+        "noFewerClears": false,
+        "earlyEndsWithinOne": true,
+        "bootstrapPositiveAtLeast80Percent": false
+      },
+      "passed": false
+    },
+    "rankedValuesOracleIndependent": {
+      "groups": [
+        {
+          "level": "oracle",
+          "runs": 32,
+          "meanWinDelta": -0.5,
+          "pairedBootstrap95": [
+            -3.5,
+            2.46875
+          ],
+          "bootstrapPositiveFraction": 0.3682,
+          "moreWins": 12,
+          "fewerWins": 16,
+          "clearDelta": -3,
+          "earlyEndDelta": 0,
+          "deltas": [
+            -1,
+            7,
+            -10,
+            -6,
+            13,
+            -3,
+            -2,
+            -17,
+            0,
+            -17,
+            -2,
+            -4,
+            0,
+            16,
+            0,
+            1,
+            -15,
+            3,
+            11,
+            -16,
+            13,
+            -2,
+            -10,
+            -1,
+            2,
+            15,
+            1,
+            0,
+            -1,
+            6,
+            4,
+            -1
+          ],
+          "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+          "candidateFingerprint": "1339fc8400633a666359730a6d905fa10729022df076d3272c40a863b07eac8c"
+        },
+        {
+          "level": "oracle",
+          "runs": 32,
+          "meanWinDelta": 1.34375,
+          "pairedBootstrap95": [
+            -1.0625,
+            3.65625
+          ],
+          "bootstrapPositiveFraction": 0.8623,
+          "moreWins": 13,
+          "fewerWins": 10,
+          "clearDelta": 1,
+          "earlyEndDelta": 0,
+          "deltas": [
+            -1,
+            0,
+            1,
+            0,
+            6,
+            0,
+            3,
+            -17,
+            16,
+            -1,
+            1,
+            -1,
+            0,
+            -4,
+            2,
+            0,
+            -1,
+            0,
+            0,
+            15,
+            -17,
+            -1,
+            -1,
+            0,
+            7,
+            12,
+            1,
+            0,
+            -2,
+            6,
+            12,
+            7
+          ],
+          "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+          "candidateFingerprint": "1339fc8400633a666359730a6d905fa10729022df076d3272c40a863b07eac8c"
+        }
+      ],
+      "combined": {
+        "level": "oracle",
+        "runs": 64,
+        "meanWinDelta": 0.421875,
+        "pairedBootstrap95": [
+          -1.5,
+          2.265625
+        ],
+        "bootstrapPositiveFraction": 0.6662,
+        "moreWins": 25,
+        "fewerWins": 26,
+        "clearDelta": -2,
+        "earlyEndDelta": 0,
+        "deltas": [
+          -1,
+          7,
+          -10,
+          -6,
+          13,
+          -3,
+          -2,
+          -17,
+          0,
+          -17,
+          -2,
+          -4,
+          0,
+          16,
+          0,
+          1,
+          -15,
+          3,
+          11,
+          -16,
+          13,
+          -2,
+          -10,
+          -1,
+          2,
+          15,
+          1,
+          0,
+          -1,
+          6,
+          4,
+          -1,
+          -1,
+          0,
+          1,
+          0,
+          6,
+          0,
+          3,
+          -17,
+          16,
+          -1,
+          1,
+          -1,
+          0,
+          -4,
+          2,
+          0,
+          -1,
+          0,
+          0,
+          15,
+          -17,
+          -1,
+          -1,
+          0,
+          7,
+          12,
+          1,
+          0,
+          -2,
+          6,
+          12,
+          7
+        ],
+        "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+        "candidateFingerprint": "1339fc8400633a666359730a6d905fa10729022df076d3272c40a863b07eac8c"
+      },
+      "checks": {
+        "bothGroupsImprove": false,
+        "meanAtLeastQuarterWin": true,
+        "noFewerClears": false,
+        "earlyEndsWithinOne": true,
+        "bootstrapPositiveAtLeast80Percent": false
+      },
+      "passed": false
+    }
+  },
+  "campaignDeep": {
+    "development": {
+      "level": "deep",
+      "runs": 32,
+      "meanWinDelta": 0.84375,
+      "pairedBootstrap95": [
+        -1.5,
+        3.1875
+      ],
+      "bootstrapPositiveFraction": 0.7555,
+      "moreWins": 11,
+      "fewerWins": 11,
+      "clearDelta": 3,
+      "earlyEndDelta": 0,
+      "deltas": [
+        3,
+        -1,
+        2,
+        0,
+        0,
+        -1,
+        -1,
+        9,
+        9,
+        -1,
+        -5,
+        0,
+        -8,
+        -13,
+        -8,
+        0,
+        -13,
+        2,
+        16,
+        -1,
+        0,
+        -4,
+        0,
+        0,
+        0,
+        15,
+        1,
+        0,
+        1,
+        13,
+        12,
+        0
+      ],
+      "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+      "candidateFingerprint": "fb683daf5b03ce01a3ae96940dd2ddb33472f520e4cd7311c0694eb313a622ce"
+    },
+    "independentProtocol": {
+      "candidate": "chrome-campaign-values",
+      "candidateFingerprint": "fb683daf5b03ce01a3ae96940dd2ddb33472f520e4cd7311c0694eb313a622ce",
+      "level": "deep",
+      "groups": [
+        95000,
+        95100
+      ],
+      "runsPerGroup": 32,
+      "battlesPerGame": 32,
+      "sourceFrozen": true,
+      "decisionAfterBothGroups": true,
+      "bothGroupsMeanImprove": true,
+      "combinedMeanAtLeast": 0.25,
+      "combinedClearDeltaAtLeast": 0,
+      "combinedEarlyEndDeltaAtMost": 1,
+      "bootstrapPositiveAtLeast": 0.8,
+      "noSampleExtension": true,
+      "noTuningOnAcceptanceSeeds": true,
+      "developmentMeanWinDelta": 0.84375,
+      "developmentClearDelta": 3,
+      "developmentBootstrapPositiveFraction": 0.7555
+    },
+    "acceptance": "running",
+    "referenceSession": 40857,
+    "candidateSession": 54411
+  },
+  "rankedValuesLowTraining": {
+    "status": "Rejected after all 32 development games",
+    "development32": {
+      "level": "deep",
+      "runs": 32,
+      "meanWinDelta": -0.375,
+      "pairedBootstrap95": [
+        -2.71875,
+        1.9375
+      ],
+      "bootstrapPositiveFraction": 0.3721,
+      "moreWins": 8,
+      "fewerWins": 14,
+      "clearDelta": 1,
+      "earlyEndDelta": 0,
+      "deltas": [
+        14,
+        0,
+        -2,
+        -3,
+        0,
+        4,
+        -4,
+        0,
+        -1,
+        -13,
+        0,
+        0,
+        -14,
+        0,
+        -6,
+        -1,
+        -14,
+        -9,
+        14,
+        -1,
+        -1,
+        -4,
+        10,
+        0,
+        0,
+        2,
+        4,
+        0,
+        1,
+        13,
+        -1,
+        0
+      ],
+      "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+      "candidateFingerprint": "46cc3add94679f659adc4c15194c79e6c8f396994925a1c4ff3e633287695223"
+    },
+    "session": 24526,
+    "processExitCode": 0
+  },
+  "rankedValuesDeepTraining": {
+    "development32": {
+      "level": "deep",
+      "runs": 32,
+      "meanWinDelta": 1.40625,
+      "pairedBootstrap95": [
+        -1.34375,
+        4.21875
+      ],
+      "bootstrapPositiveFraction": 0.8357,
+      "moreWins": 11,
+      "fewerWins": 11,
+      "clearDelta": 3,
+      "earlyEndDelta": 0,
+      "deltas": [
+        13,
+        15,
+        0,
+        -3,
+        0,
+        0,
+        -8,
+        0,
+        9,
+        -1,
+        -7,
+        0,
+        -16,
+        -7,
+        -2,
+        17,
+        -13,
+        0,
+        5,
+        15,
+        -6,
+        -4,
+        -3,
+        0,
+        0,
+        3,
+        16,
+        0,
+        1,
+        12,
+        9,
+        0
+      ],
+      "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+      "candidateFingerprint": "1339fc8400633a666359730a6d905fa10729022df076d3272c40a863b07eac8c"
+    },
+    "remaining24": "completed",
+    "session": 93172,
+    "processExitCode": 0,
+    "independentAcceptance": {
+      "candidate": "chrome-deep-ranked-values",
+      "candidateFingerprint": "1339fc8400633a666359730a6d905fa10729022df076d3272c40a863b07eac8c",
+      "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+      "level": "deep",
+      "groups": [
+        96000,
+        96100
+      ],
+      "runsPerGroup": 32,
+      "battlesPerGame": 32,
+      "sourceFrozen": true,
+      "decisionAfterBothGroups": true,
+      "bothGroupsMeanImprove": true,
+      "combinedMeanAtLeast": 0.25,
+      "combinedClearDeltaAtLeast": 0,
+      "combinedEarlyEndDeltaAtMost": 1,
+      "bootstrapPositiveAtLeast": 0.8,
+      "noSampleExtension": true,
+      "noTuningOnAcceptanceSeeds": true,
+      "developmentMeanWinDelta": 1.40625,
+      "developmentClearDelta": 3,
+      "developmentBootstrapPositiveFraction": 0.8357,
+      "frozenFiles": [
+        {
+          "path": "tmp\\ai-20261023\\chrome-deep-ranked-values\\src\\components\\autoChessGame\\ai\\AutoChessAutopilot.ts",
+          "sha256": "44fd98687f862e40d0bba184c452b9a34d842b84f285ed5ff877c5e85a016c4d"
+        },
+        {
+          "path": "tmp\\ai-20261023\\chrome-deep-ranked-values\\src\\components\\autoChessGame\\ai\\rankedUnitValues.json",
+          "sha256": "443f0f839f24f74dec14273a8e61e2525a749d8e14b556a5d2ae56d67e39132e"
+        }
+      ]
+    },
+    "acceptanceReferenceSession": 47440,
+    "acceptanceCandidateStatus": "Completed both groups; rejected; both original sessions exited0",
+    "acceptanceCandidateSession": 36611,
+    "independentStatus": "Rejected after both complete 32-game groups; mean -1.625, clears -5. No extension or tuning on acceptance seeds.",
+    "independentResult": "tmp/ai-20261023/acceptance-deep-ranked-values-deep.json"
+  },
+  "deepDataset": {
+    "games": 12,
+    "seeds": [
+      90232,
+      90243
+    ],
+    "contexts": 238,
+    "entries": 2817,
+    "auditsAllMatched": true,
+    "trainingSeeds": [
+      90232,
+      90239
+    ],
+    "trainContexts": 157,
+    "trainEntries": 1832,
+    "externalHoldoutSeeds": [
+      90240,
+      90243
+    ],
+    "externalHoldoutContexts": 81,
+    "externalHoldoutEntries": 985,
+    "runtime": "Installed muted Chrome Worker, formal60Hz, ordinal enemy encoding",
+    "inAcceptanceOrDevelopmentTrainingSeeds": false
+  },
+  "staticLint": "All three new static candidates pass complete ESLint on LF-normalized text using a research TSConfig; frozen CRLF source bytes retained. Original raw snapshot lint failed only linebreak-style. No production lint suppression.",
+  "evidence": [
+    {
+      "path": "tmp\\ai-20261023\\dev-all-values-oracle-comparison.json",
+      "sha256": "1c281df12ce70346bc84a41094b3a2f5cf940cf07e9b25cb6b8c657961fcc326"
+    },
+    {
+      "path": "tmp\\ai-20261023\\dev-audit-win-floor-deep-comparison.json",
+      "sha256": "aad6fc43179305b0e67d3979ce7ed3fb8c67bb69b282ee0dfe8c321455a39e3c"
+    },
+    {
+      "path": "tmp\\ai-20261023\\dev-campaign-values-deep-comparison.json",
+      "sha256": "454f9a439261a57058766c502252124f6f4515787c15a663105ef2a45304fc25"
+    },
+    {
+      "path": "tmp\\ai-20261023\\campaign-values-deep-protocol.json",
+      "sha256": "9a38363e83ea977e61ebccfe37498b16fe9f3cd4d8da5967ddf636754a112a2b"
+    },
+    {
+      "path": "tmp\\ai-20261023\\chrome-labels-deep-live.json",
+      "sha256": "ca94c51202d0317c6fc805e52cc57191187876335e611c34f6d0ecb106283457"
+    },
+    {
+      "path": "tmp\\ai-20261023\\chrome-labels-deep-train.json",
+      "sha256": "4d9d42d8b3a18ec1172323e58a8ac40082f4ff233eef7c68268a1d91aa0607a3"
+    },
+    {
+      "path": "tmp\\ai-20261023\\chrome-labels-deep-holdout.json",
+      "sha256": "353c95e893b8caa1df42794bef3da3905352840019a2efb3b0e018cd2c85c89a"
+    },
+    {
+      "path": "tmp\\ai-20261023\\deepUnitValues.json",
+      "sha256": "4bb4aff4fd44e75f215d9794d89f428cf8949ed773e383d63308c0d5df8b5d23"
+    },
+    {
+      "path": "tmp\\ai-20261023\\deepRankedUnitValues.json",
+      "sha256": "443f0f839f24f74dec14273a8e61e2525a749d8e14b556a5d2ae56d67e39132e"
+    },
+    {
+      "path": "tmp\\ai-20261023\\rankedUnitValues.json",
+      "sha256": "7d21dd56573e2ae07d55f608cf3676d422f7f92b000ae6f48dafb57d8094a219"
+    },
+    {
+      "path": "tmp\\ai-20261023\\train-ranked-unit-values.py",
+      "sha256": "1252a1f931423818ec34c1b613605a2b5480c9132d0669919db2b3f80a43cda0"
+    },
+    {
+      "path": "tmp\\ai-20261023\\split-deep-chrome-labels.py",
+      "sha256": "3013058281902550b0b3b14b3fe21c60e1f9d4f479ed27881f722b41ed5ed8da"
+    },
+    {
+      "path": "tmp\\ai-20261023\\dev-chrome-ranked-values-deep-32.json",
+      "sha256": "22257bcf636136d79f8a75acb641b9203088f7dbd99b426a18f8357abb884785"
+    },
+    {
+      "path": "tmp\\ai-20261023\\dev-chrome-ranked-values-deep-comparison.json",
+      "sha256": "53ae129457aec9ad71a523dc77560cb35ad5ff73d9d3d5ad3ab506b57a4fca35"
+    },
+    {
+      "path": "tmp\\ai-20261023\\dev-chrome-deep-ranked-values-deep-32.json",
+      "sha256": "95df49e0ecfeeca4eed59ad88cda4b4bc02c73c0c5eee586a7aefab553140823"
+    },
+    {
+      "path": "tmp\\ai-20261023\\dev-chrome-deep-ranked-values-deep-comparison.json",
+      "sha256": "b40a1c4747aa2ced0571544c6f2d8ee8fdea8221f9f4e38102d3e0caa61e40da"
+    },
+    {
+      "path": "tmp\\ai-20261023\\deep-ranked-values-deep-protocol.json",
+      "sha256": "c79d1e2bf29a291a13955f6505948b57fd220e7e44605fee694e4642dda2ca78"
+    },
+    {
+      "path": "tmp\\ai-20261023\\train-missing-unit-embeddings.py",
+      "sha256": "0c49c7d5212e75737c186b0cfd9f0696a045a012175bd1150332356dcd9d04ec"
+    },
+    {
+      "path": "tmp\\ai-20261023\\goCombatModel-missing-units.json",
+      "sha256": "fea9580a1cb5a39aebc685eedc82929b2a257e8ef76aec15d79ce5f0e09eb17c"
+    },
+    {
+      "path": "tmp\\ai-20261023\\verify-missing-unit-embeddings.mjs",
+      "sha256": "c09e31c0a30625117c58d4d1db26fe697fe06f532f0ceb1ff9ecc201e3cbf89e"
+    },
+    {
+      "path": "tmp\\ai-20261023\\missing-unit-embeddings-verification.json",
+      "sha256": "1576a8ed65a6106c9e375d85d3edf7525756ebc76e892ffd01c1ca524fffdce5"
+    },
+    {
+      "path": "tmp\\ai-20261023\\missing-unit-embeddings-heldout.json",
+      "sha256": "62a49715fda9eb33b59d1d0176d98d7b83b742e75f9b452e9884aa4206e19dfe"
+    },
+    {
+      "path": "tmp\\ai-20261023\\missing-unit-embeddings-eslint.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tmp\\ai-20261023\\dev-missing-unit-embeddings-deep-8.json",
+      "sha256": "a6b4ecceaa958bc825827ec2f40c80b4aa268466552dd480a9e4315f8bb5e97a"
+    },
+    {
+      "path": "tmp\\ai-20261023\\dev-missing-unit-embeddings-deep-8-comparison.json",
+      "sha256": "b8101866fd7c0df1deb6b291e174e9aa74447171aff8f6e46f563adfb829deed"
+    },
+    {
+      "path": "tmp\\ai-20261023\\candidate-isolation-verification.json",
+      "sha256": "ac6fcc125c8545cb805d6e794b54b33ea23f882c703027a174f93054890fd0d9"
+    },
+    {
+      "path": "tmp\\ai-20261023\\acceptance-campaign-values-deep.json",
+      "sha256": "539813641bc17cbe6c9d09cc5af193114ddc9221c74c1f666d91a89175213c16"
+    },
+    {
+      "path": "tmp\\ai-20261023\\freeze-observed-unit-adaptation.py",
+      "sha256": "c84f8f566ca326b644a7d0432bf73b77dac251f424dcc4e7cac44e82a5e721d0"
+    },
+    {
+      "path": "tmp\\ai-20261023\\goCombatModel-observed-units.json",
+      "sha256": "976f6adec7571c6885abf8a58ff8548a1c894d94d4686eee40ca0bdcc0002b59"
+    },
+    {
+      "path": "tmp\\ai-20261023\\verify-observed-unit-adaptation.mjs",
+      "sha256": "3272d4a413e143fe6c5b0e276173d62d7843cc21aa77199a861a948afbd27445"
+    },
+    {
+      "path": "tmp\\ai-20261023\\observed-unit-adaptation-verification.json",
+      "sha256": "5f600aef3a6640c7183e40f906fdce96e2f9219f6386a2157532519cf724bbd2"
+    },
+    {
+      "path": "tmp\\ai-20261023\\dev-observed-embeddings-deep-parity-90005.json",
+      "sha256": "57bd5c29277586b07138d0c2c5078ade5e07c66336ba3a574921dbafc612e170"
+    },
+    {
+      "path": "tmp\\ai-20261023\\observed-embeddings-chrome-parity.json",
+      "sha256": "fab918844107d1a19dd0c917dbfe160bcd9149b87afe06c26d5dc61ebed084c5"
+    },
+    {
+      "path": "tmp\\ai-20261023\\dev-missing-unit-embeddings-deep-32.json",
+      "sha256": "34177badb5e6d60af49b1e6896b6b59583f5a2b89f41506342b2bbea532948c9"
+    },
+    {
+      "path": "tmp\\ai-20261023\\dev-missing-unit-embeddings-deep-comparison.json",
+      "sha256": "9795a4164843aefe0ad94bdf1732f88e0bab7e2b97e68c1bb9682f9cfb70f2d0"
+    },
+    {
+      "path": "tmp\\ai-20261023\\observed-embeddings-deep-protocol.json",
+      "sha256": "33015112ed5308120cfbde3df4d7ba1f8060e156fc4e41411fc430fe7dae1124"
+    },
+    {
+      "path": "tmp\\ai-20261023\\verify-observed-runtime-budgets.mjs",
+      "sha256": "463345fed3454ae2291307fe557f930e2854cad54e47cc186fecd2cfe1ca69d7"
+    },
+    {
+      "path": "tmp\\ai-20261023\\observed-runtime-budgets-verification.json",
+      "sha256": "1959fe8b85e05546c7c896bfe68cee9fa1f126fd9d07b7a076dae516eca88d1c"
+    },
+    {
+      "path": "tmp\\ai-20261023\\acceptance-observed-embeddings-deep.json",
+      "sha256": "d0d3b2494a68ca29c31320c4571591eecb26c94947a915d5bd109ff4ce910edd"
+    },
+    {
+      "path": "tmp\\ai-20261023\\acceptance-deep-ranked-values-deep.json",
+      "sha256": "8a7d074c8f488d6529de9163bd361a29176817824f27183e7b88d74c4c043718"
+    },
+    {
+      "path": "tmp\\ai-20261023\\deep-observed-engineering.json",
+      "sha256": "1c39b0a128dd96bbc85bac79af2473e93bbd4d1ae9967b49979cca3a18bae5d8"
+    },
+    {
+      "path": "tmp\\ai-20261023\\oracle-ranked-values-protocol.json",
+      "sha256": "72b2fc888ee00eb4514006b5048c38988aea18bdd247cd028fd650e64404e477"
+    },
+    {
+      "path": "tmp\\ai-20261023\\oracle-observed-embeddings-protocol.json",
+      "sha256": "3710a6cfbf9174a138feaf61dbc03ee65dad263e84fa59e6f0bf0c1dabd927f3"
+    },
+    {
+      "path": "tmp\\ai-20261023\\oracle-observed-eligibility.json",
+      "sha256": "e5976e76300775fb3dd93bf3ce277cf06c0add3072a2ac40c0acbc887e8576b7"
+    },
+    {
+      "path": "tmp\\ai-20261023\\joint-static-external-holdout.json",
+      "sha256": "f13bc63e0014ec8331c39e11ce74b2776e316ccc5670d34b61be30de58f32428"
+    },
+    {
+      "path": "tmp\\ai-20261023\\deep-observed-main-chrome-parity.json",
+      "sha256": "0906f12e65e59a5e2408dfc189eeb0de55d00871e0784cce41937086950737bc"
+    },
+    {
+      "path": "tmp\\ai-20261023\\current-source-graph-integrity.json",
+      "sha256": "18e4cd5635e059d5a8a2a2fda2f099a12694129c0f637dbb83fe244a0ebdf879"
+    },
+    {
+      "path": "tmp\\ai-20261023\\oracle-current-integrity-audit.json",
+      "sha256": "5e413842b9dc8d353578a45769e30651c48a14de5d86c10f74dd5a1134891923"
+    },
+    {
+      "path": "tmp\\ai-20261023\\acceptance-deep-ranked-values-oracle.json",
+      "sha256": "7baf3b380167bef6b274f1c7c36af603912ec8de4c6b09f138d4fd7d2dae91e4"
+    },
+    {
+      "path": "tmp\\ai-20261023\\accepted-artifact-reproduction.json",
+      "sha256": "0d4feed9a149c78d4df7a1bfd895f4b4003bb23f1c95cb0d39323ce162a57e3f"
+    },
+    {
+      "path": "tmp\\ai-20261023\\archive-reproduction-check\\reproduction-report.json",
+      "sha256": "1064c973f2183b092055d8c0019828f677954c5eb20276fa8abf0e173cecd8d7"
+    },
+    {
+      "path": "scripts\\reproduce-autochess-ai.py",
+      "sha256": "919a1b6c7e5cbf6c1c403a0e8c3715adc66ced5426b4456cfa1183e2d7baacae"
+    },
+    {
+      "path": "tmp\\ai-20261023\\oracle-specific-embeddings-training-protocol.json",
+      "sha256": "fed03642973f4a35796c009ffb92d21bd64670d860923ec77cef9ff76d27133b"
+    },
+    {
+      "path": "tmp\\ai-20261023\\oracle-specific-embeddings-offline-result.json",
+      "sha256": "eb46c0c3c2cae446ba96d7da1622597d03179a3e032e367cfd358c3ed3379ab2"
+    },
+    {
+      "path": "tmp\\ai-20261023\\oracleUnitEmbeddings.json",
+      "sha256": "548fe77bdedad7ade84e686de300d7b86bc3575868e1cede76416faf963a3550"
+    },
+    {
+      "path": "tmp\\ai-20261023\\train-oracle-specific-embeddings.py",
+      "sha256": "531f6724d0febd1941a6e8be41c4cdee6927f7bd8054fca8bfd73535b7f956aa"
+    },
+    {
+      "path": "tmp/ai-20261023/acceptance-observed-embeddings-oracle.json",
+      "sha256": "499342f99ed519a26944765778f6b3922cee1e77a34ca5eb4f6180d2b3114a29"
+    },
+    {
+      "path": "tmp/ai-20261023/final-source-integrity.json",
+      "sha256": "5e54196c2f0b7135f6162de574d7742114c37ac417d6d21da1ca64e166415d15"
+    },
+    {
+      "path": "tmp/ai-20261023/final-engineering.json",
+      "sha256": "09b41efdd63a73f70b720cc8d86a5488d42340a863e300234a94a10a1e7b0833"
+    },
+    {
+      "path": "tmp/ai-20261023/final-quiet-browser-audit.json",
+      "sha256": "ad0f9f114f935ad54495d8fb976adaac3e052fca7778882bb7090481d787cb86"
+    },
+    {
+      "path": "tmp/ai-20261023/final-commit-gate.json",
+      "sha256": "ed5bba633a6fe07861791a5d2548ce8cc0839a912cccf54d799a1bd750dc579b"
+    }
+  ],
+  "missingUnitEmbeddings": {
+    "status": "Completed all32 development games on predecessor; not promoted",
+    "session": 24446,
+    "newUnits": [
+      "akirinco",
+      "chu2u",
+      "sumire",
+      "viridis"
+    ],
+    "training": {
+      "method": "Only four missing embedding rows; all original weights, features and normalization unchanged.",
+      "newUnits": [
+        "akirinco",
+        "chu2u",
+        "sumire",
+        "viridis"
+      ],
+      "trainExamples": 1576,
+      "validationExamples": 119,
+      "seed": 20261023,
+      "bestEpoch": 200,
+      "validationBceBefore": 0.9330646991729736,
+      "validationBceAfter": 0.6056167483329773,
+      "maximumEmbeddingDelta": 1.5,
+      "learnerSha256": "0c49c7d5212e75737c186b0cfd9f0696a045a012175bd1150332356dcd9d04ec",
+      "parentModelSha256": "8c246b1ed0ad52d2d76ecb969a064e2c738321a9ce3d8cbb50842c48872c0e28",
+      "data": [
+        {
+          "path": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\ai-20261023\\chrome-labels-train.json",
+          "sha256": "d50198db534b9f9f00083e765198e8882fe6fad4824a1ed2f2dba64d48777143"
+        },
+        {
+          "path": "D:\\workspace\\myrepo\\my-pixijs-game\\tmp\\ai-20261023\\chrome-labels-deep-train.json",
+          "sha256": "4d9d42d8b3a18ec1172323e58a8ac40082f4ff233eef7c68268a1d91aa0607a3"
+        }
+      ]
+    },
+    "runtimeVerification": {
+      "originalUnitsExactlyIdentical": 8661,
+      "newUnitExamples": 1695,
+      "changed": 1695,
+      "oldWeightsAndFeaturesPreserved": true,
+      "dynamicLevelIsolation": true,
+      "customScorerSingleCall": true,
+      "roundRestoredOnThrow": true,
+      "adaptedModelSha256": "fea9580a1cb5a39aebc685eedc82929b2a257e8ef76aec15d79ce5f0e09eb17c"
+    },
+    "targetedRawEslintExitCode": 0,
+    "externalHoldoutExamples": 3999,
+    "externalHoldoutCombined": [
+      {
+        "model": "goCombatModel.json",
+        "metrics": {
+          "examples": 3999,
+          "contexts": 332,
+          "pairs": 25929,
+          "pairwiseAccuracy": 0.6072737089745073,
+          "winAccuracy": 0.6606651662915729,
+          "meanTop1Regret": 975.157597302257,
+          "medianTop1Regret": 53.38199725949198,
+          "p90Top1Regret": 355.8533679285483,
+          "topK": {
+            "1": {
+              "bestRetainedRate": 0.29819277108433734,
+              "meanRegret": 975.157597302257
+            },
+            "4": {
+              "bestRetainedRate": 0.6114457831325302,
+              "meanRegret": 272.20755946307605
+            },
+            "8": {
+              "bestRetainedRate": 0.8012048192771084,
+              "meanRegret": 224.16393139695015
+            },
+            "12": {
+              "bestRetainedRate": 0.9397590361445783,
+              "meanRegret": 94.12377986427691
+            },
+            "24": {
+              "bestRetainedRate": 1,
+              "meanRegret": 0
+            }
+          }
+        }
+      },
+      {
+        "model": "goCombatModel-missing-units.json",
+        "metrics": {
+          "examples": 3999,
+          "contexts": 332,
+          "pairs": 25929,
+          "pairwiseAccuracy": 0.6113617956727988,
+          "winAccuracy": 0.668417104276069,
+          "meanTop1Regret": 911.5492139069638,
+          "medianTop1Regret": 52.034127753146095,
+          "p90Top1Regret": 319.72217932936474,
+          "topK": {
+            "1": {
+              "bestRetainedRate": 0.3042168674698795,
+              "meanRegret": 911.5492139069638
+            },
+            "4": {
+              "bestRetainedRate": 0.608433734939759,
+              "meanRegret": 272.4392416570327
+            },
+            "8": {
+              "bestRetainedRate": 0.8102409638554217,
+              "meanRegret": 193.03384755538772
+            },
+            "12": {
+              "bestRetainedRate": 0.9397590361445783,
+              "meanRegret": 93.80613294857763
+            },
+            "24": {
+              "bestRetainedRate": 1,
+              "meanRegret": 0
+            }
+          }
+        }
+      }
+    ],
+    "limits": "Offline holdout metrics are not full-game strength evidence. No low-level model routing changes, custom injected scorer preserved; high score call replaced one-for-one; existing enemy position encoding retained. Starter/augment child planners keep original scorer.",
+    "development8": {
+      "level": "deep",
+      "runs": 8,
+      "meanWinDelta": 2,
+      "pairedBootstrap95": [
+        -1,
+        6.5
+      ],
+      "bootstrapPositiveFraction": 0.7827,
+      "moreWins": 2,
+      "fewerWins": 1,
+      "clearDelta": 1,
+      "earlyEndDelta": 0,
+      "deltas": [
+        0,
+        0,
+        0,
+        4,
+        0,
+        16,
+        -4,
+        0
+      ],
+      "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+      "candidateFingerprint": "22417406da5ef8ffbadacd04ef9b46355ba659c944cf108b5ee889b9e28ce1a7"
+    },
+    "remaining24Session": 51528,
+    "trainingPresence": {
+      "sumire": 523,
+      "viridis": 446,
+      "chu2u": 837,
+      "akirinco": 0
+    },
+    "unobservedHiddenUnitNote": "akirinco is hidden in SHOP_UNIT_IDS and absent in train/holdout. Appended row is untrained, Float32 export differs from original unknown row by at most5e-7. No learning claim for that unit; preserve exact unknown fallback on any future production integration, then verify equivalence.",
+    "development32": {
+      "level": "deep",
+      "runs": 32,
+      "meanWinDelta": 0.59375,
+      "pairedBootstrap95": [
+        -2.59375,
+        3.75
+      ],
+      "bootstrapPositiveFraction": 0.6409,
+      "moreWins": 14,
+      "fewerWins": 10,
+      "clearDelta": 3,
+      "earlyEndDelta": 0,
+      "deltas": [
+        0,
+        0,
+        0,
+        4,
+        0,
+        16,
+        -4,
+        0,
+        6,
+        -10,
+        6,
+        0,
+        -16,
+        -16,
+        -15,
+        0,
+        -14,
+        1,
+        16,
+        -3,
+        -16,
+        1,
+        1,
+        0,
+        6,
+        -1,
+        18,
+        9,
+        8,
+        12,
+        11,
+        -1
+      ],
+      "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+      "candidateFingerprint": "22417406da5ef8ffbadacd04ef9b46355ba659c944cf108b5ee889b9e28ce1a7"
+    },
+    "remaining24ProcessExitCode": 0
+  },
+  "campaignValuesDeepReferenceCompleted": true,
+  "campaignValuesDeepIndependentStatus": "Rejected after both full32 groups; no extension. Both runners exited0.",
+  "rankedValuesOracle": {
+    "status": "Independent64 complete and rejected; reference26295 and candidate24796 exited0",
+    "session": 56394,
+    "sourceRoot": "tmp/ai-20261023/chrome-deep-ranked-values",
+    "report": "dev-deep-ranked-values-oracle-32.json",
+    "baseline": "dev-reference-oracle-32.json",
+    "seed": 90000,
+    "runs": 32,
+    "developmentComparison": {
+      "level": "oracle",
+      "runs": 32,
+      "meanWinDelta": 0.375,
+      "pairedBootstrap95": [
+        -2.3125,
+        2.96875
+      ],
+      "bootstrapPositiveFraction": 0.6042,
+      "moreWins": 11,
+      "fewerWins": 11,
+      "clearDelta": 4,
+      "earlyEndDelta": 0,
+      "deltas": [
+        11,
+        -1,
+        -6,
+        0,
+        0,
+        5,
+        10,
+        0,
+        0,
+        -2,
+        -3,
+        0,
+        -3,
+        0,
+        -10,
+        16,
+        0,
+        1,
+        2,
+        15,
+        -8,
+        0,
+        -2,
+        0,
+        0,
+        -16,
+        4,
+        -16,
+        16,
+        -9,
+        1,
+        7
+      ],
+      "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+      "candidateFingerprint": "1339fc8400633a666359730a6d905fa10729022df076d3272c40a863b07eac8c"
+    },
+    "processExitCode": 0,
+    "independentProtocol": "tmp/ai-20261023/oracle-ranked-values-protocol.json",
+    "independentSession": 24796,
+    "independentResult": {
+      "groups": [
+        {
+          "level": "oracle",
+          "runs": 32,
+          "meanWinDelta": -0.5,
+          "pairedBootstrap95": [
+            -3.5,
+            2.46875
+          ],
+          "bootstrapPositiveFraction": 0.3682,
+          "moreWins": 12,
+          "fewerWins": 16,
+          "clearDelta": -3,
+          "earlyEndDelta": 0,
+          "deltas": [
+            -1,
+            7,
+            -10,
+            -6,
+            13,
+            -3,
+            -2,
+            -17,
+            0,
+            -17,
+            -2,
+            -4,
+            0,
+            16,
+            0,
+            1,
+            -15,
+            3,
+            11,
+            -16,
+            13,
+            -2,
+            -10,
+            -1,
+            2,
+            15,
+            1,
+            0,
+            -1,
+            6,
+            4,
+            -1
+          ],
+          "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+          "candidateFingerprint": "1339fc8400633a666359730a6d905fa10729022df076d3272c40a863b07eac8c"
+        },
+        {
+          "level": "oracle",
+          "runs": 32,
+          "meanWinDelta": 1.34375,
+          "pairedBootstrap95": [
+            -1.0625,
+            3.65625
+          ],
+          "bootstrapPositiveFraction": 0.8623,
+          "moreWins": 13,
+          "fewerWins": 10,
+          "clearDelta": 1,
+          "earlyEndDelta": 0,
+          "deltas": [
+            -1,
+            0,
+            1,
+            0,
+            6,
+            0,
+            3,
+            -17,
+            16,
+            -1,
+            1,
+            -1,
+            0,
+            -4,
+            2,
+            0,
+            -1,
+            0,
+            0,
+            15,
+            -17,
+            -1,
+            -1,
+            0,
+            7,
+            12,
+            1,
+            0,
+            -2,
+            6,
+            12,
+            7
+          ],
+          "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+          "candidateFingerprint": "1339fc8400633a666359730a6d905fa10729022df076d3272c40a863b07eac8c"
+        }
+      ],
+      "combined": {
+        "level": "oracle",
+        "runs": 64,
+        "meanWinDelta": 0.421875,
+        "pairedBootstrap95": [
+          -1.5,
+          2.265625
+        ],
+        "bootstrapPositiveFraction": 0.6662,
+        "moreWins": 25,
+        "fewerWins": 26,
+        "clearDelta": -2,
+        "earlyEndDelta": 0,
+        "deltas": [
+          -1,
+          7,
+          -10,
+          -6,
+          13,
+          -3,
+          -2,
+          -17,
+          0,
+          -17,
+          -2,
+          -4,
+          0,
+          16,
+          0,
+          1,
+          -15,
+          3,
+          11,
+          -16,
+          13,
+          -2,
+          -10,
+          -1,
+          2,
+          15,
+          1,
+          0,
+          -1,
+          6,
+          4,
+          -1,
+          -1,
+          0,
+          1,
+          0,
+          6,
+          0,
+          3,
+          -17,
+          16,
+          -1,
+          1,
+          -1,
+          0,
+          -4,
+          2,
+          0,
+          -1,
+          0,
+          0,
+          15,
+          -17,
+          -1,
+          -1,
+          0,
+          7,
+          12,
+          1,
+          0,
+          -2,
+          6,
+          12,
+          7
+        ],
+        "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+        "candidateFingerprint": "1339fc8400633a666359730a6d905fa10729022df076d3272c40a863b07eac8c"
+      },
+      "checks": {
+        "bothGroupsImprove": false,
+        "meanAtLeastQuarterWin": true,
+        "noFewerClears": false,
+        "earlyEndsWithinOne": true,
+        "bootstrapPositiveAtLeast80Percent": false
+      },
+      "passed": false
+    },
+    "independentReport": "tmp/ai-20261023/acceptance-deep-ranked-values-oracle.json",
+    "independentProcessExitCode": 0
+  },
+  "observedUnitAdaptation": {
+    "status": "Both deep64 and oracle64 accepted; final all-four runtime integrated and engineering passed.",
+    "sourceRoot": "tmp/ai-20261023/chrome-observed-unit-embeddings",
+    "transformation": "Only remove unobserved hidden akirinco row so exact original unk fallback retained. Every retained embedding and other weight unchanged. Original frozen experiment remains untouched.",
+    "verification": {
+      "unchangedVisibleEvaluations": 14355,
+      "exactOriginalHiddenUnitCases": 24,
+      "everyRetainedIdEmbeddingAndAllOtherWeightsIdentical": true,
+      "hiddenUnitNotInShop": true,
+      "transformUsesTrainingPresenceOnly": true,
+      "sourceModelSha256": "976f6adec7571c6885abf8a58ff8548a1c894d94d4686eee40ca0bdcc0002b59"
+    },
+    "doNotMislabel": "Predecessor full-game results are not direct full-game evidence for this exact source fingerprint. Fresh independent acceptance must use this frozen export if promoted.",
+    "actualChromeParity": {
+      "seed": 90005,
+      "level": "deep",
+      "rounds": 32,
+      "wins": 30,
+      "allRoundAndFinalFieldsExactlyIdentical": true,
+      "runtime": {
+        "browser": "155.0.8059.85",
+        "engine": "Chrome Worker",
+        "hz": 60,
+        "rolloutHz": 20
+      },
+      "newCandidateFingerprint": "73667846de6149259697e1cefa4f073b9e5183a0db01626c6403dc966373c719",
+      "predecessorFingerprint": "22417406da5ef8ffbadacd04ef9b46355ba659c944cf108b5ee889b9e28ce1a7",
+      "scope": "Actual Chrome single-game trajectory equivalence; not independent strength acceptance."
+    },
+    "deepAcceptanceProtocol": {
+      "candidate": "chrome-observed-unit-embeddings",
+      "candidateFingerprint": "73667846de6149259697e1cefa4f073b9e5183a0db01626c6403dc966373c719",
+      "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+      "level": "deep",
+      "groups": [
+        97000,
+        97100
+      ],
+      "runsPerGroup": 32,
+      "battlesPerGame": 32,
+      "sourceFrozen": true,
+      "decisionAfterBothGroups": true,
+      "bothGroupsMeanImprove": true,
+      "combinedMeanAtLeast": 0.25,
+      "combinedClearDeltaAtLeast": 0,
+      "combinedEarlyEndDeltaAtMost": 1,
+      "bootstrapPositiveAtLeast": 0.8,
+      "noSampleExtension": true,
+      "noTuningOnAcceptanceSeeds": true,
+      "parentDevelopment32": {
+        "level": "deep",
+        "runs": 32,
+        "meanWinDelta": 0.59375,
+        "pairedBootstrap95": [
+          -2.59375,
+          3.75
+        ],
+        "bootstrapPositiveFraction": 0.6409,
+        "moreWins": 14,
+        "fewerWins": 10,
+        "clearDelta": 3,
+        "earlyEndDelta": 0,
+        "deltas": [
+          0,
+          0,
+          0,
+          4,
+          0,
+          16,
+          -4,
+          0,
+          6,
+          -10,
+          6,
+          0,
+          -16,
+          -16,
+          -15,
+          0,
+          -14,
+          1,
+          16,
+          -3,
+          -16,
+          1,
+          1,
+          0,
+          6,
+          -1,
+          18,
+          9,
+          8,
+          12,
+          11,
+          -1
+        ],
+        "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+        "candidateFingerprint": "22417406da5ef8ffbadacd04ef9b46355ba659c944cf108b5ee889b9e28ce1a7"
+      },
+      "developmentScopeNote": "32 games measured on predecessor. This exact corrected export preserves every retained ID embedding and other weight;14355 evaluations and one real Chrome full32-battle trajectory agree. No direct complete32-game development claim for this export. Fresh acceptance measures the exact corrected export.",
+      "frozenFiles": [
+        {
+          "path": "tmp\\ai-20261023\\chrome-observed-unit-embeddings\\src\\components\\autoChessGame\\ai\\AutoChessAutopilot.ts",
+          "sha256": "e94add167351f651fac4507398614dd81f7cf381d85b26f58bc4cc3c4a29b718"
+        },
+        {
+          "path": "tmp\\ai-20261023\\chrome-observed-unit-embeddings\\src\\components\\autoChessGame\\ai\\goCombatModelMissingUnits.json",
+          "sha256": "976f6adec7571c6885abf8a58ff8548a1c894d94d4686eee40ca0bdcc0002b59"
+        }
+      ]
+    },
+    "deepReferenceSession": 57770,
+    "deepCandidateSession": 53894,
+    "oracleDevelopmentSession": 95521,
+    "oracleDevelopmentReport": "dev-observed-embeddings-oracle-32.json",
+    "runtimeBudgetVerification": {
+      "passed": true,
+      "oneExistingInferenceReplacedByOneAdaptedInference": true,
+      "originalScorerForLowAndHiddenLevels": true,
+      "unchangedRolloutVariantLimits": true,
+      "unchangedOracleWindowsAndFutureInferenceCounts": true,
+      "customScorerPreserved": true,
+      "records": [
+        {
+          "level": "novice",
+          "baselineCalls": {
+            "original": 1,
+            "adapted": 0
+          },
+          "candidateCalls": {
+            "original": 1,
+            "adapted": 0
+          }
+        },
+        {
+          "level": "veteran",
+          "baselineCalls": {
+            "original": 1,
+            "adapted": 0
+          },
+          "candidateCalls": {
+            "original": 1,
+            "adapted": 0
+          }
+        },
+        {
+          "level": "deep",
+          "baselineCalls": {
+            "original": 1,
+            "adapted": 0
+          },
+          "candidateCalls": {
+            "original": 0,
+            "adapted": 1
+          }
+        },
+        {
+          "level": "oracle",
+          "baselineCalls": {
+            "original": 1,
+            "adapted": 0
+          },
+          "candidateCalls": {
+            "original": 0,
+            "adapted": 1
+          }
+        },
+        {
+          "level": "go",
+          "baselineCalls": {
+            "original": 1,
+            "adapted": 0
+          },
+          "candidateCalls": {
+            "original": 1,
+            "adapted": 0
+          }
+        },
+        {
+          "level": "veteran",
+          "baselineCalls": {
+            "original": 1,
+            "adapted": 0
+          },
+          "candidateCalls": {
+            "original": 1,
+            "adapted": 0
+          }
+        },
+        {
+          "level": "oracle",
+          "baselineCalls": {
+            "original": 1,
+            "adapted": 0
+          },
+          "candidateCalls": {
+            "original": 0,
+            "adapted": 1
+          }
+        },
+        {
+          "round": 1,
+          "futureBaselineCalls": 1,
+          "futureCandidateCalls": 1
+        },
+        {
+          "round": 12,
+          "futureBaselineCalls": 4,
+          "futureCandidateCalls": 4
+        },
+        {
+          "round": 16,
+          "futureBaselineCalls": 6,
+          "futureCandidateCalls": 6
+        },
+        {
+          "round": 21,
+          "futureBaselineCalls": 6,
+          "futureCandidateCalls": 6
+        },
+        {
+          "round": 31,
+          "futureBaselineCalls": 6,
+          "futureCandidateCalls": 6
+        }
+      ]
+    },
+    "deepAcceptance": {
+      "groups": [
+        {
+          "level": "deep",
+          "runs": 32,
+          "meanWinDelta": 0.96875,
+          "pairedBootstrap95": [
+            -1,
+            2.9375
+          ],
+          "bootstrapPositiveFraction": 0.8338,
+          "moreWins": 12,
+          "fewerWins": 8,
+          "clearDelta": 2,
+          "earlyEndDelta": 0,
+          "deltas": [
+            -1,
+            12,
+            4,
+            0,
+            0,
+            0,
+            11,
+            -4,
+            0,
+            3,
+            0,
+            0,
+            0,
+            1,
+            0,
+            -16,
+            1,
+            0,
+            -3,
+            0,
+            3,
+            -4,
+            0,
+            18,
+            3,
+            4,
+            -2,
+            -9,
+            6,
+            -1,
+            5,
+            0
+          ],
+          "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+          "candidateFingerprint": "73667846de6149259697e1cefa4f073b9e5183a0db01626c6403dc966373c719"
+        },
+        {
+          "level": "deep",
+          "runs": 32,
+          "meanWinDelta": 1.65625,
+          "pairedBootstrap95": [
+            0,
+            3.4375
+          ],
+          "bootstrapPositiveFraction": 0.9741,
+          "moreWins": 10,
+          "fewerWins": 7,
+          "clearDelta": -1,
+          "earlyEndDelta": 0,
+          "deltas": [
+            0,
+            -4,
+            -2,
+            0,
+            0,
+            0,
+            8,
+            8,
+            -3,
+            -3,
+            11,
+            0,
+            1,
+            1,
+            11,
+            0,
+            0,
+            0,
+            0,
+            0,
+            -1,
+            16,
+            6,
+            0,
+            0,
+            -7,
+            -1,
+            0,
+            1,
+            0,
+            11,
+            0
+          ],
+          "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+          "candidateFingerprint": "73667846de6149259697e1cefa4f073b9e5183a0db01626c6403dc966373c719"
+        }
+      ],
+      "combined": {
+        "level": "deep",
+        "runs": 64,
+        "meanWinDelta": 1.3125,
+        "pairedBootstrap95": [
+          0.03125,
+          2.640625
+        ],
+        "bootstrapPositiveFraction": 0.977,
+        "moreWins": 22,
+        "fewerWins": 15,
+        "clearDelta": 1,
+        "earlyEndDelta": 0,
+        "deltas": [
+          -1,
+          12,
+          4,
+          0,
+          0,
+          0,
+          11,
+          -4,
+          0,
+          3,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -16,
+          1,
+          0,
+          -3,
+          0,
+          3,
+          -4,
+          0,
+          18,
+          3,
+          4,
+          -2,
+          -9,
+          6,
+          -1,
+          5,
+          0,
+          0,
+          -4,
+          -2,
+          0,
+          0,
+          0,
+          8,
+          8,
+          -3,
+          -3,
+          11,
+          0,
+          1,
+          1,
+          11,
+          0,
+          0,
+          0,
+          0,
+          0,
+          -1,
+          16,
+          6,
+          0,
+          0,
+          -7,
+          -1,
+          0,
+          1,
+          0,
+          11,
+          0
+        ],
+        "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+        "candidateFingerprint": "73667846de6149259697e1cefa4f073b9e5183a0db01626c6403dc966373c719"
+      },
+      "checks": {
+        "bothGroupsImprove": true,
+        "meanAtLeastQuarterWin": true,
+        "noFewerClears": true,
+        "earlyEndsWithinOne": true,
+        "bootstrapPositiveAtLeast80Percent": true
+      },
+      "passed": true
+    },
+    "deepAcceptanceSessions": {
+      "reference": 57770,
+      "candidate": 53894,
+      "bothExitCode": 0
+    },
+    "mainIntegration": {
+      "scope": "modern deep and oracle with default scorer only",
+      "modelSha256": "976f6adec7571c6885abf8a58ff8548a1c894d94d4686eee40ca0bdcc0002b59",
+      "importGraphFingerprint": "73667846de6149259697e1cefa4f073b9e5183a0db01626c6403dc966373c719",
+      "frozenCandidateDifference": "Final41-file runtime graph exactly equals frozen accepted candidate.",
+      "actualChromeParitySeed": 90005,
+      "exactFull32TraceParity": true,
+      "parityReport": "tmp/ai-20261023/final-main-oracle-chrome-parity.json",
+      "actualChromeParityLevel": "oracle"
+    },
+    "engineering": {
+      "passed": true,
+      "report": "tmp/ai-20261023/final-engineering.json",
+      "rules": {
+        "pass": 514,
+        "fail": 0
+      },
+      "focusedModelTests": 6,
+      "pythonTests": 14,
+      "isolatedSequentialCheckBuild": "passed",
+      "nextDistDir": ".next-ai-observed-candidate",
+      "productionBrowser": "Quiet installed Chrome settings/mobile/persistence/default veteran and all4 shipped Workers through16 and settlement; all12 success PNGs inspected, external failure preserved."
+    },
+    "oracleDevelopmentComparison": {
+      "level": "oracle",
+      "runs": 32,
+      "meanWinDelta": 1.65625,
+      "pairedBootstrap95": [
+        -1.65625,
+        4.90625
+      ],
+      "bootstrapPositiveFraction": 0.8268,
+      "moreWins": 14,
+      "fewerWins": 8,
+      "clearDelta": 3,
+      "earlyEndDelta": 0,
+      "deltas": [
+        6,
+        6,
+        0,
+        0,
+        17,
+        17,
+        11,
+        0,
+        1,
+        -17,
+        -1,
+        0,
+        10,
+        -17,
+        -12,
+        0,
+        0,
+        -3,
+        3,
+        16,
+        -14,
+        0,
+        12,
+        0,
+        0,
+        -17,
+        17,
+        0,
+        16,
+        2,
+        1,
+        -1
+      ],
+      "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+      "candidateFingerprint": "73667846de6149259697e1cefa4f073b9e5183a0db01626c6403dc966373c719"
+    },
+    "oracleIndependentProtocol": "tmp/ai-20261023/oracle-observed-embeddings-protocol.json",
+    "oracleEligibility": "tmp/ai-20261023/oracle-observed-eligibility.json",
+    "oracleIndependentSession": 67416,
+    "oracleDevelopmentStatus": "Completed32; session95521 exited0",
+    "runtimeBudgetVerificationScope": "Frozen winning deep/oracle graph byte-identical to final main and isolated graph.",
+    "oracleAcceptance": {
+      "groups": [
+        {
+          "level": "oracle",
+          "runs": 32,
+          "meanWinDelta": 2.625,
+          "pairedBootstrap95": [
+            -0.0625,
+            5.25
+          ],
+          "bootstrapPositiveFraction": 0.9725,
+          "moreWins": 14,
+          "fewerWins": 7,
+          "clearDelta": 2,
+          "earlyEndDelta": 0,
+          "deltas": [
+            2,
+            0,
+            0,
+            11,
+            0,
+            0,
+            12,
+            -1,
+            1,
+            -1,
+            2,
+            -5,
+            0,
+            17,
+            11,
+            0,
+            -16,
+            16,
+            3,
+            0,
+            13,
+            12,
+            -8,
+            0,
+            0,
+            0,
+            -12,
+            0,
+            -1,
+            9,
+            3,
+            16
+          ],
+          "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+          "candidateFingerprint": "73667846de6149259697e1cefa4f073b9e5183a0db01626c6403dc966373c719"
+        },
+        {
+          "level": "oracle",
+          "runs": 32,
+          "meanWinDelta": 3.28125,
+          "pairedBootstrap95": [
+            0.78125,
+            5.8125
+          ],
+          "bootstrapPositiveFraction": 0.9946,
+          "moreWins": 12,
+          "fewerWins": 6,
+          "clearDelta": 1,
+          "earlyEndDelta": 0,
+          "deltas": [
+            -1,
+            2,
+            -1,
+            0,
+            8,
+            0,
+            11,
+            -1,
+            17,
+            0,
+            15,
+            0,
+            0,
+            -2,
+            15,
+            17,
+            0,
+            -17,
+            10,
+            0,
+            0,
+            -4,
+            0,
+            0,
+            6,
+            0,
+            0,
+            0,
+            13,
+            4,
+            13,
+            0
+          ],
+          "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+          "candidateFingerprint": "73667846de6149259697e1cefa4f073b9e5183a0db01626c6403dc966373c719"
+        }
+      ],
+      "combined": {
+        "level": "oracle",
+        "runs": 64,
+        "meanWinDelta": 2.953125,
+        "pairedBootstrap95": [
+          1.125,
+          4.78125
+        ],
+        "bootstrapPositiveFraction": 0.9994,
+        "moreWins": 26,
+        "fewerWins": 13,
+        "clearDelta": 3,
+        "earlyEndDelta": 0,
+        "deltas": [
+          2,
+          0,
+          0,
+          11,
+          0,
+          0,
+          12,
+          -1,
+          1,
+          -1,
+          2,
+          -5,
+          0,
+          17,
+          11,
+          0,
+          -16,
+          16,
+          3,
+          0,
+          13,
+          12,
+          -8,
+          0,
+          0,
+          0,
+          -12,
+          0,
+          -1,
+          9,
+          3,
+          16,
+          -1,
+          2,
+          -1,
+          0,
+          8,
+          0,
+          11,
+          -1,
+          17,
+          0,
+          15,
+          0,
+          0,
+          -2,
+          15,
+          17,
+          0,
+          -17,
+          10,
+          0,
+          0,
+          -4,
+          0,
+          0,
+          6,
+          0,
+          0,
+          0,
+          13,
+          4,
+          13,
+          0
+        ],
+        "baselineFingerprint": "3a540523a526711f9ea67c64fed2190559315e76da4599fb9b70b5548a5ec551",
+        "candidateFingerprint": "73667846de6149259697e1cefa4f073b9e5183a0db01626c6403dc966373c719"
+      },
+      "checks": {
+        "bothGroupsImprove": true,
+        "meanAtLeastQuarterWin": true,
+        "noFewerClears": true,
+        "earlyEndsWithinOne": true,
+        "bootstrapPositiveAtLeast80Percent": true
+      },
+      "passed": true
+    },
+    "oracleAcceptanceReport": "tmp/ai-20261023/acceptance-observed-embeddings-oracle.json",
+    "oracleIndependentProcessExitCode": 0
+  },
+  "reservedFutureIndependentGroups": {
+    "oracleFallbackUnused": [
+      99000,
+      99100
+    ],
+    "oracleRankedAndObservedShared": [
+      98000,
+      98100
+    ]
+  },
+  "currentAcceptanceIntegrityAudit": {
+    "observedAtLocal": "2026-10-23T22:42:35.533013",
+    "scope": "Historical prefix checkpoint only; complete acceptance and final-source-integrity supersede all partial counts.",
+    "reports": [
+      {
+        "path": "tmp\\ai-20261023\\accept-reference-deep-96000.json",
+        "gamesCompleted": 32,
+        "expectedGames": 32,
+        "protocolFingerprintMatches": true,
+        "tracesConsistent": true
+      },
+      {
+        "path": "tmp\\ai-20261023\\accept-reference-deep-96100.json",
+        "gamesCompleted": 23,
+        "expectedGames": 32,
+        "protocolFingerprintMatches": true,
+        "tracesConsistent": true
+      },
+      {
+        "path": "tmp\\ai-20261023\\accept-deep-ranked-values-deep-96000.json",
+        "gamesCompleted": 32,
+        "expectedGames": 32,
+        "protocolFingerprintMatches": true,
+        "tracesConsistent": true
+      },
+      {
+        "path": "tmp\\ai-20261023\\accept-deep-ranked-values-deep-96100.json",
+        "gamesCompleted": 28,
+        "expectedGames": 32,
+        "protocolFingerprintMatches": true,
+        "tracesConsistent": true
+      },
+      {
+        "path": "tmp\\ai-20261023\\accept-reference-deep-97000.json",
+        "gamesCompleted": 16,
+        "expectedGames": 32,
+        "protocolFingerprintMatches": true,
+        "tracesConsistent": true
+      },
+      {
+        "path": "tmp\\ai-20261023\\accept-observed-embeddings-deep-97000.json",
+        "gamesCompleted": 17,
+        "expectedGames": 32,
+        "protocolFingerprintMatches": true,
+        "tracesConsistent": true
+      }
+    ]
+  },
+  "oracleAcceptanceCurrent": {
+    "status": "Reference64, ranked64, observed64 complete. Ranked rejected; observed accepted all5 gates and enabled in final runtime.",
+    "referenceSession": 26295,
+    "rankedCandidateSession": 24796,
+    "observedCandidateSession": 67416,
+    "groups": [
+      98000,
+      98100
+    ],
+    "runsPerGroup": 32,
+    "sharedBaseline": "Both candidates and protocols frozen before any98000/98100 games; observed conditional launch gate met on complete development32 only. Supersedes unused99 reservation.",
+    "integrityAudit": {
+      "observedAtLocal": "2026-10-23T23:36:48.984812",
+      "scope": "Completed-prefix integrity only; no partial strength decision, no source tuning. Existing process handles26295/24796/67416 all returned live this turn.",
+      "frozenProtocolFilesMatch": true,
+      "reports": [
+        {
+          "path": "tmp\\ai-20261023\\accept-reference-oracle-98000.json",
+          "fileExists": true,
+          "completedGames": 32,
+          "expectedGames": 32,
+          "configurationFingerprintRuntimeErrorsAndTracesVerified": true
+        },
+        {
+          "path": "tmp\\ai-20261023\\accept-reference-oracle-98100.json",
+          "fileExists": true,
+          "completedGames": 17,
+          "expectedGames": 32,
+          "configurationFingerprintRuntimeErrorsAndTracesVerified": true
+        },
+        {
+          "path": "tmp\\ai-20261023\\accept-deep-ranked-values-oracle-98000.json",
+          "fileExists": true,
+          "completedGames": 32,
+          "expectedGames": 32,
+          "configurationFingerprintRuntimeErrorsAndTracesVerified": true
+        },
+        {
+          "path": "tmp\\ai-20261023\\accept-deep-ranked-values-oracle-98100.json",
+          "fileExists": true,
+          "completedGames": 23,
+          "expectedGames": 32,
+          "configurationFingerprintRuntimeErrorsAndTracesVerified": true
+        },
+        {
+          "path": "tmp\\ai-20261023\\accept-observed-embeddings-oracle-98000.json",
+          "fileExists": true,
+          "completedGames": 19,
+          "expectedGames": 32,
+          "configurationFingerprintRuntimeErrorsAndTracesVerified": true
+        },
+        {
+          "path": "tmp\\ai-20261023\\accept-observed-embeddings-oracle-98100.json",
+          "completedGames": 0,
+          "fileExists": false,
+          "expectedGames": 32
+        }
+      ],
+      "historicalCheckpointOnly": true
+    },
+    "referenceProcessExitCode": 0,
+    "rankedCandidateProcessExitCode": 0,
+    "observedProcessState": "original session67416 exited0",
+    "referenceGames": 64,
+    "rankedGames": 64,
+    "observedIntegrityCheckpoint": {
+      "observedAtLocal": "2026-10-23T23:57:39.743611",
+      "scope": "Integrity only, not a partial strength decision",
+      "originalSession": 67416,
+      "gamesByGroup": [
+        32,
+        21
+      ],
+      "candidateFrozenFilesMatch": true,
+      "prefixConfigurationsFingerprintsRuntimeAndTracesPass": true,
+      "historicalCheckpointOnly": true
+    },
+    "observedProcessExitCode": 0,
+    "observedGames": 64,
+    "acceptanceReport": "tmp/ai-20261023/acceptance-observed-embeddings-oracle.json"
+  },
+  "oracleDataset": {
+    "games": 12,
+    "seeds": [
+      90244,
+      90255
+    ],
+    "contexts": 256,
+    "entries": 3093,
+    "auditsAllMatched": true,
+    "trainSeeds": [
+      90244,
+      90251
+    ],
+    "trainContexts": 171,
+    "trainEntries": 2071,
+    "holdoutSeeds": [
+      90252,
+      90255
+    ],
+    "holdoutContexts": 85,
+    "holdoutEntries": 1022,
+    "protocol": "tmp/ai-20261023/oracle-training-data-protocol.json",
+    "runtime": "Installed muted Chrome, formal60Hz, original ordinal enemy encoding",
+    "session": 21890,
+    "exitCode": 0
+  },
+  "jointStaticFallback": {
+    "status": "Offline diagnostic complete; weak mixed external results, no runtime candidate or game-strength claim",
+    "protocol": "tmp/ai-20261023/joint-static-training-protocol.json",
+    "artifact": "tmp/ai-20261023/jointStaticValues.json",
+    "scopeIfNeeded": "Oracle only, preserve accepted deep and low behavior",
+    "method": "Same-context same-actual-RNG pairs only; gap>=5, max32/context; equal mixed-low/deep/oracle loss; train partitions only; no external holdout or early stopping",
+    "multipliers": [
+      0.75,
+      1.25
+    ],
+    "iterations": 2200,
+    "regularization": 0.12,
+    "learningRate": 0.01,
+    "seed": 20261023,
+    "caveats": [
+      "Old mixed-low train file inherited full-parent expectedContexts1026 despite761 filtered contexts; original data immutable. Export verifies full parent SHA/completeness and exact filtered entries/audits.",
+      "Feature baseline uses unfocused high pilot with visible round/starter/augments; adaptive runtime target focus preserved, not reconstructed."
+    ],
+    "externalHoldout": "Evaluated once fixed model; no tuning. Pair accuracy improves slightly in all3 domains, top-selected label decreases in mixed-low/oracle and unchanged deep; no runtime promotion.",
+    "externalHoldoutReport": "tmp/ai-20261023/joint-static-external-holdout.json"
+  },
+  "sourceGraphIntegrity": "tmp/ai-20261023/final-source-integrity.json",
+  "artifactReproduction": {
+    "passed": true,
+    "originalScriptAndInputBytesPreserved": true,
+    "runtimeModelAndMetricParity": true,
+    "index": "docs/experiments/autochess-ai-20261023-reproduction.json",
+    "archive": "docs/experiments/autochess-ai-20261023-reproduction.zip",
+    "harness": "scripts/reproduce-autochess-ai.py",
+    "harnessActualArchiveReplayReport": "tmp/ai-20261023/archive-reproduction-check/reproduction-report.json",
+    "originalManualReplayReport": "tmp/ai-20261023/accepted-artifact-reproduction.json",
+    "scope": "Original learner/transform hashes, numerical arrays, vocabulary/features/normalization and training metrics exact; low JSON byte-identical. Adapted metadata absolute paths differ in a scratch root. Not additional strength evidence."
+  },
+  "humanReadableGuide": "docs/experiments/autochess-ai-20261023.md",
+  "oracleSpecificEmbeddingFallback": {
+    "candidate": "oracle-specific-observed-unit-embeddings",
+    "status": "rejected offline; no internal validation improvement, selected initial model",
+    "training": {
+      "seed": 20261023,
+      "trainExamples": 423,
+      "validationExamples": 82,
+      "bestEpoch": 0,
+      "validationBceBefore": 0.5439084768295288,
+      "validationBceAfter": 0.5439084768295288,
+      "maximumCoordinateChangeFromAccepted": 0.75,
+      "learnerSha256": "531f6724d0febd1941a6e8be41c4cdee6927f7bd8054fca8bfd73535b7f956aa",
+      "dataSha256": "c0360d3809b123c730e6f5e04363a7a88d6ef3750ebfa5593ff567aefb43bf80",
+      "externalHoldoutUsedForTrainingOrEarlyStopping": false
+    },
+    "allRuntimeArraysVocabFeaturesNormalizationExactlyUnchanged": true,
+    "externalHoldoutNotOpenedForThisCandidate": true,
+    "chromeDevelopmentNotLaunched": true,
+    "sourceRuntimeUnchanged": true,
+    "trainingProtocol": "tmp/ai-20261023/oracle-specific-embeddings-training-protocol.json"
+  },
+  "completedOn": "2026-10-24",
+  "finalEngineering": "tmp/ai-20261023/final-engineering.json",
+  "finalSupplement": "docs/experiments/autochess-ai-20261024-final.json",
+  "historicalEvidenceNote": "Earlier failed candidates, partial integrity checkpoints and deep-only engineering remain historical records. mainRuntime and finalEngineering describe the final all-four source.",
+  "checkedOutSourceFingerprint": "Evaluator LF and frozen static values CRLF declared explicitly in .gitattributes; checkout parity verified, normalized Git blobs may differ in line endings."
+}

@@ -95,7 +95,9 @@ class MuZeroTests(unittest.TestCase):
     def test_campaign_boss_failure_is_terminal_even_with_hp_left(self):
         env = m.Environment()
         try:
-            state = env.call(command="reset", seed=86007, level="novice", battles=32)
+            # Verified in the Node environment: this fixture loses round16
+            # with 5 HP left. Browser trajectories are not fixture evidence.
+            state = env.call(command="reset", seed=90001, level="novice", battles=32)
             while not state["done"]:
                 state = env.call(command="step", action=0)
             self.assertEqual(state["info"]["round"], 16)

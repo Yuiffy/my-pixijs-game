@@ -13,6 +13,7 @@ const output = path.resolve(option('--output', 'tmp/muzero/chrome-evaluation.jso
 const level = option('--level', 'novice');
 const seed = Number(option('--seed', '86500'));
 const runs = Number(option('--runs', '32'));
+const diagnostics = process.argv.includes('--diagnostics');
 if (!['novice', 'veteran', 'deep', 'oracle'].includes(level) || !Number.isInteger(seed)
   || !Number.isInteger(runs) || runs < 1) throw new Error('Invalid evaluation configuration');
 const sources = new Map();
@@ -57,13 +58,28 @@ const {AutoChessAutopilot}=load(${JSON.stringify(pilotModule)});
 onmessage=({data})=>{try{
 const bridge=new EngineBridge(data.seed,1,{simulation:true,battleStepHz:60});bridge.setConsoleLogging(false);
 const pilot=new AutoChessAutopilot(bridge,'evolution',{},'balanced','normal',20,undefined,true,data.level,true);
+const actions=[];const decisions=[];let snapshot;const dispatch=bridge.dispatch.bind(bridge);
+if(data.diagnostics)bridge.dispatch=action=>{const s=bridge.engine.state;
+if(action.type==='battle')snapshot=bridge.engine.getSimulationSnapshot();
+actions.push({round:s.round,action,gold:s.gold,level:s.playerLevel});return dispatch(action);};
+if(data.diagnostics){const upgrade=pilot.upgradeAction.bind(pilot);pilot.upgradeAction=()=>{
+const action=upgrade();const s=bridge.engine.state;decisions.push({round:s.round,type:'upgrade',
+gold:s.gold,level:s.playerLevel,cost:bridge.engine.upgradeCost,action,score:pilot.plannedLineupScore,
+finance:pilot.financeInterestActive(),reserve:pilot.goldReserve(false,pilot.policy.levelInterestTiersAtRisk),
+roster:pilot.ownedEntries().length});return action;};}
 let now=1000,wins=0,cleared=false;const trace=[];pilot.startFromTitle();
 while(trace.length<32){const s=bridge.engine.state;const round=s.round;let ticks=0;
 while(s.phase!=='battle'&&s.phase!=='gameover'&&ticks<600){pilot.tick(now+=2400);ticks++;}
 if(s.phase!=='battle')throw Error('Preparation did not reach battle');
-const battleGold=s.gold;bridge.skipBattle();const won=Boolean(s.result?.won);wins+=Number(won);
+const battleGold=s.gold;const details=data.diagnostics?{
+playerLevel:s.playerLevel,starter:s.starter,augments:[...s.augments],
+board:structuredClone(s.board),bench:structuredClone(s.bench),shop:[...s.shop],
+prediction:pilot.lastBattlePredictionScore,paidRerolls:pilot.paidRerolls,
+dryPaidRerolls:pilot.dryPaidRerolls,preparationActions:pilot.preparationActions,
+actions:actions.filter(a=>a.round===round),decisions:decisions.filter(a=>a.round===round),snapshot}:{};
+bridge.skipBattle();const won=Boolean(s.result?.won);wins+=Number(won);
 if(round===16&&won)cleared=true;
-trace.push({seed:data.seed,level:data.level,round,hp:s.hp,gold:s.gold,battleGold,wins,ticks,won,cleared});
+trace.push({seed:data.seed,level:data.level,round,hp:s.hp,gold:s.gold,battleGold,wins,ticks,won,cleared,...details});
 if(bridge.engine.resultEndsRun||s.hp<=0||round>=32||s.phase==='gameover')break;
 for(let tick=0;s.phase!=='preparation'&&tick<100;tick++)pilot.tick(now+=2400);
 if(s.phase!=='preparation')throw Error('Result did not advance');
@@ -92,11 +108,12 @@ if (!chromium) throw new Error('Installed Playwright runtime unavailable');
         window.evaluationWorker.onerror = event => reject(new Error(event.message));
         window.evaluationWorker.onmessage = ({ data }) => data.error ? reject(new Error(data.error)) : resolve(data);
         window.evaluationWorker.postMessage(config);
-      }), { seed: seed + run, level });
+      }), { seed: seed + run, level, diagnostics });
       results.push(result);
-      console.log(JSON.stringify({ ...result, trace: undefined, elapsed: (Date.now() - started) / 1000 }));
+      console.log(JSON.stringify({seed:result.seed,level,round:result.round,wins:result.wins,
+        cleared:result.cleared,elapsed:(Date.now()-started)/1000}));
       mkdirSync(path.dirname(output), { recursive: true });
-      writeFileSync(`${output}.pending`, JSON.stringify({ config: { level, seed, runs, battles: 32, sourceRoot: root },
+      writeFileSync(`${output}.pending`, JSON.stringify({ config: { level, seed, runs, battles: 32, sourceRoot: root, diagnostics },
         fingerprint: hash, runtime: { browser: browser.version(), engine: 'Chrome Worker', hz: 60, rolloutHz: 20 },
         meanWins: results.reduce((n, r) => n + r.wins, 0) / results.length,
         clears: results.filter(r => r.cleared).length, results, errors }, null, 2));
