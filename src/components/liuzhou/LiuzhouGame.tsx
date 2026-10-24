@@ -30,6 +30,7 @@ import {
   QUESTS,
   saveGame,
   step,
+  toggleFlight,
   type Character,
   type Game,
   type Input,
@@ -41,8 +42,14 @@ import { deliveryTarget, deliveryWarm, NEIGHBOR_ORDERS, warmSeconds } from "./li
 import { eveningFrame, eveningTarget, RECORD_SECONDS, recordingStatus, SHOW_SECONDS, SOUND_SPOTS } from "./evening";
 import { citizenStatus, CITIZEN_PLANS } from "./citizens";
 import { StreetControls } from "./controls";
+import { DEFAULT_LOOK_SENSITIVITY, LOOK_SENSITIVITY_KEY, MAX_LOOK_SENSITIVITY, MIN_LOOK_SENSITIVITY, normalizeLookSensitivity } from "./lookSettings";
 import { StreetNavigation, type Destination, type Route, type RouteRequest } from "./navigation";
 import styles from "./liuzhou.module.css";
+import { CITY_BOUNDS, inCore } from "./exploration";
+import { CITY_ROAD_SEGMENTS } from "./city";
+import { UNDERGROUND_ENTRANCES, UNDERGROUND_WALKS, undergroundLocation } from "./underground";
+import { RIVER_POLYGONS } from "./terrain";
+import type { StreamProgress } from "./cityStreaming";
 
 const Scene = dynamic(() => import("./Scene"), { ssr: false });
 type GameWindow = Window & {
@@ -84,9 +91,9 @@ class RenderBoundary extends Component<
 function StreetMap({ game, route, full = false }: { game: Game; route: Route | null; full?: boolean }) {
   const radius = full ? 0 : 150;
   const viewBox = full
-    ? "-450 -420 1040 1230"
+    ? `${CITY_BOUNDS.minX - 100} ${CITY_BOUNDS.minZ - 100} ${CITY_BOUNDS.maxX - CITY_BOUNDS.minX + 200} ${CITY_BOUNDS.maxZ - CITY_BOUNDS.minZ + 200}`
     : `${game.player.x - radius} ${game.player.z - radius} ${radius * 2} ${radius * 2}`;
-  const q = game.stage < 6 ? QUESTS[game.stage] : eveningTarget(game);
+  const q = game.exploration ? null : game.stage < 6 ? QUESTS[game.stage] : eveningTarget(game);
   const recipient = deliveryTarget(game.life, game.npcs);
   return (
     <svg
@@ -95,13 +102,8 @@ function StreetMap({ game, route, full = false }: { game: Game; route: Route | n
       role="img"
       aria-label={full ? "东门街区地图，北在上方" : "附近街道小地图，北在上方"}
     >
-      <rect x={-2200} y={-2200} width={4400} height={4400} fill="#9da993" />
-      <path
-        d="M -650 450 Q -200 490 100 330 T 700 -250"
-        stroke="#618d88"
-        strokeWidth={315}
-        fill="none"
-      />
+      <rect x={CITY_BOUNDS.minX - 100} y={CITY_BOUNDS.minZ - 100} width={CITY_BOUNDS.maxX - CITY_BOUNDS.minX + 200} height={CITY_BOUNDS.maxZ - CITY_BOUNDS.minZ + 200} fill="#9da993" />
+      {RIVER_POLYGONS.map((p, i) => <path key={`river-${i}`} d={[p.outer, ...p.holes].map(ring => `M${ring.map(v => `${v[0]},${v[1]}`).join("L")}Z`).join(" ")} fill="#618d88" fillRule="evenodd" />)}
       {BUILDINGS.map((b) => (b.footprint ? (
         <polygon key={b.id} points={b.footprint.map((p) => `${p.x},${p.z}`).join(" ")} fill="#7f8e7c" />
       ) : (
@@ -121,7 +123,7 @@ function StreetMap({ game, route, full = false }: { game: Game; route: Route | n
           {full && <text x={recipient.x + 12} y={recipient.z - 6} fill="#f1f6dd" fontSize={13}>送餐 · {NEIGHBOR_ORDERS[game.life.delivery!.route].name}</text>}
         </g>
       )}
-      {ROAD_SEGMENTS.map((s, i) => (
+      {[...ROAD_SEGMENTS, ...CITY_ROAD_SEGMENTS.filter(s => !inCore(s.a) || !inCore(s.b))].map((s, i) => (
         <path
           key={i}
           d={`M${s.a.x} ${s.a.z}L${s.b.x} ${s.b.z}`}
@@ -130,6 +132,12 @@ function StreetMap({ game, route, full = false }: { game: Game; route: Route | n
           fill="none"
         />
       ))}
+      {(full || undergroundLocation(game.player)) && (
+<g data-underground-layer="B1">
+        {UNDERGROUND_WALKS.map(w => <polyline key={w.id} points={w.points.map(p => `${p[0]},${p[1]}`).join(" ")} stroke="#8d6598" strokeWidth={full ? 7 : 6} fill="none" />)}
+        {UNDERGROUND_ENTRANCES.map(e => <circle key={e.id} cx={e.top[0]} cy={e.top[1]} r={full ? 6 : 3} fill="#e1bce5" />)}
+      </g>
+)}
       {game.evening.started && SOUND_SPOTS.filter(s => !game.evening.samples.includes(s.id)).map(s => (
         <g key={s.id}>
           <circle cx={s.x} cy={s.z} r={full ? 8 : 5} fill="#f7d076" stroke="#444e41" strokeWidth={2} />
@@ -139,7 +147,7 @@ function StreetMap({ game, route, full = false }: { game: Game; route: Route | n
       {route?.status === "route" && (
         <g data-navigation-route={route.destination.id}>
           <polyline points={route.points.map(p => `${p.x},${p.z}`).join(" ")} fill="none" stroke="#263e38" strokeWidth={full ? 7 : 9} strokeLinecap="round" strokeLinejoin="round" />
-          <polyline points={route.points.map(p => `${p.x},${p.z}`).join(" ")} fill="none" stroke={route.destination.kind === "delivery" ? "#a0e1cf" : "#ffdc7d"} strokeWidth={full ? 3.5 : 5} strokeLinecap="round" strokeLinejoin="round" />
+          <polyline points={route.points.map(p => `${p.x},${p.z}`).join(" ")} fill="none" stroke={route.destination.kind === "delivery" ? "#a0e1cf" : "#ffdc7d"} strokeWidth={full ? 3.5 : 5} strokeDasharray={route.guidance === "bearing" ? "18 14" : undefined} strokeLinecap="round" strokeLinejoin="round" />
         </g>
       )}
       {route?.destination.kind === "landmark" && <circle cx={route.destination.x} cy={route.destination.z} r={full ? 10 : 6} fill="none" stroke="#ffdc7d" strokeWidth={3} />}
@@ -161,7 +169,7 @@ function StreetMap({ game, route, full = false }: { game: Game; route: Route | n
               x={l.x + 12}
               y={l.z - 6}
               fill="#304a42"
-              fontSize={19}
+              fontSize={full ? 65 : 19}
               fontWeight={600}
             >
               {l.name}
@@ -204,7 +212,7 @@ function StreetMap({ game, route, full = false }: { game: Game; route: Route | n
   );
 }
 export default function LiuzhouGame() {
-  const game = useRef(createGame()).current;
+  const [game] = useState(createGame);
   const rig = useRef<CameraRig>({
     yaw: -1.35,
     pitch: 0.12,
@@ -215,6 +223,14 @@ export default function LiuzhouGame() {
   const physics = useRef<Physics>();
   const [physicsReady, setPhysicsReady] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
+  const [saveReady, setSaveReady] = useState(false);
+  const [stream, setStream] = useState<StreamProgress>({ loaded: 0, total: 0, nearbyReady: false, complete: false, error: false });
+  const streamRef = useRef(stream);
+  const progress = useCallback((status: StreamProgress) => {
+    streamRef.current = status;
+    setStream(status);
+    if (status.error) setFailed(true);
+  }, []);
   const [failed, setFailed] = useState(false);
   const audio = useRef<StreetAudio>();
   const [muted, setMuted] = useState(false);
@@ -238,7 +254,26 @@ export default function LiuzhouGame() {
       audio.current?.dispose();
     };
   }, [game, rig]);
-  const [menu, setMenu] = useState<"map" | "help" | "journal" | null>(null);
+  const [menu, setMenu] = useState<"map" | "help" | "journal" | "settings" | null>(null);
+  const [lookSensitivity, setLookSensitivity] = useState(DEFAULT_LOOK_SENSITIVITY);
+  const sensitivityRef = useRef(DEFAULT_LOOK_SENSITIVITY);
+  const [settingsSaved, setSettingsSaved] = useState(true);
+  useEffect(() => {
+    try {
+      const value = normalizeLookSensitivity(JSON.parse(localStorage.getItem(LOOK_SENSITIVITY_KEY) || "null"));
+      sensitivityRef.current = value;
+      setLookSensitivity(value);
+    } catch { /* Use the default when browser storage is unavailable or damaged. */ }
+  }, []);
+  const changeLookSensitivity = (value: number) => {
+    const next = normalizeLookSensitivity(value);
+    sensitivityRef.current = next;
+    setLookSensitivity(next);
+    try {
+      localStorage.setItem(LOOK_SENSITIVITY_KEY, JSON.stringify(next));
+      setSettingsSaved(true);
+    } catch { setSettingsSaved(false); }
+  };
   const menuRef = useRef(menu);
   menuRef.current = menu;
   const [revision, refresh] = useState(0);
@@ -275,11 +310,15 @@ export default function LiuzhouGame() {
   const lastSave = useRef(0);
   const readNavigation = useCallback(() => {
     const delivery = deliveryTarget(game.life, game.npcs);
-    const target = game.stage < 6 ? QUESTS[game.stage] : eveningTarget(game);
+    const target = game.exploration ? null : game.stage < 6 ? QUESTS[game.stage] : eveningTarget(game);
     const destination: Destination | null = waypointRef.current || (delivery ? {
       ...delivery, id: `delivery-${game.life.delivery!.route}`, name: `送餐 · ${NEIGHBOR_ORDERS[game.life.delivery!.route].name}`, kind: "delivery",
     } : target ? { ...target, id: `story-${game.stage}-${target.target}`, name: target.title, kind: "story" } : null);
     const vehicle = game.vehicles.find(v => v.id === game.vehicle);
+    if (destination && game.phase !== "title" && (game.flight.active || !inCore(game.player) || !inCore(destination))) {
+      const metres = distance(game.player, destination);
+      return { destination, mode: vehicle?.kind || "walk", points: [{ ...game.player }, { ...destination }], metres, status: metres < 18 ? "arrived" : "route", guidance: "bearing" } as Route;
+    }
     return navigation.update(game.player, game.phase === "title" ? null : destination, vehicle?.kind || "walk", performance.now());
   }, [game, navigation]);
   const update = useCallback(() => { readNavigation(); refresh((n) => n + 1); }, [readNavigation]);
@@ -301,6 +340,7 @@ export default function LiuzhouGame() {
     let cancelled = false;
     let owned: Physics | undefined;
     loadGame(game);
+    setSaveReady(true);
     createPhysics(game)
       .then((p) => {
         owned = p;
@@ -341,7 +381,7 @@ export default function LiuzhouGame() {
     }
   }, [game, clearInput, update]);
   const openMenu = useCallback(
-    (next: "map" | "help" | "journal") => {
+    (next: "map" | "help" | "journal" | "settings") => {
       pause();
       if (game.phase === "title" && physics.current) game.phase = "paused";
       setMenu(next);
@@ -392,6 +432,7 @@ export default function LiuzhouGame() {
         return;
       }
       if (game.dialogue) return;
+      if (key === "KeyF") { toggleFlight(game); clearInput(); saveGame(game); update(); return; }
       if (key === "KeyH" && game.vehicle) {
         game.horn = game.time;
         notify(game, "叮——附近的行人回过头来");
@@ -401,7 +442,7 @@ export default function LiuzhouGame() {
             n.angle = Math.atan2(game.player.x - n.x, game.player.z - n.z);
           });
       }
-      if (key === "KeyC") {
+      if (key === "KeyC" && !game.flight.active) {
         rig.yaw = game.player.angle;
         rig.pitch = 0.12;
         rig.reset = true;
@@ -430,6 +471,7 @@ export default function LiuzhouGame() {
   );
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
+      if (e.code !== "Escape" && (e.target as HTMLElement).matches("input, select, textarea, [contenteditable='true']")) return;
       if (
         (e.target as HTMLElement).tagName === "BUTTON" &&
         ["Enter", "Space"].includes(e.code)
@@ -467,6 +509,7 @@ rig,
 pause,
 clear: clearInput,
 changed: update,
+      sensitivity: () => sensitivityRef.current,
       playing: () => game.phase === "playing" && !game.dialogue && !game.evening.watching,
     });
     controls.current = control;
@@ -483,7 +526,7 @@ changed: update,
     };
     const move = (e: PointerEvent) => {
       if (!drag || drag.id !== e.pointerId || control.locked) return;
-      control.look((e.clientX - drag.x) * 2, (e.clientY - drag.y) * 1.333);
+      control.look((e.clientX - drag.x) * 2, (e.clientY - drag.y) * 1.333, e.pointerType !== "touch");
       drag.x = e.clientX;
       drag.y = e.clientY;
     };
@@ -526,6 +569,8 @@ changed: update,
         sprint: pressed("ShiftLeft", "ShiftRight"),
         brake: pressed("Space"),
         jump: pressed("Space"),
+        descend: pressed("KeyC"),
+        precise: pressed("KeyQ"),
       };
       accumulator.current = Math.min(0.12, accumulator.current + dt);
       while (accumulator.current >= 1 / 60) {
@@ -541,7 +586,7 @@ changed: update,
   );
   useEffect(() => {
     const win = window as GameWindow;
-    win.render_game_to_text = () => JSON.stringify({ ...publicState(game), navigation: readNavigation(), controls: { pointerLocked: controls.current?.locked ?? false, yaw: rig.yaw, pitch: rig.pitch } });
+    win.render_game_to_text = () => JSON.stringify({ ...publicState(game), loading: streamRef.current, navigation: readNavigation(), controls: { pointerLocked: controls.current?.locked ?? false, yaw: rig.yaw, pitch: rig.pitch, sensitivity: sensitivityRef.current } });
     if (new URLSearchParams(window.location.search).get("test") === "1") {
       win.liuzhouTest = {
         game,
@@ -589,7 +634,7 @@ changed: update,
   const near = nearestInteraction(game);
   const playing = game.phase === "playing";
   const title = game.phase === "title";
-  const { route } = navigation;
+  const route = readNavigation();
   const current = game.vehicles.find((v) => v.id === game.vehicle);
   const setTouch =
     (axis: "forward" | "turn", value: number) => (e: React.PointerEvent<HTMLButtonElement>) => {
@@ -610,11 +655,11 @@ changed: update,
       data-screening={game.evening.watching}
       data-dialogue={dialogueVisible}
       data-pointer-locked={controls.current?.locked ?? false}
-      aria-label="柳州开放街区三维游戏"
+      aria-label="柳州GTA三维游戏"
     >
       <div className={styles.scene}>
         <RenderBoundary>
-          <Scene game={game} rig={rig} tick={tick} ready={ready} />
+          {saveReady && <Scene game={game} rig={rig} tick={tick} ready={ready} progress={progress} />}
         </RenderBoundary>
       </div>
       <header className={styles.header}>
@@ -622,10 +667,10 @@ changed: update,
           ←
         </Link>
         <span className={styles.brand}>
-          柳州<span>LIUZHOU / RIVERSIDE STORIES</span>
+          柳州GTA<span>LIUZHOU / CITY EXPLORATION</span>
         </span>
         <div className={styles.headerRight}>
-          <span>东门街区 · {game.evening.started ? "19:06" : game.stage === 6 ? "18:42" : "17:12"}</span>
+          <span>{undergroundLocation(game.player) ? "地下街 · B1" : inCore(game.player) ? "东门街区" : "柳州城区"} · {game.evening.started ? "19:06" : game.stage === 6 ? "18:42" : "17:12"}</span>
           <button
             onClick={() => {
               activateAudio();
@@ -638,6 +683,9 @@ changed: update,
           </button>
           <button onClick={() => openMenu("help")} aria-label="操作说明">
             ?
+          </button>
+          <button onClick={() => openMenu("settings")} disabled={!physicsReady}>
+            设置
           </button>
           <button
             onClick={() => {
@@ -654,9 +702,9 @@ changed: update,
         <div className={styles.title}>
           <p className={styles.eyebrow}>A LITTLE JOURNEY IN A REAL CITY</p>
           <h1>
-            江风
+            柳州
             <br />
-            <em>有回音。</em>
+            <em>GTA</em>
           </h1>
           <p className={styles.intro}>
             骑过老街，开过红桥。
@@ -665,17 +713,19 @@ changed: update,
           </p>
           <button
             className={styles.primary}
-            onClick={start}
-            disabled={!physicsReady || !sceneReady || failed}
+            onClick={() => { game.exploration = false; start(); }}
+            disabled={!physicsReady || !sceneReady || !stream.nearbyReady || failed}
           >
             {failed
-              ? "物理引擎加载失败，请刷新重试"
-              : physicsReady && sceneReady
+              ? "街区加载失败，请刷新重试"
+              : physicsReady && sceneReady && stream.nearbyReady
                 ? game.stage > 0
                   ? "继续这趟旅行 ↗"
                   : "走进柳州 ↗"
-                : "街区正在苏醒…"}
+                : "正在准备附近街区…"}
           </button>
+          <button className={styles.exploreStart} disabled={!physicsReady || !sceneReady || !stream.nearbyReady || failed} onClick={() => { game.exploration = true; start(); notify(game, "自由巡览 · F 开启飞行 · M 选择地标"); update(); }}>自由巡览 · 快速飞行 ↗</button>
+          {!stream.complete && !failed && <p className={styles.loadingNote}>{stream.nearbyReady ? "附近已就绪，可以进入；其余街景继续加载" : "优先准备当前位置，远处街景随后补齐"}</p>}
           <p className={styles.titleNote}>
             东门与文惠桥 · 两章街区故事
             <br />
@@ -685,15 +735,16 @@ changed: update,
       )}
       {!title && (
         <>
+          {!stream.complete && !failed && <div className={styles.streaming} role="status">远处街景加载中 {stream.total ? `${Math.min(99, Math.floor((stream.loaded / stream.total) * 100))}%` : "…"}</div>}
           <div className={styles.objective}>
             <span className={styles.eyebrow}>
-              {game.stage < 6
+              {game.exploration ? "CITY EXPLORATION" : game.stage < 6
                 ? `CHAPTER 01 / ${String(game.stage + 1).padStart(2, "0")}`
                 : game.evening.completed ? "CHAPTER 02 / COMPLETE" : game.evening.started ? `CHAPTER 02 / ${game.evening.samples.length}/3` : "CHAPTER 02 / NEXT"}
             </span>
-            <h2>{quest.title}</h2>
-            <p>{quest.description}</p>
-            {(game.stage < 6 || eveningTarget(game)) && (
+            <h2>{game.exploration ? "柳州 · 自由巡览" : quest.title}</h2>
+            <p>{game.exploration ? "M 选择目的地 · F 飞行 · Q 慢飞 · 空格升高 · C 降低" : quest.description}</p>
+            {!game.exploration && (game.stage < 6 || eveningTarget(game)) && (
               <span className={styles.distance}>
                 ◇ {Math.round(distance(game.player, quest))} m
               </span>
@@ -729,12 +780,12 @@ changed: update,
               <span className={styles.north}>N ↑</span>
             </button>
             <p>
-              {nearestRoad(game.player).name}
+              {undergroundLocation(game.player) ? "龙城地下街 · B1" : nearestRoad(game.player).name}
               <span>M · 街区地图</span>
             </p>
             {route && (
 <p className={styles.navigation} aria-label="街区导航">
-              <strong>{route.status === "route" ? `↗ ${Math.ceil(route.metres)} m` : route.status === "planning" ? "正在规划路线…" : route.status === "arrived" ? "已到达附近" : "暂时无法规划"}</strong>
+              <strong>{route.status === "route" ? `${route.guidance === "bearing" ? "直线方位" : "↗"} ${Math.ceil(route.metres)} m` : route.status === "planning" ? "正在规划路线…" : route.status === "arrived" ? "已到达附近" : "暂时无法规划"}</strong>
               <span>{route.status === "unavailable" ? "沿当前通道回到街道后再试" : route.destination.name}</span>
             </p>
 )}
@@ -742,14 +793,14 @@ changed: update,
           <div className={styles.status}>
             <span>
               {CHARACTERS[game.character].name} /{" "}
-              {current ? (current.kind === "bike" ? "骑行" : "驾车") : "步行"}
+              {current ? (current.kind === "bike" ? "骑行" : "驾车") : game.flight.active ? "飞行" : "步行"}
             </span>
             <strong>
               {Math.round(Math.abs(game.player.speed) * 3.6)}
               <small>km/h</small>
             </strong>
             <span>
-              ¥ {game.money} · 手账 {game.stamps.length}/5
+              {game.flight.active ? `离地 ${Math.round(publicState(game).flight.clearance)} m` : `¥ ${game.money} · 手账 ${game.stamps.length}/${LANDMARKS.length}`}
             </span>
           </div>
           {playing && !game.dialogue && !game.evening.watching && near && (
@@ -762,7 +813,7 @@ changed: update,
             <p className={styles.hint}>
               {current
                 ? "W/S 油门 · A/D 转向 · 空格刹车 · H 鸣笛"
-                : "WASD 移动 · Shift 跑步 · 空格跳跃 · 鼠标转动视角 · Alt 显示鼠标"}
+                : game.flight.active ? "WASD 飞行 · Q 慢飞 · 空格升高 · C 降低 · Shift 加速 · F 收起" : "WASD 移动 · Shift 跑步 · 空格跳跃 · F 飞行 · 鼠标转动视角"}
             </p>
           )}
           {playing && !game.dialogue && !game.evening.watching && !controls.current?.locked && !controls.current?.touch && (
@@ -777,6 +828,7 @@ changed: update,
             <span className={styles.saveWarning}>本机存档暂不可用</span>
           )}
           <nav className={styles.quick} aria-label="旅行工具" hidden={game.evening.watching}>
+            <button disabled={!!game.dialogue || !playing || !!current} onClick={() => action("KeyF")}>{game.flight.active ? "收起飞行" : "开启飞行"} <kbd>F</kbd></button>
             <button onClick={() => openMenu("journal")}>
               手账 <kbd>J</kbd>
             </button>
@@ -846,7 +898,7 @@ changed: update,
                   ? "操作说明"
                   : menu === "journal"
                     ? "旅行手账"
-                    : "旅行暂停"
+                    : menu === "settings" ? "视角设置" : "旅行暂停"
             }
           >
             <button
@@ -859,28 +911,52 @@ changed: update,
             <p className={styles.eyebrow}>LIUZHOU / FIELD NOTES</p>
             <h2>
               {menu === "map"
-                ? "东门这一带"
+                ? "柳州 · 城市巡览"
                 : menu === "help"
                   ? "慢慢逛，也能开快一点。"
                   : menu === "journal"
                     ? "今天，想记住什么？"
-                    : "在这里歇一会。"}
+                    : menu === "settings" ? "调到顺手为止。" : "在这里歇一会。"}
             </h2>
             {menu === "map" ? (
               <>
                 <StreetMap game={game} route={route} full />
                 <div className={styles.destinations} aria-label="选择导航目的地">
-                  <button onClick={() => setWaypoint(null)} aria-pressed={!waypoint}>跟随任务</button>
+                  <button onClick={() => setWaypoint(null)} aria-pressed={!waypoint}>{game.exploration ? "清除目的地" : "跟随任务"}</button>
                   {LANDMARKS.map(l => <button key={l.id} aria-pressed={waypoint?.id === l.id} onClick={() => setWaypoint({ ...l, ...(l.id === "river" ? { x: 270, z: -180, name: "柳江北岸" } : {}), kind: "landmark" })}>{l.id === "river" ? "柳江北岸" : l.name}</button>)}
                 </div>
-                <p>北 ↑ · 实线为当前路线，金点是主线，青色餐盒是收餐人，彩色圆点是市民。可选择地标自由探索。</p>
+                <p>北 ↑ · 实线为街区路线；虚线是直线方位参考，需自行避开建筑、山体与江面。F 开启飞行，Shift 加速，按住 Q 慢飞。</p>
                 <small>
-                  道路及部分轮廓 © OpenStreetMap contributors ·
-                  ODbL。地形来自 Mapzen / AWS Terrain Tiles（NASA SRTM 等，约 30 米源精度）；道路地面、桥梁高程和缺失建筑为近似重建。
+                  道路及建筑轮廓 © OpenStreetMap contributors、Overture Maps Foundation、East Asian Buildings / CLSM ·
+                  ODbL。地形来自 Mapzen / AWS Terrain Tiles（NASA SRTM 等，约 30 米源精度）；道路地面、桥梁高程及建筑高度为近似重建。
+                  <a href="/games/liuzhou/building-footprints.json" download>建筑轮廓数据</a>
                 </small>
               </>
+            ) : menu === "settings" ? (
+              <div className={styles.settings}>
+                <label htmlFor="liuzhou-look-sensitivity">
+                  鼠标视角灵敏度
+                  <output htmlFor="liuzhou-look-sensitivity">{Math.round(lookSensitivity * 100)}%</output>
+                </label>
+                <input
+                  id="liuzhou-look-sensitivity"
+                  type="range"
+                  min={MIN_LOOK_SENSITIVITY * 100}
+                  max={MAX_LOOK_SENSITIVITY * 100}
+                  step={5}
+                  value={Math.round(lookSensitivity * 100)}
+                  aria-valuetext={`${Math.round(lookSensitivity * 100)}%`}
+                  aria-describedby="liuzhou-look-sensitivity-note"
+                  onChange={e => changeLookSensitivity(Number(e.target.value) / 100)}
+                />
+                <div className={styles.settingScale}><span>慢 · 20%</span><span>快 · 200%</span></div>
+                <p id="liuzhou-look-sensitivity-note">同时调整左右转向与上下俯仰，步行和飞行均生效。100% 为原来的速度，触屏拖动不受影响。</p>
+                <button onClick={() => changeLookSensitivity(DEFAULT_LOOK_SENSITIVITY)}>恢复默认 · 60%</button>
+                <small role="status">{settingsSaved ? "修改自动保存在此浏览器，刷新后保留。" : "浏览器暂时无法保存，当前设置仍然有效。"}</small>
+              </div>
             ) : menu === "help" ? (
               <div className={styles.instructions}>
+                <p><kbd>F</kbd>开启 / 收起飞行 · <kbd>空格</kbd>升高 · <kbd>C</kbd>降低 · <kbd>Shift</kbd>加速。贴近建筑或降落时，按住 <kbd>Q</kbd> 慢飞，同时减慢升降；触屏可按住“慢飞”。飞行仍有碰撞，江面上请先飞回岸边再收起。</p>
                 <p>
                   <kbd>W A S D</kbd>步行移动 / 驾车油门与转向
                 </p>
@@ -891,7 +967,7 @@ changed: update,
                   <kbd>E</kbd>交谈、上车、停稳后下车
                 </p>
                 <p>
-                  <kbd>鼠标 / 滚轮</kbd>转动 / 拉近视角 <kbd>C</kbd>镜头归正
+                  <kbd>鼠标 / 滚轮</kbd>转动 / 拉近视角 <kbd>C</kbd>未飞行时镜头归正
                 </p>
                 <p>
                   <kbd>M</kbd>地图 <kbd>P</kbd>地标手账 <kbd>1–4</kbd>换角色
@@ -939,6 +1015,7 @@ changed: update,
                 <p>进度已保存在这台设备。下一站：{quest.description}。</p>
                 <button onClick={() => setMenu("map")}>查看地图</button>
                 <button onClick={() => setMenu("help")}>操作说明</button>
+                <button onClick={() => setMenu("settings")}>视角设置</button>
               </>
             )}
             <button className={styles.primary} onClick={resume}>
@@ -985,7 +1062,7 @@ changed: update,
               </button>
             </div>
           </div>
-          <div className={styles.touchActions}>
+          <div className={`${styles.touchActions} ${game.flight.active ? styles.flightActions : ""}`}>
             <button onClick={() => action("KeyE")}>互动</button>
             <button
               aria-label="刹车或跳跃"
@@ -996,14 +1073,22 @@ changed: update,
               onPointerUp={() => keys.current.delete("Space")}
               onPointerCancel={() => keys.current.delete("Space")}
             >
-              {current ? "刹车" : "跳跃"}
+              {current ? "刹车" : game.flight.active ? "升高" : "跳跃"}
             </button>
+            <button onClick={() => action("KeyF")}>{game.flight.active ? "收起" : "飞行"}</button>
+            {game.flight.active && (
+<>
+              <button aria-label="飞行降低" onPointerDown={e => { e.currentTarget.setPointerCapture(e.pointerId); keys.current.add("KeyC"); }} onPointerUp={() => keys.current.delete("KeyC")} onPointerCancel={() => keys.current.delete("KeyC")}>降低</button>
+              <button aria-label="飞行加速" onPointerDown={e => { e.currentTarget.setPointerCapture(e.pointerId); keys.current.add("ShiftLeft"); }} onPointerUp={() => keys.current.delete("ShiftLeft")} onPointerCancel={() => keys.current.delete("ShiftLeft")}>加速</button>
+              <button aria-label="飞行慢速" onPointerDown={e => { e.currentTarget.setPointerCapture(e.pointerId); keys.current.add("KeyQ"); }} onPointerUp={() => keys.current.delete("KeyQ")} onPointerCancel={() => keys.current.delete("KeyQ")}>慢飞</button>
+            </>
+)}
             <button onClick={() => openMenu("map")}>地图</button>
           </div>
         </div>
       )}
       <footer className={styles.credit}>
-        © OpenStreetMap contributors · ODbL · Mapzen / AWS Terrain Tiles <span>老城漫游 / 首章开发中</span>
+        © OpenStreetMap contributors · Overture Maps Foundation · ODbL · Mapzen / AWS Terrain Tiles <span>老城漫游 / 首章开发中</span>
       </footer>
     </main>
   );

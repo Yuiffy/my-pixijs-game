@@ -4,6 +4,7 @@ import { memo, useEffect, useMemo, useRef } from "react";
 import * as T from "three";
 import type { UrbanFabric, UrbanGround } from "./urban";
 import type { Point } from "./world";
+import { urbanGroundPositions } from "./urbanGround";
 
 type Detail = { at: [number, number, number]; size: [number, number, number]; angle?: number; color: string };
 const flatGround = () => 0;
@@ -30,36 +31,16 @@ function Instances({ items, leaves = false }: { items: Detail[]; leaves?: boolea
     </instancedMesh>
   );
 }
-const Ground = memo(({ area, heightAt }: { area: UrbanGround; heightAt: (p: Point) => number }) => {
+const Ground = memo(({ area }: { area: UrbanGround }) => {
   const geometry = useMemo(() => {
-    const shape = new T.Shape(area.points.map(p => new T.Vector2(p.x, -p.z)));
-    const polygon = new T.ShapeGeometry(shape);
-    const outline = polygon.toNonIndexed();
-    polygon.dispose();
-    const source = outline.getAttribute("position"); const vertices: number[] = [];
-    const midpoint = (a: Point, b: Point): Point => ({ x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 });
-    const emit = (a: Point, b: Point, c: Point, depth = 0) => {
-      if (depth < 8 && Math.max(Math.hypot(a.x - b.x, a.z - b.z), Math.hypot(b.x - c.x, b.z - c.z), Math.hypot(c.x - a.x, c.z - a.z)) > 16) {
-        const ab = midpoint(a, b); const bc = midpoint(b, c); const ac = midpoint(a, c);
-        emit(a, ab, ac, depth + 1); emit(ab, b, bc, depth + 1); emit(ac, bc, c, depth + 1); emit(ab, bc, ac, depth + 1);
-        return;
-      }
-      for (const p of [a, b, c]) vertices.push(p.x, heightAt(p), p.z);
-    };
-    for (let i = 0; i < source.count; i += 3) emit(
-      { x: source.getX(i), z: -source.getY(i) },
-      { x: source.getX(i + 1), z: -source.getY(i + 1) },
-      { x: source.getX(i + 2), z: -source.getY(i + 2) },
-    );
-    outline.dispose();
     const ground = new T.BufferGeometry();
-    ground.setAttribute("position", new T.Float32BufferAttribute(vertices, 3));
+    ground.setAttribute("position", new T.Float32BufferAttribute(urbanGroundPositions(area), 3));
     ground.computeVertexNormals();
     return ground;
-  }, [area, heightAt]);
+  }, [area]);
   useEffect(() => () => geometry.dispose(), [geometry]);
   return (
-<mesh geometry={geometry} position={[0, area.id.startsWith("parcel-") ? 0.012 : 0.025, 0]} receiveShadow>
+<mesh geometry={geometry} receiveShadow>
     <meshStandardMaterial color={area.color} roughness={1} />
   </mesh>
 );
@@ -83,7 +64,7 @@ export default function UrbanView({ fabric, heightAt = flatGround }: { fabric: U
   }, [fabric, heightAt]);
   return (
 <group>
-    {fabric.courtyards.map(area => <Ground key={area.id} area={area} heightAt={heightAt} />)}
+    {fabric.courtyards.map(area => <Ground key={area.id} area={area} />)}
     <Instances items={details.walls} />
     <Instances items={details.leaves} leaves />
   </group>

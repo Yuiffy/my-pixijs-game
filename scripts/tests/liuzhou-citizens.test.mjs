@@ -8,8 +8,8 @@ const game = () => { const g = e.createGame(); g.phase = 'playing'; Object.assig
 const advance = (g, seconds) => { for (let i = 0; i < seconds * 60; i++) e.step(g); };
 afterEach(() => { delete globalThis.localStorage; });
 
-test('all five citizen walks and stops have continuous usable land and building clearance', () => {
-  assert.equal(Object.keys(c.CITIZEN_PLANS).length, 5);
+test('all core, market, square and station citizen walks and stops have continuous usable land and building clearance', () => {
+  assert.deepEqual(Object.keys(c.CITIZEN_PLANS).sort(), ['market-walker-north', 'market-walker-south', 'square-walker-east', 'square-walker-west', 'station-walker-arrival', 'station-walker-plaza', 'uncle', 'walker-1', 'walker-2', 'walker-3', 'walker-4']);
   for (const [id, plan] of Object.entries(c.CITIZEN_PLANS)) {
     let length = 0;
     for (let i = 0; i < plan.stops.length; i++) {
@@ -113,5 +113,6 @@ test('old saves and invalid routine fields cannot place a citizen in walls, off 
     const n = g.npcs.find(n => n.id === one.id); assert.equal(n.routine.odometer, 0); assert.deepEqual({ x: n.x, z: n.z }, n.home); assert.equal(g.stage, 0);
   }
   delete data.citizens; saved = JSON.stringify(data); const old = game(); e.loadGame(old);
-  assert.equal(old.money, original.money); assert.equal(old.npcs.filter(n => n.routine).length, 5);
+  assert.equal(old.money, original.money);
+  assert.deepEqual(old.npcs.filter(n => n.routine).map(n => n.id).sort(), Object.keys(c.CITIZEN_PLANS).sort());
 });

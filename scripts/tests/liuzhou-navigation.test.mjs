@@ -36,9 +36,11 @@ test('all chapter destinations are reachable without routing through static coll
   }
 });
 
-test('sound spots and the five navigable landmark approaches have clear routes', () => {
+test('sound spots and core landmark approaches retain obstacle-safe routes; outer-city guidance is a separate bearing', () => {
   const from = { x: 42, z: -8 };
-  for (const q of [...evening.SOUND_SPOTS, ...world.LANDMARKS.map(l => l.id === 'river' ? { ...l, x: 270, z: -180 } : l)]) {
+  const core = world.LANDMARKS.filter(l => l.x > world.BOUNDS.minX && l.x < world.BOUNDS.maxX && l.z > world.BOUNDS.minZ && l.z < world.BOUNDS.maxZ);
+  assert.ok(core.length >= 5);
+  for (const q of [...evening.SOUND_SPOTS, ...core.map(l => l.id === 'river' ? { ...l, x: 270, z: -180 } : l)]) {
     assertRoute(nav.planRoute(from, q), from, q, 'walk');
   }
   assert.deepEqual(nav.planRoute(from, { x: 340, z: 105 }), [], 'no fake route into the river');

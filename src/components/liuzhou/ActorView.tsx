@@ -5,6 +5,12 @@ import { useEffect, useMemo, useRef, type ReactNode } from "react";
 import * as T from "three";
 import { actorPose, ARM, HIP, LEG, pedalPhase, RIDER_Y, RIDER_Z } from "./actorMotion";
 import { CITIZEN_PLANS } from "./citizens";
+import { MARKET_APPEARANCES } from "./market";
+import { STATION_APPEARANCES } from "./station";
+import { ESHAN_APPEARANCES } from "./eshan";
+import { SQUARE_APPEARANCES } from "./square";
+import { XIHUAN_APPEARANCES } from "./xihuan";
+import { WUXING_APPEARANCES } from "./wuxing";
 import { CHARACTERS, type Actor, type Character, type Game, type Npc, type Vehicle } from "./simulation";
 
 // Shared low-poly primitives. Materials are shared within each actor and released
@@ -21,6 +27,7 @@ function Part({ at = [0, 0, 0], size, material, shape = box, rotation }: { at?: 
 
 export type AvatarSnapshot = {
   id: string; character: string; mode: string; visible: boolean;
+  opacity: number;
   leftLeg: number[]; rightLeg: number[]; leftArm: number[]; rightArm: number[];
   feet: XYZ[]; hands: XYZ[]; position: XYZ;
   pedalErrors?: number[];
@@ -33,6 +40,11 @@ export function inspectAvatars(scene: T.Scene): AvatarSnapshot[] {
   scene.updateMatrixWorld(true);
   scene.traverse(root => {
     if (!root.userData.liuzhouAvatar) return;
+    let opacity = 0;
+    root.traverse(part => {
+      if (!(part instanceof T.Mesh)) return;
+      for (const material of Array.isArray(part.material) ? part.material : [part.material]) if (material.userData.liuzhouAvatarBody) opacity = Math.max(opacity, material.opacity);
+    });
     const angles = (a: string, b: string) => [root.getObjectByName(a)!.rotation.x, root.getObjectByName(b)!.rotation.x];
     let visible = true;
     for (let p: T.Object3D | null = root; p; p = p.parent) visible &&= p.visible;
@@ -44,6 +56,7 @@ export function inspectAvatars(scene: T.Scene): AvatarSnapshot[] {
       character: root.userData.character,
       mode: root.userData.mode,
       visible,
+      opacity,
       leftLeg: angles("hip-left", "knee-left"),
       rightLeg: angles("hip-right", "knee-right"),
       leftArm: angles("shoulder-left", "elbow-left"),
@@ -72,14 +85,18 @@ export default function ActorView({ game, actor, character, citizen, player = fa
   const shoulders = useRef<(T.Group | null)[]>([]);
   const elbows = useRef<(T.Group | null)[]>([]);
   const plan = citizen ? CITIZEN_PLANS[citizen.id] : undefined;
+  const streetAppearance = MARKET_APPEARANCES[citizen?.id || ""] || STATION_APPEARANCES[citizen?.id || ""] || ESHAN_APPEARANCES[citizen?.id || ""] || SQUARE_APPEARANCES[citizen?.id || ""] || XIHUAN_APPEARANCES[citizen?.id || ""] || WUXING_APPEARANCES[citizen?.id || ""];
   const appearance = character ? CHARACTERS[character] : {
-    hair: plan?.hair || "#514e42", outfit: plan?.outfit || "#7b968b", trim: plan?.trim || "#4f5e58", eyes: "#45453c",
+    hair: plan?.hair || streetAppearance?.hair || "#514e42", outfit: plan?.outfit || streetAppearance?.outfit || "#7b968b", trim: plan?.trim || streetAppearance?.trim || "#4f5e58", eyes: "#45453c",
   };
   const { hair: hairColor, outfit, trim, eyes } = appearance;
   const materials = useMemo(() => {
     const colors = { hair: hairColor, outfit, trim, eyes, skin: "#f1d4bf", white: "#fff6e7", shoe: "#33323c", sole: "#56515b", metal: "#b9b4b0", blue: "#7bb6d5", pink: "#d39eaf", green: "#789564", bag: "#b79a6f" };
-    return Object.fromEntries(Object.entries(colors).map(([key, color]) => [key, new T.MeshStandardMaterial({ color, roughness: 0.82 })]));
-  }, [hairColor, outfit, trim, eyes]);
+    return Object.fromEntries(Object.entries(colors).map(([key, color]) => {
+      const material = new T.MeshStandardMaterial({ color, roughness: 0.82, transparent: player }); material.userData.liuzhouAvatarBody = true;
+      return [key, material];
+    }));
+  }, [hairColor, outfit, trim, eyes, player]);
   useEffect(() => () => Object.values(materials).forEach(m => m.dispose()), [materials]);
   const m = materials;
   const isSui = character === "sui";
@@ -87,8 +104,15 @@ export default function ActorView({ game, actor, character, citizen, player = fa
   const isNagisa = character === "nagisa";
   const isNana = character === "nana";
   const id = vehicle ? `rider-${vehicle.id}` : player ? "player" : citizen?.id || "actor";
-  useFrame(() => {
+  useFrame(state => {
     if (!root.current || !body.current || !head.current) return;
+    if (player && !vehicle) {
+      const gap = Math.hypot(state.camera.position.x - actor.x, state.camera.position.y - actor.y - 1.4, state.camera.position.z - actor.z);
+      // Retracted stair cameras sit around 1.8m from the aim point. Hide the
+      // body there so the head and hair cannot fill the whole narrow view.
+      const opacity = Math.max(0, Math.min(1, (gap - 1.9) / 1.5));
+      Object.values(materials).forEach(material => { material.opacity = opacity; material.depthWrite = opacity > 0.99; });
+    }
     root.current.visible = vehicle ? game.vehicle === vehicle.id : !player || !game.vehicle;
     const activity = citizen?.routine && !citizen.routine.waiting && citizen.routine.remaining > 0 ? citizen.routine.action : undefined;
     const movement = game.locomotion;
@@ -102,6 +126,7 @@ export default function ActorView({ game, actor, character, citizen, player = fa
       action: activity,
       watching: game.evening.watching && (player || !!character) && Math.hypot(actor.x - 28, actor.z + 27) < 24,
       riding: !!vehicle,
+      flying: player && game.flight.active,
     });
     root.current.position.set(vehicle ? 0 : actor.x, (vehicle ? RIDER_Y : actor.y) + pose.bob, vehicle ? RIDER_Z : actor.z);
     root.current.rotation.set(0, vehicle ? 0 : actor.angle, pose.roll);

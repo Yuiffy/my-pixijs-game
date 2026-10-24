@@ -1,5 +1,13 @@
 # 柳州地块、院落与建筑补全
 
+## 2026-10-24 · 已下载建筑轮廓接入
+
+在程序化补房之前，加入缓存的 Overture Maps Buildings 2026-10-21.0 轮廓。范围 WGS84 `[109.4090,24.3050,109.4190,24.3190]`，648 个候选，均无楼高与层数属性。上游记录 597 个来自 East Asian Buildings / CLSM，51 个来自 OSM；部分为影像识别屋顶轮廓，不能当作逐栋实测地面边线。官方说明：<https://docs.overturemaps.org/guides/buildings/>；归属：<https://docs.overturemaps.org/attribution/>，East Asian 数据 DOI：10.5281/zenodo.8174931。
+
+`scripts/import-liuzhou-buildings.py` 复用现有局部投影并保留 GERS ID 和来源，坐标只舍入到 0.001 米，不修改轮廓形状，也不生成伪造的源高度。`world.ts` 优先保留原有 OSM 轮廓，再筛选下载候选：410 个采用，137 个边界/尺寸不合适、64 个廊道冲突、16 个重叠、21 个公共或玩法空间冲突。采用的楼体全部 `heightSource:"estimated"`；`real:true` 仅说明轮廓来自地图资料，不表示估算高度真实。几何进入统一碰撞、导航、NPC 避障和相机阻挡。新轮廓与既有轮廓合为一个渲染网格，基础向地下延伸三米以避免斜坡边缘悬空。
+
+公开副本：`public/games/liuzhou/overture-buildings-core.geojson` 保留原下载文件，`public/games/liuzhou/building-footprints.json` 提供转换后的坐标及来源。游戏地图附下载入口与 ODbL 归属。原文件 SHA-256：`145664c466e1ba2bb93eaf74c8c036a51c044ffa2e21fc7e237765f1a4ff1ff9`。规则与真实物理测试见 `scripts/tests/liuzhou-downloaded-geography.test.mjs`。
+
 2026-10-24。从 OpenStreetMap 官方 API 重新下载当前原点周围的原始地图：`https://api.openstreetmap.org/api/0.6/map?bbox=109.408,24.307,109.418,24.318`。这次保留原先导入中丢失的 `landuse`、`leisure`、`amenity`、`barrier`，而不把没有 `building` 标签的所有地块当成空地。原始下载留在 `tmp/liuzhou/urban-source.osm`。
 
 `src/components/liuzhou/urban-landuse.json` 与可下载的 `/games/liuzhou/urban-landuse.json` 完全一致。`scripts/import-liuzhou-landuse.ps1` 可从缓存重建，加 `-Refresh` 可重新下载。两者保留原始 OSM way ID、名称、用地类型、完整边界，采用与主地图相同的原点 WGS84 `(109.41225, 24.31415)` 和米制局部投影。数据 © OpenStreetMap contributors，ODbL 1.0；许可见 `https://www.openstreetmap.org/copyright`。

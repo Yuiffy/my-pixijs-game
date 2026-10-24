@@ -6,6 +6,9 @@ const world = await loadTypescriptModule('src/components/liuzhou/world.ts');
 const people = await loadTypescriptModule('src/components/liuzhou/pedestrian-layout.ts');
 const pedestrian = await loadTypescriptModule('src/components/liuzhou/pedestrian.ts');
 const citizens = await loadTypescriptModule('src/components/liuzhou/citizens.ts');
+const market = await loadTypescriptModule('src/components/liuzhou/market.ts');
+const station = await loadTypescriptModule('src/components/liuzhou/station.ts');
+const { default: squareLayout } = await loadTypescriptModule('src/components/liuzhou/square-layout.json');
 
 test('all resident homes and evening meeting points are clear of carriageways and solid scenery', () => {
   for (const [id, home] of Object.entries({ ...people.NPC_HOMES, ...Object.fromEntries(Object.entries(people.NPC_MEETING_POINTS).map(([id, p]) => [`meeting-${id}`, p])) })) {
@@ -24,7 +27,8 @@ test('entire resident circuits follow mapped pavements or pedestrian streets, in
         const t = metres / (length || 1);
         const p = { x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t };
         assert.ok(pedestrian.pedestrianClear(p), `${id} leg ${i} enters a carriageway or solid at ${JSON.stringify(p)}`);
-        const onPublicPath = world.ROAD_SEGMENTS.some(s => world.distance(p, world.closestOnSegment(p, s.a, s.b)) <= s.road.width / 2 + 2.5);
+        const onPublicPath = world.ROAD_SEGMENTS.some(s => world.distance(p, world.closestOnSegment(p, s.a, s.b)) <= s.road.width / 2 + 2.5) || market.marketPavement(p) || station.stationPavement(p)
+          || squareLayout.surfaces.some(face => station.stationPolygonContains(p, face.points));
         assert.ok(onPublicPath, `${id} leaves the mapped pavement for an empty block`);
       }
     }

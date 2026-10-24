@@ -1,0 +1,22 @@
+{
+  "retrieved_date": "2026-10-24",
+  "release": "2026-10-21.0",
+  "bbox_wgs84": [
+    109.409,
+    24.305,
+    109.419,
+    24.319
+  ],
+  "file": "overture-buildings-core.geojson",
+  "bytes": 373352,
+  "sha256": "145664c466e1ba2bb93eaf74c8c036a51c044ffa2e21fc7e237765f1a4ff1ff9",
+  "feature_count": 648,
+  "height_count": 0,
+  "source_dataset_counts": {
+    "doi:10.5281/zenodo.8174931": 597,
+    "OpenStreetMap": 51
+  },
+  "official_cli": "overturemaps 1.0.2",
+  "source": "https://docs.overturemaps.org/getting-data/overturemaps-py/",
+  "status": "Downloaded geographic building polygons only; not integrated into the game."
+}

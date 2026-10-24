@@ -28,7 +28,7 @@ const report = { note: 'Regular terrain-version-2 saves seed inspection position
     page.on('console', m => { if (m.type() === 'error') report.errors.push(m.text()); });
     await page.goto(`${base}/game/liuzhou?test=1`);
     await page.getByRole('button', { name: '走进柳州 ↗' }).waitFor({ timeout: 90000 });
-    async function load(p, yaw, pitch = 0.08) {
+    const load = async (p, yaw, pitch = 0.08) => {
       const y = p.y ?? terrainHeight(p);
       await page.evaluate(({ p, y }) => { window.name = 'liuzhou-fixture:' + JSON.stringify({ version: 1, terrainVersion: 2, stage: 1, player: { ...p, y, angle: 0 }, money: 60 }); }, { p, y });
       await page.reload();
@@ -36,8 +36,11 @@ const report = { note: 'Regular terrain-version-2 saves seed inspection position
       await page.evaluate(() => window.liuzhouTest.manual(true));
       await page.getByRole('button', { name: '继续这趟旅行 ↗' }).click();
       await page.evaluate(({ yaw, pitch }) => Object.assign(window.liuzhouTest.rig, { yaw, pitch, zoom: 12, reset: true, dragged: performance.now() }), { yaw, pitch });
-    }
-    async function capture(name) {
+    };
+    const capture = async name => {
+      // Startup is intentionally progressive. Landmark/streetscape evidence
+      // must show the completed scene rather than an early worker snapshot.
+      await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).loading.complete, null, { timeout: 90000 });
       await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
       const file = path.join(output, `${name}.png`);
       const sanity = inspectPng(await page.screenshot({ path: file, fullPage: true, animations: 'disabled' }));
@@ -45,7 +48,7 @@ const report = { note: 'Regular terrain-version-2 saves seed inspection position
       const dom = await page.evaluate(() => ({ canvas: [...document.querySelectorAll('canvas')].map(c => ({ width: c.width, height: c.height, drawCalls: c.dataset.drawCalls })), width: innerWidth, scrollWidth: document.documentElement.scrollWidth }));
       assert.equal(dom.canvas.length, 1); assert.ok(dom.canvas[0].width > 0); assert.ok(dom.scrollWidth <= dom.width + 1);
       report.captures.push({ name, file, sanity, dom, state });
-    }
+    };
     await load({ x: 63.38, z: 72.96 }, 2.17, -0.08);
     await capture('01-north-underpass');
     const before = await page.evaluate(() => ({ ...window.liuzhouTest.game.player }));

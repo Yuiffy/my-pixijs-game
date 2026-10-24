@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { travel, model } = require('./liuzhou-pilot.cjs');
+const { mouseLook } = require('./liuzhou-mouse.cjs');
 const state = p => p.evaluate(() => JSON.parse(window.render_game_to_text()));
 async function close(p) { for (let i = 0; (await state(p)).dialogue && i < 10; i++) await p.keyboard.press('KeyE'); }
 async function look(p, target) {
@@ -13,7 +14,7 @@ async function look(p, target) {
     if (Math.abs(delta) <= 1) break;
     const dx = Math.max(-450, Math.min(450, delta));
     // Relative mouse events stay inside the test document's virtual capture.
-    await p.evaluate(movementX => document.dispatchEvent(new MouseEvent('mousemove', { movementX })), dx);
+    await mouseLook(p, dx);
     await p.waitForTimeout(40);
   }
   await p.evaluate(() => document.querySelector('canvas').dispatchEvent(new WheelEvent('wheel', { deltaY: -800, bubbles: true, cancelable: true })));

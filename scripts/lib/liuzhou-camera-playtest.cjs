@@ -1,5 +1,6 @@
 const assert = require('node:assert/strict');
 const { travel } = require('./liuzhou-pilot.cjs');
+const { mouseLook } = require('./liuzhou-mouse.cjs');
 const difference = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
 const state = p => p.evaluate(() => JSON.parse(window.render_game_to_text()));
 async function snapshot(p) {
@@ -10,7 +11,7 @@ async function snapshot(p) {
 }
 async function aim(p, yaw, pitch = 0.12) {
   const before = await state(p);
-  await p.evaluate(({ dx, dy }) => document.dispatchEvent(new MouseEvent('mousemove', { movementX: dx, movementY: dy })), { dx: (before.controls.yaw - yaw) / 0.003, dy: (pitch - before.controls.pitch) / 0.003 });
+  await mouseLook(p, (before.controls.yaw - yaw) / 0.003, (pitch - before.controls.pitch) / 0.003);
   await p.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 }
 function check(frame, yaw, pitch) {

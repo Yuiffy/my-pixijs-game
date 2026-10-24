@@ -1,5 +1,11 @@
 import type { CameraRig } from "./Scene";
 
+// At 100% sensitivity this is 44 degrees in a single mouse sample.
+// Cursor recentering/lock transitions can report a screen-sized displacement.
+// Drop those samples rather than turning the camera or replaying them later.
+// There is no frame-level cap: a fast turn made of normal samples stays intact.
+const MAX_LOCKED_MOUSE_DELTA = 256;
+
 type Host = {
   root: HTMLElement;
   rig: CameraRig;
@@ -7,6 +13,7 @@ type Host = {
   pause: () => void;
   clear: () => void;
   changed: () => void;
+  sensitivity?: () => number;
 };
 
 /** Mouse capture follows the same lifecycle as Night Rain's ActionControls. */
@@ -46,7 +53,10 @@ export class StreetControls {
     });
     on("pointerlockerror", () => this.failed());
     on("mousemove", event => {
-      if (this.locked && host.playing() && !this.altHeld) this.look(event.movementX, event.movementY);
+      if (!this.locked || !host.playing() || this.altHeld) return;
+      const { movementX: x, movementY: y } = event;
+      if (!Number.isFinite(x) || !Number.isFinite(y) || Math.abs(x) > MAX_LOCKED_MOUSE_DELTA || Math.abs(y) > MAX_LOCKED_MOUSE_DELTA) return;
+      this.look(x, y);
     });
     on("pointerdown", event => {
       if (host.root.contains(event.target as Node)) this.touch = event.pointerType === "touch";
@@ -68,9 +78,10 @@ export class StreetControls {
     });
   }
 
-  look(x: number, y: number) {
-    this.host.rig.yaw -= x * 0.003;
-    this.host.rig.pitch = Math.max(-0.65, Math.min(0.95, this.host.rig.pitch + y * 0.003));
+  look(x: number, y: number, mouse = true) {
+    const sensitivity = mouse ? this.host.sensitivity?.() ?? 1 : 1;
+    this.host.rig.yaw -= x * 0.003 * sensitivity;
+    this.host.rig.pitch = Math.max(-0.65, Math.min(0.95, this.host.rig.pitch + y * 0.003 * sensitivity));
     this.host.rig.dragged = performance.now();
   }
 
@@ -83,13 +94,21 @@ export class StreetControls {
     this.captureAfterRelease = false;
     this.host.root.focus({ preventScroll: true });
     if (!this.host.root.requestPointerLock) { this.failed(); return; }
-    this.requesting = true;
-    try {
-      const result = this.host.root.requestPointerLock() as Promise<void> | undefined;
-      result?.then(() => {
+    const request = async (raw: boolean): Promise<void> => {
+      this.requesting = true;
+      // Prefer raw relative motion without OS pointer acceleration where
+      // supported. Older implementations still use ordinary lock.
+      try {
+        await this.host.root.requestPointerLock(raw ? { unadjustedMovement: true } : undefined);
         if (this.disposed && document.pointerLockElement === this.host.root) document.exitPointerLock();
-      }).catch(() => { if (!this.disposed) this.failed(); });
-    } catch { this.failed(); }
+      } catch (error) {
+        if (this.disposed) return;
+        if (raw && error instanceof Error && error.name === "NotSupportedError" && this.host.playing() && !this.altHeld && !this.touch) {
+          await request(false);
+        } else this.failed();
+      }
+    };
+    request(true);
   }
 
   release() {

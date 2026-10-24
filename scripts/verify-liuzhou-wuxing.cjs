@@ -1,0 +1,112 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const ts = require('typescript');
+require.extensions['.ts'] = (module, file) => module._compile(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText, file);
+const { WUXING_RESIDENTS } = require('../src/components/liuzhou/wuxing.ts');
+const underground = require('../src/components/liuzhou/underground.ts');
+const layout = require('../src/components/liuzhou/wuxing-layout.json');
+const { terrainTriangleHeight } = require('../src/components/liuzhou/terrainMesh.ts');
+const { chromium } = require(require.resolve('playwright', { paths: [process.cwd(), path.join(require('node:os').homedir(), '.codex/skills/develop-web-game')] }));
+const { quietContext } = require('./lib/liuzhou-test-browser.cjs');
+const { inspectPng } = require('./lib/autochess-screenshot.cjs');
+const base = process.env.LIUZHOU_BASE_URL || 'http://127.0.0.1:4133';
+const out = process.env.LIUZHOU_QA_DIR || '.tmp/liuzhou-wuxing-dev';
+const report = { passed: false, errors: [], checks: [], captures: [] };
+(async () => {
+  assert.equal((await fetch(`${base}/game/liuzhou`, { signal: AbortSignal.timeout(60000) })).status, 200);
+  fs.mkdirSync(out, { recursive: true });
+  const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--mute-audio', '--disable-speech-api'] });
+  try {
+    const context = await quietContext(browser, { viewport: { width: 1440, height: 900 } });
+    await context.route(/https:\/\/(pagead2\.googlesyndication\.com|hm\.baidu\.com)\//, r => r.fulfill({ body: '' }));
+    const page = await context.newPage();
+    page.on('pageerror', e => report.errors.push(e.message));
+    page.on('console', message => { if (message.type() === 'error') report.errors.push(message.text()); });
+    await page.goto(`${base}/game/liuzhou?test=1`);
+    await page.waitForFunction(() => typeof window.render_game_to_text === 'function' && ![...document.querySelectorAll('button')].find(b => b.textContent.includes('自由巡览 · 快速飞行'))?.disabled, { timeout: 90000 });
+    await page.evaluate(() => window.liuzhouTest.manual(true));
+    await page.getByRole('button', { name: '自由巡览 · 快速飞行 ↗' }).click();
+    const capture = async name => {
+      await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).loading.complete, null, { timeout: 90000 });
+      await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+      const file = path.join(out, `${name}.png`); const sanity = inspectPng(await page.screenshot({ path: file, fullPage: true }));
+      const state = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
+      const dom = await page.evaluate(() => ({ canvas: [...document.querySelectorAll('canvas')].map(c => ({ width: c.width, height: c.height, calls: c.dataset.drawCalls })), width: innerWidth, scroll: document.documentElement.scrollWidth }));
+      assert.equal(dom.canvas.length, 1); assert.ok(dom.canvas[0].width > 0); assert.ok(dom.scroll <= dom.width + 1);
+      report.captures.push({ name, file, sanity, state, dom }); console.log(`captured ${name}`);
+    };
+    const view = async (yaw, pitch = 0.12, zoom = 12) => page.evaluate(({ yaw, pitch, zoom }) => Object.assign(window.liuzhouTest.rig, { yaw, pitch, zoom, reset: true, dragged: performance.now() }), { yaw, pitch, zoom });
+    const go = async (target, flying = false) => {
+      let previous = Infinity; let still = 0;
+      for (let chunk = 0; chunk < 100; chunk++) {
+        const gap = await page.evaluate(({ target, flying }) => {
+          const t = window.liuzhouTest; const p = t.game.player; const distance = Math.hypot(target.x - p.x, target.z - p.z);
+          t.rig.yaw = Math.atan2(target.x - p.x, target.z - p.z); t.rig.dragged = performance.now();
+          if (distance > (flying ? 4 : 0.13)) {
+            const fast = flying && distance > 90; const pace = flying ? fast ? 160 : 55 : 4.4;
+            t.move({ forward: 1, sprint: fast }, Math.max(1, Math.min(75, Math.floor((distance - (flying ? 3 : 0.06)) / pace * 60))));
+          }
+          return distance;
+        }, { target, flying });
+        if (gap < (flying ? 5 : 0.18)) return;
+        still = Math.abs(previous - gap) < 0.015 ? still + 1 : 0; previous = gap;
+        assert.ok(still < 4, `movement stuck toward ${JSON.stringify(target)} at gap ${gap}`);
+      }
+      assert.fail(`route did not reach ${JSON.stringify(target)}`);
+    };
+    const route = async points => { for (const [x, z] of points) await go({ x, z }); };
+    const shopper = WUXING_RESIDENTS[0];
+    const arrival = { x: shopper.x - 0.6, z: shopper.z + 2.1 };
+    await page.keyboard.press('f');
+    await page.evaluate(() => window.liuzhouTest.move({ jump: true }, 140));
+    await go(arrival, true);
+    await page.evaluate(() => window.liuzhouTest.move({}, 120));
+    await view(2.8, 0.8, 85); await capture('01-shopping-street-overview');
+    await page.evaluate(() => window.liuzhouTest.move({ descend: true }, 1000));
+    await page.keyboard.press('f'); await go(arrival);
+    const landed = await page.evaluate(() => ({ ...window.liuzhouTest.game.player }));
+    assert.ok(Math.abs(landed.y - terrainTriangleHeight(landed)) < 0.25);
+    await view(-0.2, 0.14, 9); await capture('02-jiefang-promenade');
+    await page.keyboard.press('e');
+    assert.equal(await page.evaluate(() => window.liuzhouTest.game.dialogue?.name), shopper.name);
+    for (let i = 0; i < 6 && await page.evaluate(() => !!window.liuzhouTest.game.dialogue); i++) await page.keyboard.press('e');
+    await go({ x: -434.981, z: -115.94 }); await go({ x: -451.113, z: -190.324 });
+    await route(layout.walkRoutes['205513960'].slice(0, 6));
+    await view(0.67, 0.15, 10); await capture('03-curved-wuxing-fronts');
+    await route(layout.walkRoutes['205513960'].slice(6));
+    await route(layout.walkRoutes['205513960'].slice().reverse());
+    await go({ x: -434.981, z: -115.94 }); await go({ x: -420.3, z: -41.2 });
+    await route(layout.walkRoutes['1351248947'].slice().reverse());
+    await view(0.1, 0.1, 8); await capture('04-bookstore-exterior');
+    await route(layout.walkRoutes['1351248947']);
+    await go({ x: -409.474, z: -13.759 });
+    await route(layout.walkRoutes['196166794'].slice(0, 3).reverse());
+    await view(Math.PI, 0.16, 12); await capture('05-south-shopping-blocks');
+    await route(layout.walkRoutes['196166794'].slice(0, 4));
+    const reader = WUXING_RESIDENTS[1]; await go({ x: reader.x + 1.7, z: reader.z });
+    await view(1.4, 0.15, 9); await capture('06-zhongshan-junction');
+    await page.keyboard.press('e'); assert.equal(await page.evaluate(() => window.liuzhouTest.game.dialogue?.name), reader.name);
+    for (let i = 0; i < 6 && await page.evaluate(() => !!window.liuzhouTest.game.dialogue); i++) await page.keyboard.press('e');
+    await go({ x: -420.3, z: -41.2 });
+    await route(layout.walkRoutes['205639719'].slice(0, -1));
+    await view(-Math.PI / 2, 0.16, 10); await capture('07-zhongshan-west-stair');
+    const entrance = underground.UNDERGROUND_ENTRANCES.find(e => e.id === '1275168876');
+    await route(entrance.points); await go({ x: -590, z: -37.6 });
+    const lower = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
+    assert.equal(lower.underground, 'concourse');
+    await view(-Math.PI / 2, 0.1, 6); await capture('08-connected-underground');
+    await go({ x: -582.491, z: -37.415 }); await route(entrance.points.slice().reverse());
+    await go({ x: -573, z: -9 });
+    const end = await page.evaluate(() => ({ ...window.liuzhouTest.game.player }));
+    assert.equal(await page.evaluate(() => JSON.parse(window.render_game_to_text()).underground), null);
+    assert.ok(!await page.evaluate(() => window.liuzhouTest.game.flight.active));
+    report.checks.push({ name: 'normal walking across Jiefang, curved Wuxing, bookstore and Zhongshan, underground down/up, roadside conversation', landed, lower: lower.player, end });
+    await page.reload(); await page.waitForFunction(() => typeof window.render_game_to_text === 'function' && ![...document.querySelectorAll('button')].find(b => b.textContent.includes('自由巡览 · 快速飞行'))?.disabled, { timeout: 90000 });
+    await page.evaluate(() => window.liuzhouTest.manual(true)); await page.getByRole('button', { name: '自由巡览 · 快速飞行 ↗' }).click();
+    const restored = await page.evaluate(() => ({ ...window.liuzhouTest.game.player }));
+    assert.ok(Math.hypot(restored.x - end.x, restored.z - end.z) < 0.3); assert.ok(Math.abs(restored.y - end.y) < 0.3);
+    await page.setViewportSize({ width: 390, height: 844 }); await capture('09-mobile-restored');
+    assert.deepEqual(report.errors, []); report.passed = true;
+  } finally { await browser.close(); fs.writeFileSync(path.join(out, 'report.json'), JSON.stringify(report, null, 2)); }
+})().catch(error => { console.error(error); process.exitCode = 1; });

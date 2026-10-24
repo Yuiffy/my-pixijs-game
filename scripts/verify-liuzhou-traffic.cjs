@@ -5,6 +5,7 @@ const path = require('node:path');
 const { chromium } = require(require.resolve('playwright', { paths: [process.cwd(), path.join(require('node:os').homedir(), '.codex/skills/develop-web-game')] }));
 const { inspectPng } = require('./lib/autochess-screenshot.cjs');
 const { travel, model } = require('./lib/liuzhou-pilot.cjs');
+const { mouseLook } = require('./lib/liuzhou-mouse.cjs');
 const base = process.env.LIUZHOU_BASE_URL || 'http://127.0.0.1:4130';
 const output = process.env.LIUZHOU_QA_DIR || '.tmp/liuzhou-traffic';
 const report = { pointerLockMode: 'browser-only virtual capture; native system pointer lock disabled in automated tests', errors: [], checks: [], captures: [] };
@@ -21,7 +22,7 @@ async function lookAt(p, point) {
   const s = await state(p);const yaw = await p.evaluate(()=>window.liuzhouTest.rig.yaw);
   const wanted=Math.atan2(point.x-s.player.x,point.z-s.player.z);
   const delta=-Math.atan2(Math.sin(wanted-yaw),Math.cos(wanted-yaw))/0.003;
-  await p.evaluate(dx=>document.dispatchEvent(new MouseEvent('mousemove',{movementX:dx})),delta);
+  await mouseLook(p, delta);
   await p.waitForTimeout(250);
 }
 (async()=>{

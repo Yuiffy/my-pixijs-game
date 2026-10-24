@@ -1,8 +1,13 @@
 import map from "./map.json";
+import mappedFootprints from "./building-footprints.json";
 import { DONGMEN } from "./dongmen";
-import { createUrbanFabric, urbanPublicGround } from "./urban";
+import { createUrbanFabric, pointInUrbanPolygon, urbanPublicGround } from "./urban";
 import { CITIZEN_WALKS, NPC_HOMES, NPC_MEETING_POINTS } from "./pedestrian-layout";
 import { terrainHeight, inMappedRiver } from "./terrain";
+import { CITY_BUILDINGS, CITY_DISTRICTS, CITY_ROAD_SEGMENTS } from "./city";
+import { WUXING_BUILDINGS, WUXING_SOURCE_IDS } from "./wuxing";
+import { CENTRAL_BUILDINGS, CENTRAL_SOURCE_IDS } from "./central";
+import { riversideReserved } from "./riverside";
 
 export type Point = { x: number; z: number };
 export type Road = {
@@ -22,11 +27,19 @@ export type Building = Point & {
   color: string;
   real: boolean;
   footprint?: Point[];
+  heightSource?: "estimated";
+  sourceId?: string;
+  baseY?: number;
+  foundationDepth?: number;
 };
 export const ORIGIN = map.origin;
 export const BOUNDS = { minX: -440, maxX: 550, minZ: -400, maxZ: 1100 };
 export const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.z - b.z);
 export function buildingContains(p: Point, b: Building, margin = 0) {
+  // A conservative broad phase avoids walking every edge of distant city
+  // footprints for each resident's small movement, camera ray and save check.
+  const extent = (b.w + b.d) / 2 + Math.max(0, margin);
+  if (Math.abs(p.x - b.x) > extent || Math.abs(p.z - b.z) > extent) return false;
   if (!b.footprint) {
     const dx = p.x - b.x; const dz = p.z - b.z;
     return Math.abs(dx * Math.cos(b.angle) - dz * Math.sin(b.angle)) < b.w / 2 + margin
@@ -77,7 +90,7 @@ export const ROAD_SEGMENTS = ROADS.flatMap((r) => r.points.slice(1).map((b, i) =
 );
 export function nearestRoad(p: Point) {
   let best = { distance: Infinity, point: p, name: "东门街区" };
-  ROAD_SEGMENTS.forEach((s) => {
+  (canTraverse(p) ? ROAD_SEGMENTS : CITY_ROAD_SEGMENTS).forEach((s) => {
     const point = closestOnSegment(p, s.a, s.b);
     const d = distance(p, point);
     if (d < best.distance) best = { distance: d, point, name: s.road.name };
@@ -128,7 +141,7 @@ const PALETTE = [
   "#bcc3be",
   "#d6d3c5",
 ];
-const buildings: Building[] = [];
+const buildings: Building[] = [...WUXING_BUILDINGS, ...CENTRAL_BUILDINGS];
 // Fit the imported footprint's orientation instead of its axis-aligned box,
 // which can incorrectly cover the adjacent street for a diagonal building.
 export function footprintBox(points: Point[]) {
@@ -151,7 +164,7 @@ export function footprintBox(points: Point[]) {
   return best;
 }
 map.features
-  .filter((f) => f.building)
+  .filter((f) => f.building && !WUXING_SOURCE_IDS.has(f.id) && !CENTRAL_SOURCE_IDS.has(f.id))
   .forEach((f, i) => {
     const { x, z, w, d, angle } = footprintBox(f.points.map((p) => ({ x: p[0], z: p[1] })));
     if (canTraverse({ x, z }) && w < 130 && d < 130) buildings.push({
@@ -167,6 +180,45 @@ map.features
         footprint: f.points.slice(0, -1).map((p) => ({ x: p[0], z: p[1] })),
       });
   });
+export const IMPORTED_BUILDING_STATS = { supplied: mappedFootprints.features.length, accepted: 0, rejected: { outside: 0, water: 0, corridor: 0, overlap: 0, publicSpace: 0 } };
+const reservedPaths = Object.values(CITIZEN_WALKS).map(points => [...points, points[0]]);
+const reservedPoints = [
+  { ...DONGMEN, radius: 52 }, { x: 28, z: -34, radius: 17 },
+  { x: -170, z: 117, radius: 16 }, { x: -158, z: 126, radius: 11 },
+  { x: 74, z: 25, radius: 15 }, { x: 247, z: -166, radius: 12 },
+  ...[...Object.values(NPC_HOMES), ...Object.values(NPC_MEETING_POINTS), { x: -207, z: 8 }, { x: 45, z: 5 }, { x: 249, z: -181 }, { x: 230, z: 622 }].map(p => ({ ...p, radius: 5 })),
+];
+// Keep the downloaded outline intact. Conflicting ML roofprints are rejected,
+// never shifted into neighbouring streets or passed off as surveyed heights.
+for (const feature of mappedFootprints.features) {
+  const footprint = feature.points.map(p => ({ x: p[0], z: p[1] }));
+  const box = footprintBox([...footprint, footprint[0]]);
+  const probes = [...footprint, { x: box.x, z: box.z }];
+  for (let i = 0; i < footprint.length; i++) {
+    const a = footprint[i]; const b = footprint[(i + 1) % footprint.length]; const length = distance(a, b);
+    for (let n = 1; n < length; n += 2) probes.push({ x: a.x + ((b.x - a.x) * n) / length, z: a.z + ((b.z - a.z) * n) / length });
+  }
+  const reject = (reason: keyof typeof IMPORTED_BUILDING_STATS.rejected) => { IMPORTED_BUILDING_STATS.rejected[reason]++; };
+  if (box.w < 2 || box.d < 2 || box.w > 130 || box.d > 130 || !probes.every(p => p.x > BOUNDS.minX && p.x < BOUNDS.maxX && p.z > BOUNDS.minZ && p.z < BOUNDS.maxZ)) { reject("outside"); continue; }
+  if (probes.some(inRiver)) { reject("water"); continue; }
+  if (probes.some(p => urbanPublicGround(p) || reservedPoints.some(q => distance(p, q) < q.radius))) { reject("publicSpace"); continue; }
+  if (probes.some(p => ROAD_SEGMENTS.some(s => distance(p, closestOnSegment(p, s.a, s.b)) < s.road.width / 2 + 2)
+    || reservedPaths.some(path => path.slice(1).some((b, i) => distance(p, closestOnSegment(p, path[i], b)) < 3.5)))
+    || ROAD_SEGMENTS.some(s => pointInUrbanPolygon(s.a, footprint) || pointInUrbanPolygon(s.b, footprint))) { reject("corridor"); continue; }
+  if (buildings.some(b => probes.some(p => buildingContains(p, b, 1)) || b.footprint?.some(p => pointInUrbanPolygon(p, footprint)))) { reject("overlap"); continue; }
+  const seed = feature.id.split("").reduce((hash, c) => (hash * 31 + c.charCodeAt(0)) % 4294967296, 0);
+  buildings.push({
+    ...box,
+    id: `overture-${feature.id}`,
+    sourceId: feature.id,
+    h: Math.min(box.w, box.d) < 7 ? 6.2 : 9.3 + (seed % 5) * 3.1,
+    footprint,
+    color: PALETTE[seed % PALETTE.length],
+    real: true,
+    heightSource: "estimated",
+  });
+  IMPORTED_BUILDING_STATS.accepted++;
+}
 // Infill is explicitly fictional: OSM has sparse footprints in the old town.
 ROAD_SEGMENTS.filter((s) => !s.road.bridge && !s.road.foot).forEach((s, si) => {
   const length = distance(s.a, s.b);
@@ -180,7 +232,7 @@ ROAD_SEGMENTS.filter((s) => !s.road.bridge && !s.road.foot).forEach((s, si) => {
       const w = 15 + (si % 3);
       const d = 15;
       if (
-        !canTraverse(p) || urbanPublicGround(p) ||
+        !canTraverse(p) || urbanPublicGround(p) || riversideReserved(p, Math.hypot(w, d) / 2 + 0.5) ||
         distance(p, DONGMEN) < 75 ||
         nearestRoad(p).distance < 17
       ) continue;
@@ -205,9 +257,11 @@ canTraverse,
   protectedPaths: Object.values(CITIZEN_WALKS).map(points => [...points, points[0]]),
   protectedPoints: [...Object.values(NPC_HOMES), ...Object.values(NPC_MEETING_POINTS), { x: -207, z: 8 }, { x: 45, z: 5 }, { x: 249, z: -181 }],
 });
-export const BUILDINGS = [...buildings, ...URBAN_FABRIC.buildings, ...URBAN_FABRIC.walls];
-export const buildingElevation = (b: Building) => terrainHeight(b);
+export const BUILDINGS = [...buildings, ...URBAN_FABRIC.buildings, ...URBAN_FABRIC.walls, ...CITY_BUILDINGS];
+export const buildingElevation = (b: Building) => b.baseY ?? terrainHeight(b);
+export const buildingFoundationDepth = (b: Building) => b.foundationDepth ?? 3;
 export const LANDMARKS = [
+  ...CITY_DISTRICTS,
   {
     id: "gate",
     name: "东门城楼",

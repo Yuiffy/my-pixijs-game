@@ -13,6 +13,7 @@ the date a placeholder route was created as a launch date.
 | Golden Needle / 不许手抖 | 2026-10-02, first locally verified playable implementation and catalog entry; deployment pending | 2026-10-03, complete keyboard targeting and hold controls; deployment pending |
 | Autochess | 2026-01-10, first confirmed demos entry (`841ebb3`); earlier route was a placeholder | `AUTOCHESS_RELEASE_DATE` in the game's version file |
 | Night Rain | 2026-09-26 (`78037fb`) | 2026-09-26 (`9fde57e`) |
+| 柳州GTA | 2026-10-23, first playable Liuzhou catalog entry | 2026-10-24, saved city expansion, progressive loading, movement fixes and Wuxing west fronts; renamed 柳州GTA |
 | One More | 2026-09-06 (`07a82f4`) | 2026-10-03, independent key/touch holds, keyboard combat buttons and native menu activation; deployment pending |
 | Hush Live | 2026-09-22 (`377b186`) | 2026-09-26 (`8ff8fbb`) |
 | RESET / 开蹬！ | 2026-09-26 (`78bde60`), first playable version included in this publication | 2026-10-03, damaged-save protection, previous-position recovery and retryable storage failures; deployment pending |

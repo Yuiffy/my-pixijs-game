@@ -1,13 +1,11 @@
 const assert = require('node:assert/strict');
 const { quietContext } = require('./liuzhou-test-browser.cjs');
 const { travel } = require('./liuzhou-pilot.cjs');
+const { mouseLook } = require('./liuzhou-mouse.cjs');
 const state = p => p.evaluate(() => JSON.parse(window.render_game_to_text()));
 async function look(p, yaw, pitch = 0.18) {
   const s = await state(p);
-  await p.evaluate(({ x, y }) => document.dispatchEvent(new MouseEvent('mousemove', { movementX: x, movementY: y })), {
-    x: -Math.atan2(Math.sin(yaw - s.controls.yaw), Math.cos(yaw - s.controls.yaw)) / 0.003,
-    y: (pitch - s.controls.pitch) / 0.003,
-  });
+  await mouseLook(p, -Math.atan2(Math.sin(yaw - s.controls.yaw), Math.cos(yaw - s.controls.yaw)) / 0.003, (pitch - s.controls.pitch) / 0.003);
   await p.waitForTimeout(350);
 }
 async function pushToward(p, target, frames = 180, jump = false) {

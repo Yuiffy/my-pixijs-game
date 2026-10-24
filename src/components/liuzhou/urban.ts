@@ -1,5 +1,6 @@
 import landuse from "./urban-landuse.json";
 import type { Building, Point, Road } from "./world";
+import { riversideReserved } from "./riverside";
 
 export type UrbanParcel = {
   id: string;
@@ -67,7 +68,7 @@ export const URBAN_PARCELS: UrbanParcel[] = landuse.features.flatMap(f => {
             : f.place === "square" ? "square" : null;
   return kind ? [{ id: f.id, name: f.name || "街区院落", kind, points: f.points.slice(0, -1).map(p => ({ x: p[0], z: p[1] })) }] : [];
 });
-export const urbanPublicGround = (p: Point) => URBAN_PARCELS.some(parcel => ["park", "square", "religious"].includes(parcel.kind) && pointInUrbanPolygon(p, parcel.points));
+export const urbanPublicGround = (p: Point) => riversideReserved(p) || URBAN_PARCELS.some(parcel => ["park", "square", "religious"].includes(parcel.kind) && pointInUrbanPolygon(p, parcel.points));
 
 /**
  * OSM supplies the parcel uses and boundaries. Unmapped building volumes and
@@ -94,7 +95,7 @@ export function createUrbanFabric(context: UrbanContext): UrbanFabric {
   const protectedAt = (p: Point, margin = 0) => protectedPoints.some(q => distance(p, q) < q.radius + margin)
     || protectedSegments.some(s => segmentDistance(p, s.a, s.b) < 3.5 + margin);
   const roadAt = (p: Point, margin = 0) => segments.some(s => segmentDistance(p, s.a, s.b) < s.road.width / 2 + (s.road.bridge ? 7 : s.road.foot ? 4 : 6) + margin);
-  const groundClear = (p: Point, margin = 0) => inBounds(p, margin) && context.canTraverse(p) && !roadAt(p, margin) && !protectedAt(p, margin);
+  const groundClear = (p: Point, margin = 0) => inBounds(p, margin) && context.canTraverse(p) && !roadAt(p, margin) && !protectedAt(p, margin) && !riversideReserved(p, margin);
   const parcelAt = (p: Point) => URBAN_PARCELS.find(parcel => pointInUrbanPolygon(p, parcel.points));
   const nearestStreet = (p: Point) => segments.filter(s => !s.road.bridge).reduce((best, s) => {
     const d = segmentDistance(p, s.a, s.b);
@@ -112,7 +113,9 @@ export function createUrbanFabric(context: UrbanContext): UrbanFabric {
     const color = parcel.kind === "park" ? "#8eaa82" : parcel.kind === "residential" ? "#a7ad94"
       : parcel.kind === "school" ? "#b9baa7" : parcel.kind === "square" ? "#c5bfa9"
         : parcel.kind === "parking" ? "#929a8d" : "#b8b5a2";
-    result.courtyards.push({ id: `parcel-${parcel.id}`, points: parcel.points, color });
+    // Retail boundaries describe occupied commercial land, not an empty plaza.
+    // The dedicated source-clipped street surface covers the Wuxing passages.
+    if (parcel.id !== "1524324821") result.courtyards.push({ id: `parcel-${parcel.id}`, points: parcel.points, color });
     if (PUBLIC.has(parcel.kind) || parcel.kind === "parking" || parcel.kind === "market") continue;
     parcel.points.forEach((a, i) => {
       const b = parcel.points[(i + 1) % parcel.points.length]; const n = Math.max(1, Math.ceil(distance(a, b) / 12));

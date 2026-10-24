@@ -2,11 +2,23 @@ import type RAPIER from "@dimforge/rapier3d-compat";
 import { advanceLocomotion, createLocomotion, type Locomotion } from "./actorMotion";
 import { createTraffic, stepTraffic, type TrafficCar } from "./traffic";
 import { terrainHeight } from "./terrain";
-import { BRIDGE_SECTIONS, BRIDGE_RAILS, bridgeSurface, deckVertices, restoreBridgePosition } from "./bridges";
+import { terrainChunks, terrainSurface, terrainTriangleHeight } from "./terrainMesh";
+import { undergroundFloor, undergroundFree, undergroundLevel, undergroundLocation, undergroundStairSupport, undergroundSurface, UNDERGROUND_STEPS } from "./underground";
+import { CITY_BOUNDS, createFlight, FLIGHT_BOOST, FLIGHT_CEILING, FLIGHT_SPEED, FLIGHT_INSPECT_SPEED, FLIGHT_INSPECT_VERTICAL, inCity, inCore, type Flight } from "./exploration";
+import { BRIDGE_SECTIONS, BRIDGE_RAILS, bridgeSurface, bridgeSupportSolid, deckVertices, restoreBridgePosition } from "./bridges";
+import { GUANGYA_SUPPORTS, previousGuangyaDeck } from "./guangya";
 import { NPC_HOMES, NPC_MEETING_POINTS } from "./pedestrian-layout";
+import { MARKET_RESIDENTS, marketProjection } from "./market";
+import { STATION_PREFIX, STATION_RESIDENTS, stationRoofHeight, stationRoofSolid, stationRoofSurface } from "./station";
+import { ESHAN_RESIDENTS } from "./eshan";
+import { SQUARE_RESIDENTS } from "./square";
+import { XIHUAN_RESIDENTS } from "./xihuan";
+import { WUXING_RESIDENTS } from "./wuxing";
+import { eshanSurfaceHeight } from "./eshanSurface";
+import { pedestrianHeight } from "./pedestrian";
 import { constrainToBridge } from "./world";
 import { DONGMEN, GATE_GROUND, GATE_SOLIDS, restoreGatePosition } from "./dongmen";
-import { restoreStreetPosition, STREET_SOLIDS } from "./street";
+import { restoreStreetPosition, streetSupportHeight, STREET_SOLIDS } from "./street";
 import { citizenLine, createCitizenRoutine, restoreCitizens, stepCitizens, type CitizenRoutine } from "./citizens";
 import { BASKET_PRICE, createStreetLife, DELIVERY_PAY, deliveryWarm, finiteCounter, loadStreetLife, NEIGHBOR_ORDERS, WARM_TIP, warmSeconds, type StreetLife } from "./life";
 import { createEvening, eveningFrame, eveningTarget, loadEvening, RECORD_SECONDS, recordingStatus, SHOW_SECONDS, SOUND_SPOTS, stepEvening, type Evening } from "./evening";
@@ -14,6 +26,7 @@ import {
   BUILDINGS,
   buildingContains,
   buildingElevation,
+  buildingFoundationDepth,
   inRiver,
   canTraverse,
   distance,
@@ -81,6 +94,8 @@ export type Input = {
   sprint: boolean;
   brake: boolean;
   jump: boolean;
+  descend?: boolean;
+  precise?: boolean;
 };
 export type Dialogue = {
   name: string;
@@ -96,6 +111,8 @@ export type Game = {
   phase: "title" | "playing" | "paused";
   player: Actor;
   locomotion: Locomotion;
+  flight: Flight;
+  exploration: boolean;
   character: Character;
   vehicle: string | null;
   vehicles: Vehicle[];
@@ -178,7 +195,7 @@ const npc = (
   id,
   name,
   ...(NPC_HOMES[id] || { x, z }),
-  y: terrainHeight(NPC_HOMES[id] || { x, z }),
+  y: pedestrianHeight(NPC_HOMES[id] || { x, z }),
   angle: Math.PI,
   speed: 0,
   home: { ...(NPC_HOMES[id] || { x, z }) },
@@ -192,6 +209,8 @@ export function createGame(): Game {
     character: "sui",
     player: { x: 31, z: -10, y: terrainHeight({ x: 31, z: -10 }), angle: Math.PI, speed: 0 },
     locomotion: createLocomotion(),
+    flight: createFlight(),
+    exploration: false,
     vehicle: null,
     traffic: createTraffic(),
     vehicles: [
@@ -277,6 +296,12 @@ export function createGame(): Game {
         -55,
         "前面是罗池路。找粉店？闻着香味走。",
       ),
+      ...MARKET_RESIDENTS.map(n => ({ ...npc(n.id, n.name, n.x, n.z, n.line), angle: marketProjection(n).across > 0 ? Math.PI : 0 })),
+      ...STATION_RESIDENTS.map(n => ({ ...npc(n.id, n.name, n.x, n.z, n.line), angle: 1 })),
+      ...ESHAN_RESIDENTS.map(n => ({ ...npc(n.id, n.name, n.x, n.z, n.line), angle: 1.5 })),
+      ...SQUARE_RESIDENTS.map(n => ({ ...npc(n.id, n.name, n.x, n.z, n.line), angle: 0.4 })),
+      ...XIHUAN_RESIDENTS.map(n => ({ ...npc(n.id, n.name, n.x, n.z, n.line), angle: 0.8 })),
+      ...WUXING_RESIDENTS.map(n => ({ ...npc(n.id, n.name, n.x, n.z, n.line), angle: 0.4 })),
     ],
     stage: 0,
     dialogue: null,
@@ -308,6 +333,7 @@ export function nearestInteraction(g: Game): {
 } | null {
   if (g.evening.watching) return { kind: "screen", id: "screen", label: g.evening.elapsed >= SHOW_SECONDS ? "回到街上" : "暂离放映 · 下次接着看", distance: 0 };
   if (g.evening.recording) return { kind: "sample", id: g.evening.recording.id, label: "停止这次采样", distance: 0 };
+  if (g.flight.active) return null;
   if (g.vehicle) return { kind: "vehicle", id: g.vehicle, label: "下车", distance: 0 };
   const options = [
     ...(g.stage === 6 && g.evening.started ? SOUND_SPOTS.filter(s => !g.evening.samples.includes(s.id)).map(s => ({ kind: "sample" as const, id: s.id, label: `采样 · ${s.name}`, distance: distance(g.player, s) })) : []),
@@ -642,6 +668,9 @@ export function saveGame(g: Game) {
       JSON.stringify({
         version: 1,
         terrainVersion: 2,
+        bridgeVersion: 2,
+        exploration: g.exploration,
+        flight: g.flight.active,
         stage: g.stage,
         character: g.character,
         player: g.player,
@@ -667,21 +696,37 @@ function arrangeParty(g: Game) {
   Object.assign(nagisa, NPC_MEETING_POINTS.nagisa, { y: terrainHeight(NPC_MEETING_POINTS.nagisa), angle: 0.4 });
   Object.assign(nana, NPC_MEETING_POINTS.nana, { y: terrainHeight(NPC_MEETING_POINTS.nana), angle: -0.4 });
 }
-function restoreWorldPosition<T extends Point & { y: number }>(p: T, legacy: boolean, vehicle = false): T {
+function restoreWorldPosition<T extends Point & { y: number }>(p: T, legacy: boolean, vehicle = false, previousBridge = false): T {
   const originalY = p.y;
+  if (!vehicle && !legacy && undergroundLocation(p)) {
+    const support = undergroundStairSupport(p) ?? undergroundLevel(p);
+    if (originalY >= support - 0.25 && undergroundFree({ ...p, y: originalY + 1.4 })) return { ...p, y: originalY };
+  }
+  if (!vehicle && !legacy && !inRiver(p)) {
+    const parkGround = eshanSurfaceHeight(p);
+    if (parkGround !== undefined && Math.abs(originalY - parkGround) < 0.6) return { ...p, y: parkGround };
+    const streetSupport = streetSupportHeight(p);
+    if (streetSupport !== undefined) return { ...p, y: streetSupport };
+    const stationRoof = stationRoofHeight(p);
+    if (stationRoof !== undefined && Math.abs(originalY - stationRoof) < 0.6) return { ...p, y: stationRoof };
+    const roof = BUILDINGS.find(b => !b.id.startsWith(STATION_PREFIX) && buildingContains(p, b, -0.1) && Math.abs(originalY - buildingElevation(b) - b.h) < 0.6);
+    if (roof) return { ...p, y: buildingElevation(roof) + roof.h };
+  }
   let result = { ...p, ...restoreStreetPosition(restoreGatePosition(p, vehicle), vehicle ? 1.15 : 0.42) };
   const deck = bridgeSurface(result, -0.2);
   if (deck) {
-    const bridge = restoreBridgePosition({ ...result, y: originalY }, legacy);
+    const migrateGuangya = previousBridge && previousGuangyaDeck({ ...result, y: originalY });
+    const bridge = restoreBridgePosition({ ...result, y: migrateGuangya ? deck.y : originalY }, legacy);
     if (bridge.y === deck.y && bridge.y > terrainHeight(bridge) + 0.5) result = { ...result, y: bridge.y };
   }
   const radius = vehicle ? 1.4 : 0.6;
-  if (BUILDINGS.some(b => buildingContains(result, b, radius))) {
+  const occupied = (at: Point & { y: number }) => bridgeSupportSolid({ ...at, y: at.y + 1 }, radius) || BUILDINGS.some(b => buildingContains(at, b, radius) && (b.baseY === undefined || at.y + 1.9 > b.baseY - 3));
+  if (occupied(result)) {
     for (let r = 2; r <= 70; r += 2) {
       let found = false;
       for (let i = 0; i < 32; i++) {
         const candidate = { x: p.x + Math.sin((i * Math.PI) / 16) * r, z: p.z + Math.cos((i * Math.PI) / 16) * r };
-        if (!canTraverse(candidate) || inRiver(candidate) || BUILDINGS.some(b => buildingContains(candidate, b, radius))) continue;
+        if (!inCity(candidate) || inRiver(candidate) || occupied({ ...candidate, y: terrainHeight(candidate) })) continue;
         result = { ...result, ...candidate, y: terrainHeight(candidate) }; found = true; break;
       }
       if (found) break;
@@ -706,7 +751,7 @@ export function loadGame(g: Game) {
       Number.isFinite(s.player.x) &&
       Number.isFinite(s.player.z) &&
       Number.isFinite(s.player.angle) &&
-      canTraverse(s.player)
+      (canTraverse(s.player) || (inCity(s.player) && (!inRiver(s.player) || s.flight === true || bridgeSurface(s.player))))
     ) Object.assign(g.player, {
         x: s.player.x,
         z: s.player.z,
@@ -714,7 +759,14 @@ export function loadGame(g: Game) {
         speed: 0,
         y: s.terrainVersion === 2 && Number.isFinite(s.player.y) ? s.player.y : terrainHeight(s.player) + (Number.isFinite(s.player.y) ? s.player.y : 0),
       });
-    Object.assign(g.player, restoreWorldPosition(g.player, s.terrainVersion !== 2));
+    g.exploration = s.exploration === true;
+    if (s.flight === true && inCity(g.player) && Number.isFinite(s.player?.y) && (s.player.y >= (eshanSurfaceHeight(g.player) ?? terrainHeight(g.player)) || undergroundFree({ ...g.player, y: s.player.y + 1 })) && s.player.y <= FLIGHT_CEILING) {
+      g.flight.active = true;
+      g.player.y = s.player.y;
+      for (const b of BUILDINGS) if (g.player.y > buildingElevation(b) - buildingFoundationDepth(b) && buildingContains(g.player, b, 0.6)) g.player.y = Math.max(g.player.y, buildingElevation(b) + b.h + 0.1);
+      const roof = stationRoofHeight(g.player);
+      if (roof !== undefined && stationRoofSolid(g.player, 0)) g.player.y = roof + 0.1;
+    } else Object.assign(g.player, restoreWorldPosition(g.player, s.terrainVersion !== 2, false, s.bridgeVersion !== 2));
     if (Array.isArray(s.vehicles)) for (const v of g.vehicles) {
         const saved = s.vehicles.find((item: Vehicle) => item.id === v.id);
         if (
@@ -777,25 +829,30 @@ export async function createPhysics(g: Game): Promise<Physics> {
   if (!ready) { ready = R.init(); cache.set(R, ready); }
   await ready;
   const world = new R.World({ x: 0, y: -22, z: 0 });
-  const groundVertices: number[] = []; const groundTriangles: number[] = [];
-  const minX = -660; const minZ = -560; const cols = 137; const rows = 177; const spacing = 10;
-  for (let z = 0; z < rows; z++) for (let x = 0; x < cols; x++) {
-    const p = { x: minX + x * spacing, z: minZ + z * spacing };
-    groundVertices.push(p.x, terrainHeight(p), p.z);
-    if (x < cols - 1 && z < rows - 1) { const a = z * cols + x; groundTriangles.push(a, a + cols, a + 1, a + 1, a + cols, a + cols + 1); }
+  for (const chunk of terrainChunks()) {
+    if (chunk.maxX < CITY_BOUNDS.minX || chunk.minX > CITY_BOUNDS.maxX || chunk.maxZ < CITY_BOUNDS.minZ || chunk.minZ > CITY_BOUNDS.maxZ) continue;
+    const ground = terrainSurface(chunk, chunk.step, rings => ShapeUtils.triangulateShape(rings[0].map(p => new Vector2(p[0], p[1])), rings.slice(1).map(ring => ring.map(p => new Vector2(p[0], p[1])))));
+    world.createCollider(R.ColliderDesc.trimesh(new Float32Array(ground.positions), new Uint32Array(ground.indices)));
   }
-  world.createCollider(R.ColliderDesc.trimesh(new Float32Array(groundVertices), new Uint32Array(groundTriangles)));
   for (const section of BRIDGE_SECTIONS) {
     const slab = R.ColliderDesc.convexHull(new Float32Array(deckVertices(section)));
     if (slab) world.createCollider(slab);
   }
   for (const rail of BRIDGE_RAILS) world.createCollider(R.ColliderDesc.cuboid(...rail.size.map(n => n / 2) as [number, number, number])
     .setTranslation(...rail.at).setRotation(new Quaternion().setFromEuler(new Euler(rail.pitch, rail.yaw, 0, "YXZ"))));
+  for (const support of GUANGYA_SUPPORTS) world.createCollider(R.ColliderDesc.cuboid(...support.size.map(n => n / 2) as [number, number, number])
+    .setTranslation(...support.at).setRotation(new Quaternion().setFromEuler(new Euler(0, support.yaw, 0, "YXZ"))));
+  const underground = undergroundSurface(rings => ShapeUtils.triangulateShape(rings[0].map(p => new Vector2(p[0], p[1])), rings.slice(1).map(ring => ring.map(p => new Vector2(p[0], p[1])))));
+  world.createCollider(R.ColliderDesc.trimesh(new Float32Array(underground.positions), new Uint32Array(underground.indices)));
+  const stationRoof = stationRoofSurface();
+  world.createCollider(R.ColliderDesc.trimesh(new Float32Array(stationRoof.positions), new Uint32Array(stationRoof.indices)));
+  for (const stair of UNDERGROUND_STEPS) world.createCollider(R.ColliderDesc.cuboid(stair.size[0] / 2, stair.size[1] / 2, stair.size[2] / 2)
+    .setTranslation(...stair.at).setRotation({ x: 0, y: Math.sin(stair.angle / 2), z: 0, w: Math.cos(stair.angle / 2) }));
   for (const b of BUILDINGS) {
     const base = buildingElevation(b);
     if (b.footprint) {
       for (const triangle of ShapeUtils.triangulateShape(b.footprint.map((p) => new Vector2(p.x, p.z)), [])) {
-        const vertices = triangle.flatMap((i) => [b.footprint![i].x, base - 3, b.footprint![i].z, b.footprint![i].x, base + b.h, b.footprint![i].z]);
+        const vertices = triangle.flatMap((i) => [b.footprint![i].x, base - buildingFoundationDepth(b), b.footprint![i].z, b.footprint![i].x, base + b.h, b.footprint![i].z]);
         const hull = R.ColliderDesc.convexHull(new Float32Array(vertices));
         if (hull) world.createCollider(hull);
       }
@@ -858,6 +915,16 @@ const neutral = {
   brake: false,
   jump: false,
 };
+export function toggleFlight(g: Game) {
+  if (g.phase !== "playing" || g.dialogue || g.evening.watching) return false;
+  if (g.vehicle) { notify(g, "先停稳下车，再开启飞行"); return false; }
+  if (g.flight.active && inRiver(g.player) && (!bridgeSurface(g.player) || Math.abs(g.player.y - bridgeSurface(g.player)!.y) > 1)) { notify(g, "江面上请先飞到岸边或桥面，再收起飞行"); return false; }
+  g.flight.active = !g.flight.active;
+  g.flight.velocityY = g.flight.active ? 5 : 0;
+  g.player.speed = 0;
+  notify(g, g.flight.active ? "飞行已开启 · 空格升高 / C 降低 / Shift 加速" : "已收起飞行 · 正在落地");
+  return true;
+}
 export function step(
   g: Game,
   input: Input = neutral,
@@ -899,7 +966,7 @@ export function step(
       Math.sign(v.speed || 1);
   } else {
     const magnitude = Math.min(1, Math.hypot(input.forward, input.turn));
-    const wanted = magnitude * (input.sprint ? 8.2 : 4.4);
+    const wanted = magnitude * (g.flight.active ? input.precise ? FLIGHT_INSPECT_SPEED : input.sprint ? FLIGHT_BOOST : FLIGHT_SPEED : input.sprint ? 8.2 : 4.4);
     actor.speed += (wanted - actor.speed) * Math.min(1, dt * 12);
     if (magnitude > 0.01) {
       const target = cameraAngle + Math.atan2(-input.turn, input.forward);
@@ -912,15 +979,16 @@ export function step(
   }
   let dx = Math.sin(actor.angle) * actor.speed * dt;
   let dz = Math.cos(actor.angle) * actor.speed * dt;
-  const proposed = constrainToBridge(
+  const desired = { x: actor.x + dx, z: actor.z + dz };
+  const proposed = g.flight.active ? desired : constrainToBridge(
     actor,
-    { x: actor.x + dx, z: actor.z + dz },
+    desired,
     v?.kind === "car" ? 1.15 : 0.45,
   );
   dx = proposed.x - actor.x;
   dz = proposed.z - actor.z;
   const deck = bridgeSurface(proposed, -0.25);
-  g.blocked = !canTraverse(proposed) || (inRiver(proposed) && (!deck || actor.y < deck.y - 1));
+  g.blocked = !inCity(proposed, 1) || (!g.flight.active && inRiver(proposed) && (!deck || actor.y < deck.y - 1));
   if (!g.blocked) g.blocked = g.traffic.some(
     (car) => Math.abs(car.y - actor.y) < 2.2 && distance(car, proposed) < (v?.kind === "car" ? 3.1 : 2.35),
   );
@@ -943,10 +1011,18 @@ export function step(
       { x: actor.x, y: g.player.y + centerHeight, z: actor.z },
       false,
     );
-    if (v) physics.controller.disableAutostep();
+    if (v || g.flight.active) physics.controller.disableAutostep();
     else physics.controller.enableAutostep(0.26, 0.25, false);
-    if (!v && input.jump && (physics.controller.computedGrounded() || g.player.y < terrainHeight(g.player) + 0.05)) physics.velocityY = 7.2;
-    physics.velocityY -= 22 * dt;
+    if (g.flight.active) {
+      physics.controller.disableSnapToGround();
+      const wantedY = (Number(input.jump) - Number(input.descend || false)) * (input.precise ? FLIGHT_INSPECT_VERTICAL : input.sprint ? 65 : 24);
+      g.flight.velocityY += (wantedY - g.flight.velocityY) * Math.min(1, dt * 7);
+      physics.velocityY = Math.min(g.flight.velocityY, (FLIGHT_CEILING - g.player.y) / dt);
+    } else {
+      physics.controller.enableSnapToGround(0.3);
+      if (!v && input.jump && (physics.controller.computedGrounded() || g.player.y < (undergroundFloor(g.player) ?? eshanSurfaceHeight(g.player) ?? terrainHeight(g.player)) + 0.05)) physics.velocityY = 7.2;
+      physics.velocityY = Math.max(-28, physics.velocityY - 22 * dt);
+    }
     physics.controller.computeColliderMovement(physics.collider, {
       x: dx,
       y: physics.velocityY * dt,
@@ -955,11 +1031,11 @@ export function step(
     const move = physics.controller.computedMovement();
     actor.x += move.x;
     actor.z += move.z;
-    const floor = terrainHeight(actor);
+    const floor = undergroundFloor({ ...actor, y: g.player.y }) ?? (inCore(actor) ? terrainHeight(actor) : terrainTriangleHeight(actor));
     g.player.y = Math.max(floor, g.player.y + move.y);
     // y=0 is also a real support: the global floor clamp may resolve the last
     // few millimetres before Rapier's contact offset reports grounded.
-    grounded = physics.controller.computedGrounded() || (g.player.y <= floor + 0.001 && physics.velocityY <= 0);
+    grounded = !g.flight.active && (physics.controller.computedGrounded() || (g.player.y <= floor + 0.001 && physics.velocityY <= 0));
     if (grounded) physics.velocityY = 0;
     velocityY = physics.velocityY;
     if (
@@ -980,8 +1056,11 @@ export function step(
     actor.x += dx;
     actor.z += dz;
     const surface = bridgeSurface(actor, -0.2);
-    g.player.y = surface && Math.abs(actor.y - surface.y) < 0.6 ? surface.y : terrainHeight(actor);
+    const floor = undergroundFloor(actor) ?? terrainHeight(actor);
+    g.player.y = g.flight.active ? Math.max(floor, Math.min(FLIGHT_CEILING, actor.y + (Number(input.jump) - Number(input.descend || false)) * (input.precise ? FLIGHT_INSPECT_VERTICAL : input.sprint ? 65 : 24) * dt)) : surface && Math.abs(actor.y - surface.y) < 0.6 ? surface.y : undergroundStairSupport(actor) ?? floor;
+    grounded = !g.flight.active;
   }
+  if (g.flight.active) g.flight.travelled += Math.hypot(actor.x - beforeX, actor.z - beforeZ);
   if (v) {
     v.y = g.player.y;
     const moved = Math.hypot(actor.x - beforeX, actor.z - beforeZ);
@@ -998,7 +1077,7 @@ export function step(
   }
   advanceLocomotion(g.locomotion, v ? 0 : Math.hypot(actor.x - beforeX, actor.z - beforeZ), dt, g.time, v ? true : grounded, v ? 0 : velocityY);
   stepCitizens(g, dt);
-  for (const n of g.npcs) n.y = terrainHeight(n);
+  for (const n of g.npcs) n.y = pedestrianHeight(n);
   stepTraffic(g.traffic, [
     { ...g.player, radius: v?.kind === "car" ? 1.5 : 0.7, person: !v },
     ...g.npcs.map((n) => ({ x: n.x, y: n.y, z: n.z, radius: 0.7, person: true })),
@@ -1015,6 +1094,9 @@ export function publicState(g: Game) {
     phase: g.phase,
     player: { ...g.player, character: g.character },
     locomotion: { ...g.locomotion },
+    exploration: g.exploration,
+    underground: undergroundLocation(g.player),
+    flight: { ...g.flight, clearance: Number((g.player.y - (undergroundFloor(g.player) ?? terrainHeight(g.player))).toFixed(1)) },
     vehicle: g.vehicle,
     vehicles: g.vehicles,
     traffic: g.traffic,
@@ -1024,7 +1106,7 @@ export function publicState(g: Game) {
     quest: g.stage === 6 ? eveningTarget(g) || QUESTS[6] : QUESTS[g.stage],
     dialogue: g.dialogue,
     interaction: nearestInteraction(g),
-    street: nearestRoad(g.player).name,
+    street: undergroundLocation(g.player) ? "龙城地下街 · 地下一层" : nearestRoad(g.player).name,
     bikeDistance: g.bikeDistance,
     carDistance: g.carDistance,
     blocked: g.blocked,

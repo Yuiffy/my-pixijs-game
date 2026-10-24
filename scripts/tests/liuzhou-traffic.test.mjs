@@ -20,7 +20,8 @@ test('traffic circuits remain on land or bridges and clear the imported building
 });
 
 test('diagonal and concave footprints preserve the real street space', () => {
-  const lShape = w.BUILDINGS.find(b => b.id === '641119443');
+  const lShape = w.BUILDINGS.find(b => b.id === 'wuxing-osm-641119443');
+  assert.ok(lShape, 'the source commercial shell remains in the shared collision list');
   assert.ok(lShape.footprint.length > 4);
   assert.equal(w.buildingContains({ x: -335, z: 105 }, lShape), false, 'L-shaped courtyard stays open');
   assert.equal(w.buildingContains({ x: -360, z: 100 }, lShape), true, 'solid building wing stays solid');

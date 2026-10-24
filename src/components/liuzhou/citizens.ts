@@ -2,8 +2,10 @@ import type { Game, Npc } from "./simulation";
 import { closestOnSegment, distance, type Point } from "./world";
 import { NEIGHBOR_ORDERS } from "./life";
 import { CITIZEN_WALKS } from "./pedestrian-layout";
-import { pedestrianClear } from "./pedestrian";
-import { terrainHeight } from "./terrain";
+import { pedestrianClear, pedestrianHeight } from "./pedestrian";
+import { MARKET_APPEARANCES, MARKET_WALKS } from "./market";
+import { STATION_APPEARANCES, STATION_WALKS } from "./station";
+import { SQUARE_APPEARANCES, SQUARE_WALKS } from "./square";
 
 export type CitizenAction = "walk" | "look" | "photo" | "stretch" | "shop";
 type Stop = Point & { action?: CitizenAction; seconds?: number; angle?: number };
@@ -14,6 +16,24 @@ const stop = (id: string, index: number, action?: CitizenAction, seconds = 0, an
 // Short out-and-back walks stay on one pavement instead of cutting diagonally
 // across blocks or crossing the road to close an arbitrary loop.
 export const CITIZEN_PLANS: Record<string, Plan> = {
+  ...Object.fromEntries(Object.entries(SQUARE_WALKS).map(([id, points]) => [id, {
+    pace: 1.1,
+    ...SQUARE_APPEARANCES[id],
+    prop: "none" as const,
+    stops: points.map((p, i) => ({ ...p, action: i % 2 ? "walk" as const : "look" as const, seconds: i % 2 ? 0 : 5, angle: 0.5 })),
+  }])),
+  ...Object.fromEntries(Object.entries(STATION_WALKS).map(([id, points]) => [id, {
+    pace: 1.1,
+    ...STATION_APPEARANCES[id],
+    prop: "bag" as const,
+    stops: points.map((p, i) => ({ ...p, action: i % 2 ? "walk" as const : "look" as const, seconds: i % 2 ? 0 : 6, angle: -2.14 })),
+  }])),
+  ...Object.fromEntries(Object.entries(MARKET_WALKS).map(([id, points]) => [id, {
+    pace: 1.05,
+    ...MARKET_APPEARANCES[id],
+    prop: "bag" as const,
+    stops: points.map((p, i) => ({ ...p, action: i % 2 ? "walk" as const : "shop" as const, seconds: i % 2 ? 0 : 5, angle: id.endsWith("north") ? 0 : Math.PI })),
+  }])),
   uncle: {
     pace: 0.85,
     outfit: "#b99b70",
@@ -102,7 +122,7 @@ export function restoreCitizens(npcs: Npc[], value: unknown) {
     const previous = plan.stops[(r.target + plan.stops.length - 1) % plan.stops.length];
     // A saved walker may be a few metres off a leg while passing a parked car.
     if (distance(p, closestOnSegment(p, previous, target)) > 5 || (r.remaining > 0 && distance(p, target) > 0.25)) continue;
-    Object.assign(n, { x: p.x, z: p.z, y: terrainHeight(p), angle: p.angle, speed: 0, routine: { target: r.target, remaining: r.remaining, action: r.remaining > 0 ? target.action || "look" : "walk", odometer: Math.min(1e7, r.odometer), laps: Math.min(1e5, r.laps), waiting: null } });
+    Object.assign(n, { x: p.x, z: p.z, y: pedestrianHeight(p), angle: p.angle, speed: 0, routine: { target: r.target, remaining: r.remaining, action: r.remaining > 0 ? target.action || "look" : "walk", odometer: Math.min(1e7, r.odometer), laps: Math.min(1e5, r.laps), waiting: null } });
   }
 }
 export function stepCitizens(g: Game, dt: number) {
@@ -155,7 +175,7 @@ export function stepCitizens(g: Game, dt: number) {
     if (next) {
       const moved = distance(n, next);
       n.angle = Math.atan2(next.x - n.x, next.z - n.z);
-      Object.assign(n, next, { y: terrainHeight(next) });
+      Object.assign(n, next, { y: pedestrianHeight(next) });
       n.speed = moved / dt;
       r.odometer += moved;
       r.action = "walk";

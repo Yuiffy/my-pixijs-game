@@ -2,8 +2,9 @@
 
 import { memo, useEffect, useMemo, useRef } from "react";
 import * as T from "three";
-import { BRIDGE_AXES, BRIDGE_RAILS, BRIDGE_SECTIONS, deckVertices } from "./bridges";
+import { BRIDGE_AXES, BRIDGE_RAILS, BRIDGE_SECTIONS, deckVertices, projectBridge } from "./bridges";
 import { inMappedRiver, terrainHeight, WATER_LEVEL } from "./terrain";
+import { GUANGYA_LENGTH, GUANGYA_SECTIONS, GUANGYA_SIDEWALK_WIDTH, GUANGYA_SUPPORTS, guangyaPoint } from "./guangya";
 
 type Part = { at: T.Vector3; size: T.Vector3; rotation: T.Quaternion; color: string };
 type Arch = { geometry: T.TubeGeometry; transforms: T.Matrix4[] };
@@ -59,6 +60,52 @@ function BridgeView() {
     const slabs = new T.BufferGeometry();
     slabs.setAttribute("position", new T.Float32BufferAttribute(vertices, 3));
     slabs.setIndex(indices); slabs.computeVertexNormals();
+    for (const support of GUANGYA_SUPPORTS) add(new T.Vector3(...support.at), support.size, "#a1ada3", orient(support.yaw));
+
+    const pavingVertices: number[] = []; const pavingColors: number[] = [];
+    const stripe = (section: typeof BRIDGE_SECTIONS[number], across: number, width: number, color: string, start = 0, end = 1) => {
+      const run = Math.hypot(section.b.x - section.a.x, section.b.z - section.a.z);
+      const nx = (section.b.z - section.a.z) / run; const nz = -(section.b.x - section.a.x) / run;
+      const point = (t: number, offset: number) => {
+        const x = section.a.x + (section.b.x - section.a.x) * t + nx * offset;
+        const z = section.a.z + (section.b.z - section.a.z) * t + nz * offset;
+        return [x, projectBridge({ x, z }, section).y + 0.018, z];
+      };
+      const corners = [point(start, across - width / 2), point(start, across + width / 2), point(end, across - width / 2), point(end, across + width / 2)];
+      const c = new T.Color(color);
+      for (const i of [0, 2, 1, 1, 2, 3]) { pavingVertices.push(...corners[i]); pavingColors.push(c.r, c.g, c.b); }
+    };
+    let travelled = 0;
+    for (const section of GUANGYA_SECTIONS) {
+      const run = Math.hypot(section.b.x - section.a.x, section.b.z - section.a.z);
+      const edge = section.width / 2; const trafficEdge = edge - GUANGYA_SIDEWALK_WIDTH;
+      for (const side of [-1, 1]) {
+        stripe(section, side * (edge - GUANGYA_SIDEWALK_WIDTH / 2), GUANGYA_SIDEWALK_WIDTH, "#bfc3b4");
+        stripe(section, side * trafficEdge, 0.16, "#e7e6cf");
+        stripe(section, side * 0.16, 0.12, "#e3c281");
+        for (const lane of [1, 2, 3]) for (let from = Math.floor(travelled / 9) * 9; from < travelled + run; from += 9) {
+          const start = Math.max(0, from - travelled); const end = Math.min(run, from + 3.5 - travelled);
+          if (end > start) stripe(section, (side * trafficEdge * lane) / 4, 0.13, "#e6e4cc", start / run, end / run);
+        }
+      }
+      travelled += run;
+    }
+    const paving = new T.BufferGeometry();
+    paving.setAttribute("position", new T.Float32BufferAttribute(pavingVertices, 3));
+    paving.setAttribute("color", new T.Float32BufferAttribute(pavingColors, 3)); paving.computeVertexNormals();
+
+    // Chainage-based spacing survives the short source segments. Lamps belong
+    // to the outer sidewalks of this 40.1m deck, rather than the old 10m bridge.
+    for (let along = 28; along < GUANGYA_LENGTH - 15; along += 46) for (const side of [-1, 1]) {
+      const section = GUANGYA_SECTIONS[0];
+      const base = guangyaPoint(along, side * (section.width / 2 - 0.65));
+      const next = guangyaPoint(along + 0.5); const centre = guangyaPoint(along);
+      const yaw = Math.atan2(next.x - centre.x, next.z - centre.z); const rotation = orient(yaw);
+      const origin = new T.Vector3(base.x, base.y, base.z);
+      add(origin.clone().add(new T.Vector3(0, 3.5, 0)), [0.17, 7, 0.17], "#718982");
+      add(position(origin, rotation, -side * 0.9, 6.94, 0), [1.9, 0.16, 0.18], "#718982", rotation);
+      add(position(origin, rotation, -side * 1.7, 6.82, 0), [0.7, 0.17, 0.42], "#e4dbc1", rotation);
+    }
 
     for (const rail of BRIDGE_RAILS) {
       const origin = new T.Vector3(...rail.at); const rotation = orient(rail.yaw, rail.pitch);
@@ -67,6 +114,7 @@ function BridgeView() {
       for (let z = -rail.size[2] / 2; z <= rail.size[2] / 2; z += 6) add(position(origin, rotation, 0, 0.02, z), [0.12, 1.04, 0.12], "#bcc9bd", rotation);
     }
     for (const section of BRIDGE_SECTIONS) {
+      if (section.id.startsWith("guangya-")) continue;
       const run = Math.hypot(section.b.x - section.a.x, section.b.z - section.a.z);
       const length = Math.hypot(run, section.b.y - section.a.y);
       const yaw = Math.atan2(section.b.x - section.a.x, section.b.z - section.a.z);
@@ -125,12 +173,13 @@ function BridgeView() {
         add(new T.Vector3(p.x, top - 0.42, p.z), [8.8, 0.84, 3.8], "#aab7ab", rotation);
       }
     }
-    return { slabs, parts, arches };
+    return { slabs, paving, parts, arches };
   }, []);
-  useEffect(() => () => { model.slabs.dispose(); model.arches.forEach(arch => arch.geometry.dispose()); }, [model]);
+  useEffect(() => () => { model.slabs.dispose(); model.paving.dispose(); model.arches.forEach(arch => arch.geometry.dispose()); }, [model]);
   return (
     <group name="wenhui-grade-separated-bridges">
       <mesh geometry={model.slabs} receiveShadow castShadow><meshStandardMaterial color="#6b7775" side={T.DoubleSide} /></mesh>
+      <mesh geometry={model.paving} receiveShadow><meshStandardMaterial vertexColors side={T.DoubleSide} polygonOffset polygonOffsetFactor={-1} polygonOffsetUnits={-1} roughness={0.92} /></mesh>
       <BoxInstances parts={model.parts} />
       {model.arches.map((arch, i) => <ArchInstances key={i} arch={arch} />)}
     </group>

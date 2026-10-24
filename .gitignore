@@ -12,6 +12,10 @@
 /.tmp/
 /tmp/
 
+# Locally archived Tianditu exports have separate redistribution restrictions.
+# The source inventory and all open Liuzhou datasets remain versioned.
+/data/liuzhou/restricted/
+
 # next.js
 /.next/
 /.next-*/

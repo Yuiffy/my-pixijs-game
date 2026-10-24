@@ -445,7 +445,7 @@
 }
 .panel {
   position: relative;
-  width: min(850px, 95vw);
+  width: min(850px, 100%);
   max-height: 92svh;
   overflow: auto;
   background: #233e35;
@@ -484,6 +484,36 @@
   top: 15px;
   font-size: 30px !important;
   background: transparent;
+}
+.settings {
+  max-width: 480px;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.settings label, .settingScale {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+.settings output {
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+.settings input {
+  display: block;
+  width: 100%;
+  margin: 18px 0 4px;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+.settingScale {
+  color: #b6c2a8;
+  font-size: 11px;
+}
+.settings button {
+  margin-top: 8px;
+  padding: 8px 14px;
+  background: #476451;
 }
 .atlas {
   display: block;
@@ -596,11 +626,15 @@
     gap: 5px;
   }
   .touchActions {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(2, 48px);
     gap: 8px;
   }
   .touchActions button {
     font-size: 11px;
+  }
+  .touchActions.flightActions {
+    grid-template-columns: repeat(3, 48px);
   }
   .mapWrap {
     left: 20px;
@@ -667,7 +701,7 @@
     font-size: 9px;
   }
   .status {
-    bottom: 105px;
+    bottom: 215px;
     right: 20px;
   }
   .status strong {
@@ -735,6 +769,14 @@
   .credit {
     padding: 8px 15px;
     font-size: 6px;
+  }
+}
+@media (max-width: 360px) {
+  .touchActions.flightActions {
+    grid-template-columns: repeat(2, 48px);
+  }
+  .status {
+    bottom: 275px;
   }
 }
 @media (max-height: 520px) and (orientation: landscape) {
@@ -878,4 +920,18 @@
   .screening { bottom: 4%; padding: 10px 18px; }
   .screening p { font-size: 12px; margin: 5px 0; }
   .screening button { padding: 4px 10px; }
+}
+.exploreStart {
+  display: block;
+  margin-top: 14px;
+  padding: 12px 18px;
+  border: 1px solid #f1ddaa99;
+  color: #fff2ce;
+  background: #294b42cc;
+  min-height: 44px;
+}
+.loadingNote { font-size: 12px; color: #e0dbc8; margin: 10px 0; }
+.streaming { position: absolute; top: 78px; left: 50%; transform: translateX(-50%); padding: 5px 10px; border-radius: 12px; background: #294b42bf; color: #fff2ce; font-size: 11px; pointer-events: none; white-space: nowrap; }
+@media (max-width: 600px) {
+  .streaming { top: 64px; }
 }

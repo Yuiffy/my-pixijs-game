@@ -1,5 +1,11 @@
 import type { Point } from "./world";
 import { terrainHeight } from "./terrain";
+import { MARKET_SOLIDS } from "./market";
+import { STATION_SOLIDS } from "./station";
+import { ESHAN_SOLIDS } from "./eshan";
+import { SQUARE_SOLIDS } from "./square";
+import { XIHUAN_SOLIDS } from "./xihuan";
+import { WUXING_SOLIDS } from "./wuxing";
 
 export type StreetBox = {
   at: [number, number, number];
@@ -33,14 +39,31 @@ for (const x of [-34, 34]) for (const z of [-43, -18, 7]) {
     { at: [bx, 0.25, z + 5], size: [2.7, 0.5, 0.35], color: "#617363" },
   );
 }
-export const STREET_SOLIDS = [...STALL_BOXES, STALL_SIGN, ...BENCH_BOXES];
+export const STREET_SOLIDS = [...STALL_BOXES, STALL_SIGN, ...BENCH_BOXES, ...MARKET_SOLIDS, ...STATION_SOLIDS, ...ESHAN_SOLIDS, ...SQUARE_SOLIDS, ...XIHUAN_SOLIDS, ...WUXING_SOLIDS];
+const solidBuckets = new Map<string, StreetBox[]>();
+for (const box of STREET_SOLIDS) {
+  const extent = (box.size[0] + box.size[2]) / 2 + 8;
+  for (let x = Math.floor((box.at[0] - extent) / 32); x <= Math.floor((box.at[0] + extent) / 32); x++) for (let z = Math.floor((box.at[2] - extent) / 32); z <= Math.floor((box.at[2] + extent) / 32); z++) {
+    const key = `${x}:${z}`; const list = solidBuckets.get(key) || []; list.push(box); solidBuckets.set(key, list);
+  }
+}
 export function streetBoxContains(p: Point & { y: number }, box: StreetBox, margin = 0) {
   const dx = p.x - box.at[0]; const dz = p.z - box.at[2]; const angle = box.angle || 0;
+  const radius = (box.size[0] + box.size[2]) / 2 + margin;
+  if (Math.abs(dx) > radius || Math.abs(dz) > radius) return false;
   return Math.abs(dx * Math.cos(angle) - dz * Math.sin(angle)) < box.size[0] / 2 + margin
     && Math.abs(dx * Math.sin(angle) + dz * Math.cos(angle)) < box.size[2] / 2 + margin
     && Math.abs(p.y - terrainHeight({ x: box.at[0], z: box.at[2] }) - box.at[1]) < box.size[1] / 2 + margin;
 }
-export const streetContains = (p: Point & { y: number }, margin = 0) => STREET_SOLIDS.some(b => streetBoxContains(p, b, margin));
+export const streetContains = (p: Point & { y: number }, margin = 0) => (margin > 8 ? STREET_SOLIDS : solidBuckets.get(`${Math.floor(p.x / 32)}:${Math.floor(p.z / 32)}`) || []).some(b => streetBoxContains(p, b, margin));
+export function streetSupportHeight(p: Point & { y: number }) {
+  for (const box of STREET_SOLIDS) {
+    const top = terrainHeight({ x: box.at[0], z: box.at[2] }) + box.at[1] + box.size[1] / 2;
+    if (Math.abs(p.y - top) > 0.3) continue;
+    if (streetBoxContains({ ...p, y: top - 0.01 }, box, -0.005)) return top;
+  }
+  return undefined;
+}
 export function restoreStreetPosition<T extends Point & { y: number }>(p: T, radius = 0.42): T {
   let result = { ...p };
   for (const box of STREET_SOLIDS) {

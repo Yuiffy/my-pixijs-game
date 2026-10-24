@@ -1,6 +1,7 @@
 const { quietContext } = require('./liuzhou-test-browser.cjs');
 const assert = require('node:assert/strict');
 const { travel } = require('./liuzhou-pilot.cjs');
+const { mouseLook } = require('./liuzhou-mouse.cjs');
 const state = p => p.evaluate(() => JSON.parse(window.render_game_to_text()));
 const point = (x, z) => ({ x: -2.8 + x, z: -2.2 + z });
 
@@ -25,7 +26,7 @@ async function look(p, yaw, pitch = 0.2) {
   const before = await state(p);
   const dx = -Math.atan2(Math.sin(yaw - before.controls.yaw), Math.cos(yaw - before.controls.yaw)) / 0.003;
   const dy = (pitch - before.controls.pitch) / 0.003;
-  await p.evaluate(({ dx, dy }) => document.dispatchEvent(new MouseEvent('mousemove', { movementX: dx, movementY: dy })), { dx, dy });
+  await mouseLook(p, dx, dy);
   await p.waitForTimeout(300);
 }
 exports.runDongmen = async ({ page: p, browser, capture, report }) => {

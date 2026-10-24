@@ -7,7 +7,7 @@ import { terrainHeight } from "./terrain";
 export type TravelMode = "walk" | "bike" | "car";
 export type NavigationPoint = Point & { y?: number };
 export type Destination = NavigationPoint & { id: string; name: string; kind: "story" | "delivery" | "landmark" };
-export type Route = { destination: Destination; mode: TravelMode; points: NavigationPoint[]; metres: number; status: "route" | "arrived" | "unavailable" | "planning" };
+export type Route = { destination: Destination; mode: TravelMode; points: NavigationPoint[]; metres: number; status: "route" | "arrived" | "unavailable" | "planning"; guidance?: "bearing" };
 export type RouteRequest = { version: number; from: NavigationPoint; destination: Destination; mode: TravelMode };
 const CELL = 3;
 const WIDTH = Math.ceil((BOUNDS.maxX - BOUNDS.minX) / CELL);

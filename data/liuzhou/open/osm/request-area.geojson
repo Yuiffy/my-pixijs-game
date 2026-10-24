@@ -1,0 +1,41 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "文惠桥—东门—金沙角数据检索概略范围",
+        "datum": "WGS84 / GeoJSON longitude,latitude",
+        "purpose": "非涉密成果覆盖与申领渠道查询",
+        "note": "Approximate search extent only, not surveyed or cadastral boundary."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              109.409,
+              24.305
+            ],
+            [
+              109.419,
+              24.305
+            ],
+            [
+              109.419,
+              24.319
+            ],
+            [
+              109.409,
+              24.319
+            ],
+            [
+              109.409,
+              24.305
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

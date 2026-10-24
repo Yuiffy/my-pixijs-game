@@ -51,7 +51,7 @@ export function pedalPoint(phase: number) {
 
 type Joint = { upper: number; lower: number; side: number };
 export type ActorPose = {
-  mode: "idle" | "walk" | "run" | "rise" | "fall" | "land" | "ride" | CitizenAction | "watch";
+  mode: "idle" | "walk" | "run" | "rise" | "fall" | "land" | "ride" | "fly" | CitizenAction | "watch";
   bob: number;
   lean: number;
   roll: number;
@@ -72,6 +72,7 @@ type PoseInput = {
   action?: CitizenAction;
   watching?: boolean;
   riding?: boolean;
+  flying?: boolean;
 };
 const joint = (upper = 0, lower = 0, side = 0): Joint => ({ upper, lower, side });
 export function actorPose(i: PoseInput): ActorPose {
@@ -108,6 +109,12 @@ export function actorPose(i: PoseInput): ActorPose {
     p.rightLeg = joint(rising ? -0.65 : 0.12, rising ? 1.15 : 0.3);
     p.leftArm = joint(-0.45, -0.55, -0.32);
     p.rightArm = joint(-0.45, -0.55, 0.32);
+  }
+  if (i.flying) {
+    p.mode = "fly"; p.bob = Math.sin(i.time * 2) * 0.025;
+    p.lean = Math.min(1.1, i.speed / 95); p.twist = 0;
+    p.leftLeg = joint(0.1, 0.16); p.rightLeg = joint(0.18, 0.2);
+    p.leftArm = joint(0.14, -0.12, -0.18); p.rightArm = joint(0.14, -0.12, 0.18);
   }
   if (i.action === "photo") {
     p.mode = "photo";

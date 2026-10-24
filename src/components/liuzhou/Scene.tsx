@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { memo, useEffect, useMemo, useRef } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import * as T from "three";
 import BridgeView from "./BridgeView";
 import TerrainView from "./TerrainView";
@@ -14,6 +14,24 @@ import { cityTexture } from "./textures";
 import { deliveryTarget } from "./life";
 import { resolveCamera } from "./camera";
 import { followCameraBoom } from "../gameCamera/boom";
+import CityPlaces from "./CityPlaces";
+import CentralBlocksView from "./CentralBlocksView";
+import RiversideView from "./RiversideView";
+import MarketView from "./MarketView";
+import StationView from "./StationView";
+import StationNeighborhoodsView from "./StationNeighborhoodsView";
+import EshanView from "./EshanView";
+import SquareView from "./SquareView";
+import XihuanView from "./XihuanView";
+import WuxingView from "./WuxingView";
+import { WUXING_FACADE_IDS, WUXING_RENDER_OVERRIDES } from "./wuxing";
+import { SQUARE_FACADE_IDS, SQUARE_RENDER_OVERRIDES } from "./square";
+import { STATION_PREFIX } from "./station";
+import UndergroundView from "./UndergroundView";
+import CityLabels from "./CityLabels";
+import { CITY_ROADS, CITY_ROAD_SEGMENTS } from "./city";
+import { selectRoadRenderSegments } from "./roadSurfaces";
+import type { RoadChunk, SkylineData, StreamProgress } from "./cityStreaming";
 import { conversationArea, conversationView, type ConversationArea, type ConversationView } from "./conversationCamera";
 import { BENCH_BOXES, NOODLE_STALL, STALL_BOXES } from "./street";
 import EveningStage from "./EveningStage";
@@ -23,15 +41,16 @@ import ActorView, { inspectAvatars, type AvatarSnapshot } from "./ActorView";
 import { CRANK_Y, CRANK_Z, CRANK_RADIUS, pedalPhase } from "./actorMotion";
 import {
   BUILDINGS,
+  BOUNDS,
   URBAN_FABRIC,
   buildingElevation,
+  buildingFoundationDepth,
   buildingContains,
   canTraverse,
   distance,
   LANDMARKS,
   RIVER,
   ROAD_SEGMENTS,
-  type Building,
   type Point,
 } from "./world";
 import {
@@ -50,6 +69,8 @@ export type CameraRig = {
   dragged: number;
   reset: boolean;
   avatars?: () => AvatarSnapshot[];
+  streaming?: () => { roadTiles: string[]; bridges: number };
+  motion?: () => { time: number; player: number[]; playerYaw: number; projected: number[]; camera: number[]; vehicle?: { id: string; position: number[]; yaw: number } };
   dialoguePanel?: ConversationArea;
   framing?: () => { position: number[]; offset: boolean; area: ConversationArea; actors: { id: string; left: number; right: number; top: number; bottom: number }[] };
   listener?: { x: number; y: number; z: number; fx: number; fy: number; fz: number };
@@ -176,14 +197,14 @@ function Sign({
     </mesh>
   );
 }
-const City = memo(() => {
+const City = memo(({ roads, skyline }: { roads: RoadChunk[]; skyline?: SkylineData }) => {
   const {
     boxes: cityBoxes,
     trees: cityTrees,
   } = useMemo(() => {
     const boxes: Box[] = [];
     const trees: Point[] = [];
-    BUILDINGS.filter(b => !b.id.startsWith("urban-wall-")).forEach((b, i) => {
+    BUILDINGS.filter(b => !b.id.startsWith("urban-wall-") && !b.id.startsWith("market-east-") && !b.id.startsWith(STATION_PREFIX) && !SQUARE_FACADE_IDS.has(b.id) && !WUXING_FACADE_IDS.has(b.id)).forEach((b, i) => {
       const firstBox = boxes.length;
       if (!b.footprint) boxes.push({
         at: [b.x, b.h / 2, b.z],
@@ -203,7 +224,7 @@ const City = memo(() => {
         b.footprint.forEach((a, index) => {
           const c = b.footprint![(index + 1) % b.footprint!.length];
           const length = distance(a, c); const dx = (c.x - a.x) / length; const dz = (c.z - a.z) / length;
-          for (let n = 2; n < length - 1; n += 3.4) for (let y = 4; y < b.h - 1; y += 3.1) {
+          for (let n = 2; n < length - 1; n += b.id.startsWith("city-") ? 8 : 3.4) for (let y = 4; y < b.h - 1; y += b.id.startsWith("city-") ? 6.4 : 3.1) {
             boxes.push({ at: [a.x + dx * n, y, a.z + dz * n], size: [1.3, 1.7, 0.15], angle: -Math.atan2(dz, dx), color: (index + Math.round(n) + i) % 4 ? "#536a68" : "#d2b77a" });
           }
         });
@@ -211,7 +232,7 @@ const City = memo(() => {
         return;
       }
       for (const side of [-1, 1]) {
-        for (let y = 4; y < b.h - 1; y += 3.1) for (let x = -b.w / 2 + 2; x < b.w / 2 - 1; x += 3) {
+        for (let y = 4; y < b.h - 1; y += b.id.startsWith("city-") ? 6.4 : 3.1) for (let x = -b.w / 2 + 2; x < b.w / 2 - 1; x += b.id.startsWith("city-") ? 7 : 3) {
             const z = (b.d / 2 + 0.06) * side;
             boxes.push({
               at: [b.x + x * cos + z * sin, y, b.z - x * sin + z * cos],
@@ -255,12 +276,24 @@ const City = memo(() => {
   return (
     <>
       <TerrainView />
-      <Skyline />
+      {skyline && <Skyline model={skyline} />}
       <WaterLines />
-      <RoadView />
+      <RoadView chunks={roads} />
+      <CityPlaces />
+      <CentralBlocksView />
+      <RiversideView />
+      <MarketView />
+      <StationView />
+      <StationNeighborhoodsView />
+      <EshanView />
+      <SquareView />
+      <XihuanView />
+      <WuxingView />
+      <UndergroundView />
+      <CityLabels />
       <UrbanView fabric={URBAN_FABRIC} heightAt={terrainHeight} />
       <Batch boxes={cityBoxes} textured />
-      {BUILDINGS.filter((b) => b.footprint).map((b) => <FootprintBuilding key={b.id} building={b} />)}
+      <FootprintBuildings />
       <Trees points={cityTrees} />
       <Dongmen />
       <BridgeView />
@@ -268,15 +301,42 @@ const City = memo(() => {
     </>
   );
 });
-const FootprintBuilding = memo(({ building: b }: { building: Building }) => {
+const FootprintBuildings = memo(() => {
   const geometry = useMemo(() => {
-    const shape = new T.Shape(b.footprint!.map((p) => new T.Vector2(p.x - b.x, b.z - p.z)));
-    return new T.ExtrudeGeometry(shape, { depth: b.h, bevelEnabled: false, steps: 1 }).rotateX(-Math.PI / 2);
-  }, [b]);
+    const positions: number[] = []; const normals: number[] = []; const colors: number[] = [];
+    const color = new T.Color();
+    for (const b of BUILDINGS.filter(building => building.footprint)) {
+      const rings = SQUARE_RENDER_OVERRIDES[b.id]?.parts ?? WUXING_RENDER_OVERRIDES[b.id]?.parts ?? [{ points: b.footprint!.map(p => [p.x, p.z]), holes: [] }];
+      if (!rings.length) continue;
+      const shapes = rings.map(ring => {
+        const shape = new T.Shape(ring.points.map(([x, z]) => new T.Vector2(x - b.x, b.z - z)));
+        shape.holes = ring.holes.map(hole => new T.Path(hole.map(([x, z]) => new T.Vector2(x - b.x, b.z - z))));
+        return shape;
+      });
+      // Render and physical hull share the foundation depth. Large square
+      // landmarks extend below the lowest sampled ground along their outline.
+      const foundation = buildingFoundationDepth(b);
+      const part = new T.ExtrudeGeometry(shapes, { depth: b.h + foundation, bevelEnabled: false, steps: 1 }).rotateX(-Math.PI / 2).translate(b.x, buildingElevation(b) - foundation, b.z);
+      const p = part.getAttribute("position"); const n = part.getAttribute("normal");
+      color.set(b.color);
+      for (let i = 0; i < p.count; i++) {
+        positions.push(p.getX(i), p.getY(i), p.getZ(i));
+        normals.push(n.getX(i), n.getY(i), n.getZ(i));
+        colors.push(color.r, color.g, color.b);
+      }
+      part.dispose();
+    }
+    const merged = new T.BufferGeometry();
+    merged.setAttribute("position", new T.Float32BufferAttribute(positions, 3));
+    merged.setAttribute("normal", new T.Float32BufferAttribute(normals, 3));
+    merged.setAttribute("color", new T.Float32BufferAttribute(colors, 3));
+    merged.computeBoundingSphere();
+    return merged;
+  }, []);
   useEffect(() => () => geometry.dispose(), [geometry]);
   return (
-<mesh position={[b.x, buildingElevation(b), b.z]} geometry={geometry} castShadow receiveShadow>
-    <meshStandardMaterial color={b.color} roughness={0.95} />
+<mesh name="柳州已下载建筑轮廓" geometry={geometry} castShadow receiveShadow>
+    <meshStandardMaterial vertexColors roughness={0.95} />
   </mesh>
 );
 });
@@ -492,7 +552,7 @@ function VehicleView({ v, game }: { v: Vehicle; game: Game }) {
     });
   });
   if (v.kind === "bike") return (
-      <group ref={root}>
+      <group ref={root} name={`vehicle-${v.id}`}>
         <MealBox game={game} vehicle={v} />
         <Cube at={[0, 0.72, 0]} size={[0.1, 0.14, 1.4]} color={v.color} />
         <Cube at={[0, 0.85, 0.45]} size={[0.1, 1, 0.1]} color={v.color} />
@@ -522,7 +582,7 @@ function VehicleView({ v, game }: { v: Vehicle; game: Game }) {
       </group>
     );
   return (
-    <group ref={root}>
+    <group ref={root} name={`vehicle-${v.id}`}>
       <MealBox game={game} vehicle={v} />
       <Cube at={[0, 0.65, 0]} size={[1.9, 0.68, 3.8]} color={v.color} />
       <Cube at={[0, 1.21, -0.23]} size={[1.7, 0.66, 1.8]} color={v.color} />
@@ -589,7 +649,7 @@ function QuestMarker({ game }: { game: Game }) {
   useFrame(() => {
     const q = game.stage < 6 ? QUESTS[game.stage] : eveningTarget(game);
     if (root.current) {
-      root.current.visible = !!q && !game.evening.watching;
+      root.current.visible = !!q && !game.exploration && !game.evening.watching;
       if (q) root.current.position.set(q.x, terrainHeight(q) + 0.1, q.z);
     }
     if (beam.current) beam.current.position.y = 3 + Math.sin(game.time * 2) * 0.3;
@@ -637,8 +697,29 @@ function Frame({
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("test") !== "1") return;
     rig.avatars = () => inspectAvatars(scene);
-    return () => { delete rig.avatars; };
-  }, [rig, scene]);
+    rig.streaming = () => {
+      const roadTiles: string[] = []; let bridges = 0;
+      scene.traverse(object => {
+        if (object.name.startsWith("分区道路-")) roadTiles.push(object.name.slice(5));
+        if (object.name === "柳州实际方位远景桥梁与城市") bridges = object.userData.bridgeCount;
+      });
+      return { roadTiles, bridges };
+    };
+    rig.motion = () => {
+      scene.updateMatrixWorld(true);
+      const player = scene.getObjectByName("player")!;
+      const position = player.getWorldPosition(new T.Vector3());
+      const vehicle = game.vehicle ? scene.getObjectByName(`vehicle-${game.vehicle}`) : undefined;
+      return {
+        time: game.time,
+        player: position.toArray(),
+        playerYaw: player.rotation.y,
+        projected: position.clone().add(new T.Vector3(0, 1.4, 0)).project(camera).toArray(),
+        camera: camera.position.toArray(),
+        vehicle: vehicle ? { id: game.vehicle!, position: vehicle.getWorldPosition(new T.Vector3()).toArray(), yaw: vehicle.rotation.y } : undefined };
+    };
+    return () => { delete rig.avatars; delete rig.motion; delete rig.streaming; };
+  }, [camera, game, rig, scene]);
   const boomDistance = useRef<number>();
   const initialized = useRef(false);
   const watching = useRef(false);
@@ -723,7 +804,7 @@ function Frame({
       );
       rig.yaw += diff * Math.min(1, delta * 2);
     }
-    const d = game.vehicle ? rig.zoom * 1.45 : rig.zoom;
+    const d = game.flight.active ? rig.zoom * (1.7 + Math.min(1.2, game.player.speed / 120)) : game.vehicle ? rig.zoom * 1.45 : rig.zoom;
     const target = new T.Vector3(
       game.player.x,
       game.player.y + (game.vehicle ? 1.1 : 1.4),
@@ -742,7 +823,9 @@ function Frame({
     audioView();
     gl.domElement.dataset.drawCalls = String(gl.info.render.calls);
     gl.domElement.dataset.cameraDistance = String(camera.position.distanceTo(target).toFixed(2));
-  });
+  // Advance physics and the camera before every default-priority actor/vehicle
+  // callback. Otherwise the body is one frame behind its own tracking camera.
+  }, -1);
   return null;
 }
 export default function Scene({
@@ -750,18 +833,45 @@ export default function Scene({
   rig,
   tick,
   ready,
+  progress,
 }: {
   game: Game;
   rig: CameraRig;
   tick: (dt: number) => void;
   ready: () => void;
+  progress: (status: StreamProgress) => void;
 }) {
+  const [roads, setRoads] = useState<RoadChunk[]>([]);
+  const [skyline, setSkyline] = useState<SkylineData>();
+  useEffect(() => {
+    const worker = new Worker(new URL("./city.worker.ts", import.meta.url));
+    let pending: RoadChunk[] = []; let frame = 0;
+    const flush = () => { frame = 0; const batch = pending; pending = []; setRoads(previous => [...previous, ...batch]); };
+    const fail = () => progress({ loaded: 0, total: 0, nearbyReady: false, complete: false, error: true });
+    worker.onmessage = (event: MessageEvent<RoadChunk & SkylineData & StreamProgress & { type: string }>) => {
+      const { data } = event;
+      if (data.type === "road") { pending.push(data); if (!frame) frame = requestAnimationFrame(flush); }
+      if (data.type === "skyline") setSkyline(data);
+      if (data.type === "progress") {
+        if (data.nearbyReady && pending.length) { cancelAnimationFrame(frame); flush(); }
+        progress(data);
+        if (data.complete) { worker.terminate(); window.clearInterval(timer); }
+      }
+      if (data.type === "error") fail();
+    };
+    worker.onerror = fail;
+    // loadGame restores the saved player in the parent effect before this
+    // canvas mounts. Re-evaluate focus while moving to prioritize flight too.
+    worker.postMessage({ type: "start", center: { x: game.player.x, z: game.player.z }, segments: selectRoadRenderSegments(ROAD_SEGMENTS, CITY_ROAD_SEGMENTS), roads: CITY_ROADS, bounds: BOUNDS });
+    const timer = window.setInterval(() => worker.postMessage({ type: "focus", center: { x: game.player.x, z: game.player.z } }), 500);
+    return () => { window.clearInterval(timer); cancelAnimationFrame(frame); worker.terminate(); };
+  }, [game, progress]);
   return (
     <Canvas
       shadows
       dpr={[1, 1.5]}
       camera={{ fov: 58, near: 0.15, far: 18000 }}
-      gl={{ antialias: true, powerPreference: "high-performance" }}
+      gl={{ antialias: true, powerPreference: "high-performance", logarithmicDepthBuffer: true }}
       onCreated={({ gl }) => {
         gl.toneMapping = T.ACESFilmicToneMapping;
         gl.toneMappingExposure = 1.15;
@@ -790,7 +900,7 @@ export default function Scene({
         shadow-camera-far={500}
         shadow-bias={-0.0003}
       />
-      <City />
+      <City roads={roads} skyline={skyline} />
       <Person
         game={game}
         actor={game.player}
