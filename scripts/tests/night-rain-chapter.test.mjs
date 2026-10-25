@@ -124,7 +124,8 @@ test('each new lamp survives an actual combat death and respawns without closing
 test('Rhea enters phase two and warns before symmetric time stop instead of an invisible sweep', () => {
   const s=fresh();const e=s.enemies.find(e=>e.id==='rain-regent');place(s,{x:e.x,y:e.y,z:e.z+2});
   Object.assign(e,{hp:e.maxHp/2-1,action:'recover',timer:2,aggro:true,facing:0});
-  step(s,20);assert.equal(e.phase,2);
+  step(s,20);assert.equal(e.phase,1);assert.equal(e.action,'recover');
+  step(s,e.timer*1000+20);assert.equal(e.phase,2);
   Object.assign(e,{action:'windup',attackIndex:1,timer:.12,hitDone:false});step(s,400);
   assert.equal(s.bossFields[0].kind,'freeze');assert.equal(s.player.hp,engine.maxHp(s));
   step(s,1200);const timer=e.timer;const x=s.player.x;step(s,300,{x:1});

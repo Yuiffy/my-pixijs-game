@@ -100,7 +100,8 @@ test('valley bosses enter phase two and cast distinct counter, song and beam mec
   for (const [id,skill] of [['drowned-warden','counter'],['silent-abbot','song'],['river-serpent','beam']]) {
     const s=fresh();const e=s.enemies.find(e=>e.id===id);place(s,{x:e.x,y:e.y,z:e.z+2});
     Object.assign(e,{hp:e.maxHp/2-1,action:'recover',timer:2,aggro:true,facing:0});
-    engine.stepGame(s,20);assert.equal(e.phase,2);
+    engine.stepGame(s,20);assert.equal(e.phase,1,'finish committed recovery before phase change');
+    engine.stepGame(s,2100);assert.equal(e.phase,2);
     Object.assign(e,{action:'windup',timer:.12,attackIndex:1});engine.stepGame(s,400);
     assert.ok(s.bossFields.some(f=>f.owner===id&&f.kind===skill),id);
     assert.equal(s.player.hp,engine.maxHp(s));

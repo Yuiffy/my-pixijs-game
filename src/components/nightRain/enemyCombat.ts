@@ -39,6 +39,14 @@ export function enemyTiming(e: Enemy) {
   return { raise: Math.min(windup * 0.3, style === 'overhead' ? 0.24 : 0.2), commit: Math.min(windup * 0.35, style === 'overhead' || style === 'draw' ? 0.3 : 0.24) };
 }
 
+/** A planted push accelerates into contact and settles after it, in simulation time. */
+export function enemyLungeStep(e: Enemy, dt: number): number {
+  const duration = ENEMY_CONTACT_TIME * 2;
+  const elapsed = ENEMY_STRIKE_TIME - e.timer;
+  const progress = (time: number) => (1 - Math.cos(Math.PI * clamp(time / duration))) / 2;
+  return enemyAttack(e).lunge * 0.6 * (progress(elapsed + dt) - progress(elapsed));
+}
+
 /** Readout and weapon glint use the same countdown as damage and steering. */
 export function enemyTell(e: Enemy) {
   const spec = enemyAttack(e); const timing = enemyTiming(e);

@@ -4,6 +4,7 @@ import { loadTypescriptModule } from './load-typescript-module.mjs';
 const { findPath } = await loadTypescriptModule('src/components/nightRain/companion.ts');
 const { enemyAttack } = await loadTypescriptModule('src/components/nightRain/enemyCombat.ts');
 const { weaponAttack } = await loadTypescriptModule('src/components/nightRain/weapons.ts');
+const { enemyRole } = await loadTypescriptModule('src/components/nightRain/encounters.ts');
 export const NIGHT_ROUTE = [
   { x: 1, z: 15, interact: 'laptop' },
   { x: 10, z: 15 }, { x: 10, z: 8 }, { x: 10, z: -1 },
@@ -24,15 +25,24 @@ export const NIGHT_ROUTE = [
 ];
 
 const gap = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
+// Alert ranged posts can shoot from twelve metres. Resolve that visible threat
+// before a later waypoint leads the pilot into a second encounter.
+const isThreat = (s, e, destination) => e.hp > 0 && e.aggro
+  && !(destination.ignoreBoss && e.kind === 'boss') && Math.abs(e.y - s.player.y) < 1.5
+  && gap(e, s.player) < (['crossbow', 'slinger'].includes(enemyRole(e)) ? 12 : 8);
 export function chooseInput(s, destination, { parryOnly = false } = {}) {
   const p = s.player;
-  const enemy = s.enemies.filter(e => e.hp > 0 && e.aggro && !(destination.ignoreBoss && e.kind === 'boss') && Math.abs(e.y - p.y) < 1.5 && gap(e, p) < 8)
+  const enemy = s.enemies.filter(e => isThreat(s, e, destination))
     .sort((a, b) => gap(a, p) - gap(b, p))[0];
   if (!enemy) {
     if (s.lockedId) return { x: 0, z: 0, lock: true };
     const dx = destination.x - p.x; const dz = destination.z - p.z; const d = Math.hypot(dx, dz);
     return { x: d > 0.12 ? dx / d : 0, z: d > 0.12 ? dz / d : 0 };
   }
+  // Changing the observed threat must also change the real lock. Toggle the
+  // old lock off first; the following frame acquires the nearest enemy through
+  // the game's normal input path instead of parrying in the wrong direction.
+  if (s.lockedId && s.lockedId !== enemy.id) return { x: 0, z: 0, lock: true };
   const d = gap(enemy, p); const dx = (enemy.x - p.x) / Math.max(d, 0.01); const dz = (enemy.z - p.z) / Math.max(d, 0.01);
   const input = { x: 0, z: 0 };
   if (!s.lockedId) input.lock = true;
@@ -90,7 +100,7 @@ export function chooseInput(s, destination, { parryOnly = false } = {}) {
 export function walkTo(engine, s, target, limitMs = 45000, options = {}) {
   let ms = 0; let blockedMs = 0; let detour = [];
   while (ms < limitMs && s.mode === 'playing') {
-    const inCombat = s.enemies.some(e => e.hp > 0 && e.aggro && !(target.ignoreBoss && e.kind === 'boss') && Math.abs(e.y - s.player.y) < 1.5 && gap(e, s.player) < 8);
+    const inCombat = s.enemies.some(e => isThreat(s, e, target));
     if (gap(s.player, target) < 0.22 && !inCombat && s.player.action === 'idle') return ms;
     if (inCombat) detour = [];
     while (detour.length && gap(s.player, detour[0]) < 0.22) detour.shift();

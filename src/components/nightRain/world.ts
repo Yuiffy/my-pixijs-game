@@ -9,6 +9,7 @@ import { VALLEY_ENEMIES, VALLEY_LANDMARKS, VALLEY_OBSTACLES, VALLEY_REST_POINTS,
 
 import { HAVEN_ENEMIES, HAVEN_LANDMARKS, HAVEN_OBSTACLES, HAVEN_REST_POINTS, HAVEN_SURFACES } from './haven';
 import { DUNGEON_ENEMIES, DUNGEON_FOYERS, DUNGEON_LANDMARKS, DUNGEON_OBSTACLES, DUNGEON_REST_POINTS, DUNGEON_SURFACES } from './dungeons';
+import { EARTH_SURFACES, foundationBottom, foundationCells } from './terrain';
 
 // Metres. +x east, +z south, +y up. Ramp endY is the height at z2.
 // Solid parapets bound the walkable network; no hidden teleport links.
@@ -61,9 +62,14 @@ export const SURFACES: Surface[] = [
   ...DUNGEON_FOYERS,
   ...SKY_SURFACES,
   ...BELL_SURFACES,
+  ...EARTH_SURFACES,
 ];
+const FOUNDATIONS = new Map(SURFACES.map(s => [s, foundationCells(s, SURFACES)]));
+export const deckBottom = (s: Surface, x: number, z: number) => foundationBottom(s, x, z, FOUNDATIONS.get(s)!);
 
 export const OBSTACLES: Obstacle[] = [
+  { x: 1.5, y: -3, z: -16, w: 0.9, d: 0.9, h: 2.2, kind: 'pillar' },
+  { x: 6, y: -3, z: -23, w: 1.1, d: 1.1, h: 3.6, kind: 'pillar' },
   { x: -1, z: 7, w: 0.9, d: 0.9, y: 0, h: 2.8, kind: 'shrine', landmarkId: 'courtyard' },
   { x: -32, z: -9.5, w: 0.9, d: 0.9, y: 0, h: 0.95, kind: 'shrine', landmarkId: 'temple-lamp' },
   { x: 18, z: -30, w: 0.9, d: 0.9, y: 0, h: 0.95, kind: 'shrine', landmarkId: 'canal-lamp' },
@@ -97,6 +103,7 @@ export const OBSTACLES: Obstacle[] = [
 
 export const LANDMARKS: Landmark[] = [
   { id: 'laptop', kind: 'note', label: '合上新笔记本', x: 0, y: 6, z: 15 },
+  { id: 'sunken-cache', kind: 'cache', label: '收下沉庭旅人的钱袋', x: -1.6, y: -3, z: -23.5 },
   { id: 'courtyard', kind: 'rest', label: '中庭雨灯', x: -1, y: 0, z: 7 },
   { id: 'alley-cache', kind: 'cache', label: '拾取遗落的夜市钱袋', x: -16, y: 0, z: 1 },
   { id: 'roof-charm', kind: 'charm', label: '收下金铃护符', x: -15, y: 6, z: -23 },
@@ -242,7 +249,7 @@ export function projectileBlocked(p: Vec3, access: WorldAccess): boolean {
   return nearbySurfaces(p.x, p.z).some(s => {
     if (p.x < s.x1 || p.x > s.x2 || p.z < s.z1 || p.z > s.z2) return false;
     const top = s.y + (((s.endY ?? s.y) - s.y) * (p.z - s.z1)) / (s.z2 - s.z1);
-    return p.y >= top - 0.58 && p.y <= top + 0.03;
+    return p.y >= deckBottom(s, p.x, p.z) && p.y <= top + 0.03;
   });
 }
 
@@ -307,7 +314,7 @@ export function deckBlocks(x:number, z:number, feet:number):boolean {
   return nearbySurfaces(x, z).some(s => {
     if (x < s.x1 || x > s.x2 || z < s.z1 || z > s.z2) return false;
     const top = s.y + (((s.endY ?? s.y) - s.y) * (z - s.z1)) / (s.z2 - s.z1);
-    return top > feet + 0.6 && feet + 1.65 > top - 0.58;
+    return top > feet + 0.6 && feet + 1.65 > deckBottom(s, x, z);
   });
 }
 
@@ -316,7 +323,7 @@ export function ceilingAt(x:number, z:number, before:number, after:number):numbe
  let result:number | null = null;
  for (const [dx, dz] of [[0, 0], [0.22, 0], [-0.22, 0], [0, 0.22], [0, -0.22]]) {
   const bottoms = architectureIntervals(x + dx, z + dz).map(h => h.bottom);
-  for (const s of nearbySurfaces(x + dx, z + dz)) if (x + dx >= s.x1 && x + dx <= s.x2 && z + dz >= s.z1 && z + dz <= s.z2)bottoms.push(s.y + (((s.endY ?? s.y) - s.y) * (z + dz - s.z1)) / (s.z2 - s.z1) - 0.58);
+  for (const s of nearbySurfaces(x + dx, z + dz)) if (x + dx >= s.x1 && x + dx <= s.x2 && z + dz >= s.z1 && z + dz <= s.z2)bottoms.push(deckBottom(s, x + dx, z + dz));
   for (const y of bottoms) if (y >= before - 0.001 && y <= after && (result === null || y < result))result = y;
  }
  return result;

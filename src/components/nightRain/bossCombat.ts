@@ -13,6 +13,27 @@ const spell = (name: string, skill: BossSkill, changes: Partial<EnemyAttack> = {
  * Ground effects deliberately have their own post-cast warning window. */
 export function bossAttack(e: Enemy): EnemyAttack | null {
   const index = e.attackIndex % 3; const second = e.phase === 2;
+  const variant = e.attackIndex % 6;
+  if (second && variant >= 3) {
+    switch (bossCharacter(e.kind)) {
+      case 'harei': return [
+        strike('花礼 · 双拍追客', { windup: 0.78, recovery: 0.65, range: 3.1, arc: 1.1, style: 'sweep', lunge: 0.9, damage: 20 }),
+        strike('花礼 · 留客迟拍', { windup: 1.6, recovery: 1.9, range: 3.6, style: 'overhead', damage: 32 }),
+        spell('花礼 · 雨庭迎客松', 'pine', { range: 8, windup: 1.35, recovery: 2, damage: 14 }),
+      ][variant - 3];
+      case 'shiori': return [
+        strike('栞栞 · 雨间返鞘', { windup: 0.8, recovery: 0.65, range: 3.7, style: 'draw', lunge: 1.3, damage: 25 }),
+        strike('危 · 獭影回身', { windup: 1.1, recovery: 1.2, range: 3.9, arc: 2.1, parryable: false, jumpable: true, style: 'sweep', damage: 30 }),
+        spell('危 · 追雨跃袭', 'leap', { range: 7.5, windup: 1.5, recovery: 2.3, style: 'overhead', damage: 38 }),
+      ][variant - 3];
+      case 'nana': return [
+        strike('七海 · 试岩短凿', { windup: 0.85, recovery: 0.7, range: 3.5, lunge: 1, damage: 28 }),
+        strike('七海 · 拔镐迟落', { windup: 2.2, recovery: 2.25, range: 4.3, style: 'overhead', damage: 46 }),
+        spell('七海 · 守石反架', 'counter', { range: 5, windup: 1.1, recovery: 3, style: 'draw', damage: 18 }),
+      ][variant - 3];
+      default: break;
+    }
+  }
   if (e.kind === 'bellkeeper') return [
     strike('余响 · 悬槌迟钟', { damage: 46, range: 3.7, windup: 1.7, recovery: 2.1, style: 'overhead', lunge: 0.7 }),
     strike('危 · 断声低扫', { damage: 38, range: 4.4, windup: 1.45, recovery: 2, style: 'sweep', arc: 2, parryable: false, jumpable: true, lunge: 0 }),

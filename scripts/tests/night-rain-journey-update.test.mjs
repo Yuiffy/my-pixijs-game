@@ -148,7 +148,10 @@ test('underground checkpoints respawn locally and lamp travel retains supplies a
   const s = fresh(); place(s, d.DUNGEON_REST_POINTS['crypt-lamp']); e.interact(s);
   assert.equal(s.checkpoint, 'crypt-lamp');
   const blade = s.enemies.find(x => x.id === 'crypt-blade');
-  place(s, { x: blade.x, y: blade.y, z: blade.z + 1.8 }); s.player.hp = 1;
+  // The south side meets the entry hall's solid parapet. Stand on its clear
+  // north side so this fixture tests an unobstructed real attack.
+  place(s, { x: blade.x, y: blade.y, z: blade.z - 1.8 });
+  assert.ok(w.canOccupy(s.player.x, s.player.z, s.player.y, s)); s.player.hp = 1;
   for (let i = 0; i < 120 && s.mode === 'playing'; i++) e.stepGame(s, 40);
   assert.equal(s.mode, 'dead'); assert.ok(e.loadGame(e.saveGame(s)));
   e.respawn(s); assert.equal(s.player.y, -24); assert.equal(s.liftRide, null);

@@ -74,7 +74,8 @@ test('pause and save preserve every tell and a phase change cannot replace an al
   const restored = engine.loadGame(engine.saveGame(s)); assert.ok(restored);
   assert.deepEqual(motion.enemyTell(restored.enemies.find(actor => actor.id === e.id)), tell);
   engine.setPaused(s, false); step(s, 300); assert.equal(e.phase, 1); assert.equal(e.action, 'windup');
-  step(s, 700); assert.equal(e.phase, 2); assert.equal(e.action, 'recover');
+  step(s, 700); assert.equal(e.phase, 1); assert.equal(e.action, 'recover');
+  step(s, e.timer * 1000 + 20); assert.equal(e.phase, 2);
 });
 
 test('an old save mid-strike retains its remaining time to contact and migrates only once', () => {

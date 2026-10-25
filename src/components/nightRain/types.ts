@@ -25,6 +25,7 @@ export type Enemy = Vec3 & {
   hp: number; maxHp: number; posture: number; maxPosture: number;
   action: EnemyAction; timer: number; attackIndex: number; hitDone: boolean;
   phase: number; aggro: boolean; flash: number;
+  awareness?: { lastSeen: Vec3; lost: number; repath: number; route: Vec3[]; returning?: boolean };
 };
 export type GameInput = {
   x: number; z: number; sprint?: boolean;

@@ -3,7 +3,9 @@ import { SKY_ENEMIES, SKY_GATES, SKY_LORE, skyPrisms } from './skyplain';
 import type { Action, AttackId, Effect, Enemy, EnemyKind, GameInput, GameState, Player, Vec3, WorldAccess } from './types';
 import { ceilingAt, deckBlocks, playerBlocked, projectileBlocked, supportAt, rampLandingAt, canOccupy, REST_POINTS, ENEMY_SPAWNS, AMBUSH_ENEMIES, LANDMARKS, lineClear, regionAt, SPAWN, WORLD_BOUNDS } from './world';
 import { enemyRole, isBoss } from './encounters';
-import { DUNGEON_BOSSES, DUNGEON_ENEMIES, DUNGEON_PORTALS, DUNGEONS, giantScale, undergroundId } from './dungeons';
+import { enemySenses, enemyFootwork, turnEnemy } from './enemyTactics';
+import { findPath, walkSegment } from './companion';
+import { DUNGEON_BOSSES, DUNGEON_ENEMIES, DUNGEON_PORTALS, DUNGEONS, giantScale, navigationLayer, undergroundId } from './dungeons';
 import { discoverDungeon, liftPosition, migrateUnderground, updateLift, validLift } from './dungeonTravel';
 import { ARMORS, validEquipment } from './equipment';
 import { bestiaryKey } from './bestiary';
@@ -14,7 +16,7 @@ import { applyConversation, validHaven } from './havenStory';
 import { CHAPTER_ENEMIES, CHAPTER_GATES, CHAPTER_LORE } from './chapter';
 import { riverSeals, VALLEY_BOSSES, VALLEY_ENEMIES, VALLEY_GATES, VALLEY_LORE } from './valley';
 
-import { enemyAttack, enemyTiming, ENEMY_STRIKE_TIME, ENEMY_CONTACT_TIME } from './enemyCombat';
+import { enemyAttack, enemyTiming, enemyLungeStep, ENEMY_STRIKE_TIME, ENEMY_CONTACT_TIME } from './enemyCombat';
 
 import { bossDefense, bossLeapHeight, castBossSkill, frozenByBoss, interruptBossChannel, snaredByBoss, updateBossFields, validBossFields } from './bossFields';
 import { FAN_ENEMIES, combatFanOf, fanOf } from './fanEnemies';
@@ -56,6 +58,19 @@ const angleDiff = (a: number, b: number) => Math.atan2(Math.sin(a - b), Math.cos
 const facingToward = (a: Vec3, b: Vec3) => Math.atan2(b.x - a.x, b.z - a.z);
 const alive = (enemy: Enemy) => enemy.hp > 0 && enemy.action !== 'dead';
 const finite = (n: unknown, min: number, max: number): n is number => typeof n === 'number' && Number.isFinite(n) && n >= min && n <= max;
+// Expensive world probes are transient and never trusted from a saved game.
+type EnemyProbes = { sightAt: number; visible: boolean; eye: Vec3; seen: Vec3; walkAt: number; direct: boolean; goal: Vec3; access: string; returning: boolean };
+const enemyProbes = new WeakMap<Enemy, EnemyProbes>();
+const nextEnemyRoute = new WeakMap<GameState, number>();
+const enemyAccess = new WeakMap<GameState, { time: number; key: string }>();
+function enemyAccessKey(s: GameState): string {
+  let access = enemyAccess.get(s);
+  if (!access || access.time !== s.time) {
+    access = { time: s.time, key: [s.shortcut, s.templeGate, s.harborGate, s.chapterGates.join(','), s.valleyGates.join(','), s.skyGates.join(','), s.bellGates.join(','), s.haven.gates.join(',')].join('|') };
+    enemyAccess.set(s, access);
+  }
+  return access.key;
+}
 
 export function maxFlasks(s: GameState): number { return 3 + Number(s.flaskUpgrade) + Number(s.collected.includes('cistern-flask')) + Number(s.collected.includes('valley-flask')); }
 export function healAmount(s: GameState): number { return (s.gear.talisman === 'goldBell' ? 80 : 60) + (s.collected.includes('bamboo-dew') ? 30 : 0) + (s.haven.ending === 'release' ? 15 : 0); }
@@ -211,9 +226,9 @@ function move(s: GameState, entity: Vec3, dx: number, dz: number, radius = 0.33)
   const steps = Math.max(1, Math.ceil(Math.hypot(dx, dz) / 0.1));
   for (let i = 0; i < steps; i += 1) {
     const nx = entity.x + dx / steps;
-    if (canOccupy(nx, entity.z, entity.y, s, radius) && !blockedByBody(nx, entity.z)) { entity.x = nx; entity.y = supportAt(nx, entity.z, entity.y + 0.6) ?? entity.y; }
+    if (canOccupy(nx, entity.z, entity.y, s, radius) && !playerBlocked(nx, entity.z, entity.y, s, radius) && !blockedByBody(nx, entity.z)) { entity.x = nx; entity.y = supportAt(nx, entity.z, entity.y + 0.6) ?? entity.y; }
     const nz = entity.z + dz / steps;
-    if (canOccupy(entity.x, nz, entity.y, s, radius) && !blockedByBody(entity.x, nz)) { entity.z = nz; entity.y = supportAt(entity.x, nz, entity.y + 0.6) ?? entity.y; }
+    if (canOccupy(entity.x, nz, entity.y, s, radius) && !playerBlocked(entity.x, nz, entity.y, s, radius) && !blockedByBody(entity.x, nz)) { entity.z = nz; entity.y = supportAt(entity.x, nz, entity.y + 0.6) ?? entity.y; }
   }
 }
 
@@ -473,28 +488,46 @@ function updateEnemy(s: GameState, e: Enemy, dt: number): void {
   if (!alive(e)) return;
   const p = s.player; const dist = distance(e, p); const homeDistance = distance(e, e.spawn);
   // Distant idle actors do not trace hundreds of metres through the expanded city.
-  if (!e.aggro && dist > 17 && homeDistance < 0.15) return;
+  const senses = enemySenses(e);
+  if (!e.aggro && e.action === 'idle' && !e.awareness?.returning && dist > senses.sight && homeDistance < 0.15) return;
   const role = enemyRole(e); const ranged = role === 'crossbow' || role === 'slinger';
-  const sameLevel = Math.abs(e.y - p.y) < 1.8; const sees = sameLevel && dist < 17 && lineClear(e, p, s);
-  if (isBoss(e) && e.hp <= e.maxHp * 0.5 && e.phase === 1 && !['windup', 'attack'].includes(e.action)) { e.phase = 2; say(s, BOSS_ROSTER[e.kind] ? `${BOSS_ROSTER[e.kind]!.name.split(' · ')[0]} · ${BOSS_ROSTER[e.kind]!.second}` : e.kind === 'nana' ? '米汀 · 七潮叠浪' : '弥月 · 夜曲变奏', 5, 'event', BOSS_ROSTER[e.kind]?.tip ?? '红色横扫不能弹反，跳过或退开，等收招再反击。'); }
+  const probes = enemyProbes.get(e) ?? { sightAt: -1, visible: false, eye: { ...e }, seen: { ...p }, walkAt: -1, direct: false, goal: { ...e.spawn }, access: '', returning: e.awareness?.returning ?? (!e.aggro && e.action === 'chase' && homeDistance > 0.15) };
+  enemyProbes.set(e, probes);
+  const access = enemyAccessKey(s); const accessChanged = probes.access !== access;
+  if (accessChanged) { probes.access = access; probes.sightAt = -1; probes.walkAt = -1; }
+  const sameLayer = navigationLayer(e) === navigationLayer(p);
+  const canSee = sameLayer && Math.abs(e.y - p.y) < 8 && dist < senses.sight + 5;
+  if (!canSee) probes.visible = false;
+  else if (s.time >= probes.sightAt || distance(probes.eye, e) > 0.7 || distance(probes.seen, p) > 0.7 || Math.abs(probes.eye.y - e.y) > 0.4 || Math.abs(probes.seen.y - p.y) > 0.4) {
+    probes.visible = lineClear(e, p, s); probes.sightAt = s.time + (dist < 5 ? 0.08 : 0.24);
+    probes.eye = { ...e }; probes.seen = { ...p };
+  }
+  const sees = canSee && probes.visible;
+  const memory = e.awareness ?? { lastSeen: { ...e.spawn }, lost: 0, repath: 0, route: [] };
+  e.awareness = memory; memory.repath = Math.max(0, memory.repath - dt);
+  if (accessChanged) { memory.route = []; memory.repath = 0; }
+  if (sees) { memory.lastSeen = { x: p.x, y: p.y, z: p.z }; memory.lost = 0; } else if (e.aggro) memory.lost = Math.min(30, memory.lost + dt);
+  if (isBoss(e) && e.hp <= e.maxHp * 0.5 && e.phase === 1 && ['idle', 'chase'].includes(e.action)) { e.phase = 2; say(s, BOSS_ROSTER[e.kind] ? `${BOSS_ROSTER[e.kind]!.name.split(' · ')[0]} · ${BOSS_ROSTER[e.kind]!.second}` : e.kind === 'nana' ? '米汀 · 七潮叠浪' : '弥月 · 夜曲变奏', 5, 'event', BOSS_ROSTER[e.kind]?.tip ?? '红色横扫不能弹反，跳过或退开，等收招再反击。'); }
   const inArena = e.kind !== 'boss' || (p.z < -36 && p.y < 0.2);
   const ambush = AMBUSH_ENEMIES.some(a => a.id === e.id);
-  const refuge = s.litLamps.includes('courtyard') && Math.abs(p.y) < 0.8 && Math.hypot(p.x + 1, p.z - 7) < 3.5;
-  if (refuge && e.aggro && e.kind !== 'boss') { e.aggro = false; e.action = 'idle'; e.timer = 0.8; e.posture = 0; }
-  if (!e.aggro && homeDistance < 1.5 && inArena && !refuge && dist < (ambush ? 3.6 : ranged ? 11 : e.kind === 'boss' ? 8 : 6.3) && sees) { e.aggro = true; e.timer = ranged ? 0.9 : 0.45; }
+  const refuge = LANDMARKS.some(l => l.kind === 'rest' && s.litLamps.includes(l.id) && Math.abs(p.y - l.y) < 0.8 && distance(p, l) < (l.id === 'courtyard' ? 3.5 : 2.8));
+  if (refuge && e.aggro && e.kind !== 'boss') { e.aggro = false; e.action = 'idle'; e.timer = 0.8; e.posture = 0; memory.route = []; memory.repath = 0; probes.walkAt = -1; probes.returning = homeDistance > 0.15; memory.returning = probes.returning; }
+  const forward = Math.cos(facingToward(e, p) - e.facing) > -0.2;
+  const detection = ambush ? 3.6 : forward ? senses.sight : senses.rear;
+  if (!e.aggro && !probes.returning && homeDistance < senses.leash - 3 && inArena && !refuge && dist < detection && sees) { e.aggro = true; e.timer = ranged ? 0.9 : 0.45; memory.route = []; memory.lost = 0; probes.walkAt = -1; }
   // Enemies return to their posts rather than pursuing through floors or the entire level.
-  if (e.aggro && (homeDistance > (['regent', 'serpent', 'elegist'].includes(e.kind) ? 22 : e.kind === 'captain' ? 18 : e.kind === 'boss' ? 11 : 10) || dist > 15 || (e.kind === 'boss' && p.z > -35.5))) { e.aggro = false; e.action = 'idle'; e.timer = 0.8; e.posture = 0; }
+  const committed = e.action === 'windup' || e.action === 'attack';
+  if (e.aggro && !committed && (homeDistance > senses.leash || dist > senses.leash + 8 || memory.lost > senses.forget || (e.kind === 'boss' && p.z > -35.5))) { e.aggro = false; e.action = 'idle'; e.timer = 0.8; e.posture = 0; memory.route = []; probes.returning = true; memory.returning = true; probes.walkAt = -1; memory.repath = 0; }
   if (!e.aggro) {
     if (combatFanOf(e) === 'shark' && homeDistance < 2.2 && dist > 7) {
       const target = { ...e.spawn, z: e.spawn.z + Math.sin(s.time * 0.35) * 1.2 };
-      e.facing = facingToward(e, target); e.action = 'chase';
+      turnEnemy(e, target, dt); e.action = 'chase';
       if (distance(e, target) > 0.12) move(s, e, Math.sin(e.facing) * dt * 0.65, Math.cos(e.facing) * dt * 0.65);
       return;
     }
     if (homeDistance > 0.15) {
-      e.facing = facingToward(e, e.spawn); e.action = 'chase';
-      move(s, e, Math.sin(e.facing) * STATS[e.kind].speed * dt, Math.cos(e.facing) * STATS[e.kind].speed * dt);
-    } else { e.action = 'idle'; e.facing = ENEMY_SPAWNS.find(spawn => spawn.id === e.id)?.facing ?? 0; }
+      followEnemyRoute(s, e, e.spawn, dt, STATS[e.kind].speed);
+    } else { e.action = 'idle'; probes.returning = false; memory.returning = false; const facing = ENEMY_SPAWNS.find(spawn => spawn.id === e.id)?.facing ?? 0; turnEnemy(e, { x: e.x + Math.sin(facing), y: e.y, z: e.z + Math.cos(facing) }, dt); }
     return;
   }
   if (e.action === 'stagger') { e.timer -= dt; if (e.timer <= 0) { e.action = 'recover'; e.timer = 0.6; e.posture = e.maxPosture * 0.35; } return; }
@@ -502,16 +535,15 @@ function updateEnemy(s: GameState, e: Enemy, dt: number): void {
   if (e.action === 'windup') {
     // The loaded stance turns gradually, then plants its feet before release.
     if (e.timer > enemyTiming(e).commit) {
-      const turn = facingToward(e, p) - e.facing;
-      const angle = Math.atan2(Math.sin(turn), Math.cos(turn));
-      e.facing += Math.max(-2.7 * dt, Math.min(2.7 * dt, angle));
+      turnEnemy(e, p, dt, Math.min(2.7, senses.turn));
     }
     e.timer -= dt;
     if (e.timer <= 0) { e.action = 'attack'; e.timer = ENEMY_STRIKE_TIME; e.hitDone = false; }
     return;
   }
   if (e.action === 'attack') {
-    if (e.timer > ENEMY_STRIKE_TIME - 0.12) move(s, e, Math.sin(e.facing) * attack.lunge * dt * 5, Math.cos(e.facing) * attack.lunge * dt * 5);
+    const lunge = enemyLungeStep(e, dt);
+    if (lunge > 0) move(s, e, Math.sin(e.facing) * lunge, Math.cos(e.facing) * lunge);
     e.timer -= dt;
     if (!e.hitDone && e.timer <= ENEMY_STRIKE_TIME - ENEMY_CONTACT_TIME) {
       e.hitDone = true;
@@ -540,9 +572,42 @@ function updateEnemy(s: GameState, e: Enemy, dt: number): void {
     else if (e.attackIndex % 3 === 2) e.attackIndex += 1;
   }
   const nextAttack = enemyAttack(e);
-  if (dist <= nextAttack.range - 0.25 && sees && e.timer <= 0) { e.facing = facingToward(e, p); e.action = 'windup'; e.timer = nextAttack.windup; return; }
+  if (sees && dist <= (ranged ? 9 : 1.2)) turnEnemy(e, p, dt);
+  const facingTarget = Math.abs(angleDiff(facingToward(e, p), e.facing)) < 1.2;
+  if (dist <= nextAttack.range - 0.25 && sees && facingTarget && e.timer <= 0) { e.action = 'windup'; e.timer = nextAttack.windup; return; }
   e.action = 'chase';
-  if (ranged && dist < 4 && homeDistance < 2.5 && sees) { e.facing = facingToward(e, p); move(s, e, -Math.sin(e.facing) * dt, -Math.cos(e.facing) * dt); } else if (dist > (ranged ? 9 : 1.2) && sees) { e.facing = facingToward(e, p); move(s, e, Math.sin(e.facing) * STATS[e.kind].speed * dt, Math.cos(e.facing) * STATS[e.kind].speed * dt); }
+  if (ranged && dist < 4 && homeDistance < 2.5 && sees) { move(s, e, -Math.sin(e.facing) * dt, -Math.cos(e.facing) * dt); } else if (dist > (ranged ? 9 : 1.2) || !sees) followEnemyRoute(s, e, sees ? p : memory.lastSeen, dt, STATS[e.kind].speed * (dist > 7 && !ranged ? 1.45 : 1));
+  if (sees) { const side = enemyFootwork(e, s.time, dist); move(s, e, Math.cos(e.facing) * side * dt, -Math.sin(e.facing) * side * dt); }
+}
+
+/** Bounded local routes retain a last seen position around corners. Closed doors,
+ * parapets, real earth and floor changes use the same walkability as the player. */
+function followEnemyRoute(s: GameState, e: Enemy, target: Vec3, dt: number, speed: number) {
+  const memory = e.awareness!;
+  const probes = enemyProbes.get(e)!;
+  let next = target;
+  const changed = distance(probes.goal, target) > 0.9 || Math.abs(probes.goal.y - target.y) > 0.4;
+  if (s.time >= probes.walkAt || changed) {
+    probes.direct = walkSegment(e, target, s, 0.6, 0.33 * giantScale(e.id));
+    probes.walkAt = s.time + 0.4; probes.goal = { ...target };
+    if (changed) memory.repath = Math.min(memory.repath, 0.35);
+  }
+  if (!probes.direct) {
+    if (memory.repath <= 0 && s.time >= (nextEnemyRoute.get(s) ?? 0)) {
+      memory.route = findPath(e, target, s, 320).slice(1); memory.repath = 1.4 + (e.id.length % 4) * 0.2;
+      // Only one bounded search may run in this simulation slice.
+      nextEnemyRoute.set(s, s.time + 0.12);
+    }
+    while (memory.route.length && distance(e, memory.route[0]) < 0.35) memory.route.shift();
+    if (!memory.route.length) { e.action = 'idle'; return; }
+    [next] = memory.route;
+  } else memory.route = [];
+  if (distance(e, next) < 0.12) { e.action = 'idle'; return; }
+  turnEnemy(e, next, dt); e.action = 'chase';
+  const angle = facingToward(e, next);
+  const alignment = Math.max(0, Math.cos(angle - e.facing));
+  const step = Math.min(distance(e, next), speed * dt * alignment);
+  move(s, e, Math.sin(e.facing) * step, Math.cos(e.facing) * step);
 }
 
 function updateProjectiles(s: GameState, dt: number) {
@@ -1105,6 +1170,12 @@ export function loadGame(raw: string | null): GameState | null {
       if (!['idle', 'chase', 'windup', 'attack', 'recover', 'stagger', 'dead'].includes(e.action) || (e.hp === 0) !== (e.action === 'dead')) return null;
       if (!finite(e.timer, -0.02, 5) || !finite(e.attackIndex, 0, 1000000) || !Number.isInteger(e.attackIndex) || ![1, 2].includes(e.phase) || !finite(e.facing, -100, 100) || !finite(e.flash, 0, 1)) return null;
       if (typeof e.hitDone !== 'boolean' || typeof e.aggro !== 'boolean') return null;
+      // Keep validated pursuit state through reload. Probe caches still rebuild.
+      if (e.awareness !== undefined) {
+        const memory = e.awareness; const seen = memory?.lastSeen;
+        const validPoint = (point: Vec3) => point && finite(point.x, WORLD_BOUNDS.x1, WORLD_BOUNDS.x2) && finite(point.y, WORLD_BOUNDS.minY, WORLD_BOUNDS.maxY) && finite(point.z, WORLD_BOUNDS.z1, WORLD_BOUNDS.z2);
+        if (!memory || !validPoint(seen) || !finite(memory.lost, 0, 30) || !finite(memory.repath, 0, 5) || !Array.isArray(memory.route) || memory.route.length > 1024 || !memory.route.every(validPoint) || (memory.returning !== undefined && typeof memory.returning !== 'boolean')) return null;
+      }
       // The longer follow-through must not move an old saved strike past contact.
       if (legacyMotion && e.action === 'attack') {
         if (e.timer > 0.24 + 0.001) return null;

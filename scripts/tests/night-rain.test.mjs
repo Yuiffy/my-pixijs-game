@@ -74,10 +74,11 @@ test('repeated legitimate parries break posture and allow exactly one execution 
 
 test('dodge invulnerability works even against a wall, but late recovery is vulnerable', () => {
   const fixture = () => {
-    const { s, e } = courtyardDuel(); Object.assign(s.player, { x: -4, z: 9.6 }); Object.assign(e, { x: -4, z: 8.6, action: 'windup', timer: 0.12, aggro: true }); return { s, e };
+    // The courtyard's south edge now joins a real stone slope; use the solid crate.
+    const { s, e } = courtyardDuel(); Object.assign(s.player, { x: -5, z: -3.3 }); Object.assign(e, { x: -5, z: -4.3, action: 'windup', timer: 0.12, aggro: true }); return { s, e };
   };
   const good = fixture(); advance(good.s, 350, { ...neutral, dodge: true });
-  assert.ok(good.s.player.z < 9.68); assert.equal(good.s.player.hp, 100); assert.equal(good.s.player.stamina, 75);
+  assert.ok(good.s.player.z < -3.03); assert.ok(good.s.player.z > -3.3); assert.equal(good.s.player.hp, 100); assert.equal(good.s.player.stamina, 75);
   const early = fixture(); early.e.timer = 0.56; advance(early.s, 850, { ...neutral, dodge: true });
   assert.ok(early.s.player.hp < 100, 'end of roll is not invincible');
 });
@@ -140,16 +141,22 @@ test('Harei combines a parryable strike, visible badge projectile and delayed pi
 
 
 test('death requires explicit respawn; a legal return retrieves the last bloodstain', () => {
-  const s = fresh(); reachLamp(s); walkTo(engine, s, { x: -6, z: 2 }); assert.equal(s.rice, 18);
+  const s = fresh(); reachLamp(s); walkTo(engine, s, { x: -6, z: 2 }); assert.equal(s.rice, 48);
+  assert.equal(s.enemies.find(e => e.id === 'courtyard-prowler').action, 'dead');
+  assert.equal(s.enemies.find(e => e.id === 'alley-guard').action, 'dead');
   walkTo(engine, s, { x: -8, z: 2 });
   advance(s, 800, { x: -0.7, z: -0.7 });
+  // Wider alert already brought the alley guard into the first duel. Walk toward
+  // the surviving stair ambusher without attacking, then let its real strike kill.
+  advance(s, 1500, { x: -1, z: 0 }); advance(s, 3000, { x: 0, z: -1 });
+  advance(s, 1500, { x: 0, z: 1 });
   for (let i = 0; i < 30 && s.mode === 'playing'; i += 1) advance(s, 1000);
-  assert.equal(s.mode, 'dead'); assert.equal(s.rice, 0); assert.equal(s.bloodstain.rice, 18); const dead = saveGame(s);
+  assert.equal(s.mode, 'dead'); assert.equal(s.rice, 0); assert.equal(s.bloodstain.rice, 48); const dead = saveGame(s);
   advance(s, 5000); assert.equal(saveGame(s), dead); const loaded = loadGame(dead); assert.equal(loaded.mode, 'dead');
   const stain = { ...s.bloodstain }; respawn(s); assert.equal(s.mode, 'playing'); assert.equal(s.player.hp, 100); assert.equal(s.player.flasks, 3);
-  assert.equal(s.enemies[0].hp, s.enemies[0].maxHp); assert.equal(s.bloodstain.rice, 18);
+  assert.equal(s.enemies[0].hp, s.enemies[0].maxHp); assert.equal(s.bloodstain.rice, 48);
   walkTo(engine, s, { x: -4, z: 4 }); walkTo(engine, s, { x: -8, z: 2 }); walkTo(engine, s, stain); const carried = s.rice;
-  interact(s); assert.equal(s.bloodstain, null); assert.equal(s.rice, carried + 18);
+  interact(s); assert.equal(s.bloodstain, null); assert.equal(s.rice, carried + 48);
 });
 
 test('rest respawns ordinary foes, preserves cleared boss and exploration, and replenishes finite flasks', () => {
@@ -170,8 +177,9 @@ test('save restores exact combat and kills, rejects malformed data and cannot cr
   const s = fresh(); reachLamp(s); walkTo(engine, s, { x: -3, z: 4 });
   walkTo(engine, s, { x: -8, z: 2 }); advance(s, 300, { x: -1, z: -1 });
   const raw = saveGame(s); const restored = loadGame(raw); assert.ok(restored);
-  assert.deepEqual(restored.player, s.player); assert.deepEqual(restored.enemies, s.enemies); assert.equal(restored.rice, 18);
-  assert.equal(restored.enemies[0].action, 'dead'); advance(restored, 40); assert.equal(restored.rice, 18);
+  assert.deepEqual(restored.player, s.player); assert.deepEqual(restored.enemies, s.enemies); assert.equal(restored.rice, 48);
+  assert.equal(restored.enemies[0].action, 'dead'); assert.equal(restored.enemies.find(e=>e.id==='alley-guard').action,'dead');
+  advance(restored, 40); assert.equal(restored.rice, 48);
   const invalid = [null, '', '{}', 'null', '{']; for (const value of invalid) assert.equal(loadGame(value), null);
   const corruptions = [
     x => { x.player.x = 900; }, x => { x.player.hp = 5000; }, x => { x.player.action = 'godmode'; },

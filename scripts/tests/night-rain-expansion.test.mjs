@@ -47,7 +47,8 @@ test('drop from frog stage returns through stair foot, never through its physica
 test('guest posture executions deal boss damage and allow the second phase',()=>{
  for(const kind of ['nana','azi']){const s=fresh(),e=s.enemies.find(e=>e.kind===kind);place(s,{x:e.x,y:e.y,z:e.z+1.5});s.player.facing=Math.PI;e.action='stagger';e.posture=e.maxPosture;
  const hp=e.hp;step(s,16,{light:true});assert.equal(s.player.action,'execute');assert.ok(e.hp>0&&e.hp<hp);assert.equal(s.defeatedGuests.length,0);
- e.hp=e.maxHp*.49;step(s,20);assert.equal(e.phase,2);
+ e.hp=e.maxHp*.49;step(s,20);assert.equal(e.phase,1);assert.equal(e.action,'recover');
+ step(s,e.timer*1000+20);assert.equal(e.phase,2);
  }
 });
 

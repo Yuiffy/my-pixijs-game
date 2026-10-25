@@ -170,7 +170,7 @@ export function walkSegment(a: Vec3, b: Vec3, shortcut: WorldAccess, maxStep = 0
   }
   return Math.abs(y - b.y) < 0.6;
 }
-export function findPath(start: Vec3, destination: Vec3, shortcut: WorldAccess): Vec3[] {
+export function findPath(start: Vec3, destination: Vec3, shortcut: WorldAccess, budget = 140000): Vec3[] {
   if (navigationLayer(start) !== navigationLayer(destination)) return [];
   const step = 0.5;
   const key = (x: number, z: number, y: number) => `${x},${z},${Math.round(y * 10)}`;
@@ -206,7 +206,7 @@ export function findPath(start: Vec3, destination: Vec3, shortcut: WorldAccess):
     const id = key(x, z, y); points.set(id, p); costs.set(id, distance(start, p)); push(id, distance(start, p) + distance(p, destination));
   }
   const closed = new Set<string>();
-  while (heap.length && closed.size < 140000) {
+  while (heap.length && closed.size < budget) {
     const { id } = pop(); if (closed.has(id)) continue; closed.add(id);
     const p = points.get(id)!;
     if (distance(p, destination) < 1 && walkSegment(p, destination, shortcut)) {

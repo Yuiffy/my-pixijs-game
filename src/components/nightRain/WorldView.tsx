@@ -24,11 +24,15 @@ import GeometryBatch, { type StoneBox } from "./GeometryBatch";
 import { CHAPTER_GATES } from "./chapter";
 import { createSaltTexture } from './skyTexture';
 import { createStoneTexture } from './stoneTexture';
+import { createEarthTexture } from './earthTexture';
 import CompanionView from './CompanionView';
 import CombatTrail from './CombatTrail';
 import PlayerActor from './PlayerActor';
 import { characterAppearance, type CharacterAppearance } from './characterAppearance';
-import RainEffects, { ShrineWisps } from './RainEffects';
+import RainEffects from './RainEffects';
+import HomewardShrine from './HomewardShrine';
+import TerrainView from './TerrainView';
+import EnemyPresence from './EnemyPresence';
 import TerritoryView from './TerritoryView';
 import FanStyle from './FanStyle';
 import { combatFanOf, fanOf, FAN_COLORS } from './fanEnemies';
@@ -250,7 +254,8 @@ function Lantern({
 function Deck({ surface }: { surface: Surface }) {
   const { x1, x2, z1, z2, y, endY = y } = surface;
   const salt = surface.id.startsWith('sky-');
-  const stone = useMemo(() => (salt ? createSaltTexture() : createStoneTexture()), [salt]);
+  const natural = surface.id === 'courtyard-rain-bank' || surface.id === 'courtyard-stone-bank';
+  const stone = useMemo(() => (salt ? createSaltTexture() : natural ? createEarthTexture() : createStoneTexture()), [salt, natural]);
   useEffect(() => () => stone.dispose(), [stone]);
   const geometry = useMemo(() => {
     const g = new THREE.BufferGeometry();
@@ -269,19 +274,19 @@ function Deck({ surface }: { surface: Surface }) {
   useEffect(() => () => geometry.dispose(), [geometry]);
   const boxes = useMemo(() => {
     const items: StoneBox[] = [];
-    const steps = endY !== y ? Math.round(Math.abs(endY - y) / 0.22) : 0;
-    if (!steps) items.push({ position: [(x1 + x2) / 2, y - 0.3, (z1 + z2) / 2], size: [x2 - x1, 0.58, z2 - z1], color: COLORS.stone });
+    const steps = endY !== y && !natural ? Math.round(Math.abs(endY - y) / 0.22) : 0;
+    if (!steps && endY === y) items.push({ position: [(x1 + x2) / 2, y - 0.3, (z1 + z2) / 2], size: [x2 - x1, 0.58, z2 - z1], color: COLORS.stone });
     for (let i = 0; i < steps; i++) items.push({ position: [(x1 + x2) / 2, y + (endY - y) * ((i + 0.5) / steps) - 0.055, z1 + (i + 0.5) * ((z2 - z1) / steps)], size: [x2 - x1, 0.11, (z2 - z1) / steps - 0.04], color: i % 3 === 0 ? '#a6a393' : surface.color });
     for (const r of surfaceRails(surface)) {
       items.push({ position: [r.x, r.y + 0.35, r.z], size: [r.w, 0.65, r.d], rotation: [-Math.atan(r.slope), 0, 0], color: '#7f8b7e' });
       items.push({ position: [r.x, r.y + 0.7, r.z], size: [r.w + 0.1, 0.07, r.d + 0.02], rotation: [-Math.atan(r.slope), 0, 0], color: '#b4ad96' });
     }
     return items;
-  }, [surface, x1, x2, z1, z2, y, endY]);
+  }, [surface, x1, x2, z1, z2, y, endY, natural]);
   return (
 <group>
     <GeometryBatch boxes={boxes} />
-    <mesh geometry={geometry} receiveShadow><meshStandardMaterial map={stone} color={surface.color} roughness={0.62} metalness={0.1} side={THREE.DoubleSide} polygonOffset polygonOffsetFactor={-SURFACES.indexOf(surface) * 0.05} polygonOffsetUnits={-SURFACES.indexOf(surface)} /></mesh>
+    <mesh geometry={geometry} receiveShadow><meshStandardMaterial map={stone} bumpMap={stone} bumpScale={0.07} color={surface.color} roughness={0.8} metalness={0.08} side={THREE.DoubleSide} polygonOffset polygonOffsetFactor={-SURFACES.indexOf(surface) * 0.05} polygonOffsetUnits={-SURFACES.indexOf(surface)} /></mesh>
   </group>
 );
 }
@@ -549,6 +554,8 @@ function CityContent() {
       const hole = new THREE.Path(); const { x } = d.upper; const z = -d.upper.z;
       hole.moveTo(x - 3.3, z - 3.3); hole.lineTo(x - 3.3, z + 3.3); hole.lineTo(x + 3.3, z + 3.3); hole.lineTo(x + 3.3, z - 3.3); hole.closePath(); shape.holes.push(hole);
     }
+    // The lower court is drained, three metres below the streets.
+    const court = new THREE.Path(); court.moveTo(-3.6, 6); court.lineTo(-3.6, 37); court.lineTo(9.1, 37); court.lineTo(9.1, 6); court.closePath(); shape.holes.push(court);
     return shape;
   }, []);
   return (
@@ -965,28 +972,7 @@ function ObstacleArt({ stateRef }: { stateRef: StateRef }) {
 }
 
 function RainShrine({ stateRef, id, position }: { stateRef: StateRef; id: string; position: Triple }) {
-  const glow = useRef<THREE.Mesh>(null); const flame = useRef<THREE.Mesh>(null); const light = useRef<THREE.PointLight>(null);
-  useFrame(() => {
-    const s = stateRef.current; const lit = s.litLamps.includes(id); const current = s.checkpoint === id;
-    if (glow.current) { glow.current.rotation.z = s.time * 0.12; const mat = glow.current.material as THREE.MeshBasicMaterial; mat.color.set(current ? '#ffda89' : lit ? '#ffce82' : '#80bfee'); mat.opacity = (lit ? 0.5 : 0.75) + Math.sin(s.time * 2) * 0.08; glow.current.scale.setScalar(lit ? 1 : 0.7); }
-    if (flame.current) { flame.current.visible = lit; flame.current.scale.setScalar(1 + Math.sin(s.time * 4) * 0.08); }
-    if (light.current) { light.current.intensity = lit ? 8 : 0.8; light.current.color.set(lit ? '#ffce82' : '#80bfee'); }
-  });
-  return (
-<group position={position}>
-    <ShrineWisps stateRef={stateRef} id={id} />
-    <mesh ref={glow} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.035, 0]}><ringGeometry args={[0.7, 1, 48]} /><meshBasicMaterial transparent opacity={0.4} depthWrite={false} /></mesh>
-    <Block position={[0, 0.15, 0]} size={[0.8, 0.3, 0.8]} color="#827d69" />
-    <Pole position={[0, 0.85, 0]} height={1.4} radius={0.045} />
-    <Block position={[0, 1.42, 0]} size={[0.42, 0.07, 0.42]} color="#514f42" />
-    {[-1, 1].map(side => <Pole key={side} position={[side * 0.19, 1.66, 0]} height={0.5} radius={0.022} />)}
-    <mesh position={[0, 1.99, 0]} rotation={[0, Math.PI / 4, 0]}><coneGeometry args={[0.35, 0.22, 4]} /><meshStandardMaterial color="#4b5c58" /></mesh>
-    <mesh ref={flame} position={[0, 1.65, 0]}><octahedronGeometry args={[0.17]} /><meshBasicMaterial color="#ffe4a0" /></mesh>
-    <Pole position={[-0.6, 1.4, 0]} height={2.8} radius={0.045} color="#ba9c65" />
-    <Block position={[-0.35, 2.3, 0]} size={[0.5, 0.85, 0.04]} color="#ac714f" />
-    <pointLight ref={light} position={[0, 1.7, 0]} distance={7} intensity={8} color="#ffd598" />
-  </group>
-);
+  return <HomewardShrine stateRef={stateRef} id={id} position={position} />;
 }
 
 function Landmarks({ stateRef }: { stateRef: StateRef }) {
@@ -1167,6 +1153,8 @@ function LegacyActor({
   const healthFill = useRef<THREE.Mesh>(null);
   const lastPosition = useRef(new THREE.Vector3());
   const walk = useRef(0);
+  const gaitSpeed = useRef(0);
+  const gaitTime = useRef(stateRef.current.time);
   const drinkAim = useMemo(() => ({ up: new THREE.Vector3(0, 1, 0), direction: new THREE.Vector3(), inverse: new THREE.Quaternion() }), []);
   const rollBounds = useMemo(() => ({ all: new THREE.Box3(), mesh: new THREE.Box3(), pivot: new THREE.Vector3() }), []);
   const kind: EnemyKind | "player" = enemyId
@@ -1217,14 +1205,18 @@ function LegacyActor({
         actor.z - lastPosition.current.z,
       ) / Math.max(dt, 0.001);
     lastPosition.current.set(actor.x, actor.y, actor.z);
-    walk.current += Math.min(speed, 6) * dt * 2.8;
+    const frame = Math.max(0, Math.min(state.time - gaitTime.current, 0.05));
+    gaitTime.current = state.time;
+    gaitSpeed.current += (Math.min(speed, 6) - gaitSpeed.current) * (1 - Math.exp(-frame * 12));
+    walk.current += gaitSpeed.current * frame * (kind === 'guard' ? 2.25 : kind === 'duelist' ? 3.15 : 2.8);
     root.current.position.set(actor.x, actor.y, actor.z);
     body.current.position.x = 0; body.current.position.z = 0;
     body.current.scale.setScalar(size);
     body.current.rotation.order = "XYZ";
     body.current.rotation.y = actor.facing;
-    const walking = speed > 0.15 && actor.action !== "dead";
-    const swing = walking ? Math.sin(walk.current) * 0.7 : 0;
+    const walking = gaitSpeed.current > 0.15 && actor.action !== "dead";
+    const stride = Math.min(1, gaitSpeed.current / 2.4);
+    const swing = walking ? Math.sin(walk.current) * (guard ? 0.48 : 0.67) * stride : 0;
     body.current.position.y = walking
       ? Math.abs(Math.sin(walk.current)) * 0.045
       : Math.sin(state.time * 2) * 0.012;
@@ -1234,16 +1226,16 @@ function LegacyActor({
         : actor.action === "hurt" || actor.action === "stagger"
           ? -0.16
           : 0;
-    body.current.rotation.z = 0;
-    if (leftLeg.current) leftLeg.current.rotation.x = swing;
-    if (rightLeg.current) rightLeg.current.rotation.x = -swing;
-    if (leftArm.current) leftArm.current.rotation.set(-swing * 0.65, 0, 0);
+    body.current.rotation.z = walking ? Math.sin(walk.current) * 0.025 * stride : 0;
+    if (leftLeg.current) leftLeg.current.rotation.x = swing > 0 ? swing * 0.65 : swing;
+    if (rightLeg.current) rightLeg.current.rotation.x = swing < 0 ? -swing * 0.65 : -swing;
+    if (leftArm.current) leftArm.current.rotation.set(-swing * 0.4 - (enemy?.aggro ? 0.28 : 0.08), 0, 0.07);
     if (arm.current) arm.current.rotation.y = 0;
     if (rightElbow.current) rightElbow.current.rotation.x = player ? 0 : -0.2 - swing * 0.12;
     if (leftElbow.current) leftElbow.current.rotation.x = player ? 0 : -0.2 + swing * 0.12;
     if (leftLeg.current) leftLeg.current.rotation.z = 0;
     if (rightLeg.current) rightLeg.current.rotation.z = 0;
-    let armX = swing * 0.6;
+    let armX = swing * 0.35 - (enemy?.aggro ? 0.32 : 0.04);
     let armZ = -0.08;
     if (player) {
       const p = state.player;
@@ -1374,6 +1366,7 @@ function LegacyActor({
   return (
     <group ref={root} name={enemyId ? `enemy-${enemyId}` : "player-rig"}>
       <group ref={body} scale={size}>
+        {enemyId && <EnemyPresence enemy={stateRef.current.enemies.find(e => e.id === enemyId)!} stateRef={stateRef} />}
         <group ref={leftLeg} position={[-0.14, 0.8, 0]}>
           <Pole
             position={[0, -0.28, 0]}
@@ -1852,6 +1845,7 @@ function Scene({ stateRef, cameraControl, onReady, onError, companionRef }: Worl
       <ambientLight intensity={0.2} color="#c1d9eb" />
       <Moonlight stateRef={stateRef} />
       <City />
+      <TerrainView />
       <ValleyView stateRef={stateRef} />
       <SkyplainView stateRef={stateRef} />
       <BellAbbeyView stateRef={stateRef} />
