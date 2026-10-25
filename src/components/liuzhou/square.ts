@@ -1,20 +1,38 @@
 import layout from "./square-layout.json";
 import source from "./city-map.json";
 import { terrainHeight } from "./terrain";
-import { terrainTriangleHeight } from "./terrainMesh";
+import { terrainDrapedTriangles, terrainTriangleHeight } from "./terrainMesh";
 import type { StreetBox } from "./street";
 
 type P = { x: number; z: number };
 // Source IDs identify actual footprints. Facades/heights without source tags
 // are authored estimates; the 311 m tower height is retained from its OSM tag.
 export const SQUARE_BUILDING_STYLES: Record<string, { h: number; color: string }> = {
-  205515113: { h: 21.6, color: "#9d9784" },
+  205515113: { h: 21.6, color: "#a9a6a1" },
   205658301: { h: 25.6, color: "#bfc9c5" },
   205657499: { h: 19.2, color: "#c6bfaa" },
   899710004: { h: 311, color: "#759197" },
   434067129: { h: 19.6, color: "#849b9b" },
+  // These retain the previous default heights. Source names and footprints are
+  // archived OSM; facade materials, openings and signs are an exterior study.
+  205657493: { h: 26, color: "#b9b39d" },
+  205657490: { h: 16.4, color: "#c7bba3" },
+  205657494: { h: 10, color: "#a9a18b" },
+  205657496: { h: 16.4, color: "#a5b5b6" },
+  566345463: { h: 19.6, color: "#b7b4a7" },
 };
-export const SQUARE_FACADE_IDS = new Set(Object.keys(SQUARE_BUILDING_STYLES).map(id => `city-osm-${id}`));
+export const SQUARE_FRONTAGE_IDS = new Set(["205657493", "205657490", "205657494", "205657496", "566345463"]);
+export const SQUARE_SOURCE_ROOF_IDS = new Set(["899710007", "899710008"]);
+export const SQUARE_ROOF_BUILDINGS = source.buildings.filter(b => SQUARE_SOURCE_ROOF_IDS.has(b.id)).map(b => {
+  const footprint = b.points.slice(0, -1).map(([x, z]) => ({ x, z }));
+  const xs = footprint.map(p => p.x); const zs = footprint.map(p => p.z);
+  // OSM only identifies the plan as an open roof. Use the highest drawn ground
+  // under that complete source plan + estimated 4.8m clearance, with no solid
+  // foundation down to the street. The same slab feeds rendering and Rapier.
+  const baseY = Math.max(...terrainDrapedTriangles(footprint).flatMap(face => face.map(terrainTriangleHeight))) + 4.8;
+  return { id: `city-osm-${b.id}`, sourceId: b.id, sourceTags: b.tags, x: (Math.min(...xs) + Math.max(...xs)) / 2, z: (Math.min(...zs) + Math.max(...zs)) / 2, w: Math.max(...xs) - Math.min(...xs), d: Math.max(...zs) - Math.min(...zs), h: 0.28, baseY, foundationDepth: 0, angle: 0, color: "#75857e", real: true, footprint, heightSource: "estimated" as const };
+});
+export const SQUARE_FACADE_IDS = new Set([...Object.keys(SQUARE_BUILDING_STYLES).map(id => `city-osm-${id}`), ...SQUARE_ROOF_BUILDINGS.map(b => b.id)]);
 export const SQUARE_RENDER_OVERRIDES: Record<string, { parts: { points: number[][]; holes: number[][][] }[]; facadeEdges: number[][][] }> = layout.buildingRenderOverrides;
 export const SQUARE_SOLIDS: StreetBox[] = [];
 export const SQUARE_DECOR: StreetBox[] = [];
@@ -27,6 +45,24 @@ const add = (p: P, y: number, size: StreetBox["size"], color: string, angle = 0,
 const label = (p: P, text: string, y: number, width: number, height: number, angle = 0, color = "#53695e", flat = false) => {
   SQUARE_LABELS.push({ text, at: [p.x, terrainTriangleHeight(p) + y, p.z], width, height, angle, color, flat });
 };
+
+export const SQUARE_ROOF_COLUMNS: { sourceId: string; p: P; bottom: number; top: number }[] = [];
+for (const roof of SQUARE_ROOF_BUILDINGS) {
+  // In each source ring edge 1→2 is the free outer edge. Estimated supports sit
+  // 45cm inside that edge, leaving the middle of the covered walkway clear.
+  const [a, b] = roof.footprint.slice(1, 3); const length = Math.hypot(b.x - a.x, b.z - a.z);
+  const dx = (b.x - a.x) / length; const dz = (b.z - a.z) / length;
+  const mx = (a.x + b.x) / 2; const mz = (a.z + b.z) / 2;
+  const inward = Math.hypot(roof.x - mx, roof.z - mz);
+  const point = (n: number) => ({ x: a.x + dx * n + ((roof.x - mx) / inward) * 0.45, z: a.z + dz * n + ((roof.z - mz) / inward) * 0.45 });
+  for (let n = 3; n < length - 2; n += 12.5) {
+    const p = point(n); const bottom = terrainTriangleHeight(p); const height = roof.baseY - bottom;
+    SQUARE_ROOF_COLUMNS.push({ sourceId: roof.sourceId, p, bottom, top: roof.baseY });
+    add(p, height / 2, [0.32, height, 0.32], "#b1b5aa");
+    add(p, 0.09, [0.6, 0.18, 0.6], "#8b948b");
+  }
+  add(point(length / 2), roof.baseY - 0.13, [length - 0.8, 0.26, 0.34], "#aab2aa", -Math.atan2(dz, dx), true, true);
+}
 
 for (const [x, z] of layout.benches) {
   const p = { x, z }; const angle = Math.PI / 2;
@@ -72,6 +108,39 @@ for (const id of Object.keys(SQUARE_BUILDING_STYLES)) {
   const x = (Math.min(...xs) + Math.max(...xs)) / 2; const z = (Math.min(...zs) + Math.max(...zs)) / 2;
   const base = terrainHeight({ x, z }); const height = SQUARE_BUILDING_STYLES[id].h;
   const edges = SQUARE_RENDER_OVERRIDES[`city-osm-${id}`]?.facadeEdges ?? points.map((a, i) => [a, points[(i + 1) % points.length]]);
+  if (SQUARE_FRONTAGE_IDS.has(id)) {
+    // All bands follow actual source edges. Offset toward the exterior keeps
+    // the facade on the physical shell even on the irregular Zhongjiao plan.
+    const area = points.reduce((sum, a, i) => { const b = points[(i + 1) % points.length]; return sum + a[0] * b[1] - b[0] * a[1]; }, 0);
+    let sign: { p: P; angle: number; length: number; score: number } | undefined;
+    for (const [a, b] of edges) {
+      const length = Math.hypot(b[0] - a[0], b[1] - a[1]); if (length < 1) continue;
+      const dx = (b[0] - a[0]) / length; const dz = (b[1] - a[1]) / length; const angle = -Math.atan2(dz, dx);
+      const nx = dz * Math.sign(area); const nz = -dx * Math.sign(area);
+      const at = (n: number, out = 0.17) => ({ x: a[0] + dx * n + nx * out, z: a[1] + dz * n + nz * out });
+      const ink = id === "205657494" ? "#69594a" : id === "205657496" ? "#d3dad3" : "#e0d4b9";
+      for (const y of [3.8, height - 0.45]) add(at(length / 2), base + y, [length, 0.32, 0.4], ink, angle, false, true);
+      const bays = Math.max(1, Math.floor(length / 4.6)); const step = length / bays;
+      for (let n = step / 2; n < length; n += step) {
+        const p = at(n); const width = Math.min(3.4, step - 0.55);
+        // The low, recessed-looking dark shop fronts remain closed solids.
+        add(p, base + 1.8, [width, 2.65, 0.32], id === "205657494" ? "#4c5b51" : "#46646a", angle, false, true);
+        add(at(n, 0.34), base + 3.25, [Math.min(step - 0.2, 4.5), 0.5, 0.55], id === "205657493" ? "#5f7163" : id === "205657490" ? "#657a75" : "#817864", angle, false, true);
+        for (let y = 5.6; y < height - 1.5; y += 3.5) {
+          add(p, base + y, [id === "205657496" ? width : width * 0.72, 2.1, 0.3], id === "205657493" ? "#516b6d" : "#5b777b", angle, false, true);
+          add(at(n, 0.22), base + y - 1.13, [width + 0.2, 0.15, 0.45], ink, angle, false, true);
+        }
+        if (id === "205657496") add(at(n - step / 2 + 0.1, 0.22), base + height / 2, [0.24, height - 0.6, 0.4], "#d2dad6", angle, false, true);
+      }
+      // The frontage toward 解放北路 is on the east of these four buildings.
+      // Keep the source name off the silhouette and use one legible sign only.
+      const front = id === "566345463" ? nz : nx;
+      const score = front > 0.5 ? length * front : -Infinity;
+      if (!sign || score > sign.score) sign = { p: at(length / 2, 0.43), angle: angle + (area > 0 ? Math.PI : 0), length, score };
+    }
+    if (sign && Number.isFinite(sign.score)) SQUARE_LABELS.push({ text: building.name, at: [sign.p.x, base + Math.min(height - 1.2, 5.1), sign.p.z], width: Math.min(sign.length - 2, building.name.length * 2.35), height: 1.4, angle: sign.angle, color: id === "205657493" ? "#5b594d" : "#526d6b" });
+    continue;
+  }
   for (const [a, b] of edges) {
     const length = Math.hypot(b[0] - a[0], b[1] - a[1]); const angle = -Math.atan2(b[1] - a[1], b[0] - a[0]);
     const dx = (b[0] - a[0]) / length; const dz = (b[1] - a[1]) / length;
@@ -82,10 +151,10 @@ for (const id of Object.keys(SQUARE_BUILDING_STYLES)) {
       } else if (id === "899710004") {
         add(p, base + height / 2, [0.22, height, 0.3], "#b3c6c4", angle, false, true);
       } else if (id === "205515113") {
-        add(p, base + 12.5, [4.9, 14.5, 0.3], "#756344", angle, false, true);
+        add(p, base + 12.5, [4.9, 14.5, 0.3], "#777874", angle, false, true);
         for (let row = 0; row < 5; row++) {
           const motif = { x: p.x + dx * (row % 2 ? 0.75 : -0.75), z: p.z + dz * (row % 2 ? 0.75 : -0.75) };
-          add(motif, base + 6.7 + row * 2.5, [3.5, 0.38, 0.5], "#99824d", angle, false, true);
+          add(motif, base + 6.7 + row * 2.5, [3.5, 0.38, 0.5], "#b8b7ae", angle, false, true);
         }
       } else {
         for (let y = 4; y < height - 2; y += 4.2) add(p, base + y, [4.6, 2.7, 0.2], "#526f70", angle, false, true);
@@ -93,7 +162,7 @@ for (const id of Object.keys(SQUARE_BUILDING_STYLES)) {
       }
     }
     for (const y of id === "899710004" ? Array.from({ length: 73 }, (_, i) => 4.1 + i * 4.1) : [3.1, height - 0.8]) {
-      add({ x: (a[0] + b[0]) / 2, z: (a[1] + b[1]) / 2 }, base + y, [length, 0.3, 0.32], id === "205515113" ? "#5b5044" : "#b6c4bd", angle, false, true);
+      add({ x: (a[0] + b[0]) / 2, z: (a[1] + b[1]) / 2 }, base + y, [length, 0.3, 0.32], id === "205515113" ? "#777874" : "#b6c4bd", angle, false, true);
     }
   }
   if (id === "434067129") continue;
@@ -102,11 +171,11 @@ for (const id of Object.keys(SQUARE_BUILDING_STYLES)) {
   const p = westFacing ? { x: Math.min(...xs) - 0.2, z } : { x, z: Math.max(...zs) + 0.2 };
   SQUARE_LABELS.push({ text: name, at: [p.x, base + (id === "899710004" ? 24 : height - 3.3), p.z], width: westFacing ? 18 : id === "899710004" ? 32 : 35, height: 2.3, angle: westFacing ? -Math.PI / 2 : 0, color: id === "205515113" ? "#665442" : "#526f70" });
   if (id === "205515113") {
-    // The official museum introduction describes 21-metre bronze-like pillars;
-    // these are a simplified exterior motif, not copied relief artwork.
+    // Simplified entrance columns, with estimated dimensions. The museum text
+    // describes 21 relief panels, not measured 21-metre columns.
     for (let n = -2; n <= 2; n++) {
       const column = { x: p.x - 0.22, z: z + n * 4.6 };
-      add(column, base + 10.5, [0.6, 21, 0.6], "#69593f", 0, false, true);
+      add(column, base + 5.5, [0.6, 11, 0.6], "#70716b", 0, false, true);
     }
   }
 }

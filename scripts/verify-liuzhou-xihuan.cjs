@@ -23,15 +23,18 @@ const report = { passed: false, errors: [], checks: [], captures: [] };
     page.on('pageerror', e => report.errors.push(e.message));
     page.on('console', message => { if (message.type() === 'error') report.errors.push(message.text()); });
     await page.goto(`${base}/game/liuzhou?test=1`);
-    await page.waitForFunction(() => typeof window.render_game_to_text === 'function' && ![...document.querySelectorAll('button')].find(b => b.textContent.includes('自由巡览 · 快速飞行'))?.disabled, { timeout: 90000 });
+    await page.waitForFunction(() => typeof window.render_game_to_text === 'function' && [...document.querySelectorAll('button')].some(b => b.textContent.includes('自由巡览 · 快速飞行') && !b.disabled), null, { timeout: 120000 });
     await page.evaluate(() => window.liuzhouTest.manual(true));
     await page.getByRole('button', { name: '自由巡览 · 快速飞行 ↗' }).click();
+    await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).loading.complete, null, { timeout: 120000 });
     const capture = async name => {
       await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
       const file = path.join(out, `${name}.png`); const sanity = inspectPng(await page.screenshot({ path: file, fullPage: true }));
       const state = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
       const dom = await page.evaluate(() => ({ canvas: [...document.querySelectorAll('canvas')].map(c => ({ width: c.width, height: c.height, calls: c.dataset.drawCalls })), width: innerWidth, scroll: document.documentElement.scrollWidth }));
       assert.equal(dom.canvas.length, 1); assert.ok(dom.canvas[0].width > 0); assert.ok(dom.scroll <= dom.width + 1);
+      assert.ok(state.loading.complete, 'Scene remounted or was not completely loaded at capture');
+      assert.ok(dom.canvas[0].width >= dom.width, 'Canvas remounted to its 300px default size');
       report.captures.push({ name, file, sanity, state, dom }); console.log(`captured ${name}`);
     };
     const view = async (yaw, pitch = 0.12, zoom = 12) => page.evaluate(({ yaw, pitch, zoom }) => Object.assign(window.liuzhouTest.rig, { yaw, pitch, zoom, reset: true, dragged: performance.now() }), { yaw, pitch, zoom });
@@ -53,6 +56,19 @@ const report = { passed: false, errors: [], checks: [], captures: [] };
       }
       assert.fail(`route did not reach ${JSON.stringify(target)}`);
     };
+    if (process.env.LIUZHOU_XIHUAN_FACADES_ONLY === '1') {
+      await page.keyboard.press('f'); await page.evaluate(() => window.liuzhouTest.move({ jump: true, sprint: true }, 270));
+      await go({ x: -3442, z: -473 }, true);
+      await page.evaluate(() => window.liuzhouTest.move({ descend: true }, 1000));
+      await view(0, 0.3, 55); await capture('10-industrial-source-frontage');
+      await page.evaluate(() => window.liuzhouTest.move({ jump: true }, 160));
+      await go({ x: -3380, z: -395 }, true);
+      await page.evaluate(() => window.liuzhouTest.move({ descend: true }, 1000));
+      await view(-1.2, 0.25, 50); await capture('11-industrial-source-row');
+      report.checks.push({ name: 'source industrial facade scenery', sourceIds: layout.frontages.filter(b => b.kind === 'industrial').map(b => b.id) });
+      assert.deepEqual(report.errors, []); report.passed = true;
+      return;
+    }
     const busFront = { x: XIHUAN_BUS.x - 0.5, z: XIHUAN_BUS.z + 1.4 };
     await page.keyboard.press('f'); await page.evaluate(() => window.liuzhouTest.move({ jump: true, sprint: true }, 270));
     await go(busFront, true);
@@ -84,11 +100,17 @@ const report = { passed: false, errors: [], checks: [], captures: [] };
     assert.ok(!await page.evaluate(() => window.liuzhouTest.game.flight.active));
     const visited = new Set(['2061501700', '4747427531', '12364604169', '12364604170', '4747427530', '4747426608', '8154491246', '8154491236']);
     report.checks.push({ name: 'ordinary walking across all four source crossing arms, roadside conversations', landed, end, visitedCrossingIds: layout.crossings.filter(c => visited.has(c.id)).map(c => c.id) });
-    await page.reload(); await page.waitForFunction(() => typeof window.render_game_to_text === 'function' && ![...document.querySelectorAll('button')].find(b => b.textContent.includes('自由巡览 · 快速飞行'))?.disabled, { timeout: 90000 });
+    await page.reload(); await page.waitForFunction(() => typeof window.render_game_to_text === 'function' && [...document.querySelectorAll('button')].some(b => b.textContent.includes('自由巡览 · 快速飞行') && !b.disabled), null, { timeout: 120000 });
     await page.evaluate(() => window.liuzhouTest.manual(true)); await page.getByRole('button', { name: '自由巡览 · 快速飞行 ↗' }).click();
+    await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).loading.complete, null, { timeout: 120000 });
     const restored = await page.evaluate(() => ({ ...window.liuzhouTest.game.player }));
     assert.ok(Math.hypot(restored.x - end.x, restored.z - end.z) < 0.3); assert.ok(Math.abs(restored.y - end.y) < 0.3);
     await page.setViewportSize({ width: 390, height: 844 }); await capture('08-mobile-restored');
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.keyboard.press('f'); await page.evaluate(() => window.liuzhouTest.move({ jump: true }, 180));
+    await go({ x: -3460, z: -655 }, true);
+    await page.evaluate(() => window.liuzhouTest.move({ descend: true }, 300));
+    await view(-0.4, 0.95, 120); await capture('09-estimated-campus-courts');
     assert.deepEqual(report.errors, []); report.passed = true;
   } finally { await browser.close(); fs.writeFileSync(path.join(out, 'report.json'), JSON.stringify(report, null, 2)); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

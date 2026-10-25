@@ -51,7 +51,7 @@ test('formerly missing boundary buildings keep their entire source rings exactly
 });
 
 test('source parcel boundaries survive and estimated enclosures leave all mapped public road axes open', () => {
-  assert.deepEqual(layout.parcels.map(p => p.id), ['205654200', '205659715', '1044328330', '1044328341', '1044328342', '1044328343', '1044328346', '1044328347', '1352351112', '1044328331', '1539716390', '1274445934', '1274445939', '1306511547', '1539716380', '1539716381', 'relation-21296846', 'school-205663282']);
+  assert.deepEqual(layout.parcels.map(p => p.id), ['205654200', '205659715', '1044328330', '1044328341', '1044328342', '1044328343', '1044328346', '1044328347', '1352351112', '1044328331', '1539716390', '1274445934', '1274445939', '1306511547', '1539716380', '1539716381', '1044328334', 'relation-21296846', 'school-205663282']);
   assert.ok(layout.volumes.length >= 10);
   for (const parcel of layout.parcels) {
     if (!parcel.sourceRelationId && !parcel.sourceWayId) assert.deepEqual(parcel.points, source.areas.find(a => a.id === parcel.id).points);

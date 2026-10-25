@@ -39,7 +39,7 @@ test('public square paving avoids actual source buildings and carriageways, and 
     for (const weights of [[1 / 3, 1 / 3, 1 / 3], [0.8, 0.1, 0.1]]) {
       const p = { x: face.points.reduce((n, v, i) => n + v[0] * weights[i], 0), z: face.points.reduce((n, v, i) => n + v[1] * weights[i], 0) };
       assert.ok(!pedestrian.inCarriageway(p), JSON.stringify(p));
-      assert.ok(!world.BUILDINGS.some(b => world.buildingContains(p, b)), JSON.stringify(p));
+      assert.ok(!world.BUILDINGS.some(b => world.buildingContains(p, b) && terrain.terrainTriangleHeight(p) + 1.9 > world.buildingElevation(b) - world.buildingFoundationDepth(b)), JSON.stringify(p));
     }
   }
   assert.ok(Math.abs(area - layout.publicArea) < 0.05);
@@ -70,8 +70,45 @@ test('square residents and both complete walking loops stay off roads, buildings
   }
 });
 
+test('east-side source buildings retain their pre-detail default heights and closed source footprints', () => {
+  const source = require('../../src/components/liuzhou/city-map.json');
+  const expected = { 205657493: 26, 205657490: 16.4, 205657494: 10, 205657496: 16.4, 566345463: 19.6 };
+  assert.deepEqual([...square.SQUARE_FRONTAGE_IDS].sort(), Object.keys(expected).sort());
+  for (const [id, height] of Object.entries(expected)) {
+    const b = city.CITY_BUILDINGS.find(b => b.id === `city-osm-${id}`);
+    const original = source.buildings.find(b => b.id === id);
+    assert.equal(b.h, height); assert.equal(b.heightSource, 'estimated');
+    assert.deepEqual(b.footprint.map(p => [p.x, p.z]), original.points.slice(0, -1));
+    assert.ok(square.SQUARE_FACADE_IDS.has(b.id));
+    assert.equal(square.SQUARE_LABELS.filter(label => label.text === original.name).length, 1);
+    assert.ok(world.buildingContains(b, b));
+  }
+});
+
+test('ordinary Rapier walking follows the public gap along all four east-frontage buildings', async () => {
+  const g = sim.createGame(); g.phase = 'playing';
+  Object.assign(g.player, { x: -480, z: -764, y: terrain.terrainTriangleHeight({ x: -480, z: -764 }) });
+  const physics = await sim.createPhysics(g);
+  const go = target => {
+    let still = 0;
+    for (let i = 0; i < 100; i++) {
+      const before = { ...g.player }; const gap = world.distance(before, target); if (gap < .18) return;
+      const yaw = Math.atan2(target.x - before.x, target.z - before.z);
+      const frames = Math.max(1, Math.min(65, Math.floor((gap - .06) / 4.4 * 60)));
+      for (let frame = 0; frame < frames; frame++) sim.step(g, { ...idle, forward: 1 }, 1 / 60, physics, yaw);
+      still = world.distance(before, g.player) < .01 ? still + 1 : 0;
+      assert.ok(still < 4, JSON.stringify({ target, player: g.player }));
+      assert.ok(Math.abs(g.player.y - terrain.terrainTriangleHeight(g.player)) < .2);
+    }
+    assert.fail(`east-side route did not reach ${JSON.stringify(target)}`);
+  };
+  const route = [{ x: -480, z: -722 }, { x: -480, z: -659 }, { x: -440, z: -659 }, { x: -440, z: -633 }, { x: -442, z: -633 }, { x: -442, z: -591 }, { x: -416, z: -591 }, { x: -416, z: -555 }];
+  try { for (const target of [...route, ...route.slice(0, -1).reverse(), { x: -480, z: -764 }]) go(target); }
+  finally { physics.dispose(); }
+});
+
 test('culture building foundation reaches its lowest outline terrain and the camera sees the same lower wall', () => {
-  for (const id of square.SQUARE_FACADE_IDS) {
+  for (const id of Object.keys(square.SQUARE_BUILDING_STYLES).map(id => `city-osm-${id}`)) {
     const b = world.BUILDINGS.find(b => b.id === id); const bottom = world.buildingElevation(b) - world.buildingFoundationDepth(b);
     for (let i = 0; i < b.footprint.length; i++) {
       const a = b.footprint[i]; const c = b.footprint[(i + 1) % b.footprint.length]; const length = world.distance(a, c);

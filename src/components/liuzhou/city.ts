@@ -5,7 +5,7 @@ import { MARKET_BUILDINGS, MARKET_SOURCE_ID, marketReserved } from "./market";
 import { STATION_BUILDINGS } from "./station";
 import { STATION_NEIGHBORHOOD_BUILDINGS, stationNeighborhoodReserved } from "./stationNeighborhoods";
 import { ESHAN_ENTRANCE, ESHAN_SHELTER_IDS } from "./eshan";
-import { SQUARE_BUILDING_STYLES } from "./square";
+import { SQUARE_BUILDING_STYLES, SQUARE_ROOF_BUILDINGS, SQUARE_SOURCE_ROOF_IDS } from "./square";
 import { terrainTriangleHeight } from "./terrainMesh";
 import xihuanLayout from "./xihuan-layout.json";
 import { WUXING_SOURCE_IDS } from "./wuxing";
@@ -56,7 +56,7 @@ const occupied = CENTRAL_BUILDINGS.filter(b => !b.id.startsWith("urban-wall-")).
 const buildings: CityBuilding[] = [];
 const coreClear = (p: P, radius: number) => !inCore(p, radius + 15);
 for (const b of source.buildings) {
-  if (WUXING_SOURCE_IDS.has(b.id) || CENTRAL_SOURCE_IDS.has(b.id)) continue;
+  if (WUXING_SOURCE_IDS.has(b.id) || CENTRAL_SOURCE_IDS.has(b.id) || SQUARE_SOURCE_ROOF_IDS.has(b.id)) continue;
   if (b.id === "632407338") continue;
   if (ESHAN_SHELTER_IDS.has(b.id)) continue;
   const footprint = b.points.slice(0, -1).map(p => ({ x: p[0], z: p[1] }));
@@ -78,7 +78,7 @@ for (const b of source.buildings) {
   buildings.push({ ...p, id: `city-osm-${b.id}`, w, d, h, angle: 0, color: style?.color ?? palette[Number(b.id) % palette.length], real: true, footprint, ...(style ? { foundationDepth } : {}), ...(!knownHeight ? { heightSource: "estimated" as const } : {}) });
   occupied.push({ ...p, r: Math.hypot(w, d) / 2 });
 }
-for (const b of [...MARKET_BUILDINGS, ...STATION_BUILDINGS, ...STATION_NEIGHBORHOOD_BUILDINGS]) {
+for (const b of [...MARKET_BUILDINGS, ...STATION_BUILDINGS, ...STATION_NEIGHBORHOOD_BUILDINGS, ...SQUARE_ROOF_BUILDINGS]) {
   buildings.push(b); occupied.push({ x: b.x, z: b.z, r: Math.hypot(b.w, b.d) / 2 });
 }
 for (let index = 0; index < CITY_ROAD_SEGMENTS.length; index++) {

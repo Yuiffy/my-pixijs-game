@@ -26,6 +26,7 @@ import XihuanView from "./XihuanView";
 import WuxingView from "./WuxingView";
 import { WUXING_FACADE_IDS, WUXING_RENDER_OVERRIDES } from "./wuxing";
 import { SQUARE_FACADE_IDS, SQUARE_RENDER_OVERRIDES } from "./square";
+import { XIHUAN_FACADE_IDS } from "./xihuan";
 import { STATION_PREFIX } from "./station";
 import UndergroundView from "./UndergroundView";
 import CityLabels from "./CityLabels";
@@ -204,7 +205,7 @@ const City = memo(({ roads, skyline }: { roads: RoadChunk[]; skyline?: SkylineDa
   } = useMemo(() => {
     const boxes: Box[] = [];
     const trees: Point[] = [];
-    BUILDINGS.filter(b => !b.id.startsWith("urban-wall-") && !b.id.startsWith("market-east-") && !b.id.startsWith(STATION_PREFIX) && !SQUARE_FACADE_IDS.has(b.id) && !WUXING_FACADE_IDS.has(b.id)).forEach((b, i) => {
+    BUILDINGS.filter(b => !b.id.startsWith("urban-wall-") && !b.id.startsWith("market-east-") && !b.id.startsWith(STATION_PREFIX) && !SQUARE_FACADE_IDS.has(b.id) && !WUXING_FACADE_IDS.has(b.id) && !XIHUAN_FACADE_IDS.has(b.id)).forEach((b, i) => {
       const firstBox = boxes.length;
       if (!b.footprint) boxes.push({
         at: [b.x, b.h / 2, b.z],

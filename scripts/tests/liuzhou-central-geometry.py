@@ -49,6 +49,17 @@ volumes = [Polygon(v['points']) for v in layout['volumes']]
 walls = unary_union([Polygon(w['points']) for w in layout['walls']])
 surfaces = unary_union([Polygon(s['points']) for s in layout['surfaces']])
 parcels = {p['id']: Polygon(p['points'], p.get('holes', [])) for p in layout['parcels']}
+# Re-read the small Linjiang Lane residential way from the original archive,
+# rather than validating only against the intermediate city-map export.
+dorm = next(p for p in layout['parcels'] if p['id'] == '1044328334')
+assert dorm['points'] == source_ring('1044328334')
+assert dorm['tags'] == {t.attrib['k']: t.attrib['v'] for t in ways['1044328334'].findall('tag')}
+assert dorm['existingBuildingIds'] == []
+dorm_volumes = [v for v in layout['volumes'] if v['parcelId'] == dorm['id']]
+assert len(dorm_volumes) == 2
+assert all(v['geometryStatus'] == 'inferred' and v['heightSource'] == 'estimated' for v in dorm_volumes)
+assert sum(Polygon(v['points']).area for v in dorm_volumes) / parcels[dorm['id']].area > .15
+assert any(w['parcelId'] == dorm['id'] for w in layout['walls'])
 for v, polygon in zip(layout['volumes'], volumes):
     assert parcels[v['parcelId']].covers(polygon), v['id']
     if v['parcelId'] == residential['id']:

@@ -8,6 +8,9 @@ export const XIHUAN_SOLIDS: StreetBox[] = [];
 export const XIHUAN_DECOR: StreetBox[] = [];
 export const XIHUAN_CROWNS: { at: [number, number, number]; scale: [number, number, number] }[] = [];
 export const XIHUAN_LABELS: { text: string; at: [number, number, number]; angle: number; width: number; height: number; color: string }[] = [];
+export const XIHUAN_FACADE_IDS = new Set(layout.frontages.map(b => `city-osm-${b.id}`));
+export const XIHUAN_FACADES: { id: string; baseY: number; height: number; windows: number }[] = [];
+export const XIHUAN_HOOPS: [number, number, number][] = [];
 export const XIHUAN_ROAD_WIDTHS: Record<string, number> = layout.roadWidths;
 export const inXihuanDetail = (p: P) => p.x > layout.bounds[0] && p.x < layout.bounds[2] && p.z > layout.bounds[1] && p.z < layout.bounds[3];
 const add = (p: P, y: number, size: StreetBox["size"], color: string, angle = 0, solid = true) => {
@@ -33,6 +36,95 @@ layout.trees.forEach((tree, i) => {
   add(p, 2.5, [0.3, 5, 0.3], "#7f7358");
   XIHUAN_CROWNS.push({ at: [p.x, terrainTriangleHeight(p) + 5.8, p.z], scale: [2.4 + (i % 2) * 0.4, 2.7, 2.4] });
 });
+layout.yardTrees.forEach((tree, i) => {
+  const p = { x: tree.point[0], z: tree.point[1] };
+  add(p, 1.8, [0.21, 3.6, 0.21], "#7c725b");
+  XIHUAN_CROWNS.push({ at: [p.x, terrainTriangleHeight(p) + 4.6, p.z], scale: [2.2, 2.3 + (i % 3) * 0.3, 2.2] });
+});
+
+// Source footprints and runtime shell heights are unchanged. The exterior is
+// authored: no source image or measured facade/window/balcony data is available.
+for (const building of layout.frontages) {
+  const points = building.points.slice(0, -1);
+  const center = { x: (Math.min(...points.map(p => p[0])) + Math.max(...points.map(p => p[0]))) / 2, z: (Math.min(...points.map(p => p[1])) + Math.max(...points.map(p => p[1]))) / 2 };
+  const baseY = terrainHeight(center);
+  const signedArea = points.reduce((n, p, i) => n + p[0] * points[(i + 1) % points.length][1] - points[(i + 1) % points.length][0] * p[1], 0);
+  const school = building.kind === "school";
+  const industrial = building.kind === "industrial";
+  const floors = Math.max(2, Math.floor(building.height / 3.2));
+  let windows = 0;
+  const put = (p: P, y: number, size: StreetBox["size"], color: string, angle: number) => XIHUAN_DECOR.push({ at: [p.x, baseY + y - terrainHeight(p), p.z], size, color, angle });
+  points.forEach(([ax, az], edge) => {
+    const [bx, bz] = points[(edge + 1) % points.length];
+    const length = Math.hypot(bx - ax, bz - az);
+    if (length < 2) return;
+    const dx = (bx - ax) / length; const dz = (bz - az) / length;
+    const outward = signedArea > 0 ? 1 : -1;
+    const normal = { x: dz * outward, z: -dx * outward };
+    const angle = -Math.atan2(dz, dx);
+    const at = (along: number, depth = 0.12) => ({ x: ax + dx * along + normal.x * depth, z: az + dz * along + normal.z * depth });
+    const plaster = industrial ? "#aeb9b2" : school ? "#d6d2b6" : ["#c6bda4", "#c4c4b2", "#bbc3b3"][Number(building.id) % 3];
+    put(at(length / 2, 0.02), building.height / 2, [length, building.height, 0.1], plaster, angle);
+    put(at(length / 2), 0.45, [length + 0.12, 0.9, 0.16], school ? "#929e8a" : "#879889", angle);
+    put(at(length / 2, 0.17), building.height - 0.16, [length + 0.24, 0.32, 0.28], "#76877c", angle);
+    if (industrial) {
+      const bays = Math.max(1, Math.floor(length / 6)); const span = length / bays;
+      for (let bay = 0; bay < bays; bay++) {
+        const along = (bay + 0.5) * span; const width = Math.min(4.6, span - 0.7);
+        put(at(bay * span, 0.15), building.height / 2, [0.18, building.height - 0.6, 0.19], "#8a9c92", angle);
+        put(at(along, 0.13), building.height - 3.1, [width + 0.16, 2.1, 0.14], "#d0d5c5", angle);
+        put(at(along, 0.22), building.height - 3.1, [width, 1.89, 0.06], "#4b6968", angle);
+        put(at(along, 0.26), building.height - 3.1, [0.09, 1.95, 0.05], "#c0cbbd", angle);
+        windows++;
+        if (length < 30 || bay % 3 !== 1) continue;
+        put(at(along, 0.18), 2.1, [3.6, 4.2, 0.17], "#718e80", angle);
+        for (let stripe = 1; stripe < 9; stripe++) put(at(along, 0.28), stripe * 0.43, [3.5, 0.06, 0.04], "#879f90", angle);
+        put(at(along, 0.6), 4.32, [4, 0.14, 1.1], "#607a6c", angle);
+      }
+      return;
+    }
+    const bays = Math.max(1, Math.floor((length - 1) / (school ? 3.8 : 4.8)));
+    const spacing = length / bays;
+    for (let floor = 0; floor < floors; floor++) {
+      const y = (floor + 0.55) * (building.height / floors);
+      if (floor) put(at(length / 2, 0.09), (floor * building.height) / floors, [length, 0.14, 0.19], school ? "#a8b49d" : "#a1ad9c", angle);
+      for (let bay = 0; bay < bays; bay++) {
+        const along = (bay + 0.5) * spacing;
+        const width = Math.min(school ? 2.65 : 1.8, spacing - 0.65);
+        put(at(along, 0.115), y, [width + 0.21, 1.85, 0.14], "#e0dec6", angle);
+        put(at(along, 0.2), y + 0.015, [width, 1.61, 0.055], (floor + bay + edge) % 7 === 0 ? "#9caa9c" : "#536e6c", angle);
+        put(at(along, 0.24), y, [0.065, 1.67, 0.05], "#bac7b7", angle);
+        windows++;
+        if (school || length < 20 || bay % 3 !== 1 || !floor) continue;
+        // Shallow balcony furniture stays decorative; the source shell owns collision.
+        put(at(along, 0.61), y - 1.06, [width + 0.5, 0.15, 1.1], "#a6b19e", angle);
+        put(at(along, 1.12), y - 0.55, [width + 0.45, 0.91, 0.11], "#718b7c", angle);
+        for (const side of [-1, 1]) put(at(along + (side * (width + 0.38)) / 2, 0.63), y - 0.55, [0.1, 0.91, 1.03], "#849988", angle);
+      }
+    }
+  });
+  XIHUAN_FACADES.push({ id: `city-osm-${building.id}`, baseY, height: building.height, windows });
+}
+
+for (const court of layout.sports) {
+  const [x, z] = court.center;
+  if (court.name === "estimated-court") {
+    for (const side of [-1, 1]) {
+      const p = { x: x + side * (court.along / 2 - 1.1), z };
+      add(p, 1.85, [0.16, 3.7, 0.16], "#677e70");
+      add(p, 3.8, [0.15, 1.2, 1.8], "#d4d8c3", 0, false);
+      const rim = { x: p.x - side * 0.65, z };
+      add({ x: (p.x + rim.x) / 2, z }, 3.05, [0.75, 0.1, 0.1], "#ad7756", 0, false);
+      XIHUAN_HOOPS.push([rim.x, terrainTriangleHeight(p) + 3.05, z]);
+    }
+  } else {
+    for (const side of [-1, 1]) {
+      const gx = x + side * (court.along / 2 - 1.1);
+      for (const gz of [-2.2, 2.2]) add({ x: gx, z: z + gz }, 1.2, [0.12, 2.4, 0.12], "#d7d8c2");
+      add({ x: gx, z }, 2.4, [0.12, 0.12, 4.5], "#d7d8c2", 0, false);
+    }
+  }
+}
 for (const signal of layout.signals) {
   const p = { x: signal.pole[0], z: signal.pole[1] };
   const angle = Math.atan2(signal.tangent[0], signal.tangent[1]);

@@ -7,6 +7,7 @@ import { terrainTriangleHeight } from "./terrainMesh";
 import { urbanGroundPositions } from "./urbanGround";
 import { treeClearsBridge } from "./bridges";
 import { BUILDINGS, buildingContains } from "./world";
+import RiversideDetailView from "./RiversideDetailView";
 
 function RiversideView() {
   const trunkRef = useRef<T.InstancedMesh>(null); const crownRef = useRef<T.InstancedMesh>(null);
@@ -29,6 +30,7 @@ function RiversideView() {
   }, [trees]);
   return (
     <group name="江滨公园与柳堤游园来源边界内的估算绿化">
+      <RiversideDetailView />
       <mesh geometry={geometry} receiveShadow><meshStandardMaterial color="#8b9e79" roughness={1} side={T.DoubleSide} /></mesh>
       <instancedMesh ref={trunkRef} args={[undefined, undefined, trees.length]} castShadow><boxGeometry /><meshStandardMaterial color="#71765e" roughness={1} /></instancedMesh>
       <instancedMesh ref={crownRef} args={[undefined, undefined, trees.length]} castShadow><icosahedronGeometry args={[1, 1]} /><meshStandardMaterial roughness={1} /></instancedMesh>

@@ -3,7 +3,7 @@
 import { memo, useEffect, useMemo, useRef } from "react";
 import * as T from "three";
 import layout from "./xihuan-layout.json";
-import { XIHUAN_CROWNS, XIHUAN_DECOR, XIHUAN_LABELS, XIHUAN_SOLIDS } from "./xihuan";
+import { XIHUAN_CROWNS, XIHUAN_DECOR, XIHUAN_HOOPS, XIHUAN_LABELS, XIHUAN_SOLIDS } from "./xihuan";
 import { terrainHeight } from "./terrain";
 import { terrainDrapedTriangles, terrainTriangleHeight } from "./terrainMesh";
 import { pavingWithoutEntrances } from "./underground";
@@ -62,6 +62,7 @@ function XihuanView() {
       <mesh geometry={ground} receiveShadow><meshStandardMaterial vertexColors roughness={0.96} side={T.DoubleSide} polygonOffset polygonOffsetFactor={-3} polygonOffsetUnits={-3} /></mesh>
       <instancedMesh ref={ref} args={[undefined, undefined, boxes.length]} castShadow receiveShadow><boxGeometry /><meshStandardMaterial roughness={0.82} /></instancedMesh>
       <instancedMesh ref={treesRef} args={[undefined, undefined, XIHUAN_CROWNS.length]} castShadow><icosahedronGeometry args={[1, 2]} /><meshStandardMaterial color="#547751" roughness={0.95} /></instancedMesh>
+      {XIHUAN_HOOPS.map((at, i) => <mesh key={i} position={at} rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.24, 0.035, 5, 12]} /><meshStandardMaterial color="#b17e57" roughness={0.8} /></mesh>)}
       <mesh geometry={labels}><meshStandardMaterial map={atlas} roughness={0.87} /></mesh>
     </group>
   );

@@ -720,7 +720,7 @@ function restoreWorldPosition<T extends Point & { y: number }>(p: T, legacy: boo
     if (bridge.y === deck.y && bridge.y > terrainHeight(bridge) + 0.5) result = { ...result, y: bridge.y };
   }
   const radius = vehicle ? 1.4 : 0.6;
-  const occupied = (at: Point & { y: number }) => bridgeSupportSolid({ ...at, y: at.y + 1 }, radius) || BUILDINGS.some(b => buildingContains(at, b, radius) && (b.baseY === undefined || at.y + 1.9 > b.baseY - 3));
+  const occupied = (at: Point & { y: number }) => bridgeSupportSolid({ ...at, y: at.y + 1 }, radius) || BUILDINGS.some(b => buildingContains(at, b, radius) && (b.baseY === undefined || at.y + 1.9 > b.baseY - buildingFoundationDepth(b)));
   if (occupied(result)) {
     for (let r = 2; r <= 70; r += 2) {
       let found = false;

@@ -28,6 +28,7 @@ const report = { passed: false, errors: [], checks: [], captures: [] };
     await page.evaluate(() => window.liuzhouTest.manual(true));
     await page.getByRole('button', { name: '自由巡览 · 快速飞行 ↗' }).click();
     const capture = async name => {
+      await page.waitForFunction(() => { const s = JSON.parse(window.render_game_to_text()); return s.phase === 'playing' && s.loading.complete; }, { timeout: 120000 });
       await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
       const file = path.join(out, `${name}.png`); const sanity = inspectPng(await page.screenshot({ path: file, fullPage: true }));
       const state = await page.evaluate(() => JSON.parse(window.render_game_to_text()));

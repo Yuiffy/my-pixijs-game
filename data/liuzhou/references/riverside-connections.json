@@ -1,0 +1,205 @@
+{
+  "source": "data/liuzhou/open/osm/skyline-core.osm.gz",
+  "sourceSha256": "22609bfd6175ab457238a006320bc3b21db5b9a63720cbcb126473bed476e355",
+  "attribution": "© OpenStreetMap contributors",
+  "license": "ODbL-1.0",
+  "status": "Exact archived node joins; not a constructed or validated walkable staircase model.",
+  "connections": [
+    {
+      "sourceId": "1378654366",
+      "nodeIds": [
+        "12766030298",
+        "12766030299",
+        "12766030300"
+      ],
+      "tags": {
+        "highway": "steps"
+      },
+      "ends": [
+        {
+          "nodeId": "12766030298",
+          "lon": 109.4062444,
+          "lat": 24.3116794,
+          "roads": [
+            {
+              "sourceId": "1275168863",
+              "name": "龙城路",
+              "tags": {
+                "bridge": "yes",
+                "cycleway:left": "no",
+                "cycleway:right": "lane",
+                "highway": "secondary",
+                "lanes": "3",
+                "layer": "1",
+                "maxspeed": "30",
+                "maxweight": "15",
+                "name": "龙城路",
+                "name:en": "Liu JIang Bridge",
+                "name:zh": "柳江大桥",
+                "oneway": "yes",
+                "source": "bing"
+              }
+            }
+          ]
+        },
+        {
+          "nodeId": "12766030300",
+          "lon": 109.4063402,
+          "lat": 24.3118247,
+          "roads": [
+            {
+              "sourceId": "1531307805",
+              "name": "滨江西路",
+              "tags": {
+                "highway": "tertiary",
+                "name": "滨江西路",
+                "name:en": "W. Binjiang Road",
+                "source": "bing"
+              }
+            }
+          ]
+        }
+      ],
+      "heightStatus": "No surveyed deck, landing or stair elevations are present. DEM ground samples cannot establish bridge stair levels."
+    },
+    {
+      "sourceId": "1378654367",
+      "nodeIds": [
+        "12766115201",
+        "12766115202",
+        "12766115203"
+      ],
+      "tags": {
+        "highway": "steps"
+      },
+      "ends": [
+        {
+          "nodeId": "12766115201",
+          "lon": 109.4061877,
+          "lat": 24.3116825,
+          "roads": [
+            {
+              "sourceId": "195910349",
+              "name": "龙城路",
+              "tags": {
+                "bridge": "yes",
+                "cycleway:left": "no",
+                "cycleway:right": "lane",
+                "highway": "secondary",
+                "lanes": "1",
+                "layer": "1",
+                "maxspeed": "30",
+                "maxweight": "15",
+                "name": "龙城路",
+                "name:en": "Liu JIang Bridge",
+                "name:zh": "柳江大桥",
+                "oneway": "yes",
+                "source": "bing"
+              }
+            }
+          ]
+        },
+        {
+          "nodeId": "12766115203",
+          "lon": 109.4060773,
+          "lat": 24.3118326,
+          "roads": [
+            {
+              "sourceId": "1531307805",
+              "name": "滨江西路",
+              "tags": {
+                "highway": "tertiary",
+                "name": "滨江西路",
+                "name:en": "W. Binjiang Road",
+                "source": "bing"
+              }
+            }
+          ]
+        }
+      ],
+      "heightStatus": "No surveyed deck, landing or stair elevations are present. DEM ground samples cannot establish bridge stair levels."
+    },
+    {
+      "sourceId": "1449382842",
+      "nodeIds": [
+        "13294511133",
+        "13294511142",
+        "13294511143",
+        "13294511144",
+        "2154820648"
+      ],
+      "tags": {
+        "highway": "steps"
+      },
+      "ends": [
+        {
+          "nodeId": "13294511133",
+          "lon": 109.3999367,
+          "lat": 24.3153377,
+          "roads": [
+            {
+              "sourceId": "649497457",
+              "name": "红光大桥",
+              "tags": {
+                "bridge": "yes",
+                "cycleway:left": "no",
+                "cycleway:right": "track",
+                "highway": "secondary",
+                "lanes": "2",
+                "layer": "1",
+                "name": "红光大桥",
+                "name:en": "Hong Guang Bridge",
+                "oneway": "yes",
+                "source": "bing"
+              }
+            },
+            {
+              "sourceId": "1449382839",
+              "name": "红光大桥",
+              "tags": {
+                "bridge": "yes",
+                "cycleway:left": "no",
+                "cycleway:right": "track",
+                "foot": "no",
+                "highway": "secondary",
+                "lanes": "2",
+                "layer": "1",
+                "motor_vehicle": "designated",
+                "name": "红光大桥",
+                "name:en": "Hong Guang Bridge",
+                "oneway": "yes",
+                "source": "bing"
+              }
+            }
+          ]
+        },
+        {
+          "nodeId": "2154820648",
+          "lon": 109.4000343,
+          "lat": 24.315253,
+          "roads": [
+            {
+              "sourceId": "205519385",
+              "name": "",
+              "tags": {
+                "highway": "tertiary_link",
+                "oneway": "yes"
+              }
+            },
+            {
+              "sourceId": "1531307805",
+              "name": "滨江西路",
+              "tags": {
+                "highway": "tertiary",
+                "name": "滨江西路",
+                "name:en": "W. Binjiang Road",
+                "source": "bing"
+              }
+            }
+          ]
+        }
+      ],
+      "heightStatus": "No surveyed deck, landing or stair elevations are present. DEM ground samples cannot establish bridge stair levels."
+    }
+  ]
+}

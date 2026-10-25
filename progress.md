@@ -1,5 +1,23 @@
 # 项目进度
 
+## 2026-10-25 · 柳州GTA 城市细化收尾（按用户要求暂停）
+
+用户原要求多子智能体补城到15:00，随后提前要求“收尾本次改动，下次我们再继续”。已停止新增与联网扩区，城市构建目标已暂停；河东五处尚未加入运行地图。
+
+本轮以66c27dc为基线：法院宿舍源用地内新增2栋估算宿舍与22段墙；柳堤步道185段栏杆、8处休憩点；人民广场东四栋源楼立面、地王前场和两处源building=roof架空雨棚；西环路×鹅山路15份源楼立面、院落与33棵估算树。广雅桥按来源改为白色海鸥双主拱/V形根部，与红色文惠桥区分；博物馆改浅暖灰石材。原轮廓、道路及DEM优先保留，未知高度、设施位置、构件截面仍明确估算。
+
+本次工作区同时有其他游戏的未完成改动，未混入提交。对66c27dc加本轮柳州文件的冻结快照顺序执行pnpm run check → pnpm run build，全部通过，Next ESLint保持启用；快照目录.tmp/liuzhou-oct25-release，生产目录其中的.next-liuzhou-oct25-build，BUILD_ID `Dfsck3Iug57xATTyRjATK`。提交前核对所有运行源码哈希及四份public/source布局副本一致。原工作区全量检查曾被其他线程NightRain的lint错误阻挡，因此正式验收以此隔离快照为准，没有改动或绕过其规则。
+
+专项开发检查覆盖独立原始OSM/Shapely几何、真实Rapier普通往返、家具支撑、NPC与镜头、架空屋面净空和新旧存档；通用行人/交通/控制10项、中心街坊7项及各片区专项通过。开发截图与生产验收分开记录，不累加为全城通过。共享测试加载器补充真实three依赖，未用几何桩替代实际三角化。
+
+冻结生产包静音系统Chrome复验：桥5图（含红文惠对照）、雨棚5图、博物馆灰石材1图；实际4132入口渐进加载4图，均逐张打开检查，报告零页面/控制台错误。验证了普通桥面步行80米、棚下普通步行/存档/移动端、屋顶落脚、未完成整城加载时先进入行走，以及远处鹅山存档优先加载。实际入口25份资源SHA与验收包一致。本机首次可进入8.967秒，整图完成16.755秒，时间仅代表本次机器和测试条件。
+
+资料档案39项校验通过，没有新增受限下载或河东原始数据；河东来源审计已记录市民广场、体育中心、城中万达、柳高高新校区、乌托邦（阳光100城市广场）。先补109.425～109.440经度覆盖缺口，再实施市民广场—文昌桥连续通行；学校连廊/步桥/隧道及体育场关系内孔不可机械挤出。文惠上桥折返梯、东门河岸大坡梯、金沙角船台仍待可靠资料。
+
+本机试玩 `http://127.0.0.1:4132/game/liuzhou`。接续先读docs/liuzhou-city-handoff.md、docs/liuzhou-city-expansion.md及data/liuzhou/references/hedong-expansion.md。完整资料备份仍需另存本机data/liuzhou/restricted，Git不含受限原包。
+
+本机证据：tmp/liuzhou/oct25-release-{check,build}.log、oct25-common-rules-final.log、oct25-central-rules.log、oct25-archive-final.log；.tmp/liuzhou-bridge-appearance-prod/report.json、.tmp/liuzhou-square-roofs-prod/report.json、.tmp/liuzhou-museum-prod/report.json、.tmp/liuzhou-oct25-streaming-live/report.json、.tmp/liuzhou-oct25-production/live-report.json。截图/构建/日志均忽略，不随Git克隆。
+
 ## 2026-10-24 · 柳州GTA 阶段保存与接续文档
 
 Original prompt: 先把当前进展保存，作为demos某个分类最后一个选项，推送到远端。游戏命名为柳州GTA。

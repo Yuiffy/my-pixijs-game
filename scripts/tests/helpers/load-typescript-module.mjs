@@ -48,6 +48,12 @@ const loadAbsoluteModule = async (sourcePath) => {
     }
     const dependencies = {};
     for (const specifier of dependencySpecifiers(normalizedPath, sourceText)) {
+      // Terrain-backed street furniture uses the same real triangulator as
+      // rendering/physics. Load Three itself rather than stubbing geometry.
+      if (specifier === "three") {
+        dependencies[specifier] = await import("three");
+        continue;
+      }
       if (!specifier.startsWith(".")) continue;
       dependencies[specifier] = await loadAbsoluteModule(
         resolveDependency(normalizedPath, specifier),

@@ -5,6 +5,7 @@ import type { Road } from "./world";
 import { inCity } from "./exploration";
 import { bridgeSurface } from "./bridges";
 import { GUANGYA_ARCH_OFFSET, GUANGYA_MAIN } from "./guangya";
+import { buildGuangyaAppearance, GUANGYA_APPEARANCE, GUANGYA_PIER_FRACTIONS } from "./bridgeAppearance";
 
 type P = { x: number; z: number };
 type Part = { at: T.Vector3; scale: T.Vector3; rotation: T.Quaternion; color: string };
@@ -91,14 +92,18 @@ export function buildSkylineGeometry(cityRoads: Road[], bounds: { minX: number; 
         for (const side of [-1, 1]) beam(point(0, 1.1, (side * bridge.width) / 2), point(1, 1.1, (side * bridge.width) / 2), 0.45, "#c2ccbf");
       }
       const spans = Math.max(2, Math.round(length / 140));
-      for (let i = 0; i <= spans; i++) {
-        const p = point(i / spans); const bottom = Math.min(terrainHeight(p), WATER_LEVEL - 1.5);
-        beam(p.clone().setY(bottom), p.clone().setY(y - 2), 5, "#9faeaa", bridge.width * 0.65);
+      const piers = bridge.name === "广雅大桥" ? GUANGYA_PIER_FRACTIONS : Array.from({ length: spans + 1 }, (_, i) => i / spans);
+      for (const t of piers) {
+        const p = point(t); const bottom = Math.min(terrainHeight(p), WATER_LEVEL - 1.5);
+        const top = bridge.name === "广雅大桥" ? y - GUANGYA_APPEARANCE.estimatedSpringBelowDeck - 1.5 : y - 2;
+        beam(p.clone().setY(bottom), p.clone().setY(top), 5, "#9faeaa", bridge.width * 0.65);
       }
-      if (bridge.style === "arch") {
-        const arches = bridge.name === "广雅大桥" ? 2 : 1;
+      if (bridge.name === "广雅大桥") {
+        for (const part of buildGuangyaAppearance(GUANGYA_ARCH_OFFSET)) beam(point(part.a.t, part.a.h, part.a.side), point(part.b.t, part.b.h, part.b.side), part.width, part.color, part.depth);
+      } else if (bridge.style === "arch") {
+        const arches = 1;
         const rise = Math.min(90, (length / arches) * 0.15);
-        const archOffset = bridge.name === "广雅大桥" ? GUANGYA_ARCH_OFFSET : bridge.width * 0.44;
+        const archOffset = bridge.width * 0.44;
         for (let span = 0; span < arches; span++) for (const side of [-archOffset, archOffset]) for (let j = 0; j < 32; j++) {
           const t = j / 32; const next = (j + 1) / 32;
           beam(point((span + t) / arches, Math.sin(t * Math.PI) * rise, side), point((span + next) / arches, Math.sin(next * Math.PI) * rise, side), 2.2, "#b17464");

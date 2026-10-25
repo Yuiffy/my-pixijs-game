@@ -1,4 +1,4 @@
-import { BUILDINGS, ROAD_SEGMENTS, buildingContains, canTraverse, closestOnSegment, distance, type Point } from "./world";
+import { BUILDINGS, ROAD_SEGMENTS, buildingContains, buildingElevation, buildingFoundationDepth, canTraverse, closestOnSegment, distance, type Point } from "./world";
 import { gateContains } from "./dongmen";
 import { streetContains } from "./street";
 import { terrainHeight, inMappedRiver } from "./terrain";
@@ -29,9 +29,12 @@ export function inCarriageway(p: Point, margin = 0) {
 export const pedestrianHeight = (p: Point) => (inCore(p) ? terrainHeight(p) : terrainTriangleHeight(p));
 
 export function pedestrianClear(p: Point, margin = 0.62) {
+  const feet = pedestrianHeight(p);
   return (canTraverse(p) || (inCity(p) && !inMappedRiver(p)))
     && !inCarriageway(p, margin)
-    && !BUILDINGS.some(b => buildingContains(p, b, margin))
+    && !BUILDINGS.some(b => buildingContains(p, b, margin)
+      && feet + 1.9 > buildingElevation(b) - buildingFoundationDepth(b)
+      && feet < buildingElevation(b) + b.h)
     && !gateContains({ ...p, y: terrainHeight(p) + 1 }, margin)
-    && !streetContains({ ...p, y: pedestrianHeight(p) + 1 }, margin);
+    && !streetContains({ ...p, y: feet + 1 }, margin);
 }

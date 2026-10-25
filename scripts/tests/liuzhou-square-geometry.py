@@ -4,7 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 import xml.etree.ElementTree as ET
-from shapely.geometry import Polygon, LineString
+from shapely.geometry import Polygon, LineString, Point, box
 from shapely.ops import unary_union
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -35,11 +35,12 @@ assert layout['sourceFountain']['points'] == holes[0]
 square, fountain = Polygon(outer[0], holes), Polygon(holes[0])
 assert abs(square.area - layout['sourceSquare']['area']) < .00001
 assert abs(fountain.area - layout['sourceFountain']['area']) < .00001
-envelope = Polygon(layout['envelopeEstimated'])
+envelope = unary_union([Polygon(ring) for ring in layout.get('envelopesEstimated', [layout['envelopeEstimated']])])
+roof_ids = {r['id'] for r in layout.get('sourceRoofs', [])}
 obstacles = []
 for building in city['buildings']:
     polygon = Polygon(building['points'])
-    if polygon.intersects(envelope):
+    if polygon.intersects(envelope) and building['id'] not in roof_ids:
         obstacles.append(polygon.buffer(.65))
 for road in city['roads']:
     highway = road['tags'].get('highway')
@@ -63,6 +64,34 @@ for surface, triangle in zip(layout['surfaces'], triangles):
 fountain_faces = [Polygon(s['points']) for s in layout['sourceFountain']['surfaces']]
 assert unary_union(fountain_faces).symmetric_difference(fountain).area < .001
 assert abs(sum(f.area for f in fountain_faces) - fountain.area) < .001
+
+# New east-side detail uses the same archived shells and recolors only existing
+# approach paving. Verify this independently from the generator's output faces.
+frontage_ids = ['205657493', '205657490', '205657494', '205657496', '566345463']
+assert layout['frontage']['sourceIds'] == frontage_ids
+source_buildings = {b['id']: b for b in city['buildings']}
+for identifier in frontage_ids:
+    assert source_buildings[identifier]['points'] == points(identifier)
+    assert source_buildings[identifier]['name']
+aprons = unary_union([Polygon(face) for face in layout['frontage']['surfaces']])
+expected_aprons = unary_union([Polygon(source_buildings[i]['points']).buffer(3.8, join_style=2)
+                              for i in frontage_ids]).intersection(expected.difference(Polygon(outer[0])))
+assert aprons.symmetric_difference(expected_aprons).area < .005
+assert abs(aprons.area - layout['frontage']['area']) < .005
+for x, z in layout['frontage']['trees']:
+    assert expected.covers(Point(x, z).buffer(2)), 'frontage planter blocks source road or building'
+for x, z in layout['frontage']['benches']:
+    assert expected.covers(box(x - .7, z - 1.2, x + .7, z + 1.2)), 'frontage bench blocks source road or building'
+assert roof_ids == {'899710007', '899710008'}
+for roof in layout['sourceRoofs']:
+    assert roof['points'] == points(roof['id']), 'open-roof source plan changed'
+    assert roof['tags']['building'] == 'roof'
+    assert 'estimated' in roof['detailStatus']
+north = layout['northApproach']
+assert north['retailSourcePoints'] == points('899710010')
+assert north['retailSourceId'] == '899710010' and north['mallSourceId'] == '566345463'
+independent_north = Polygon(points('899710010')).intersection(Polygon(points('566345463')).buffer(13, join_style=2)).intersection(box(-775, -1055, -590, -963))
+assert unary_union([Polygon(face) for face in north['estimatedEnvelope']]).symmetric_difference(independent_north).area < .005
 
 # Independently reconstruct the source tower/podium overlap. Render subtraction
 # must remove the duplicate exterior without shrinking the combined solid.

@@ -6,6 +6,7 @@ import { ESHAN_SOLIDS } from "./eshan";
 import { SQUARE_SOLIDS } from "./square";
 import { XIHUAN_SOLIDS } from "./xihuan";
 import { WUXING_SOLIDS } from "./wuxing";
+import { RIVERSIDE_DETAIL_SOLIDS } from "./riversideDetail";
 
 export type StreetBox = {
   at: [number, number, number];
@@ -39,7 +40,7 @@ for (const x of [-34, 34]) for (const z of [-43, -18, 7]) {
     { at: [bx, 0.25, z + 5], size: [2.7, 0.5, 0.35], color: "#617363" },
   );
 }
-export const STREET_SOLIDS = [...STALL_BOXES, STALL_SIGN, ...BENCH_BOXES, ...MARKET_SOLIDS, ...STATION_SOLIDS, ...ESHAN_SOLIDS, ...SQUARE_SOLIDS, ...XIHUAN_SOLIDS, ...WUXING_SOLIDS];
+export const STREET_SOLIDS = [...STALL_BOXES, STALL_SIGN, ...BENCH_BOXES, ...MARKET_SOLIDS, ...STATION_SOLIDS, ...ESHAN_SOLIDS, ...SQUARE_SOLIDS, ...XIHUAN_SOLIDS, ...WUXING_SOLIDS, ...RIVERSIDE_DETAIL_SOLIDS];
 const solidBuckets = new Map<string, StreetBox[]>();
 for (const box of STREET_SOLIDS) {
   const extent = (box.size[0] + box.size[2]) / 2 + 8;

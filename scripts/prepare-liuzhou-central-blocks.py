@@ -23,7 +23,8 @@ buildings = [{**next(b for b in source['buildings'] if b['id'] == identifier),
 parcel_ids = ['205654200', '205659715', '1044328330', '1044328341',
               '1044328342', '1044328343', '1044328346', '1044328347',
               '1352351112', '1044328331', '1539716390', '1274445934',
-              '1274445939', '1306511547', '1539716380', '1539716381']
+              '1274445939', '1306511547', '1539716380', '1539716381',
+              '1044328334']
 parcels = [next(a for a in source['areas'] if a['id'] == identifier) for identifier in parcel_ids]
 
 # The source residential relation surrounds, but explicitly excludes, a school.
@@ -205,7 +206,7 @@ for route in walk_routes.values():
     assert LineString(route['points']).buffer(.7).intersection(solids).is_empty
 output = {'version': 1, 'sourceSha256': hashlib.sha256(source_path.read_bytes()).hexdigest(),
           'license': 'ODbL-1.0; OpenStreetMap contributors',
-          'note': 'Four restored source building rings, sixteen source residential ways, residential relation 21296846 and its excluded school 205663282. Existing source building groups take priority. Infill, fences, heights, nameplates and landscaping are estimates; road corridors remain open.',
+          'note': 'Four restored source building rings, seventeen source residential ways including the archived court dormitory parcel 1044328334, residential relation 21296846 and its excluded school 205663282. Existing source building groups take priority. Infill, fences, heights, nameplates and landscaping are estimates; road corridors remain open.',
           'additionalSource': {'archive': str(archive.relative_to(ROOT)).replace('\\', '/'),
                                'rawSha256': hashlib.sha256(archive_raw).hexdigest(),
                                'relationId': '21296846'},

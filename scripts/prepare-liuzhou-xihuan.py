@@ -2,7 +2,8 @@
 
 Axes, crossings, signal nodes, bus platform and parcel outlines are source data.
 Lane widths, pavement extent, fences, planting and all furniture are estimates.
-No terrain heights are manufactured by this preparation step.
+Source building footprints are preserved; facade details and internal courtyard
+layouts are authored estimates. No terrain heights are manufactured here.
 """
 import gzip
 import json
@@ -72,6 +73,79 @@ def rectangle(p, tangent, along, across):
     return Polygon([[p[0] + dx * a - dz * b, p[1] + dz * a + dx * b]
                     for a, b in [(-along / 2, -across / 2), (along / 2, -across / 2),
                                  (along / 2, across / 2), (-along / 2, across / 2)]])
+
+
+# Preserve source shells and their existing runtime height rule. The windows,
+# balconies and internal paving below are an interpretation, not source survey.
+facade_ids = ['546014175', '546014176', '546014177', '1442497610',
+              '1442497611', '1442497612', '1442497613', '1442497614',
+              '1442497615', '1442497622', '1442497623', '1442497624', '1442497625',
+              '1527710222', '1527710223']
+frontages = []
+for building in city['buildings']:
+    if building['id'] not in facade_ids:
+        continue
+    info = building['tags']
+    tagged = info.get('height')
+    try:
+        height = float(tagged) if tagged else float(info.get('building:levels', '0')) * 3.2
+    except ValueError:
+        height = 0
+    sourced_height = 2 <= height <= 500
+    frontages.append({'id': building['id'], 'points': building['points'],
+                      'height': height if sourced_height else 10 + int(building['id']) % 6 * 3.2,
+                      'heightSource': 'tagged' if sourced_height else 'estimated',
+                      'kind': 'school' if info.get('building') == 'school' else
+                      'industrial' if info.get('building') == 'industrial' else 'residential'})
+
+# Fill only the open space of archived parcels. Exact internal paths and court
+# locations are unknown and must remain marked as estimates in the manifest.
+yard_space = {parcel['id']: Polygon(parcel['points']).buffer(-2).difference(obstacles.buffer(0.6))
+              .difference(carriageway.buffer(0.8)) for parcel in parcels}
+for parcel in parcels[1:]:
+    yard = yard_space[parcel['id']]
+    faces(yard, '#869179', 'courtyard', 0.185)
+    # Sparse paths between source rows. Clipping keeps paving out of the shells.
+    direction = [math.cos(-0.5), math.sin(-0.5)]
+    for x, z in ([[-3222, -557], [-3205, -531]] if parcel['id'] == '1421525099'
+                 else [[-3119, -598], [-3091, -581]]):
+        faces(rectangle([x, z], direction, 102, 3.8).intersection(yard), '#b5ad97', 'yardpath', 0.205)
+
+sports = []
+for center, along, across, color, name in [([-3506, -632], 54, 30, '#967969', 'estimated-playground'),
+                                          ([-3438, -630], 28, 15, '#6e9180', 'estimated-court')]:
+    shape = rectangle(center, [1, 0], along, across)
+    assert yard_space[parcels[0]['id']].covers(shape.buffer(0.5)), name
+    faces(shape, color, 'sports', 0.215)
+    border = shape.buffer(-0.3).boundary.buffer(0.055)
+    faces(border, '#e3dac1', 'courtLine', 0.23)
+    faces(rectangle(center, [1, 0], 0.1, across - 0.6), '#e3dac1', 'courtLine', 0.23)
+    circle = Point(center).buffer(1.8 if name == 'estimated-court' else 4.5, quad_segs=16).boundary.buffer(0.055)
+    faces(circle, '#e3dac1', 'courtLine', 0.23)
+    for side in [-1, 1]:
+        length = 5.8 if name == 'estimated-court' else 9
+        width = 4.9 if name == 'estimated-court' else 16.5
+        box_center = [center[0] + side * (along / 2 - 0.3 - length / 2), center[1]]
+        penalty = rectangle(box_center, [1, 0], length, width).boundary.buffer(0.055)
+        faces(penalty, '#e3dac1', 'courtLine', 0.23)
+    sports.append({'name': name, 'center': center, 'along': along, 'across': across,
+                   'points': list(shape.exterior.coords)[:-1], 'estimated': True})
+
+yard_trees = []
+paths = unary_union([Polygon(s['points']) for s in surfaces if s['kind'] == 'yardpath'])
+for parcel in parcels:
+    yard = yard_space[parcel['id']]
+    minx, minz, maxx, maxz = yard.bounds
+    for ix, x in enumerate(range(math.ceil(minx / 17) * 17, math.floor(maxx), 17)):
+        for iz, z in enumerate(range(math.ceil(minz / 19) * 19, math.floor(maxz), 19)):
+            p = Point(x, z)
+            if (ix + iz) % 3 != 0 or not yard.covers(p.buffer(2.6)) or paths.distance(p) < 2.5:
+                continue
+            if any(Polygon(s['points']).distance(p) < 4 for s in sports):
+                continue
+            if parcel['id'] == '899210203' and p.distance(campus.boundary) > 15:
+                continue
+            yard_trees.append({'point': [x, z], 'parcelId': parcel['id']})
 
 
 crossings = []
@@ -179,8 +253,12 @@ output = {'license': 'ODbL-1.0; OpenStreetMap contributors',
           'bounds': [-3500, -860, -3060, -470], 'roadWidths': widths,
           'sourceRoads': roads, 'parcels': parcels, 'crossings': crossings, 'signals': signals,
           'busStop': bus, 'surfaces': surfaces, 'fences': fences, 'trees': trees, 'signs': signs,
+          'frontages': frontages, 'sports': sports, 'yardTrees': yard_trees,
+          'detailSource': 'Building footprint and school/residential parcel rings are archived OSM geometry. Facades, balconies, courtyard planting, paving, playgrounds and court locations are estimated; no measured heights or internal-layout source.',
           'neighbour': [round(neighbour.x, 5), round(neighbour.y, 5)]}
 text = json.dumps(output, ensure_ascii=False, separators=(',', ':')) + '\n'
 for target in ['src/components/liuzhou/xihuan-layout.json', 'public/games/liuzhou/xihuan-layout.json']:
-    (ROOT / target).write_text(text, encoding='utf8')
-print(json.dumps({'roads': len(roads), 'crossings': len(crossings), 'signals': len(signals), 'fences': len(fences), 'trees': len(trees), 'faces': len(surfaces)}))
+    path = ROOT / target
+    if not path.exists() or path.read_text(encoding='utf8') != text:
+        path.write_text(text, encoding='utf8')
+print(json.dumps({'roads': len(roads), 'crossings': len(crossings), 'signals': len(signals), 'fences': len(fences), 'trees': len(trees), 'yardTrees': len(yard_trees), 'frontages': len(frontages), 'faces': len(surfaces)}))

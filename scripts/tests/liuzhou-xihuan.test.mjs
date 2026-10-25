@@ -88,3 +88,17 @@ test('terrain-draped fence bases reach below the actual endpoint ground and are 
     assert.ok(street.streetContains(p));
   });
 });
+
+test('custom facades retain source shell base and height without duplicating body collision', () => {
+  assert.equal(xihuan.XIHUAN_FACADES.length, 15);
+  for (const frontage of xihuan.XIHUAN_FACADES) {
+    const building = world.BUILDINGS.find(b => b.id === frontage.id);
+    assert.ok(building, frontage.id);
+    assert.equal(frontage.height, building.h);
+    assert.equal(frontage.baseY, require('../../src/components/liuzhou/terrain.ts').terrainHeight(building));
+    assert.ok(frontage.windows >= 16, frontage.id);
+    assert.ok(xihuan.XIHUAN_FACADE_IDS.has(building.id));
+    assert.equal(world.BUILDINGS.filter(b => b.id === frontage.id).length, 1);
+  }
+  assert.equal(xihuan.XIHUAN_HOOPS.length, 2);
+});

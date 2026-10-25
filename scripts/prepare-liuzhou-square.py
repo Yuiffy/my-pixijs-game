@@ -36,9 +36,17 @@ fountain = Polygon(fountain_ring)
 assert square.is_valid and fountain.is_valid
 # Keep the previously explored cultural-building approaches, but do not label
 # this envelope (or the area beyond the source outer ring) as a surveyed square.
-envelope = box(-766, -913, -365, -555).union(Polygon(outer))
+roof_ids = ['899710007', '899710008']
+mall_source = next(b for b in source['buildings'] if b['id'] == '566345463')
+retail_source = next(a for a in source['areas'] if a['id'] == '899710010')
+# Rebuild only the near-street mall frontage inside the archived retail parcel.
+# This is an estimated access strip, not a claim of public parcel ownership.
+north_approach = Polygon(retail_source['points']).intersection(
+    Polygon(mall_source['points']).buffer(13, join_style=2)).intersection(box(-775, -1055, -590, -963))
+base_envelope = box(-766, -913, -365, -555).union(Polygon(outer))
+envelope = base_envelope.union(north_approach)
 buildings = [b for b in source['buildings'] if Polygon(b['points']).intersects(envelope)]
-obstacles = [Polygon(b['points']).buffer(0.65) for b in buildings]
+obstacles = [Polygon(b['points']).buffer(0.65) for b in buildings if b['id'] not in roof_ids]
 road_ids = []
 for road in source['roads']:
     tags = road['tags']
@@ -53,6 +61,13 @@ obstacles = unary_union(obstacles)
 public_square = square.difference(obstacles)
 approaches = envelope.difference(Polygon(outer)).difference(obstacles)
 public = public_square.union(approaches)
+frontage_ids = ['205657493', '205657490', '205657494', '205657496', '566345463']
+frontages = [b for b in buildings if b['id'] in frontage_ids]
+# Estimated apron bands beside archived building outlines distinguish the
+# east-side commercial frontage from the broad cultural-building approaches.
+# They only recolor existing public paving; no roads, parcels or buildings move.
+frontage_aprons = unary_union([Polygon(b['points']).buffer(3.8, join_style=2)
+                              for b in frontages]).intersection(approaches)
 
 
 def faces(geometry):
@@ -78,6 +93,20 @@ for x in [-649, -510]:
         if public_square.covers(box(bx - 0.7, z - 1.2, bx + 0.7, z + 1.2)):
             benches.append([bx, z])
 lawns = unary_union(lawns)
+frontage_trees = []
+frontage_benches = []
+for x, z in [(-476, -705), (-476, -680), (-446, -654), (-446, -610),
+             (-421, -573), (-457, -586), (-477, -749),
+             (-704, -978), (-662, -978), (-766, -1028)]:
+    # A clear walking corridor is retained around every isolated planter.
+    # No claim is made that a tree or bench occupies this exact real-world spot.
+    if approaches.covers(Point(x, z).buffer(2)):
+        frontage_trees.append([x, z])
+        p = box(x - .7, z + 3, x + .7, z + 5.4)
+        if approaches.covers(p):
+            frontage_benches.append([x, z + 4.2])
+trees.extend(frontage_trees)
+benches.extend(frontage_benches)
 surfaces = []
 # Narrow estimated stone bands replace the previous entire 8-metre dark cells.
 # Fine 0.6 x 0.9 m slab joints are drawn by a repeated texture in SquareView.
@@ -85,7 +114,8 @@ bands = unary_union([box(x, -920, x + .45, -540) for x in range(-648, -490, 24)]
                     + [box(-670, z, -490, z + .45) for z in range(-900, -540, 24)])
 for shape, color, kind in [(public_square.difference(lawns).difference(bands), '#c7c1ad', 'square'),
                            (public_square.difference(lawns).intersection(bands), '#999a8b', 'band'),
-                           (approaches, '#b6b4a3', 'approach'), (lawns, '#718760', 'lawn')]:
+                           (approaches.difference(frontage_aprons), '#b6b4a3', 'approach'),
+                           (frontage_aprons, '#a39d8b', 'approach'), (lawns, '#718760', 'lawn')]:
     surfaces.extend({'points': face, 'color': color, 'kind': kind} for face in faces(shape))
 assert abs(sum(Polygon(s['points']).area for s in surfaces) - public.area) < 0.05
 assert public.intersection(fountain).area < 1e-7
@@ -125,7 +155,8 @@ render_overrides = {'city-osm-434067129': {
 output = {
     'license': 'ODbL-1.0; OpenStreetMap contributors',
     'note': 'Square outer ring and fountain hole come from archived OSM relation 9600586. Approach envelope, all furniture, landscaping, sculpture position, inactive fountain details and facade dimensions are estimated. No detailed elevation or pool survey has been acquired.',
-    'envelopeEstimated': list(envelope.exterior.coords),
+    'envelopeEstimated': list(base_envelope.exterior.coords),
+    'envelopesEstimated': [list(p.exterior.coords) for p in ([envelope] if envelope.geom_type == 'Polygon' else envelope.geoms)],
     'sourceSquare': {'relationId': '9600586', 'outerWayId': '583907191', 'outer': outer,
                      'innerWayIds': ['205658310'], 'holes': [fountain_ring],
                      'area': round(square.area, 5), 'archive': 'data/liuzhou/open/osm/skyline-core.osm.gz',
@@ -134,6 +165,15 @@ output = {
                        'detailStatus': 'estimated inactive flush installation; no measured pool geometry',
                        'surfaces': fountain_surfaces, 'nozzles': nozzles},
     'sourceBuildingIds': [b['id'] for b in buildings], 'sourceRoadIds': road_ids,
+    'frontage': {'sourceIds': frontage_ids, 'area': round(frontage_aprons.area, 5),
+                 'surfaces': faces(frontage_aprons), 'trees': frontage_trees, 'benches': frontage_benches,
+                 'detailStatus': 'OSM building names/outlines; estimated facade/apron/furniture, unchanged default heights'},
+    'northApproach': {'retailSourceId': retail_source['id'], 'retailSourcePoints': retail_source['points'],
+                      'mallSourceId': mall_source['id'], 'estimatedEnvelope': faces(north_approach),
+                      'detailStatus': 'Estimated near-street access strip inside archived retail parcel; no claim of surveyed access/ownership'},
+    'sourceRoofs': [{'id': b['id'], 'points': b['points'], 'tags': b['tags'],
+                     'detailStatus': 'Source open-roof plan; roof elevation, thickness and supporting columns estimated'}
+                    for b in source['buildings'] if b['id'] in roof_ids],
     'buildingRenderOverrides': render_overrides,
     'publicArea': round(public.area, 5), 'sourceSquarePublicArea': round(public_square.area, 5),
     'estimatedApproachArea': round(approaches.area, 5), 'surfaces': surfaces,
