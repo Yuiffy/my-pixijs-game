@@ -37,6 +37,8 @@ async function prepare(context) {
     route => route.fulfill({ body: '' }));
   await context.addInitScript(() => {
     if (window.speechSynthesis) window.speechSynthesis.speak = () => {};
+    Element.prototype.requestPointerLock = () => Promise.resolve();
+    document.exitPointerLock = () => {};
   });
   context.on('page', page => {
     page.on('pageerror', error => errors.push({ url: page.url(), text: error.message }));
@@ -87,7 +89,8 @@ async function capture(page, name) {
   const snapshot = await state(page);
   const dom = await page.locator('body').innerText();
   assert.ok(dom.includes(snapshot.weight.toFixed(2)), 'HUD must show two-decimal weight from public state');
-  assert.ok(dom.includes(snapshot.bodyFat.toFixed(2)), 'HUD must match public body composition');
+  const bodyMetrics = await page.getByLabel('身体指标', { exact: true }).textContent();
+  assert.ok(bodyMetrics.includes(snapshot.bodyFat.toFixed(2)), 'Body detail values must match public composition even when collapsed on phones');
   shots.push({ file, pixels, layout, state: await state(page) });
 }
 

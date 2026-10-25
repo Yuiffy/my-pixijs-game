@@ -115,6 +115,7 @@ export default class DeliveryAudio {
       case "land-cloth": air(0.08, 0.022); tone(120, 80, 0.09, 0.02); break;
       case "dough": tone(170, 420, 0.17, 0.07); tone(330, 190, 0.08, 0.025); break;
       case "stomp": tone(180, 560, 0.15, 0.065); break;
+      case "vault": tone(180, 620, 0.18, 0.06); tone(620, 880, 0.1, 0.025, "sine", 0.07); break;
       case "metal": tone(760, 620, 0.17, 0.045); tone(1260, 1130, 0.13, 0.022); break;
       case "reflect": tone(1180, 1850, 0.12, 0.045); tone(760, 1300, 0.1, 0.025); break;
       case "blocked": tone(165, 100, 0.08, 0.035, "triangle"); break;

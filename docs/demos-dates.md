@@ -8,7 +8,8 @@ the date a placeholder route was created as a launch date.
 
 | Game | Release evidence | Latest update evidence |
 | --- | --- | --- |
-| Sui Fitness / 今天也要动 | 2026-10-03, first locally verified five-day survival campaign and catalog entry; deployment pending | 2026-10-03, 48→40kg gradual fat loss, body composition, action XP, three talents and four attacks; deployment pending |
+| Sui Fitness / 今天也要动 | 2026-10-03, first locally verified five-day survival campaign and catalog entry; deployment pending | 2026-10-25, offensive dash, charge interception, contextual guidance and compact touch HUD; release checks and production-build playtest passed |
+| Spring Delivery / 春日第一单 | 2026-10-22, delivery adventure catalog release | 2026-10-25, contact-based tray vault, buffered attack and contextual first-roof teaching; release checks and production-build playtest passed |
 | Beach Volley / 晴海双打 | 2026-10-02, first locally playable implementation and catalog entry; deployment pending | 2026-10-03, independent input holds, native keyboard activation and complete 2P touch actions; deployment pending |
 | Golden Needle / 不许手抖 | 2026-10-02, first locally verified playable implementation and catalog entry; deployment pending | 2026-10-03, complete keyboard targeting and hold controls; deployment pending |
 | Autochess | 2026-01-10, first confirmed demos entry (`841ebb3`); earlier route was a placeholder | `AUTOCHESS_RELEASE_DATE` in the game's version file |
@@ -19,7 +20,7 @@ the date a placeholder route was created as a launch date.
 | RESET / 开蹬！ | 2026-09-26 (`78bde60`), first playable version included in this publication | 2026-10-03, damaged-save protection, previous-position recovery and retryable storage failures; deployment pending |
 | Hype Harbor | 2026-09-26, initial playable release in this commit | 2026-10-03, owned preparation gestures and cancellation on focus/lifecycle changes; deployment pending |
 | Streamer | 2026-09-12 (`845028c`) | 2026-09-12 (`845028c`) |
-| Pre-stream | 2026-09-12 (`845028c`) | 2026-10-03, independent input holds, cancellation-safe scoops and landscape controls; deployment pending |
+| Pre-stream | 2026-09-12 (`845028c`) | 2026-10-25, short burst movement, doorway route markers, contextual water/task guidance and compact touch checklist; release checks and production-build playtest passed |
 | Snack | 2026-09-11 (`2ac9261`) | 2026-10-03, focused keyboard controls, independent input holds and optional tap-to-toggle; deployment pending |
 | Pinglu Canal / 平陆运河 | 2026-09-27, terrain engineering catalog release | 2026-10-03, validated save recovery, previous-state backup and unreadable-data preservation; deployment pending |
 | AGI | 2026-09-11 (`2ac9261`) | 2026-10-03, quarterly income adjustments, itemized upkeep, refund risk and cash preview; deployment pending |

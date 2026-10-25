@@ -1,7 +1,7 @@
 import type { DeliveryGame, Surface } from "./types";
 
 export type FeedbackKind =
-  | "jump" | "swing" | "dough" | "stomp" | "metal" | "reflect"
+  | "jump" | "swing" | "dough" | "stomp" | "vault" | "metal" | "reflect"
   | "land-stone" | "land-wood" | "land-metal" | "land-cloth"
   | "cloth-tight" | "spring" | "dash" | "steam" | "shot"
   | "cart-start" | "cart-stop" | "warning" | "sweep" | "mechanism"

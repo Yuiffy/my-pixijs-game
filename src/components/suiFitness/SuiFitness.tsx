@@ -26,6 +26,7 @@ import {
   FOOD_DEFS,
   workoutCost,
   wavePace,
+  fitnessHint,
 } from "./engine";
 import type { FitnessInput, FitnessState, Talent, WeaponKind } from "./engine";
 import { drawFitness } from "./renderer";
@@ -87,6 +88,7 @@ export default function SuiFitness() {
   const recorded = useRef<FitnessState | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [help, setHelp] = useState(false);
+  const [bodyDetails, setBodyDetails] = useState(false);
   const helpRef = useRef(false);
   const [notice, setNotice] = useState("");
   const keys = useRef(new Set<string>());
@@ -243,6 +245,8 @@ export default function SuiFitness() {
         },
         assetsReady: true,
         visualRevision: 3,
+        combatRevision: 4,
+        hint: fitnessHint(game.current),
         wave: wavePace(game.current),
         helpOpen: helpRef.current,
       });
@@ -504,6 +508,7 @@ export default function SuiFitness() {
               <small> 秒</small>
             </span>
           </div>
+          <div className={styles.bodyMetrics} data-open={bodyDetails} aria-label="身体指标">
           <Meter
             label="体重"
             value={((view.weight - 40) / 14) * 100}
@@ -525,11 +530,12 @@ export default function SuiFitness() {
             detail="目标 ≥55 · 底线 20"
             tone={view.muscle < 35 ? "danger" : "plum"}
           />
+          </div>
           <Meter
             label="动力"
             value={view.motivation}
             display={`${Math.floor(view.motivation)}`}
-            detail="攒起来，去运动"
+            detail={`体力 ${Math.floor(view.stamina)} · 冲刺消耗 30`}
             tone="sage"
           />
           <div className={styles.level}>
@@ -548,6 +554,9 @@ export default function SuiFitness() {
             </div>
             <small>拾取 +5 · 训练 +12 起</small>
           </div>
+          <button className={styles.bodyToggle} aria-expanded={bodyDetails} onClick={() => setBodyDetails(!bodyDetails)}>
+            {weightLabel} kg · 身体详情 {bodyDetails ? "收起 ↑" : "展开 ↓"}
+          </button>
         </section>
         {view.phase === "ready" && (
           <section className={styles.buildPicker} aria-label="选择开局天赋">
@@ -588,7 +597,7 @@ export default function SuiFitness() {
             width={WORLD.width}
             height={WORLD.height}
             tabIndex={0}
-            aria-label="运动小镇。方向键或 WASD 移动，空格冲刺，Q 拒绝诱惑，运动区按住 E 锻炼。"
+            aria-label="运动小镇。方向键或 WASD 移动，空格破围冲刺，Q 拒绝诱惑，运动区按住 E 锻炼。"
           />
           {view.phase === "ready" && (
             <div className={styles.intro}>
@@ -643,7 +652,7 @@ export default function SuiFitness() {
               <div className={styles.message} role="status">
                 {view.messageTime > 0
                   ? view.message
-                  : "拾取与训练得经验 → 随时升级 → 混搭攻击。"}
+                  : fitnessHint(view)}
               </div>
               <div className={styles.workoutPrompt}>
                 {nearby ? (
@@ -658,7 +667,7 @@ export default function SuiFitness() {
                     </span>
                   </>
                 ) : (
-                  <span>攻击自动释放 · 三站各练一次触发心流</span>
+                  <span>空格破围 · 拾星星后去运动区按住 E</span>
                 )}
               </div>
             </>
@@ -701,7 +710,7 @@ export default function SuiFitness() {
               <kbd>WASD</kbd> / <kbd>↑ ↓ ← →</kbd> 移动
             </span>
             <span>
-              <kbd>Space</kbd> 冲刺
+              <kbd>Space</kbd> 破围冲刺
             </span>
             <span>
               <kbd>Q</kbd> 拒绝诱惑
@@ -741,15 +750,21 @@ export default function SuiFitness() {
                 disabled={
                   !interactive || view.dashCooldown > 0 || view.stamina < 30
                 }
-                onClick={() => {
+                onPointerDown={(event) => {
+                  if (event.pointerType === "mouse") return;
+                  event.preventDefault();
+                  pending.current.dash = true;
+                }}
+                onClick={(event) => {
+                  if (["touch", "pen"].includes((event.nativeEvent as PointerEvent).pointerType)) return;
                   pending.current.dash = true;
                 }}
               >
-                冲刺 Space
+                破围 Space
                 <small>
                   {view.dashCooldown > 0
                     ? `${view.dashCooldown.toFixed(1)}s`
-                    : "闪开！"}
+                    : view.stamina < 30 ? "体力恢复中" : "穿敌 · 30 体力"}
                 </small>
               </button>
               <button
@@ -757,7 +772,13 @@ export default function SuiFitness() {
                 disabled={
                   !interactive || view.pulseCooldown > 0 || view.motivation < 25
                 }
-                onClick={() => {
+                onPointerDown={(event) => {
+                  if (event.pointerType === "mouse") return;
+                  event.preventDefault();
+                  pending.current.pulse = true;
+                }}
+                onClick={(event) => {
+                  if (["touch", "pen"].includes((event.nativeEvent as PointerEvent).pointerType)) return;
                   pending.current.pulse = true;
                 }}
               >
@@ -815,7 +836,7 @@ export default function SuiFitness() {
                 <ol className={styles.rules}>
                   <li>
                     <b>美食会追你。</b>DQ
-                    慢但重、牛肉干快速贴身，西西里柠檬柚会瞄准冲刺。新美食随进度登场。碰到增加脂肪负担，已装备武器会自动攻击。
+                    慢但重、牛肉干快速贴身，西西里柠檬柚会瞄准冲刺。新美食随进度登场。碰到增加脂肪负担，已装备武器会自动攻击。朝美食按空格可破围造成伤害；命中牛肉干或果茶的冲锋预警，还能截击打断。
                   </li>
                   <li>
                     <b>动力靠行动攒。</b>击退敌人掉落小星星，拾取后去运动区按住
@@ -844,7 +865,7 @@ export default function SuiFitness() {
                 </details>
                 <div className={styles.ruleKeys}>
                   <span>WASD / 方向键移动</span>
-                  <span>空格冲刺</span>
+                  <span>空格破围冲刺 · 30 体力</span>
                   <span>Q 消耗 25 动力清场</span>
                   <span>E 按住锻炼</span>
                   <span>P / Esc 暂停 · F 全屏</span>
@@ -965,6 +986,7 @@ export default function SuiFitness() {
                 <p className={styles.resultSummary}>
                   肌肉 {muscleLabel} · Lv.{view.level} · 用时{" "}
                   {view.elapsed.toFixed(1)} 秒 · {view.defeats} 次击退
+                  <br />破围击退 {view.dashDefeats} · 截击 {view.interceptions}
                 </p>
                 <div className={styles.workoutReport}>
                   {(["gym", "swim", "home"] as const).map((kind) => (

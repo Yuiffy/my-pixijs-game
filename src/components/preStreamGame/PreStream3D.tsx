@@ -14,7 +14,7 @@ import {
   interactPrep, leaveMiniGame, pressPrep, startPrepGame, stepPrepGame, placeFoodPrep, releaseCatPourPrep,
   nearestStation, setAudioChannelPrep, capturePosePrep, wipeSpillPrep, connectCablePrep, toggleObsSourcePrep,
   sweepGlassPrep, scoopLitterPrep, digBowelPrep,
-  togglePausePrep, validatePrepGame, getPrepStations,
+  togglePausePrep, validatePrepGame, getPrepStations, getPrepGuideStation, dashPrep, PREP_DASH_COOLDOWN_MS,
 } from './gameplay3d';
 import type { PrepState, StationId, TaskId } from './gameplay3d';
 import { createPreStreamAudio } from './sound3d';
@@ -194,6 +194,7 @@ export default function PreStream3D() {
   const [selectedFood, setSelectedFood] = useState<number | null>(null);
   const [selectedPlug, setSelectedPlug] = useState<number | null>(null);
   const [audioPreferences, setAudioPreferences] = useState<AudioPreferences>(defaultAudioPreferences);
+  const [checklistOpen, setChecklistOpen] = useState(false);
   const rootRef = useRef<HTMLElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef(state);
@@ -443,6 +444,17 @@ export default function PreStream3D() {
     selectStation(next);
   }, [selectStation]);
 
+  const dash = useCallback(() => {
+    const keys = keysRef.current;
+    const x = (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0) - (keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0) + stickRef.current.x;
+    const z = (keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0) - (keys.has('KeyW') || keys.has('ArrowUp') ? 1 : 0) + stickRef.current.z;
+    const next = dashPrep(stateRef.current, x, z);
+    if (next === stateRef.current) return;
+    destinationRef.current = null;
+    setTarget(null);
+    commit(next);
+  }, [commit]);
+
   useEffect(() => {
     if (!selectedStation) return;
     stationRailRef.current?.querySelector(`[data-station="${selectedStation}"]`)?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
@@ -558,6 +570,10 @@ coordinateSystem: 'world: x right, z down; aim: x/y 0..1',
       ...stateRef.current,
 target: destinationRef.current,
 selectedStation: selectedRef.current,
+      suggestedStation: getPrepGuideStation(stateRef.current)?.id || null,
+      guideStation: stateRef.current.phase === 'explore' && !stateRef.current.paused ? destinationRef.current ||
+        (selectedRef.current && stationAvailable(stateRef.current, selectedRef.current) ? selectedRef.current : null) ||
+        getPrepGuideStation(stateRef.current)?.id || null : null,
       stations: getPrepStations(stateRef.current),
       records: recordsRef.current,
       audio: readAudioState(),
@@ -603,6 +619,11 @@ formattedTime: formatPrepTime(stateRef.current.elapsedMs),
       const focusedControl = event.target instanceof HTMLElement && Boolean(event.target.closest('button, a, input, select'));
       const { current } = stateRef;
       if (current.paused || current.phase === 'title' || current.phase === 'result') return;
+      if ((event.code === 'KeyX' || event.code === 'KeyK') && current.phase === 'explore' && !(event.target instanceof HTMLInputElement)) {
+        event.preventDefault();
+        if (!event.repeat) dash();
+        return;
+      }
       if (event.code === 'KeyQ' && current.phase === 'explore' && !focusedControl) {
         event.preventDefault();
         if (!event.repeat) cycleNearby(event.shiftKey ? -1 : 1);
@@ -662,7 +683,7 @@ formattedTime: formatPrepTime(stateRef.current.elapsedMs),
       window.removeEventListener('pagehide', freeze);
       document.removeEventListener('visibilitychange', visibility);
     };
-  }, [act, aim, clearControls, commit, confirmRestart, cycleNearby, fullscreen, help, pause, persist, pressPrimary, releasePrimary, syncAudio]);
+  }, [act, aim, clearControls, commit, confirmRestart, cycleNearby, dash, fullscreen, help, pause, persist, pressPrimary, releasePrimary, syncAudio]);
 
   const stationAction = (id: StationId) => {
     if (incidentStation(id)) return state.incidents.active.includes(id as PrepState['incidents']['active'][number]) ? '突发' : '完成';
@@ -693,8 +714,12 @@ formattedTime: formatPrepTime(stateRef.current.elapsedMs),
   const selected = selectedStation && stationAvailable(state, selectedStation) ? stations.find(item => item.id === selectedStation) : null;
   const selectedIndex = nearby.indexOf(selectedStation as StationId);
   const pendingTasks = TASKS.filter(task => !state.completed.includes(task.id));
+  const suggested = getPrepGuideStation(state);
+  const guideStation = target || selected?.id || suggested?.id || null;
+  const dashReady = state.movement.cooldownMs <= 0;
+  const dashPercent = 100 - (state.movement.cooldownMs / PREP_DASH_COOLDOWN_MS) * 100;
   const selectionText = selected?.id === 'obs' && readyForLive && atComputer ? 'OBS 就绪 · 正式上播' : selected ? `${selected.label}${target === selected.id ? ' · 前往中' : ''}` :
-    state.incidents.active.length > 0 ? '突发状况待处理' : readyForLive ? atComputer ? '电脑前就绪' : '去电脑前开播' : nearbyAction || '走近物品并交互';
+    state.incidents.active.length > 0 ? `先处理：${suggested?.label || '突发状况'}` : readyForLive ? atComputer ? '电脑前就绪' : '去电脑前开播' : suggested ? `建议：${suggested.label}${state.water.cup === 'filling' ? ' · 接水同时准备' : ''}` : nearbyAction || '走近物品并交互';
 
   const pointAim = (event: React.PointerEvent<HTMLDivElement>) => {
     const bounds = event.currentTarget.getBoundingClientRect();
@@ -737,8 +762,8 @@ formattedTime: formatPrepTime(stateRef.current.elapsedMs),
   };
 
   return (
-<main ref={rootRef} className={styles.root} data-phase={state.phase} data-audio-enabled={audioState.enabled} data-audio-active={audioState.active} onPointerDownCapture={unlockAudio} onKeyDownCapture={unlockAudio}>
-    <div ref={worldRef} className={styles.world}><World3D state={state} liveStateRef={stateRef} selectedStation={selectedStation} onStationClick={interact} onReady={worldOnReady} /></div>
+<main ref={rootRef} className={styles.root} data-phase={state.phase} data-checklist-open={checklistOpen} data-audio-enabled={audioState.enabled} data-audio-active={audioState.active} onPointerDownCapture={unlockAudio} onKeyDownCapture={unlockAudio}>
+    <div ref={worldRef} className={styles.world}><World3D state={state} liveStateRef={stateRef} selectedStation={selectedStation} guideStation={guideStation} onStationClick={interact} onReady={worldOnReady} /></div>
     {!worldReady && <div className={styles.loading} role="status">房间准备中…</div>}
 
     <header className={styles.topbar}>
@@ -790,7 +815,7 @@ disabled={!ready || !worldReady}
         onClick={() => commit(startPrepGame(stateRef.current))}>
         <CaretRightOutlined /> {ready && worldReady ? '开始准备' : '房间准备中'}
       </button>
-      <p className={styles.titleHint}>WASD 移动 · E 交互 · 点击目标自动前往</p>
+      <p className={styles.titleHint}>WASD 移动 · X 快步 · E 交互 · 点击目标自动前往</p>
     </section>
 )}
 
@@ -799,12 +824,13 @@ disabled={!ready || !worldReady}
       <div className={styles.objectives} aria-label="开播准备">
         <span className={styles.objectiveHeading}>今晚的准备</span>
         <span className={styles.objectiveCount}>{pendingTasks.length > 0 ? `${pendingTasks.length} 项待办` : '准备完成'}</span>
-        <span className={styles.objectiveText}>当前：{selectionText}</span>
-        <div className={styles.taskChecklist} aria-label="准备事项">
+        <span className={styles.objectiveText} data-guide-station={guideStation}> {selectionText}</span>
+        <button type="button" className={styles.checklistToggle} aria-expanded={checklistOpen} aria-controls="prep-task-checklist" onClick={() => setChecklistOpen(open => !open)}>{checklistOpen ? '收起' : '清单'} {state.completed.length}/7</button>
+        <div id="prep-task-checklist" className={styles.taskChecklist} data-expanded={checklistOpen} aria-label="准备事项">
           {TASKS.map(task => {
             const done = state.completed.includes(task.id);
             const station = task.id === 'water' ? waterStation || task.station : task.station;
-            return <button key={task.id} type="button" data-objective-task={task.id} data-done={done} data-current={selectedStation === station} aria-pressed={selectedStation === station} disabled={done || state.phase !== 'explore' || !stationAvailable(state, station)} title={task.label} aria-label={`${task.label}${done ? '已完成' : '未完成，点击前往'}`} onClick={() => interact(station)}>{done ? <CheckOutlined aria-hidden /> : <span className={styles.taskPendingDot} />}{SHORT_TASKS[task.id]}</button>;
+            return <button key={task.id} type="button" data-objective-task={task.id} data-done={done} data-current={selectedStation === station} aria-pressed={selectedStation === station} disabled={done || state.phase !== 'explore' || !stationAvailable(state, station)} title={task.label} aria-label={`${task.label}${done ? '已完成' : '未完成，点击前往'}`} onClick={() => { setChecklistOpen(false); interact(station); }}>{done ? <CheckOutlined aria-hidden /> : <span className={styles.taskPendingDot} />}{SHORT_TASKS[task.id]}</button>;
           })}
         </div>
       </div>
@@ -837,6 +863,7 @@ title={`${station.label} · ${stationAction(station.id)}`}>
       </div>
       <div className={styles.explorePrompt}>
         <span>{selected ? `已选 ${selected.label}${nearby.length > 1 ? ` · 滚轮/Q 切换附近 ${selectedIndex >= 0 ? selectedIndex + 1 : '–'}/${nearby.length}` : ''}` : nearby.length > 1 ? '滚轮 / Q 切换附近目标' : 'WASD / 方向键移动'}</span>
+        <button type="button" className={styles.dashButton} data-dash-ready={dashReady} disabled={!dashReady} onClick={dash} title="X / K 快步，越过挡路的嘉嘉"><span>X</span>{dashReady ? '快步' : '恢复中'}<i style={{ width: `${dashPercent}%` }} /></button>
         <button id="interact" type="button" onClick={() => interact()}><span>E</span> {selected?.id === 'obs' && readyForLive && atComputer ? '正式上播' : selected ? target ? `前往${selected.label}` : `交互${selected.label}` : nearbyAction || '交互'}</button>
       </div>
       <div className={styles.mobileControls}>
@@ -852,6 +879,7 @@ onLostPointerCapture={stickUp}>
           <span style={{ transform: `translate(${knob.x * 29}px, ${knob.z * 29}px)` }} />
         </div>
         {nearby.length > 1 && <button type="button" className={styles.mobileCycle} onClick={() => cycleNearby(1)} title="切换附近目标" aria-label={`切换附近目标，当前${selected?.label || '未选择'}，共${nearby.length}个`}><span>{selectedIndex >= 0 ? selectedIndex + 1 : '·'}/{nearby.length}</span><strong>{selected?.label || '选目标'}</strong><ArrowRightOutlined aria-hidden /></button>}
+        <button type="button" className={styles.mobileDash} data-dash-ready={dashReady} aria-label="快步" disabled={!dashReady} onPointerDown={event => { event.preventDefault(); dash(); }} onClick={event => { if (event.detail === 0) dash(); }}><strong>快步</strong><i style={{ width: `${dashPercent}%` }} /></button>
         <button type="button" className={styles.mobileInteract} aria-label={readyForLive && atComputer ? '正式上播' : '交互'} onClick={() => interact()}>{readyForLive && atComputer ? '上播' : '交互'}</button>
       </div>
     </>

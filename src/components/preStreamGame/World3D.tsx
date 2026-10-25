@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { MutableRefObject } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import { INCIDENT_IDS, STATIONS, TASK_IDS, getPrepStations } from "./gameplay3d";
+import { INCIDENT_IDS, STATIONS, TASK_IDS, getPrepStations, getPrepWalkTarget, PREP_DASH_MS } from "./gameplay3d";
 import type { IncidentId, PrepState, StationId } from "./gameplay3d";
 
 type Vec3 = [number, number, number];
@@ -623,6 +623,7 @@ function Studio({ state, ready }: { state: PrepState; ready: boolean }) {
 
 function Avatar({ state, liveStateRef }: { state: PrepState; liveStateRef: MutableRefObject<PrepState> }) {
   const rig = useRef<THREE.Group>(null);
+  const dashTrail = useRef<THREE.Group>(null);
   const leftArm = useRef<THREE.Group>(null);
   const rightArm = useRef<THREE.Group>(null);
   const leftLeg = useRef<THREE.Group>(null);
@@ -630,7 +631,8 @@ function Avatar({ state, liveStateRef }: { state: PrepState; liveStateRef: Mutab
   const prev = useRef({ x: liveStateRef.current.player.x, z: liveStateRef.current.player.z, moving: 0, initialized: false });
   useFrame(({ clock }, dt) => {
     if (!rig.current) return;
-    const { player } = liveStateRef.current;
+    const { player, movement } = liveStateRef.current;
+    const dashing = movement.dashMs > 0;
     const dx = player.x - prev.current.x;
     const dz = player.z - prev.current.z;
     const moving = Math.hypot(dx, dz) > 0.005 ? 1 : 0;
@@ -648,7 +650,9 @@ function Avatar({ state, liveStateRef }: { state: PrepState; liveStateRef: Mutab
       const yawDelta = Math.atan2(Math.sin(player.yaw - rig.current.rotation.y), Math.cos(player.yaw - rig.current.rotation.y));
       rig.current.rotation.y += yawDelta * (1 - Math.exp(-12 * dt));
     }
-    rig.current.position.y = 0.04 + Math.sin(clock.elapsedTime * 11) * prev.current.moving * 0.05;
+    rig.current.position.y = 0.04 + Math.sin(clock.elapsedTime * 11) * prev.current.moving * 0.05 + (dashing ? Math.sin((1 - movement.dashMs / PREP_DASH_MS) * Math.PI) * 0.16 : 0);
+    rig.current.rotation.x = THREE.MathUtils.damp(rig.current.rotation.x, dashing ? 0.17 : 0, 18, dt);
+    if (dashTrail.current) dashTrail.current.visible = dashing;
     const stride = Math.sin(clock.elapsedTime * 11) * prev.current.moving * 0.38;
     if (leftArm.current) leftArm.current.rotation.x = stride;
     if (rightArm.current) rightArm.current.rotation.x = -stride;
@@ -658,6 +662,9 @@ function Avatar({ state, liveStateRef }: { state: PrepState; liveStateRef: Mutab
   const carrying = state.water.cup === "carried-empty" || state.water.cup === "carried-full";
   return (
     <group ref={rig}>
+      <group ref={dashTrail} visible={false}>
+        {[0, 1, 2].map(index => <mesh key={index} position={[0, 0.12, -0.3 - index * 0.28]} rotation={[-Math.PI / 2, 0, 0]} scale={[1 - index * 0.2, 1, 1]}><ringGeometry args={[0.14, 0.23, 20]} /><meshBasicMaterial color="#f8e4aa" transparent opacity={0.65 - index * 0.15} depthWrite={false} /></mesh>)}
+      </group>
       <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[0.28, 24]} /><meshBasicMaterial color="#554565" transparent opacity={0.22} depthWrite={false} /></mesh>
       <group ref={leftLeg} position={[-0.12, 0.61, 0]}>
         <Orb at={[0, -0.27, 0]} scale={[0.12, 0.31, 0.13]} color="#f1d6d5" />
@@ -892,7 +899,29 @@ function CameraRig({ liveStateRef }: { liveStateRef: MutableRefObject<PrepState>
   return null;
 }
 
-function Room({ state, liveStateRef, selectedStation, onStationClick }: { state: PrepState; liveStateRef: MutableRefObject<PrepState>; selectedStation?: StationId | null; onStationClick: (id: StationId) => void }) {
+function RoutePips({ liveStateRef, station }: { liveStateRef: MutableRefObject<PrepState>; station: StationId }) {
+  const route = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    if (!route.current) return;
+    const { current } = liveStateRef;
+    const waypoint = getPrepWalkTarget(current, station);
+    route.current.visible = current.phase === 'explore' && !current.paused && Boolean(waypoint);
+    if (!waypoint) return;
+    const dx = waypoint.x - current.player.x;
+    const dz = waypoint.z - current.player.z;
+    const length = Math.hypot(dx, dz);
+    route.current.children.forEach((pip, index) => {
+      const offset = 0.45 + index * 0.4;
+      pip.visible = offset < length - 0.12;
+      pip.position.set(current.player.x + (dx * offset) / Math.max(0.001, length), 0.055, current.player.z + (dz * offset) / Math.max(0.001, length));
+      pip.rotation.set(-Math.PI / 2, 0, -Math.atan2(dx, dz));
+      pip.scale.setScalar(0.85 + Math.sin(clock.elapsedTime * 4 - index * 0.7) * 0.12);
+    });
+  });
+  return <group ref={route}>{Array.from({ length: 8 }, (_, index) => <mesh key={index}><circleGeometry args={[0.07, 12]} /><meshBasicMaterial color="#ad71be" transparent opacity={0.8 - index * 0.065} depthWrite={false} /></mesh>)}</group>;
+}
+
+function Room({ state, liveStateRef, selectedStation, guideStation, onStationClick }: { state: PrepState; liveStateRef: MutableRefObject<PrepState>; selectedStation?: StationId | null; guideStation?: StationId | null; onStationClick: (id: StationId) => void }) {
   const incidents = state.incidents.active;
   const activeIncidentStations = STATIONS.filter(station => incidents.includes(station.id as (typeof incidents)[number]));
   const readyToGoLive = state.phase === "explore" && state.completed.length === TASK_IDS.length &&
@@ -915,6 +944,7 @@ function Room({ state, liveStateRef, selectedStation, onStationClick }: { state:
       <CatBowl state={state} />
       <RoamingCat liveStateRef={liveStateRef} />
       <Avatar state={state} liveStateRef={liveStateRef} />
+      {state.phase === 'explore' && guideStation && <RoutePips liveStateRef={liveStateRef} station={guideStation} />}
       <IncidentScenes active={incidents} />
       {state.phase === "explore" && getPrepStations(state).map((station) => {
         const waterStation = station.id === "thermos" || station.id === "dispenser";
@@ -931,7 +961,7 @@ function Room({ state, liveStateRef, selectedStation, onStationClick }: { state:
               done={done}
               active={active}
               near={distance < 1.45 && !incidentHasPriority}
-              selected={selectedStation === station.id}
+              selected={selectedStation === station.id || (!selectedStation && guideStation === station.id)}
               suppressed={incidentHasPriority}
               ready={(station.id === "obs" && readyToGoLive) || (station.id === "dispenser" && state.water.cup === "ready")}
               player={state.player}
@@ -950,11 +980,12 @@ type World3DProps = {
   state: PrepState;
   liveStateRef: MutableRefObject<PrepState>;
   selectedStation?: StationId | null;
+  guideStation?: StationId | null;
   onStationClick: (id: StationId) => void;
   onReady?: () => void;
 };
 
-export default function World3D({ state, liveStateRef, selectedStation, onStationClick, onReady }: World3DProps) {
+export default function World3D({ state, liveStateRef, selectedStation, guideStation, onStationClick, onReady }: World3DProps) {
   return (
     <Canvas
       shadows
@@ -966,7 +997,7 @@ export default function World3D({ state, liveStateRef, selectedStation, onStatio
       onCreated={() => onReady?.()}
       fallback={<div>请开启浏览器硬件加速以显示 3D 公寓。</div>}
     >
-      <Room state={state} liveStateRef={liveStateRef} selectedStation={selectedStation} onStationClick={onStationClick} />
+      <Room state={state} liveStateRef={liveStateRef} selectedStation={selectedStation} guideStation={guideStation} onStationClick={onStationClick} />
     </Canvas>
   );
 }

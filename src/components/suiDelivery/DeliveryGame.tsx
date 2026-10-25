@@ -482,7 +482,7 @@ export default function DeliveryGame() {
             <p className={styles.intro}>
               阁楼有人等一碗热汤。
               <br />
-              挑起面团，踩着晨光出发。
+              跳起、挑跃，把热汤送上屋顶。
             </p>
             <button
               className={styles.primary}
@@ -684,7 +684,7 @@ export default function DeliveryGame() {
                     <dt>空格 / W / ↑</dt>
                     <dd>轻点短跳，按住高跳；踩下时按住可跳更高</dd>
                     <dt>J / X</dt>
-                    <dd>托盘上挑。面团变蓬松后，可踩它登高；再挑一次清路</dd>
+                    <dd>按住跳跃并挑中面团，可再跃一次。站着挑起后也能踩它登高；再挑一次清路</dd>
                     <dt>E</dt>
                     <dd>取餐、交谈、送达</dd>
                     <dt>K</dt>

@@ -185,6 +185,7 @@
 .objectives { left: max(18px, 2.5vw); width: min(280px, calc(100% - 36px)); display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 5px 8px; }
 .objectiveHeading { font-size: 11px; font-weight: 800; }
 .objectiveCount { color: #9a6944; font-size: 10px; font-weight: 800; }
+.checklistToggle { display: none; }
 .objectiveText { grid-column: 1 / -1; font-size: 10px; color: #597463; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .taskChecklist { display: flex; flex-wrap: wrap; grid-column: 1 / -1; gap: 4px; }
 .taskChecklist button { display: inline-flex; align-items: center; gap: 3px; min-height: 19px; padding: 2px 5px; border: 1px solid #d5b88a; border-radius: 3px; background: #fff7e6; color: #684a2f; font-size: 9px; font-weight: 750; line-height: 1.1; white-space: nowrap; }
@@ -283,6 +284,10 @@
 .explorePrompt button { padding: 7px 9px; border: 0; border-radius: 3px; background: #f7f3e6; color: #334c3d; font-size: 10px; font-weight: 700; }
 .explorePrompt button span { padding-right: 5px; color: #845c8f; }
 .mobileControls { display: none; }
+.dashButton, .mobileDash { position: relative; overflow: hidden; }
+.dashButton i, .mobileDash i { position: absolute; height: 3px; left: 0; bottom: 0; background: #b285c1; pointer-events: none; }
+.dashButton:disabled, .mobileDash:disabled { opacity: 0.65; }
+.mobileDash { position: absolute; z-index: 4; right: 106px; bottom: 110px; width: 57px; height: 57px; border: 2px solid #fff5e5; border-radius: 50%; background: #f8eed7ed; color: #674b7b; box-shadow: 0 5px 14px #342b3a44; font-size: 12px; touch-action: manipulation; }
 .mobileCycle { display: none; }
 .miniPanel {
   position: absolute;
@@ -678,10 +683,16 @@
   .nightPicker button { min-height: 40px; }
   .titleHint { margin-top: 10px; }
   .objectives { top: 99px; left: 12px; min-height: 45px; width: min(246px, calc(100% - 24px)); padding: 6px 9px; }
+  .objectiveHeading, .objectiveCount { display: none; }
+  .objectiveText { margin-top: 0; grid-column: 1; grid-row: 1; }
+  .checklistToggle { display: inline-flex; align-items: center; justify-content: center; grid-column: 2; grid-row: 1; min-height: 32px; padding: 4px 7px; border: 1px solid #d6c4a5; border-radius: 3px; background: #fff7e6; color: #674b7b; font-size: 10px; }
   .taskChecklist { gap: 3px; }
-  .taskChecklist button { min-height: 18px; padding: 2px 4px; font-size: 8px; }
-  .waterHud { top: 192px; left: 12px; right: auto; width: min(246px, calc(100% - 24px)); padding: 6px 9px; min-height: 40px; }
-  .notice { top: 242px; left: 12px; transform: none; max-width: calc(100% - 24px); text-align: left; }
+  .taskChecklist:not([data-expanded='true']) { display: none; }
+  .taskChecklist button { min-height: 32px; padding: 4px 7px; font-size: 10px; }
+  .waterHud { top: 153px; left: 12px; right: auto; width: min(246px, calc(100% - 24px)); padding: 6px 9px; min-height: 32px; }
+  .root[data-phase='explore'] .waterHud:not([data-water='filling']):not([data-water='ready']) { display: none; }
+  .root[data-phase='explore'][data-checklist-open='true'] .waterHud { display: none; }
+  .notice { top: auto; bottom: 205px; left: 12px; transform: none; max-width: calc(100% - 24px); text-align: left; }
   .stationRail { left: 0; right: 0; bottom: 0; transform: none; max-width: none; width: 100%; border-radius: 0; padding: 4px max(8px, env(safe-area-inset-right)); }
   .stationRail button { flex-basis: 74px; min-height: 45px; font-size: 9px; }
   .stationRail small { font-size: 7px; }
@@ -737,8 +748,9 @@
   .titleHint { font-size: 9px; }
   .mainButton { min-height: 40px; }
   .objectives { top: 93px; }
-  .waterHud { top: 187px; }
-  .notice { top: 235px; }
+  .waterHud { top: 147px; }
+  .notice { top: auto; bottom: 195px; }
+  .mobileDash { bottom: 85px; right: 94px; width: 51px; height: 51px; }
   .joystick { width: 89px; height: 89px; bottom: 64px; }
   .mobileCycle { right: 12px; bottom: 151px; max-width: 118px; }
   .mobileInteract { width: 61px; height: 61px; bottom: 80px; }

@@ -66,6 +66,8 @@ function playerAt(x: number, y: number): DeliveryGame["player"] {
     attackHeld: false,
     interactHeld: false,
     attack: 0,
+    attackBuffer: 0,
+    doughGrace: 0,
     cooldown: 0,
     hit: [],
     pose: "idle",
@@ -131,6 +133,7 @@ export function createDelivery(
     prompt: "",
     lifts: 0,
     bounces: 0,
+    vaults: 0,
     pans: Object.fromEntries(
       level.pans.map((v) => [v.id, { y: v.y, previous: v.y, timer: 0 }]),
     ),
@@ -455,7 +458,12 @@ function advanceDough(s: DeliveryGame, blocks: Surface[], dt: number) {
       e.timer = 4;
       feedback(s, "stomp", e.x + 19, e.y);
       sparks(s, e.x + 19, e.y);
-    } else if (e.state === "hop" && e.grace === 0) hurt(s, e.x);
+    } else if (e.state === "hop" && e.grace === 0) {
+      // A short, directional takeoff window lets the tray startup meet a hopping target.
+      // Standing contacts, contacts from behind and all other hazards still hurt normally.
+      const scoopApproach = p.doughGrace > 0 && p.jumpHeld && p.vy < 0 && (e.x + 19 - p.x - 13) * p.facing >= 0;
+      if (!scoopApproach) hurt(s, e.x);
+    }
   }
 }
 function attack(s: DeliveryGame) {
@@ -476,10 +484,26 @@ function attack(s: DeliveryGame) {
   );
   attackRain(s, box, (text) => tell(s, text, 5));
   attackTheater(s, box, (text) => tell(s, text, 5));
+  // The airborne scoop reaches below the feet, so jump then tray is a natural sequence.
+  const doughBox = p.jumpHeld && !p.grounded ? { ...box, h: 106 } : box;
   for (const e of s.dough) {
-    if (e.state === "gone" || p.hit.includes(e.id) || !overlaps(e, box)) continue;
+    if (e.state === "gone" || p.hit.includes(e.id) || !overlaps(e, doughBox)) continue;
     p.hit.push(e.id);
-    if (e.state === "loft") {
+    if (e.state === "hop" && p.jumpHeld && !p.grounded) {
+      // A real contact supplies the second impulse; a miss never grants an air jump.
+      p.vy = Math.min(p.vy, -900);
+      p.coyote = 0;
+      p.buffer = 0;
+      p.dash = 0;
+      p.land = 0.16;
+      e.state = "gone";
+      e.timer = 4;
+      s.vaults++;
+      tell(s, s.levelId === ORDER && e.id === "first-dough" ? "挑跃！按住跳跃，向右落上高台。" : "挑跃！按住跳跃，保持方向落向高处。", 3);
+      feedback(s, "vault", e.x + 19, e.y + 15);
+      sparks(s, e.x + 19, e.y + 15, 0x7aa497);
+      continue;
+    } else if (e.state === "loft") {
       e.state = "gone";
       e.timer = 4;
       tell(s, "清出一条路。面团过一会儿会重新鼓起来。", 3);
@@ -649,9 +673,13 @@ export function stepDelivery(
   p.land = Math.max(0, p.land - dt);
   p.attack = Math.max(0, p.attack - dt);
   p.cooldown = Math.max(0, p.cooldown - dt);
+  p.attackBuffer = Math.max(0, p.attackBuffer - dt);
+  p.doughGrace = Math.max(0, p.doughGrace - dt);
   p.dash = Math.max(0, p.dash - dt);
-  if (input.attack && !p.attackHeld && p.cooldown === 0) {
+  if (input.attack && !p.attackHeld && p.cooldown <= 0.12) p.attackBuffer = 0.12 + dt;
+  if (p.attackBuffer > 0 && p.cooldown === 0) {
     p.attack = 0.34;
+    p.attackBuffer = 0;
     p.cooldown = s.save.tray === "wide" ? 0.64 : 0.43;
     p.hit = [];
     feedback(s, "swing");
@@ -670,6 +698,7 @@ export function stepDelivery(
     : Math.max(0, p.coyote - dt);
   if (p.buffer > 0 && p.coyote > 0) {
     p.vy = -PHYSICS.jump;
+    p.doughGrace = 0.18;
     p.buffer = 0;
     p.coyote = 0;
     p.grounded = false;
@@ -788,6 +817,9 @@ export function stepDelivery(
   }
   if (p.y > level.world.h - 40) die(s);
   if (s.phase === "playing") interact(s, pressed);
+  if (s.phase === "playing" && !s.prompt && s.levelId === ORDER && s.vaults === 0 && p.x > 700 && p.x < 1100 && s.dough.some(e => e.state === "hop" && Math.abs(e.x - p.x) < 190)) {
+    s.prompt = "按住跳跃 + 挑击面团 · 再跃上高台";
+  }
   if (s.save.resume?.switches?.length !== s.switches.length) persistCheckpoint(s);
   p.pose = s.theater.seated ? "sit" : deliveryFinished(s)
     ? "deliver"
@@ -886,6 +918,7 @@ export function deliveryPublicState(s: DeliveryGame) {
     toast: s.toastTimer > 0 ? s.toast : "",
     lifts: s.lifts,
     bounces: s.bounces,
+    vaults: s.vaults,
     feedback: s.feedback.map(cue => ({ ...cue, age: Math.round(cue.age * 1000) / 1000 })),
     pans: s.pans,
     boss: s.boss,

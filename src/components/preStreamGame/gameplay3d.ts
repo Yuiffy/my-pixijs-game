@@ -59,6 +59,7 @@ export interface PrepState {
   elapsedMs: number;
   countdownMs: number;
   player: { x: number; z: number; yaw: number };
+  movement: { dashMs: number; cooldownMs: number; x: number; z: number; dashes: number };
   cat: { x: number; z: number; yaw: number; cycleMs: number };
   completed: TaskId[];
   water: { cup: 'table' | 'carried-empty' | 'filling' | 'ready' | 'carried-full' | 'drank'; fillMs: number; fillRequiredMs: number };
@@ -74,6 +75,9 @@ export const BEDROOM_DOOR = { wallX: 1.2, openingMinZ: 0.45, openingMaxZ: 1.55 }
 export const INTERACT_RADIUS = 1.3;
 export const LIVE_RADIUS = 1.6;
 export const LIVE_TRANSITION_MS = 2000;
+export const PREP_DASH_MS = 240;
+export const PREP_DASH_COOLDOWN_MS = 1250;
+const freshMovement = (): PrepState['movement'] => ({ dashMs: 0, cooldownMs: 0, x: 0, z: 1, dashes: 0 });
 export const STATIONS: PrepStation[] = [
   { id: 'thermos', x: 2.95, z: 1.65, label: '保温杯' },
   { id: 'dispenser', x: -0.6, z: 2.25, label: '饮水机' },
@@ -140,6 +144,7 @@ function copyState(state: PrepState): PrepState {
   return {
     ...state,
     player: { ...state.player },
+    movement: { ...freshMovement(), ...state.movement },
     cat: { ...state.cat },
     completed: [...state.completed],
     water: { ...state.water },
@@ -184,6 +189,7 @@ rng: safeSeed,
     elapsedMs: 0,
 countdownMs: 0,
 player: { x: 0.3, z: 0.1, yaw: 0 },
+movement: freshMovement(),
 cat: catAt(0),
 completed: [],
     water: { cup: 'table', fillMs: 0, fillRequiredMs: 19000 + (safeLevel - 1) * 2500 },
@@ -203,7 +209,7 @@ noticeMs: 0,
 
 export function startPrepGame(state: PrepState): PrepState {
   if (state.phase !== 'title') return state;
-  return { ...state, phase: 'explore', noticeMs: 4000 };
+  return { ...state, phase: 'explore', notice: '沿紫色脚印先拿保温杯。快步能越过嘉嘉，接水时可以先忙别的！', noticeMs: 6000 };
 }
 
 export function getPrepStations(state: PrepState): PrepStation[] {
@@ -256,6 +262,36 @@ export function getPrepWalkTarget(state: PrepState, id: StationId): { x: number;
     return { x: -3, z: -1.4 };
   }
   return { x: station.x, z: station.z };
+}
+
+// A suggestion, never a task-order restriction. Water runs while other work happens.
+export function getPrepGuideStation(state: PrepState): PrepStation | null {
+  if (state.phase !== 'explore') return null;
+  if (state.incidents.active.length) return STATIONS.find(item => item.id === state.incidents.active[0]) || null;
+  if (readyForLive(state)) return STATIONS.find(item => item.id === 'obs') || null;
+  const water = state.water.cup;
+  if (water === 'table' || water === 'carried-full') return getPrepStations(state).find(item => item.id === 'thermos') || null;
+  if (water === 'carried-empty' || water === 'ready') return getPrepStations(state).find(item => item.id === 'dispenser') || null;
+  const candidates = getPrepStations(state).filter(item => isTask(item.id) && !state.completed.includes(item.id));
+  const routeCost = (station: PrepStation) => {
+    const waypoint = getPrepWalkTarget(state, station.id) || station;
+    return distance(state.player, waypoint) + distance(waypoint, station);
+  };
+  return candidates.sort((a, b) => routeCost(a) - routeCost(b))[0] || null;
+}
+
+export function dashPrep(state: PrepState, x = 0, z = 0): PrepState {
+  if (state.phase !== 'explore' || state.paused || state.movement.cooldownMs > 0 || !finite(x) || !finite(z)) return state;
+  const next = copyState(state);
+  const length = Math.hypot(x, z);
+  next.movement = {
+    dashMs: PREP_DASH_MS,
+    cooldownMs: PREP_DASH_COOLDOWN_MS,
+    x: length > 0.01 ? x / length : Math.sin(state.player.yaw),
+    z: length > 0.01 ? z / length : Math.cos(state.player.yaw),
+    dashes: state.movement.dashes + 1,
+  };
+  return next;
 }
 
 export function getPrepAction(state: PrepState): string {
@@ -767,16 +803,19 @@ function blocksBedroom(fromX: number, fromZ: number, toX: number, toZ: number) {
 
 function movePlayer(state: PrepState, dt: number, input: PrepInput) {
   if (!finite(input.x) || !finite(input.z)) return;
-  const magnitude = Math.hypot(input.x, input.z);
+  const dashing = state.movement.dashMs > 0;
+  const inputX = dashing ? state.movement.x : input.x;
+  const inputZ = dashing ? state.movement.z : input.z;
+  const magnitude = Math.hypot(inputX, inputZ);
   if (magnitude < 0.001) return;
   const scale = Math.min(1, magnitude) / magnitude;
-  const dx = input.x * scale;
-  const dz = input.z * scale;
-  const speed = 2.65;
+  const dx = inputX * scale;
+  const dz = inputZ * scale;
+  const speed = dashing ? 6.8 : 2.65;
   const x = clamp(state.player.x + ((dx * dt * speed) / 1000), WORLD_BOUNDS.minX, WORLD_BOUNDS.maxX);
   const z = clamp(state.player.z + ((dz * dt * speed) / 1000), WORLD_BOUNDS.minZ, WORLD_BOUNDS.maxZ);
-  const movedX = blocksBathroom(state.player.x, state.player.z, x, state.player.z) || blocksBedroom(state.player.x, state.player.z, x, state.player.z) || distance({ x, z: state.player.z }, state.cat) < 0.44 ? state.player.x : x;
-  const movedZ = blocksBathroom(movedX, state.player.z, movedX, z) || distance({ x: movedX, z }, state.cat) < 0.44 ? state.player.z : z;
+  const movedX = blocksBathroom(state.player.x, state.player.z, x, state.player.z) || blocksBedroom(state.player.x, state.player.z, x, state.player.z) || (!dashing && distance({ x, z: state.player.z }, state.cat) < 0.44) ? state.player.x : x;
+  const movedZ = blocksBathroom(movedX, state.player.z, movedX, z) || (!dashing && distance({ x: movedX, z }, state.cat) < 0.44) ? state.player.z : z;
   state.player.x = movedX;
   state.player.z = movedZ;
   state.player.yaw = Math.atan2(dx, dz);
@@ -853,7 +892,7 @@ export function stepPrepGame(state: PrepState, ms: number, input: PrepInput = { 
   let remaining = ms;
   while (remaining > 0) {
     if (next.phase === 'result') break;
-    const dt = Math.min(50, remaining);
+    const dt = Math.min(next.movement.dashMs > 0 ? Math.min(16, next.movement.dashMs) : 50, remaining);
     remaining -= dt;
     const counted = next.phase === 'countdown' ? Math.min(dt, next.countdownMs) : dt;
     next.elapsedMs += counted;
@@ -872,6 +911,8 @@ export function stepPrepGame(state: PrepState, ms: number, input: PrepInput = { 
     }
     next.cat = catAt(next.cat.cycleMs + dt);
     if (next.phase === 'explore') movePlayer(next, dt, controls);
+    next.movement.dashMs = next.phase === 'explore' ? Math.max(0, next.movement.dashMs - dt) : 0;
+    next.movement.cooldownMs = Math.max(0, next.movement.cooldownMs - dt);
     if (next.phase === 'minigame') tickMini(next, dt, controls.primary === true);
   }
   return next;
@@ -879,7 +920,7 @@ export function stepPrepGame(state: PrepState, ms: number, input: PrepInput = { 
 
 export function togglePausePrep(state: PrepState): PrepState {
   if (state.phase === 'title' || state.phase === 'result') return state;
-  return { ...state, paused: !state.paused };
+  return { ...state, paused: !state.paused, movement: { ...state.movement, dashMs: 0 } };
 }
 
 export function goLivePrep(state: PrepState): PrepState {
@@ -915,6 +956,7 @@ export function validatePrepGame(raw: unknown): PrepState | null {
   if (!['title', 'explore', 'minigame', 'countdown', 'result'].includes(String(raw.phase)) || typeof raw.paused !== 'boolean') return null;
   if (!bounded(raw.elapsedMs, 0, 86400000) || !bounded(raw.countdownMs, 0, 3000) || typeof raw.notice !== 'string' || raw.notice.length > 300 || !bounded(raw.noticeMs, 0, 10000)) return null;
   if (!record(raw.player) || !bounded(raw.player.x, WORLD_BOUNDS.minX, WORLD_BOUNDS.maxX) || !bounded(raw.player.z, WORLD_BOUNDS.minZ, WORLD_BOUNDS.maxZ) || !bounded(raw.player.yaw, -Math.PI, Math.PI)) return null;
+  if (raw.movement !== undefined && (!record(raw.movement) || !bounded(raw.movement.dashMs, 0, PREP_DASH_MS) || !bounded(raw.movement.cooldownMs, 0, PREP_DASH_COOLDOWN_MS) || !bounded(raw.movement.x, -1, 1) || !bounded(raw.movement.z, -1, 1) || !bounded(raw.movement.dashes, 0, 1000000) || !Number.isInteger(raw.movement.dashes))) return null;
   if (!legacy) {
     if (!record(raw.cat) || !bounded(raw.cat.cycleMs, 0, CAT_CYCLE_MS) || !bounded(raw.cat.x, WORLD_BOUNDS.minX, WORLD_BOUNDS.maxX) || !bounded(raw.cat.z, WORLD_BOUNDS.minZ, WORLD_BOUNDS.maxZ) || !bounded(raw.cat.yaw, -Math.PI, Math.PI)) return null;
     const expectedCat = catAt(raw.cat.cycleMs);
@@ -993,6 +1035,7 @@ export function validatePrepGame(raw: unknown): PrepState | null {
     }
   }
   const restored = copyState(raw as unknown as PrepState);
+  restored.movement.dashMs = 0;
   restored.version = 2;
   if (restored.phase === 'countdown') restored.countdownMs = Math.min(restored.countdownMs, LIVE_TRANSITION_MS);
   if (legacy) {

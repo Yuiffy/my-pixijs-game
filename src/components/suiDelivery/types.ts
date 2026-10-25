@@ -194,6 +194,8 @@ export type DeliveryGame = {
     attackHeld: boolean;
     interactHeld: boolean;
     attack: number;
+    attackBuffer: number;
+    doughGrace: number;
     cooldown: number;
     hit: string[];
     pose: string;
@@ -241,6 +243,7 @@ export type DeliveryGame = {
   prompt: string;
   lifts: number;
   bounces: number;
+  vaults: number;
   pans: Record<string, { y: number; previous: number; timer: number }>;
   projectiles: {
     id: number;

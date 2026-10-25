@@ -17,6 +17,16 @@ const state = page => page.evaluate(() => JSON.parse(window.render_game_to_text(
 const advance = (page, ms) => page.evaluate(value => window.advanceTime(value), ms);
 const mark = scenario => console.log(`[pre-stream-3d] ${scenario}`);
 
+async function quietContext(browser, options) {
+  const context = await browser.newContext(options);
+  await context.addInitScript(() => {
+    if ('speechSynthesis' in window) window.speechSynthesis.speak = () => {};
+    Element.prototype.requestPointerLock = () => Promise.resolve();
+    document.exitPointerLock = () => {};
+  });
+  return context;
+}
+
 async function assertAudioState(page, expected, scenario) {
   await page.waitForFunction(values => {
     const current = JSON.parse(window.render_game_to_text()).audio;
@@ -469,7 +479,8 @@ async function main() {
   });
   let page;
   try {
-    page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
+    const desktopContext = await quietContext(browser, { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
+    page = await desktopContext.newPage();
     observeErrors(page);
     await page.goto(`${base}/game/pre-stream`, { waitUntil: 'networkidle' });
     await page.waitForFunction(() => !!window.render_game_to_text && !!window.advanceTime);
@@ -601,7 +612,7 @@ async function main() {
     assert.equal(result.phase, 'result');
     observations.push({ scenario: 'full-night-complete', elapsedMs: result.elapsedMs, stars: result.records.best[1].stars, completed: result.completed, incidents: result.incidents.resolved });
 
-    const saveContext = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    const saveContext = await quietContext(browser, { viewport: { width: 1280, height: 800 } });
     const savePage = await saveContext.newPage();
     observeErrors(savePage);
     await savePage.goto(`${base}/game/pre-stream`, { waitUntil: 'networkidle' });
@@ -629,7 +640,46 @@ async function main() {
     observations.push({ scenario: 'pause-reload-resume-water', fillBefore: paused.water.fillMs, fillAfter: (await state(savePage)).water.fillMs });
     await saveContext.close();
 
-    const lateContext = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    mark('second night complete loop');
+    const secondContext = await quietContext(browser, { viewport: { width: 1280, height: 800 } });
+    await secondContext.addInitScript(() => {
+      localStorage.setItem('sui-pre-stream-records-v2', JSON.stringify({ version: 2, best: { 1: { elapsedMs: 90000, stars: 3 } }, unlocked: 2 }));
+    });
+    const second = await secondContext.newPage();
+    observeErrors(second);
+    await second.goto(`${base}/game/pre-stream`, { waitUntil: 'networkidle' });
+    await second.locator('[data-level="2"]').click();
+    await second.locator('#start-game').click();
+    await visit(second, 'thermos', current => current.water.cup === 'carried-empty');
+    await visit(second, 'dispenser', current => current.water.cup === 'filling');
+    await visit(second, 'food', current => current.minigame?.kind === 'food');
+    await plateFood(second);
+    await visit(second, 'toilet', current => current.minigame?.kind === 'toilet');
+    await sprayTarget(second);
+    await second.locator('[data-flush]').click();
+    await advance(second, 1900);
+    await resolveActiveIncidents(second);
+    for (const station of ['cat', 'audio', 'vts']) {
+      await visit(second, station, current => current.minigame?.kind === station);
+      await solveMini(second, station);
+      await resolveActiveIncidents(second);
+    }
+    const secondWater = await state(second);
+    if (secondWater.water.cup === 'filling') await advance(second, secondWater.water.fillRequiredMs - secondWater.water.fillMs + 100);
+    await visit(second, 'dispenser', current => current.water.cup === 'carried-full');
+    await visit(second, 'thermos', current => current.water.cup === 'drank');
+    await resolveActiveIncidents(second);
+    await finishComputerTasks(second);
+    await routeToComputerThenInteract(second);
+    await advance(second, liveTransitionMs + 100);
+    const secondResult = await capture(second, 'result-night-two');
+    assert.equal(secondResult.phase, 'result');
+    assert.equal(secondResult.completed.length, 7);
+    assert.equal(secondResult.incidents.resolved.length, 2);
+    observations.push({ scenario: 'second-night-complete', elapsedMs: secondResult.elapsedMs, incidents: secondResult.incidents.resolved });
+    await secondContext.close();
+
+    const lateContext = await quietContext(browser, { viewport: { width: 1280, height: 800 } });
     await lateContext.addInitScript(() => {
       localStorage.setItem('sui-pre-stream-records-v2', JSON.stringify({ version: 2, best: { 1: { elapsedMs: 90000, stars: 3 }, 2: { elapsedMs: 120000, stars: 3 } }, unlocked: 3 }));
     });
@@ -668,6 +718,7 @@ async function main() {
     await routeToComputerThenInteract(late);
     await advance(late, liveTransitionMs + 100);
     assert.equal((await state(late)).phase, 'result', 'Third night must finish after all incidents');
+    await capture(late, 'result-night-three');
     await assertAudioRuntime(late, { requested: false, playing: false, fading: false }, 'uninterrupted transition finishes its audio fade');
     await lateContext.close();
 
@@ -681,7 +732,7 @@ async function main() {
         paused: true,
         incidents: { active: [id], resolved: [], queue: ['spill', 'cable'] },
       };
-      const eventContext = await browser.newContext({ viewport: { width, height }, hasTouch: compact, isMobile: compact, deviceScaleFactor: 1 });
+      const eventContext = await quietContext(browser, { viewport: { width, height }, hasTouch: compact, isMobile: compact, deviceScaleFactor: 1 });
       await eventContext.addInitScript(save => {
         localStorage.setItem('sui-pre-stream-run-v2', JSON.stringify(save));
         localStorage.setItem('sui-pre-stream-records-v2', JSON.stringify({ version: 2, best: { 1: { elapsedMs: 90000, stars: 3 }, 2: { elapsedMs: 120000, stars: 3 } }, unlocked: 3 }));
@@ -699,7 +750,7 @@ async function main() {
       await eventContext.close();
     }
 
-    const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1 });
+    const mobileContext = await quietContext(browser, { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1 });
     const mobile = await mobileContext.newPage();
     observeErrors(mobile);
     await mobile.goto(`${base}/game/pre-stream`, { waitUntil: 'networkidle' });
@@ -707,6 +758,7 @@ async function main() {
     mark('mobile joystick and layout');
     await capture(mobile, 'title-mobile-390');
     await mobile.locator('#start-game').tap();
+    await mobile.getByRole('button', { name: '清单 0/7' }).tap();
     await mobile.locator('[data-objective-task="food"]').tap();
     assert.equal((await state(mobile)).selectedStation, 'food', 'Mobile task title must select its station');
     await advance(mobile, 100);
@@ -729,7 +781,7 @@ async function main() {
     observations.push({ scenario: 'touch-joystick-and-toilet-layout', player: (await state(mobile)).player });
     await mobileContext.close();
 
-    const touchContext = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1 });
+    const touchContext = await quietContext(browser, { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1 });
     const touchPage = await touchContext.newPage();
     observeErrors(touchPage);
     await touchPage.goto(`${base}/game/pre-stream`, { waitUntil: 'networkidle' });

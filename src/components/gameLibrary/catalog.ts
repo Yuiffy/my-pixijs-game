@@ -38,10 +38,11 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
       {
         title: '肥岁健身 · 48减8',
         href: '/game/sui-fitness',
-        description: '从 48 kg 练到 40 kg，躲开美食的围攻，混搭四种武器、边练边升级，减脂也保住肌肉。',
+        description: '朝美食冲刺破围，在冲锋预警时截击打断。捡星星、练三站、混搭四种武器，从 48 kg 练到 40 kg。',
         image: '/games/sui-fitness/preview.svg',
         meta: '类土豆兄弟 · 美食肉鸽 · 三种天赋 · 四种攻击 / 触屏',
         releaseDate: '2026-10-03',
+        updateDate: '2026-10-25',
       },
       {
         title: '晴海双打 · 岁己 × 栞栞 × 米汀',
@@ -100,11 +101,11 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
       {
         title: '岁己 · 春日第一单',
         href: '/game/sui-spring',
-        description: '挑起面团借力登高，搭乘餐车、穿过雨棚，再登上剧场吊台，停稳宴席机。四区十二单，最后坐到街坊为你留下的红椅子。',
+        description: '跳起挑中面团，再借力跃上屋顶。搭餐车、穿雨棚、登上剧场吊台，走过四区十二单，最后坐到街坊留下的红椅子。',
         image: '/games/sui-spring/delivery-preview.png',
         meta: '2D 配送冒险 · 开发中 · 挑击借力 / 触屏',
         releaseDate: '2026-10-22',
-        updateDate: '2026-10-24',
+        updateDate: '2026-10-25',
       },
       {
         title: '柳州GTA',
@@ -125,11 +126,11 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
         title: '岁己：马上就播',
         href: '/game/pre-stream',
         description:
-          '跑遍公寓准备直播，趁保温杯慢慢接水去喂猫、试音，处理突发状况后赶到 OBS 开播。',
+          '跟着脚印跑遍公寓，用快步越过挡路的猫。趁接水去喂猫、试音，处理突发状况后赶到 OBS 开播。',
         image: '/games/pre-stream/preview-3d.webp',
         meta: '3D 开播竞速 · 扮演主播岁己 · 三晚计时摘星',
         releaseDate: '2026-09-12',
-        updateDate: '2026-10-03',
+        updateDate: '2026-10-25',
       },
       {
         title: '嘘，TA还在播',

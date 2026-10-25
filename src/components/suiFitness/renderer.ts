@@ -22,7 +22,7 @@ function ellipse(
   y: number,
   rx: number,
   ry: number,
-  color: string,
+  color: string | CanvasGradient,
 ) {
   c.beginPath();
   c.ellipse(x, y, rx, ry, 0, 0, TAU);
@@ -657,6 +657,7 @@ function feedback(c: Ctx, s: FitnessState) {
     c.restore();
   }
   for (const e of s.effects) {
+    if (e.text) continue;
     const life = Math.max(0, Math.min(1, e.life * 2.5));
     c.save();
     c.globalAlpha = life;
@@ -765,6 +766,17 @@ export function drawFitness(
     }
   }
   for (const p of s.pickups) pickup(c, p, s.elapsed, reduced);
+  if (s.dashTime > 0) {
+    c.save();
+    c.translate(s.player.x, s.player.y);
+    c.rotate(Math.atan2(s.dashDirection.y, s.dashDirection.x));
+    const trail = c.createLinearGradient(-95, 0, 22, 0);
+    trail.addColorStop(0, "#f2cc7400");
+    trail.addColorStop(1, "#fff3bdcc");
+    ellipse(c, reduced ? -8 : -30, 0, reduced ? 38 : 76, 24, trail);
+    c.restore();
+    ring(c, s.player.x, s.player.y, 34, "#fff7d5", 3);
+  }
   attackObjects(c, s);
   feedback(c, s);
   let painted = false;
@@ -775,5 +787,22 @@ export function drawFitness(
     food(c, f, s.elapsed, reduced);
   }
   if (!painted) drawAthlete(c, s, reduced, moving);
+  if (s.impactTime > 0) ring(c, s.player.x, s.player.y, 39, "#d6a248", 3);
+  for (const e of s.effects) {
+    if (!e.text) continue;
+    c.save();
+    c.globalAlpha = Math.min(1, e.life / 0.18);
+    c.font = "700 20px sans-serif";
+    c.textAlign = "center";
+    c.lineJoin = "round";
+    c.lineWidth = 5;
+    c.strokeStyle = "#fffbee";
+    c.fillStyle = e.accent ? "#9b6427" : "#794d43";
+    const y = Math.max(24, Math.min(HEIGHT - 12, e.y - 24 - (reduced ? 0 : (0.65 - e.life) * 24)));
+    const x = Math.max(70, Math.min(WIDTH - 70, e.x));
+    c.strokeText(e.text, x, y);
+    c.fillText(e.text, x, y);
+    c.restore();
+  }
   c.restore();
 }

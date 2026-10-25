@@ -138,7 +138,7 @@ export default class DeliveryScene extends Phaser.Scene {
           padding: { x: 9, y: 7 },
         })
         .setOrigin(0.5, 1)
-        .setDepth(8);
+        .setDepth(5);
       this.labels.push(label);
     }
   }
@@ -679,8 +679,8 @@ export default class DeliveryScene extends Phaser.Scene {
           p.x + 13,
           p.y + 18,
           60,
-          p.facing > 0 ? -1.4 : 2,
-          p.facing > 0 ? 0.1 : 3.3,
+          p.facing > 0 ? -1.4 : (p.jumpHeld && !p.grounded ? 1.8 : 2),
+          p.facing > 0 ? (p.jumpHeld && !p.grounded ? 1.3 : 0.1) : (p.jumpHeld && !p.grounded ? 4.5 : 3.3),
         )
         .strokePath();
     }

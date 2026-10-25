@@ -12,7 +12,7 @@ export function drawDeliveryFeedback(g: Phaser.GameObjects.Graphics, s: Delivery
     const motion = s.save.settings.reducedMotion ? 0.25 : t;
     const { x, y, kind } = cue;
     const alpha = Math.min(1, (1 - t) * 1.7) * (0.65 + cue.strength * 0.35);
-    const soft = ["dough", "stomp", "spring", "land-cloth", "cloth-tight", "bird"].includes(kind);
+    const soft = ["dough", "stomp", "vault", "spring", "land-cloth", "cloth-tight", "bird"].includes(kind);
     const steam = ["steam", "dash", "water"].includes(kind);
     const warning = kind === "warning" || kind === "blocked";
     const land = kind.startsWith("land-");
@@ -30,9 +30,13 @@ export function drawDeliveryFeedback(g: Phaser.GameObjects.Graphics, s: Delivery
       for (const side of [-1, 1]) g.lineBetween(x + side * spread, y - 3, x + side * (spread + 6), y - 7);
     } else if (soft) {
       g.strokeEllipse(x, y, 28 + motion * 27, 17 + motion * 14);
-      if (kind === "dough" || kind === "stomp" || kind === "spring") {
+      if (kind === "dough" || kind === "stomp" || kind === "vault" || kind === "spring") {
         g.lineBetween(x - 6, y - 18 - motion * 13, x, y - 25 - motion * 13);
         g.lineBetween(x, y - 25 - motion * 13, x + 6, y - 18 - motion * 13);
+        if (kind === "vault") {
+          g.lineBetween(x - 8, y - 30 - motion * 13, x, y - 39 - motion * 13);
+          g.lineBetween(x, y - 39 - motion * 13, x + 8, y - 30 - motion * 13);
+        }
       }
     } else {
       const radius = 9 + motion * 20;

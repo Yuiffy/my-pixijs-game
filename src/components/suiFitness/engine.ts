@@ -76,6 +76,8 @@ export interface FitnessEffect {
   y: number;
   life: number;
   radius?: number;
+  text?: string;
+  accent?: boolean;
 }
 export interface Projectile {
   id: number;
@@ -145,6 +147,12 @@ export interface FitnessState {
   attackRange: number;
   attackFlash: number;
   dashTime: number;
+  dashHitIds: number[];
+  dashDamage: number;
+  dashDefeats: number;
+  interceptions: number;
+  impactTime: number;
+  dashUses: number;
   dashDirection: { x: number; y: number };
   facing: { x: number; y: number };
   lastDash: boolean;
@@ -272,7 +280,13 @@ export const UPGRADE_DEFS: UpgradeDef[] = [
   {
     id: "breath",
     name: "呼吸节奏",
-    description: "冲刺冷却 −0.4 秒，体力恢复更快",
+    description: "破围冲刺冷却 −0.4 秒，体力恢复更快",
+    max: 2,
+  },
+  {
+    id: "breakthrough",
+    name: "破围步法",
+    description: "破围伤害 +0.8，范围 +10；冲锋预警时命中可截击",
     max: 2,
   },
   {
@@ -305,6 +319,23 @@ const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n
 const distance = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.hypot(a.x - b.x, a.y - b.y);
 export const upgradeRank = (s: FitnessState, id: string) => s.upgrades.filter((value) => value === id).length;
 export const workoutCost = (s: FitnessState) => 24 - upgradeRank(s, "focus") * 4;
+
+/** One next action, derived from the current run rather than a permanent tutorial. */
+export function fitnessHint(s: FitnessState) {
+  if (s.elapsed >= 60) return "破围开路，拾星训练；三站各练一次触发心流。";
+  if (s.dashCooldown === 0 && s.stamina >= 30 && s.foods.some(food => (food.kind === "jerky" || food.kind === "tea") && food.telegraph > 0 &&
+    Math.hypot(food.x - s.player.x, food.y - s.player.y) < 260)) {
+    return "冲锋预警！朝箭头上的美食按空格，截击打断。";
+  }
+  if (s.elapsed < 12 && s.dashDamage === 0) return "移动接近美食 → 朝它按空格破围。武器自动攻击。";
+  if (!Object.values(s.workouts).some(Boolean)) {
+    if (s.motivation < workoutCost(s)) return "捡金色星星攒动力，再去运动区训练。";
+    const nearest = [...s.zones].sort((a, b) => Math.hypot(a.x - s.player.x, a.y - s.player.y) - Math.hypot(b.x - s.player.x, b.y - s.player.y))[0];
+    return `去${EXERCISE_DEFS[nearest.kind].name}的圈内，站定按住 E 两秒。`;
+  }
+  if (s.dashDamage === 0) return "遇到围堵就朝食物按空格破围，预警时命中可截击。";
+  return "做得好！去另两处运动区练一次，集齐三站触发心流。";
+}
 /** Each minute offers a readable build-up, a surge, then time to collect/train. */
 export function wavePace(s: Pick<FitnessState, "day" | "time">) {
   if (s.time < 12) return { name: "热身", interval: 1.12 - (s.day - 1) * 0.07 };
@@ -584,7 +615,7 @@ export function createFitness(
     ropeAngle: 0,
     exercise: null,
     buffs: { attack: 0, speed: 0, guard: 0 },
-    message: "48.00 → 40.00 kg · 拾取星星和训练得经验，升级随时发生。",
+    message: "先动起来，朝美食按空格破围。武器会自动攻击。",
     messageTime: 5,
     dashCooldown: 0,
     pulseCooldown: 0,
@@ -597,6 +628,12 @@ export function createFitness(
     attackRange: 105,
     attackFlash: 0,
     dashTime: 0,
+    dashHitIds: [],
+    dashDamage: 0,
+    dashDefeats: 0,
+    interceptions: 0,
+    impactTime: 0,
+    dashUses: 0,
     dashDirection: { x: 0, y: -1 },
     facing: { x: 0, y: -1 },
     lastDash: false,
@@ -637,6 +674,52 @@ function hit(s: FitnessState, food: Food, amount: number, weapon: WeaponKind) {
   food.hp -= amount;
   food.hitFlash = 0.12;
   effect(s, "hit", food.x, food.y);
+}
+
+function damageNumber(s: FitnessState, food: Food, amount: number, accent = false, prefix = '') {
+  // Numbers are transient feedback. They never decide damage, collision or time.
+  const rounded = Math.round(amount * 10) / 10;
+  s.effects.push({ id: s.nextId++,
+kind: 'hit',
+x: food.x,
+y: food.y - food.radius,
+    life: 0.65,
+text: `${prefix}${rounded}`,
+accent });
+  if (s.effects.length > 70) s.effects.shift();
+}
+
+function dashAttack(s: FitnessState, from: { x: number; y: number }) {
+  const dx = s.player.x - from.x;
+  const dy = s.player.y - from.y;
+  const lengthSquared = dx * dx + dy * dy;
+  const rank = upgradeRank(s, 'breakthrough');
+  const power = (1 + upgradeRank(s, 'strong') * 0.2) * (s.buffs.attack > 0 ? 1.35 : 1);
+  for (const food of s.foods) {
+    if (food.hp <= 0 || s.dashHitIds.includes(food.id)) continue;
+    const progress = lengthSquared ? clamp(((food.x - from.x) * dx + (food.y - from.y) * dy) / lengthSquared, 0, 1) : 0;
+    const nearest = { x: from.x + dx * progress, y: from.y + dy * progress };
+    if (distance(nearest, food) > food.radius + PLAYER_RADIUS + 9 + rank * 10) continue;
+    const interception = (food.kind === 'jerky' || food.kind === 'tea') && (food.telegraph > 0 || food.rush > 0);
+    const damage = (2 + rank * 0.8 + (interception ? 1.5 : 0)) * power;
+    s.dashHitIds.push(food.id);
+    s.dashDamage += Math.min(food.hp, damage);
+    food.hp -= damage;
+    if (food.hp <= 0) s.dashDefeats++;
+    food.hitFlash = 0.12;
+    food.x += s.dashDirection.x * 34;
+    food.y += s.dashDirection.y * 34;
+    if (interception) {
+      s.interceptions++;
+      food.telegraph = 0;
+      food.rush = 0;
+      food.charge = 2.5;
+      say(s, '截击！冲锋被打断，沿缺口冲出去。', 1.4);
+    } else if (s.dashUses <= 2) say(s, '破围命中！穿过食物，留下星星。', 1.4);
+    effect(s, 'hit', food.x, food.y);
+    damageNumber(s, food, damage, true, interception ? '截击 ' : '破围 ');
+    s.impactTime = 0.12;
+  }
 }
 function attack(s: FitnessState, dt: number) {
   const tempo = s.flowTime > 0 ? 1.25 : 1;
@@ -781,6 +864,7 @@ function tick(s: FitnessState, dt: number, input: FitnessInput) {
     "comboTime",
     "flowTime",
     "waterFlash",
+    "impactTime",
   ] as const) s[field] = Math.max(0, s[field] - dt);
   for (const kind of ["attack", "speed", "guard"] as const) s.buffs[kind] = Math.max(0, s.buffs[kind] - dt);
   if (s.comboTime === 0) s.combo = 0;
@@ -797,6 +881,8 @@ function tick(s: FitnessState, dt: number, input: FitnessInput) {
     s.invincible = Math.max(s.invincible, 0.36);
     s.dashCooldown = 2.4 - upgradeRank(s, "breath") * 0.4;
     s.dashDirection = { ...s.facing };
+    s.dashHitIds = [];
+    s.dashUses++;
     s.exercise = null;
     effect(s, "dash", s.player.x, s.player.y);
   }
@@ -839,7 +925,9 @@ function tick(s: FitnessState, dt: number, input: FitnessInput) {
     (1 + upgradeRank(s, "shoes") * 0.1) *
     (s.talent === "swimmer" ? 1.1 : 1) *
     (s.buffs.speed > 0 ? 1.25 : 1);
-  if (s.dashTime > 0) {
+  const dashFrom = { ...s.player };
+  const dashing = s.dashTime > 0;
+  if (dashing) {
     s.player.x += s.dashDirection.x * 620 * dt;
     s.player.y += s.dashDirection.y * 620 * dt;
     s.dashTime = Math.max(0, s.dashTime - dt);
@@ -953,6 +1041,7 @@ function tick(s: FitnessState, dt: number, input: FitnessInput) {
     food.x += (dx - dy * sideways) * travel;
     food.y += (dy + dx * sideways) * travel;
   }
+  if (dashing) dashAttack(s, dashFrom);
   attack(s, dt);
   const remaining: Food[] = [];
   const crumbs: Food[] = [];

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>三款动作游戏 · 试玩</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f6f2e9; color: #293f38; font-family: system-ui, "Microsoft YaHei", sans-serif; }
+    main { max-width: 1120px; margin: auto; padding: 64px 28px 36px; }
+    header { max-width: 720px; margin-bottom: 36px; }
+    .date { color: #6e776e; font-size: 12px; letter-spacing: .14em; }
+    h1 { margin: 12px 0; font-size: clamp(32px, 5vw, 54px); font-weight: 700; letter-spacing: -.05em; }
+    header p { color: #626d63; line-height: 1.8; margin: 0; }
+    .games { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+    article { background: #fffdf7; border: 1px solid #dcded1; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+    .cover { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; background: #e3e7d8; }
+    .body { padding: 23px; display: flex; flex-direction: column; flex: 1; }
+    .kind { color: #737b70; font-size: 11px; letter-spacing: .08em; }
+    h2 { font-size: 23px; margin: 9px 0 12px; letter-spacing: -.03em; }
+    .pitch { line-height: 1.8; margin: 0 0 18px; min-height: 5.4em; font-size: 14px; }
+    .keys { border-top: 1px solid #e7e7dc; padding-top: 14px; margin: 0 0 21px; color: #70776e; font-size: 12px; line-height: 1.9; }
+    .play { margin-top: auto; display: flex; justify-content: space-between; align-items: center; padding: 13px 15px; border-radius: 5px; color: #fffdf5; background: #365b4b; text-decoration: none; font-weight: 600; font-size: 14px; }
+    .play:hover { background: #244837; }
+    a:focus-visible { outline: 3px solid #aa6c3d; outline-offset: 4px; }
+    footer { margin-top: 32px; color: #6d766b; font-size: 13px; line-height: 1.9; }
+    footer a { color: #365b4b; }
+    @media (max-width: 760px) { main { padding-top: 32px; } .games { grid-template-columns: 1fr; max-width: 500px; } .pitch { min-height: 0; } .body { padding: 21px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <span class="date">2026.10.25 · 试玩</span>
+      <h1>先动起来，再说下一局。</h1>
+      <p>这次围绕三个直接的动作：借力跃上屋顶、冲开食物包围、跑遍公寓准时开播。建议每款先玩三分钟，看看哪里让你想继续，哪里仍会卡住。</p>
+    </header>
+    <section class="games" aria-label="本轮试玩游戏">
+      <article>
+        <img class="cover" src="/games/sui-spring/delivery-preview.png" alt="春日配送小镇" width="640" height="400">
+        <div class="body">
+          <span class="kind">平台跳跃 · 配送冒险</span>
+          <h2>春日第一单</h2>
+          <p class="pitch">接下第一单，在面团旁按住跳跃并挑击，借力再跃上屋顶。试试高路，也可以沿原来的踩踏路线前进。</p>
+          <p class="keys">方向键移动 · 空格跳跃 · J / X 挑击<br>E 取餐、交谈、送达 · 支持触屏</p>
+          <a class="play" href="/game/sui-spring"><span>去送第一单</span><span aria-hidden="true">→</span></a>
+        </div>
+      </article>
+      <article>
+        <img class="cover" src="/games/sui-fitness/preview.svg" alt="肥岁健身运动小镇" width="640" height="400">
+        <div class="body">
+          <span class="kind">俯视动作 · 生存挑战</span>
+          <h2>肥岁健身</h2>
+          <p class="pitch">朝美食按空格破围；趁冲锋预警命中，还能截击打断。捡星星、去运动区训练，把主动进攻接进原来的生存节奏。</p>
+          <p class="keys">WASD / 方向键移动 · 空格破围<br>按住 E 训练 · Q 清场 · 支持触屏</p>
+          <a class="play" href="/game/sui-fitness"><span>开始今天的挑战</span><span aria-hidden="true">→</span></a>
+        </div>
+      </article>
+      <article>
+        <img class="cover" src="/games/pre-stream/preview-3d.webp" alt="马上就播的3D公寓" width="640" height="400">
+        <div class="body">
+          <span class="kind">3D 公寓 · 开播竞速</span>
+          <h2>马上就播</h2>
+          <p class="pitch">跟着脚印先拿保温杯，接水时顺路做准备。用快步穿过房间、越过嘉嘉，处理突发状况，再到 OBS 准时开播。</p>
+          <p class="keys">WASD / 方向键移动 · X / K 快步<br>E 互动 · 点击站点前往 · 支持触屏</p>
+          <a class="play" href="/game/pre-stream"><span>今晚准时开播</span><span aria-hidden="true">→</span></a>
+        </div>
+      </article>
+    </section>
+    <footer>试玩时可以留意：能否自己看懂第一步，动作是否愿意重复，失败后是否想再试。<br><a href="/demos">返回全部游戏 →</a></footer>
+  </main>
+</body>
+</html>
