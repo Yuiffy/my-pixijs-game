@@ -266,6 +266,15 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
         releaseDate: '2025-11-29',
         updateDate: '2026-09-06',
       },
+      {
+        title: '余席',
+        href: '/game/remaining-seat',
+        description: '深夜回到旧宅，一桌饭永远多留一个位置。穿过三次家宴，给自己留一点空气。',
+        image: '/games/remaining-seat/preview.png',
+        meta: '3D 心理恐怖 · 第一人称探索 · 三幕 / 双结局原型',
+        releaseDate: '2026-10-26',
+        updateDate: '2026-10-26',
+      },
     ],
   },
 

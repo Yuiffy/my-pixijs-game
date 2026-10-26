@@ -11,6 +11,10 @@ export const gameShareContent: Record<string, { title: string; description: stri
     title: '岁己：今天也要动',
     description: '三种运动天赋、四种攻击混搭。从 48.00 kg 向 40.00 kg 前进，靠训练和战斗升级，减脂也保肌。',
   },
+  '/game/remaining-seat': {
+    title: '余席：一场没有散席的家宴',
+    description: '门没有锁，饭还温着。穿过三次家宴，在旧信、空碗和雨声中找回自己的呼吸。原创 3D 心理恐怖短篇。',
+  },
   '/game/autochess': {
     title: '维阿自走棋：裂隙阵线',
     description: '购买 VR 和 PSP 成员棋子，组建队伍、凑齐羁绊、安排站位，挑战一轮比一轮更强的敌人！',

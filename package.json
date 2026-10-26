@@ -62,6 +62,8 @@
     "needle:test": "node --test scripts/tests/golden-needle.test.mjs scripts/tests/needle-keyboard.test.mjs",
     "needle:verify:keyboard": "node scripts/verify-needle-keyboard.cjs",
     "needle:verify": "node scripts/verify-golden-needle.cjs",
+    "remaining-seat:test": "node --test scripts/tests/remaining-seat.test.mjs",
+    "remaining-seat:verify": "node scripts/verify-remaining-seat.cjs",
     "harbor:test": "node --test scripts/tests/hype-harbor.test.mjs scripts/tests/hype-harbor-room.test.mjs",
     "harbor:verify": "node scripts/verify-hype-harbor.cjs",
     "harbor:verify:drag": "node scripts/verify-harbor-drag.cjs",
