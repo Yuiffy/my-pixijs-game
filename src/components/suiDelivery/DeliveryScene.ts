@@ -6,6 +6,7 @@ import { deliveryLevel } from "./levels";
 import { crabValve, insulatedTray } from "./machinery";
 import { beltSpeed, servingStage } from "./market";
 import { drawRainDistrict, drawRainMechanisms } from "./RainView";
+import { addRainFacades, RAIN_ART } from "./RainFacades";
 import { drawTheaterDistrict, drawTheaterMechanisms } from "./TheaterView";
 import { drawHomeDetails } from "./HomeView";
 import { addBreakfastFacades, BREAKFAST_ART, drawBreakfastMaterials } from "./BreakfastView";
@@ -60,7 +61,7 @@ export default class DeliveryScene extends Phaser.Scene {
     this.bridge = bridge;
   }
   preload() {
-    for (const art of [...BREAKFAST_ART, ...BAKERY_ART, ...OVEN_ART, ...MARKET_ART, ...FREIGHT_ART]) this.load.image(art.key, `/games/sui-spring/environment/${art.file}`);
+    for (const art of [...BREAKFAST_ART, ...BAKERY_ART, ...OVEN_ART, ...MARKET_ART, ...FREIGHT_ART, ...RAIN_ART]) this.load.image(art.key, `/games/sui-spring/environment/${art.file}`);
     this.load.image(
       "delivery-sui",
       "/images/autochess/portraits/minimal/sui.png",
@@ -229,6 +230,7 @@ export default class DeliveryScene extends Phaser.Scene {
       if (level.theme === "market") this.facades = addMarketFacades(this);
       if (level.theme === "freight") this.facades = addFreightFacades(this);
       if (level.theme === "sorter") this.facades = addSorterFacades(this);
+      if (level.rain) this.facades = addRainFacades(this);
       this.drawDistrict();
       drawBreakfastMaterials(g, level);
       return;
@@ -377,7 +379,7 @@ export default class DeliveryScene extends Phaser.Scene {
       g.lineStyle(4, 0xa78e66).lineBetween(880, 576, 1320, 576);
       for (let x = 900; x <= 1300; x += 100) g.lineStyle(5, 0xb29a73).lineBetween(x, 576, x, 680);
     }
-    if (!["oven", "market"].includes(level.theme)) this.rect(g, 40, 540, 270, 140, C.wall, 5);
+    if (!level.rain && !["oven", "market"].includes(level.theme)) this.rect(g, 40, 540, 270, 140, C.wall, 5);
     if (level.theme !== "market") {
       this.rect(g, 110, 625, 150, 55, C.wood, 4);
       this.rect(g, 100, 615, 170, 12, C.cream, 3);

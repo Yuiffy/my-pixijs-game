@@ -3,7 +3,7 @@ import { SKY_ENEMIES, SKY_GATES, SKY_LORE, skyPrisms } from './skyplain';
 import type { Action, AttackId, Effect, Enemy, EnemyKind, GameInput, GameState, Player, Vec3, WorldAccess } from './types';
 import { ceilingAt, deckBlocks, playerBlocked, projectileBlocked, supportAt, rampLandingAt, canOccupy, REST_POINTS, ENEMY_SPAWNS, AMBUSH_ENEMIES, LANDMARKS, lineClear, regionAt, SPAWN, WORLD_BOUNDS } from './world';
 import { enemyRole, isBoss } from './encounters';
-import { enemySenses, enemyFootwork, turnEnemy } from './enemyTactics';
+import { enemySenses, enemyFootwork, enemyPursuitTarget, turnEnemy } from './enemyTactics';
 import { findPath, walkSegment } from './companion';
 import { DUNGEON_BOSSES, DUNGEON_ENEMIES, DUNGEON_PORTALS, DUNGEONS, giantScale, navigationLayer, undergroundId } from './dungeons';
 import { discoverDungeon, liftPosition, migrateUnderground, updateLift, validLift } from './dungeonTravel';
@@ -59,7 +59,7 @@ const facingToward = (a: Vec3, b: Vec3) => Math.atan2(b.x - a.x, b.z - a.z);
 const alive = (enemy: Enemy) => enemy.hp > 0 && enemy.action !== 'dead';
 const finite = (n: unknown, min: number, max: number): n is number => typeof n === 'number' && Number.isFinite(n) && n >= min && n <= max;
 // Expensive world probes are transient and never trusted from a saved game.
-type EnemyProbes = { sightAt: number; visible: boolean; eye: Vec3; seen: Vec3; walkAt: number; direct: boolean; goal: Vec3; access: string; returning: boolean };
+type EnemyProbes = { sightAt: number; visible: boolean; eye: Vec3; seen: Vec3; walkAt: number; direct: boolean; goal: Vec3; destination: Vec3; access: string; returning: boolean };
 const enemyProbes = new WeakMap<Enemy, EnemyProbes>();
 const nextEnemyRoute = new WeakMap<GameState, number>();
 const enemyAccess = new WeakMap<GameState, { time: number; key: string }>();
@@ -491,7 +491,7 @@ function updateEnemy(s: GameState, e: Enemy, dt: number): void {
   const senses = enemySenses(e);
   if (!e.aggro && e.action === 'idle' && !e.awareness?.returning && dist > senses.sight && homeDistance < 0.15) return;
   const role = enemyRole(e); const ranged = role === 'crossbow' || role === 'slinger';
-  const probes = enemyProbes.get(e) ?? { sightAt: -1, visible: false, eye: { ...e }, seen: { ...p }, walkAt: -1, direct: false, goal: { ...e.spawn }, access: '', returning: e.awareness?.returning ?? (!e.aggro && e.action === 'chase' && homeDistance > 0.15) };
+  const probes = enemyProbes.get(e) ?? { sightAt: -1, visible: false, eye: { ...e }, seen: { ...p }, walkAt: -1, direct: false, goal: { ...e.spawn }, destination: { ...e.spawn }, access: '', returning: e.awareness?.returning ?? (!e.aggro && e.action === 'chase' && homeDistance > 0.15) };
   enemyProbes.set(e, probes);
   const access = enemyAccessKey(s); const accessChanged = probes.access !== access;
   if (accessChanged) { probes.access = access; probes.sightAt = -1; probes.walkAt = -1; }
@@ -576,25 +576,26 @@ function updateEnemy(s: GameState, e: Enemy, dt: number): void {
   const facingTarget = Math.abs(angleDiff(facingToward(e, p), e.facing)) < 1.2;
   if (dist <= nextAttack.range - 0.25 && sees && facingTarget && e.timer <= 0) { e.action = 'windup'; e.timer = nextAttack.windup; return; }
   e.action = 'chase';
-  if (ranged && dist < 4 && homeDistance < 2.5 && sees) { move(s, e, -Math.sin(e.facing) * dt, -Math.cos(e.facing) * dt); } else if (dist > (ranged ? 9 : 1.2) || !sees) followEnemyRoute(s, e, sees ? p : memory.lastSeen, dt, STATS[e.kind].speed * (dist > 7 && !ranged ? 1.45 : 1));
+  if (ranged && dist < 4 && homeDistance < 2.5 && sees) { move(s, e, -Math.sin(e.facing) * dt, -Math.cos(e.facing) * dt); } else if (dist > (ranged ? 9 : 1.2) || !sees) followEnemyRoute(s, e, sees ? p : memory.lastSeen, dt, STATS[e.kind].speed * (dist > 7 && !ranged ? 1.45 : 1), Math.min(1, nextAttack.range - 0.45));
   if (sees) { const side = enemyFootwork(e, s.time, dist); move(s, e, Math.cos(e.facing) * side * dt, -Math.sin(e.facing) * side * dt); }
 }
 
 /** Bounded local routes retain a last seen position around corners. Closed doors,
  * parapets, real earth and floor changes use the same walkability as the player. */
-function followEnemyRoute(s: GameState, e: Enemy, target: Vec3, dt: number, speed: number) {
+function followEnemyRoute(s: GameState, e: Enemy, target: Vec3, dt: number, speed: number, approach = 0) {
   const memory = e.awareness!;
   const probes = enemyProbes.get(e)!;
-  let next = target;
   const changed = distance(probes.goal, target) > 0.9 || Math.abs(probes.goal.y - target.y) > 0.4;
   if (s.time >= probes.walkAt || changed) {
-    probes.direct = walkSegment(e, target, s, 0.6, 0.33 * giantScale(e.id));
+    probes.destination = approach > 0 ? enemyPursuitTarget(e, target, s, approach) : target;
+    probes.direct = walkSegment(e, probes.destination, s, 0.6, 0.33 * giantScale(e.id));
     probes.walkAt = s.time + 0.4; probes.goal = { ...target };
     if (changed) memory.repath = Math.min(memory.repath, 0.35);
   }
+  let next = probes.destination;
   if (!probes.direct) {
     if (memory.repath <= 0 && s.time >= (nextEnemyRoute.get(s) ?? 0)) {
-      memory.route = findPath(e, target, s, 320).slice(1); memory.repath = 1.4 + (e.id.length % 4) * 0.2;
+      memory.route = findPath(e, probes.destination, s, 320).slice(1); memory.repath = 1.4 + (e.id.length % 4) * 0.2;
       // Only one bounded search may run in this simulation slice.
       nextEnemyRoute.set(s, s.time + 0.12);
     }

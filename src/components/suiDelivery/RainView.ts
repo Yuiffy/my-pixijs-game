@@ -8,14 +8,6 @@ export function drawRainDistrict(scene: DeliveryScene): boolean {
   if (!level.rain) return false;
   const g = scene.buildings;
   if (level.theme === "greenhouse") {
-    scene.rect(g, 740, 250, 1600, 440, 0xb5cabb, 8);
-    scene.roof(g, 730, 130, 1620, 125, 0x688c85);
-    scene.rect(g, 760, 270, 1560, 400, 0xd6e1c6, 3);
-    for (let x = 780; x < 2340; x += 130) {
-      g.lineStyle(8, 0x6a8d7a).lineBetween(x, 250, x, 680);
-      g.lineStyle(2, 0xf7f0cf, 0.65).lineBetween(x + 20, 290, x + 85, 355);
-    }
-    g.lineStyle(7, 0x6a8d7a).lineBetween(740, 365, 2340, 365);
     for (const [x, y] of [
       [840, 500],
       [1360, 420],
@@ -26,36 +18,8 @@ export function drawRainDistrict(scene: DeliveryScene): boolean {
       scene.rect(g, x, y - 27, 54, 27, 0xa87956, 5);
       for (let n = 0; n < 3; n++) scene.flower(g, x + 9 + n * 16, y - 48, 0xd2a56f);
     }
-    scene.rect(g, 2700, 275, 270, 135, 0x93b49c, 7);
-    scene.window(g, 2780, 292, 60, 85);
-    scene.ellipse(g, 2810, 333, 37, 48, 0xf5d487, 0.4);
-  } else {
-    for (const roof of level.surfaces.filter(
-      (surface) => surface.kind === "wood" && surface.w >= 240 && surface.y < 600,
-    )) {
-      scene.rect(g, roof.x + 15, roof.y + 18, roof.w - 30, 330, 0xa9b9ac, 3);
-      scene.window(g, roof.x + 45, roof.y + 65, 52, 70);
-      scene.window(g, roof.x + roof.w - 110, roof.y + 65, 52, 70);
-      g.lineStyle(3, 0x7b9686).lineBetween(
-        roof.x + 20,
-        roof.y + 180,
-        roof.x + roof.w - 20,
-        roof.y + 180,
-      );
-      scene.rect(g, roof.x - 8, roof.y + 17, roof.w + 16, 13, 0x5e7d79, 4);
-      for (let { x } = roof; x < roof.x + roof.w; x += 28) g.lineStyle(2, 0x4e716e).lineBetween(
-          x,
-          roof.y + 18,
-          x + 8,
-          roof.y + 29,
-        );
-    }
-    if (level.theme === "rain") {
-      scene.rect(g, 2780, 260, 250, 130, 0xb3c4b0);
-      scene.roof(g, 2760, 190, 280, 75, 0x577d75);
-      scene.window(g, 2870, 280, 64, 90);
-    }
-    if (level.theme === "bird") for (let x = 2650; x < 3250; x += 70) {
+  } else if (level.theme === "bird") {
+    for (let x = 2650; x < 3250; x += 70) {
         const y = 330 + Math.sin(((x - 2650) / 500) * Math.PI) * 35;
         g.lineStyle(2, 0x677f78).lineBetween(x, y, x + 70, y + 6);
         scene.ellipse(g, x, y + 9, 12, 16, 0xf2ce88);

@@ -5,8 +5,9 @@ import { terrainHeight } from "./terrain";
 import { terrainChunks, terrainSurface, terrainTriangleHeight } from "./terrainMesh";
 import { undergroundFloor, undergroundFree, undergroundLevel, undergroundLocation, undergroundStairSupport, undergroundSurface, UNDERGROUND_STEPS } from "./underground";
 import { CITY_BOUNDS, createFlight, FLIGHT_BOOST, FLIGHT_CEILING, FLIGHT_SPEED, FLIGHT_INSPECT_SPEED, FLIGHT_INSPECT_VERTICAL, inCity, inCore, type Flight } from "./exploration";
-import { BRIDGE_SECTIONS, BRIDGE_RAILS, bridgeSurface, bridgeSupportSolid, deckVertices, restoreBridgePosition } from "./bridges";
-import { GUANGYA_SUPPORTS, previousGuangyaDeck } from "./guangya";
+import { BRIDGE_SECTIONS, BRIDGE_RAILS, bridgeSurface, bridgeSupportSolid, deckVertices, restoreBridgePosition, BRIDGE_SUPPORTS } from "./bridges";
+import { previousGuangyaDeck } from "./guangya";
+import { HEDONG_BENCHES, HEDONG_TREES } from "./hedong";
 import { NPC_HOMES, NPC_MEETING_POINTS } from "./pedestrian-layout";
 import { MARKET_RESIDENTS, marketProjection } from "./market";
 import { STATION_PREFIX, STATION_RESIDENTS, stationRoofHeight, stationRoofSolid, stationRoofSurface } from "./station";
@@ -840,8 +841,10 @@ export async function createPhysics(g: Game): Promise<Physics> {
   }
   for (const rail of BRIDGE_RAILS) world.createCollider(R.ColliderDesc.cuboid(...rail.size.map(n => n / 2) as [number, number, number])
     .setTranslation(...rail.at).setRotation(new Quaternion().setFromEuler(new Euler(rail.pitch, rail.yaw, 0, "YXZ"))));
-  for (const support of GUANGYA_SUPPORTS) world.createCollider(R.ColliderDesc.cuboid(...support.size.map(n => n / 2) as [number, number, number])
+  for (const support of BRIDGE_SUPPORTS) world.createCollider(R.ColliderDesc.cuboid(...support.size.map(n => n / 2) as [number, number, number])
     .setTranslation(...support.at).setRotation(new Quaternion().setFromEuler(new Euler(0, support.yaw, 0, "YXZ"))));
+  for (const bench of HEDONG_BENCHES) world.createCollider(R.ColliderDesc.cuboid(bench.size[0] / 2, bench.size[1] / 2, bench.size[2] / 2).setTranslation(...bench.at));
+  for (const tree of HEDONG_TREES) world.createCollider(R.ColliderDesc.cylinder(2, 0.2).setTranslation(tree.x, terrainTriangleHeight(tree) + 2, tree.z));
   const underground = undergroundSurface(rings => ShapeUtils.triangulateShape(rings[0].map(p => new Vector2(p[0], p[1])), rings.slice(1).map(ring => ring.map(p => new Vector2(p[0], p[1])))));
   world.createCollider(R.ColliderDesc.trimesh(new Float32Array(underground.positions), new Uint32Array(underground.indices)));
   const stationRoof = stationRoofSurface();

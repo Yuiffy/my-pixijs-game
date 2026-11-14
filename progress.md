@@ -8,6 +8,18 @@ Original prompt: 用户要求判断本轮改动是否适合上线，适合则合
 
 发布前规则与check→build、独立生产试玩及远端发布状态将写入docs/action-games-release-2026-10-25.md。已知非阻塞限制为健身窄屏角色较小、3D部分390px小游戏提示条偏长；真实手机/Safari和人工体验评价留待后续。
 
+## 2026-10-25 · 三款近期动作游戏改版（用户要求收尾，已暂停）
+
+Original prompt: 根据 gamedev skills 开几个子智能体，改版表现不佳的游戏，工作到 15:00 后人工审核。用户明确保留自走棋与旅居之魂；随后说明发掘局是有意保持简单的弹丸论破式小游戏，小鸟一百层是早期验证 demo，晶圆等复杂经营并非此次重点，优先近期动作、平台跳跃与 3D、上手简单且吸引力大的作品。
+
+最终分工为肥岁健身（破围冲刺与首分钟战斗/手机可读性）、春日第一单（挑击与跳跃衔接）、马上就播（3D 移动与空间引导）。此前选题阶段的发掘局、小鸟、晶圆改动均由各作者撤回，RESET/streamer 只读审查未改。三名子智能体直接编辑不同目录；主智能体负责视觉复核、整合、独立试玩、统一 check→build 与 15:00 审核入口。保留并行柳州线程的全部改动与服务，不将其工作计入本轮成果。
+
+共享开发入口 http://127.0.0.1:4160，构建目录 .next-game-redesign-dev。浏览器只使用静音安装版 Chrome、speech/Pointer Lock 测试桩和全页截图；先确认资源及场景就绪，截图结合文字状态、DOM 与错误日志核查。初始过早捕捉的加载画面已识别为加载中，不作为正常游戏外观或失败证据。本条未宣布验收完成，以后续最终记录为准。
+
+用户提前要求“收尾本次改动，下次再继续”，目标保持paused，已冻结三款源码。完成破围冲刺/截击及手机双指、跳跃挑击借力及面团相位宽容、3D快步/门洞脚印/接水任务建议与折叠清单。主线程最终顺序check→build均exit0，Next ESLint启用；规则fitness40、delivery72、pre-stream20、library6均通过。固定生产预览 http://127.0.0.1:4161/reviews/2026-10-25.html，BUILD_ID 7GqCVF4wN1DEDpB4iHzHi，PID160124。生产真实RAF/正常按键三款复核report passed=true/errors=[]，7图全部逐张打开，目录.tmp/game-redesign-2026-10-25/live-production。春日真实等待后曾先受伤，失败证据保留在live-dev，最小修复后已满血落屋顶。已移除本轮两个临时生成类型include，保留其他线程配置和全部改动。未commit/push/外部部署。
+
+下次读docs/action-games-review-2026-10-25.md及各游戏交接：先人工判断操作是否值得重复，再继续。已知健身窄屏角色偏小，3D部分390px小游戏提示条拉长/帮助未补快步；真实手机/Safari和真人趣味尚未验证。不能把原有四区十二单、三晚、三天赋等内容当成本轮新增。
+
 ## 2026-10-25 · 柳州GTA 城市细化收尾（按用户要求暂停）
 
 用户原要求多子智能体补城到15:00，随后提前要求“收尾本次改动，下次我们再继续”。已停止新增与联网扩区，城市构建目标已暂停；河东五处尚未加入运行地图。
@@ -2230,3 +2242,27 @@ Original prompt: 我又刷新了一下好像不会出现了？可以再观察观
 收尾仅停止本轮开发服务PID156432/134284，并移除本轮.next-night-earth-dev自动类型include；同端口另有其他任务的独立生产进程，未终止。其他服务与配置修改保留，整体优化目标暂停等待下次继续。
 
 用户追加要求将本次阶段改版提交远端，并确认使用现有 master 主分支；提交仅包含本游戏代码、测试及记录。发布前暂存内容的独立副本已顺序通过 check、build，完整游戏规则再次 212/212 通过；仅副本重装锁定依赖并隔离父级重复 ESLint 插件，未更改提交的依赖版本或检查规则。
+
+## 2026-10-26 · 旅居之魂续作收尾（本地，已暂停）
+
+用户恢复自然地貌、动作、追击与近墙镜头优化，随后明确要求立即收尾。三名子智能体已交回成果并停止；本轮没有提交、推送或部署，之前远端阶段仍为f9c4681。仅关闭本任务4187独立开发服务PID206052/202888，其他游戏文件及服务保留，未经明确恢复不自动继续。
+
+本轮完成分层侵蚀岩壁、共享矿物纹理与街面薄石沿，保留真实厚地基和下层净空；修复墓门贴墙位置导致敌人原地空寻路；按角色区分敌人站姿、实际位移步相、蓄势/收招及披布，保持攻击数值与接触时刻；加入敌人局部俯仰和解析鞋底接地。镜头使用完整地基碰撞，近墙角色渐隐及换装材质同步/释放，保持自由转向。
+
+完整night:test 227/227通过（最后材质/鞋底改动前）；最终镜头、动作鞋底、地形和贴墙追击专项19/19通过。镜头344个转向样本13图、最终岩壁2图、三首领完整动作周期508帧9图均检查，报告通过且页面/控制台错误为空。静音Chrome与虚拟Pointer Lock，无系统鼠标捕获。独立依赖副本tmp/night-earth-publish的源码哈希与本轮文件一致，pnpm run check后顺序pnpm run build均通过、构建ESLint开启；主目录共享依赖缺失未重装。
+
+详细日志、截图、局限见docs/night-rain-earth.md。仍待真人难度、全地区自然轮廓、更完整脚锁/IK及窄处构图；当前程序腿转身仍有侧向位移，动作浏览器只覆盖三首领各一招二阶段周期。
+
+## 2026-11-15 · 恋爱判断问卷集
+
+原 /game/uwaki-hantei 扩展为四套选择入口，保留粉灰视觉与170ms点选即前进。新增健屋题表「这份爱太沉重吗」30题、「这算依存吗」30题，以及理想恋人创建表（25点能力、7组偏好、3缺点换技能、自由填写）。逐页核对用户提供的三条X帖子附图，只翻译印刷题目，未抄填主播手写答案。新增判断题只汇总分类，未自创心理评分。
+
+按hash直达问卷、独立存档，原love-boundary-zh-v1兼容；全部支持文字和PNG导出。游戏库名称、说明、封面同步。来源、规则和维护说明见docs/love-questionnaires.md。浏览器静音Chrome完整100题、切换刷新/旧存档、预算、编辑/重置、剪贴板和PNG已通过，无页面错误，320/390布局截图及下载图已逐一目检。单元测试4/4与游戏库6/6通过。最终 pnpm run check 后顺序 pnpm run build 均通过，构建保留 ESLint 检查；仅有其他模块既存 unused-vars 警告。本轮未提交、推送或部署。
+
+
+## 2026-11-15 Workspace publication review
+- Synced `origin/master` before collecting the pending work, preserving the published action-game updates and Remaining Seat release.
+- Included the Chinese questionnaire hub, EchoZero prologue, Hedong/Wenchang expansion, Night Rain terrain/camera/enemy improvements, Spring Delivery environment assets, and song/stream synchronization updates with their tests and documentation.
+- Preserved archived OSM acquisition metadata byte-for-byte via `.gitattributes`; verified both new staged archive checksums and the matching source/public runtime layouts. The song snapshot validates with 29 sessions and 37 performances.
+- `pnpm run check` and the subsequent `pnpm run build` passed with build-time ESLint enabled. The independent Hedong geometry checks passed.
+- Kept local logs, agent memory, generated dev-type paths, scratch uploads, Blender experiments and unfinished Phantom Blade Zero mod outputs outside the publication; retained those files locally.

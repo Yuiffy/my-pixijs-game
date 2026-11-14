@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "created": "2026-10-23",
   "tool": "built-in image_gen.imagegen",
   "processing": "Original RGBA PNGs preserved unchanged in docs/art/sui-delivery/environment. Runtime WebP encoding uses quality90, exact=True; alpha verified byte-for-byte. No crop, recolor or background removal. Phaser uses uniform scale. First three facades use original alpha-bottom coordinates; gatehouse and workshop use recorded >=200 alpha content bounds as placement baselines to ignore faint edge pixels. Collision ledges remain separate foreground geometry. Kitchen wall, oven, cooling racks and backdoor use >=200 alpha bounds and uniform scale; the raised service sill meets the unchanged delivery platform.",
@@ -655,6 +655,90 @@
         "depth": 3.5,
         "hiddenWhen": "no serving machine or phase off"
       }
+    },
+    {
+      "group": "rain-roof",
+      "prompt": "Use case: production 2D side-scrolling platformer environment sprite. NEW single village rooftop building facade isolated on genuine transparent alpha. Strict straight-on orthographic front elevation, no visible side wall, no perspective. A square-ish facade with a completely FLAT HORIZONTAL top roofline: one narrow row of chunky rain-darkened sage ceramic coping tiles, gutter immediately underneath, pale ivory plaster and timber wall extending down to a flat stone foundation. Two small closed cream-mullioned windows with muted warm amber lamplight, restrained ivy only at the far sides, one short iron rain downpipe along the right edge. Big clear storybook shapes, dark warm-brown hand-drawn contours, softly textured painted plaster, sage/olive/cream/ochre palette, soft overcast upper-left lighting, same cozy handcrafted feel as a spring village bakery. At display width260px the horizontal tile lip must remain readable. Top roof lip is a real gameplay landing surface: perfectly level across the FULL width, no gable, dormer, chimney, plants, railings or props above it. Whole facade inside canvas with a small even margin, no exterior cast shadow. No text, letters, symbols, logos, people, animals, balcony, stairs, ladders, detached pots, ground, sky, rain lines or scenery. Transparent background, not black/white/checkerboard. One complete object, not sprite sheet.",
+      "reference": "cafe-v1.webp inspected for visual style; new generation without reference input",
+      "generator": "built-in image_gen.imagegen",
+      "original": "C:/Users/yuiffy/.codex/generated_images/01a16797-598f-7d61-afa8-cedcb53ece36/exec-efbb2dcd-2442-4d83-9221-0cb51fcb585c.png",
+      "file": "docs/art/sui-delivery/environment/rain-roof-source-v1.png",
+      "sourceSha256": "e92b138af0a766982d2e1d3e61ea10b29e650cdb8de62e0a5886e2a915ffaa93",
+      "size": [
+        1310,
+        1200
+      ],
+      "alphaBounds": [
+        0,
+        36,
+        1286,
+        1174
+      ],
+      "opaqueBounds200": [
+        72,
+        151,
+        1233,
+        1139
+      ],
+      "runtime": "public/games/sui-spring/environment/rain-roof-v1.webp",
+      "runtimeSha256": "d74cd5dce86faab04daf869b044afe46888aa969315a4201dc9301162e08afe7",
+      "runtimeBytes": 425464
+    },
+    {
+      "group": "greenhouse-hall",
+      "prompt": "Use case: production transparent 2D side-scrolling game architectural BACKDROP. NEW single long village botanical greenhouse, strict straight-on orthographic front elevation, very wide composition about3:1. Entire building silhouette visible with margin. Sage-green painted iron frame, shallow low-pitched glass roof, cream stone low foundation, slender repeating arched greenhouse ribs. Delicate transparent blue-green glass panes with sparse pale highlights; the large central interior is mostly visibly transparent alpha, allowing the game's sky and gameplay objects to show through. Broad simple hand-painted shapes and warm-brown fine contours matching a cozy storybook spring village, no photorealism, no perspective side face. A small golden hanging lamp at each far end and a few low leafy herb beds along the bottom outer corners only. Keep the middle80 percent of height uncluttered and clear: no internal floor, platform, crosswalk, stairs, doors, water, bridges or plant shelves; the game renders its own collidable geometry and moving water lift. Do not bake gameplay apparatus into image. Building should read as shelter and glass enclosure behind a platforming puzzle at1600px display width. Muted sage/cream/blue-green palette, soft rainy afternoon light, restrained painterly texture. No people, characters, animals, text, numbers, signs, logos, UI, sky, landscape, external ground, detached objects, exterior shadow or checkerboard. Genuine alpha outside building and semitransparent glazing.",
+      "reference": "cafe-v1.webp inspected for visual style; new generation without reference input",
+      "generator": "built-in image_gen.imagegen",
+      "original": "C:/Users/yuiffy/.codex/generated_images/01a16797-598f-7d61-afa8-cedcb53ece36/exec-c6a4b45f-0b58-466a-ac03-75945aeb870c.png",
+      "file": "docs/art/sui-delivery/environment/greenhouse-hall-source-v1.png",
+      "sourceSha256": "7d12c202a1d9daee031f677701d2e72ee14f1892580960ff4d5fd03d6eadd609",
+      "size": [
+        2172,
+        724
+      ],
+      "alphaBounds": [
+        0,
+        1,
+        2172,
+        724
+      ],
+      "opaqueBounds200": [
+        17,
+        15,
+        2155,
+        684
+      ],
+      "runtime": "public/games/sui-spring/environment/greenhouse-hall-v1.webp",
+      "runtimeSha256": "6488b661c576e6750db4d6ea53ca54368bc8c29d19fbca97f4db0238e4136957",
+      "runtimeBytes": 467314
+    },
+    {
+      "group": "rain-service-window",
+      "prompt": "Use case: production transparent 2D side-scrolling game facade. NEW compact rooftop gardener's service alcove, strict straight-on orthographic front elevation. One small complete ivory-plaster gabled shed with rain-darkened sage-green curved tiles, thick warm timber posts at either side, low cream-stone base, subtle ivy at edges. Central large OPEN serving window with warm amber interior and one simple hanging lamp; empty dark warm interior leaves room for the game's separately drawn resident, no person inside. Window sill is a long level horizontal cream-painted wooden board at exactly about65 percent down the building height. A tiny clay herb pot at the far left of sill, dark green shutters opened flat against wall. Full silhouette fits with margin. Big polished storybook painted shapes, warm dark-brown contours, soft plaster texture, soft overcast upper-left lighting, readable at250px wide. New art matches a cozy spring village bakery but uses sage roof and rain-cool palette. No writing, signs, logos, people, animals, food, plates, ground, external shadow, steps, stairs, balcony, surrounding building, sky, landscape or checkerboard. One isolated asset on genuine alpha transparency.",
+      "reference": "cafe-v1.webp inspected for visual style; new generation without reference input",
+      "generator": "built-in image_gen.imagegen",
+      "original": "C:/Users/yuiffy/.codex/generated_images/01a16797-598f-7d61-afa8-cedcb53ece36/exec-ed719d5b-0677-40d5-b3c6-e92879cb6deb.png",
+      "file": "docs/art/sui-delivery/environment/rain-service-window-source-v1.png",
+      "sourceSha256": "dd6108feea2aad065a8824c62e76c1e090b7a26fd8259919ae742bb4df394335",
+      "size": [
+        1374,
+        1145
+      ],
+      "alphaBounds": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "opaqueBounds200": [
+        5,
+        5,
+        1369,
+        1136
+      ],
+      "runtime": "public/games/sui-spring/environment/rain-service-window-v1.webp",
+      "runtimeSha256": "79242ded218eb55a408e13917b3f019b3b50d431367de394792cf3ce2dcd81cd",
+      "runtimeBytes": 421324
     }
   ]
 }

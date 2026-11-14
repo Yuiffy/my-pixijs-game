@@ -11,7 +11,35 @@ export const ENEMY_CONTACT_TIME = 0.08;
 export type EnemyStyle = 'thrust' | 'overhead' | 'sweep' | 'draw' | 'shot';
 export type EnemyPose = Pose & { weaponPitch: number; elbow: number; leftElbow: number; side: number; advance: number; stance: number };
 export const ENEMY_NEUTRAL: EnemyPose = { lean: 0, twist: 0, crouch: 0, ax: 0, ay: 0, az: -0.08, lx: 0, lz: 0, legL: 0, legR: 0, weaponPitch: Math.PI / 2, elbow: 0, leftElbow: 0, side: 0, advance: 0, stance: 0 };
+export type EnemyMotionIdentity = ReturnType<typeof enemyRole> | 'harei' | 'shiori' | 'nana';
+export function enemyMotionIdentity(e: Enemy): EnemyMotionIdentity {
+  const character = bossCharacter(e.kind);
+  return character === 'harei' || character === 'shiori' || character === 'nana' ? character : enemyRole(e);
+}
+
+type MotionAccent = { load: Partial<EnemyPose>; contact: Partial<EnemyPose>; recoil: Partial<EnemyPose>; settle: number };
+// Offsets retain each weapon's authored path. The carrier supplies its own weight:
+// broad shield, narrow pike, folded draw, loose reaper and the three named hosts.
+const ACCENTS: Record<EnemyMotionIdentity, MotionAccent> = {
+  skirmisher: { load: { lean: 0.06, side: -0.025, lx: -0.18, legR: -0.06 }, contact: { lean: 0.035, twist: 0.07 }, recoil: { side: -0.035, twist: -0.1 }, settle: 0.32 },
+  bulwark: { load: { crouch: -0.035, stance: 0.055, lx: -0.25, leftElbow: -0.12, advance: -0.025 }, contact: { crouch: -0.04, lx: -0.32, stance: 0.055, lean: 0.055 }, recoil: { lx: -0.3, leftElbow: -0.1, crouch: -0.045 }, settle: 0.53 },
+  blade: { load: { crouch: -0.05, side: -0.025, ay: -0.07, legL: 0.08 }, contact: { side: 0.035, twist: 0.1, legR: 0.08 }, recoil: { side: 0.025, ay: 0.12, twist: -0.14 }, settle: 0.38 },
+  pike: { load: { advance: -0.05, stance: 0.025, lx: -0.12, legL: 0.06, legR: -0.08 }, contact: { lean: 0.07, advance: 0.035, lx: -0.16 }, recoil: { advance: -0.06, lean: -0.04, lx: -0.2 }, settle: 0.51 },
+  reaper: { load: { side: -0.05, twist: -0.08, lean: 0.04 }, contact: { side: 0.05, twist: 0.15, crouch: -0.025 }, recoil: { side: -0.05, twist: -0.18, elbow: -0.15 }, settle: 0.58 },
+  staff: { load: { lx: -0.15, leftElbow: -0.1, stance: 0.03 }, contact: { lx: -0.12, twist: 0.05, crouch: -0.025 }, recoil: { lx: -0.18, leftElbow: -0.12, lean: -0.025 }, settle: 0.44 },
+  crossbow: { load: { lx: -0.12, leftElbow: -0.08, side: 0.025 }, contact: { lean: -0.05, elbow: -0.08, lx: -0.1 }, recoil: { lean: -0.045, lx: -0.15, side: -0.02 }, settle: 0.5 },
+  slinger: { load: { ay: -0.1, side: -0.04, twist: -0.09, lx: 0.12 }, contact: { ay: 0.1, twist: 0.14, side: 0.035 }, recoil: { ay: 0.16, twist: -0.12, side: -0.035 }, settle: 0.55 },
+  boss: { load: { crouch: -0.025, stance: 0.035 }, contact: { lean: 0.035, stance: 0.035 }, recoil: { crouch: -0.035, lean: -0.035 }, settle: 0.52 },
+  harei: { load: { side: -0.055, lz: 0.18, lx: -0.12, twist: -0.07 }, contact: { side: 0.055, lz: 0.18, twist: 0.13 }, recoil: { side: 0.055, lz: 0.24, twist: -0.14, elbow: 0.12 }, settle: 0.41 },
+  shiori: { load: { crouch: -0.075, advance: -0.04, ay: -0.09, legR: -0.08 }, contact: { crouch: -0.055, advance: 0.04, side: 0.035 }, recoil: { crouch: -0.07, ay: -0.18, twist: -0.16, side: -0.025 }, settle: 0.6 },
+  nana: { load: { crouch: -0.055, stance: 0.08, ax: -0.08, lx: -0.15, leftElbow: -0.1 }, contact: { crouch: -0.07, stance: 0.08, lean: 0.075, lx: -0.2 }, recoil: { crouch: -0.075, lean: 0.05, elbow: -0.16, leftElbow: -0.16 }, settle: 0.66 },
+};
 const key = (p: Partial<EnemyPose>): EnemyPose => ({ ...ENEMY_NEUTRAL, ...p });
+function accentPose(pose: EnemyPose, accent: Partial<EnemyPose>): EnemyPose {
+  const result = { ...pose };
+  for (const name of Object.keys(accent) as (keyof EnemyPose)[]) result[name] += accent[name]!;
+  return result;
+}
 const clamp = (v: number) => Math.max(0, Math.min(1, v));
 function mix(a: EnemyPose, b: EnemyPose, amount: number, fast = false): EnemyPose {
   const t = clamp(amount); const eased = fast ? 1 - (1 - t) ** 3 : t * t * (3 - 2 * t);
@@ -88,8 +116,10 @@ const KEYS: Record<EnemyStyle, [EnemyPose, EnemyPose]> = {
 /** Quick raise, planted loaded silhouette, a distinct release, contact and weighty recovery.
  * No wall-clock animation: pause and hitstop freeze every joint and cue together. */
 export function enemyMotion(e: Enemy): EnemyPose | null {
+  if (e.action !== 'windup' && e.action !== 'attack' && e.action !== 'recover') return null;
   const spec = enemyAttack(e); const timing = enemyTiming(e); const style = enemyStyle(e);
-  const [loaded, contact] = KEYS[style];
+  const accent = ACCENTS[enemyMotionIdentity(e)];
+  const loaded = accentPose(KEYS[style][0], accent.load); const contact = accentPose(KEYS[style][1], accent.contact);
   const gathered = { ...loaded, twist: loaded.twist - 0.09, lean: loaded.lean - 0.055, elbow: loaded.elbow - 0.12, crouch: loaded.crouch - 0.025 };
   const release = mix(gathered, contact, 0.16);
   const follow = { ...contact, ax: contact.ax + (style === 'shot' ? -0.15 : 0.45), twist: contact.twist + (style === 'sweep' ? 0.22 : 0.12), elbow: -0.3, leftElbow: -0.45, lean: contact.lean + (style === 'shot' ? 0.06 : 0.04), advance: contact.advance + 0.025 };
@@ -101,12 +131,17 @@ export function enemyMotion(e: Enemy): EnemyPose | null {
   }
   if (e.action === 'attack') {
     const t = ENEMY_STRIKE_TIME - e.timer;
-    return t < ENEMY_CONTACT_TIME ? mix(release, contact, t / ENEMY_CONTACT_TIME, true) : mix(contact, follow, (t - ENEMY_CONTACT_TIME) / (ENEMY_STRIKE_TIME - ENEMY_CONTACT_TIME));
+    return t < ENEMY_CONTACT_TIME ? mix(release, contact, t / ENEMY_CONTACT_TIME) : mix(contact, follow, (t - ENEMY_CONTACT_TIME) / (ENEMY_STRIKE_TIME - ENEMY_CONTACT_TIME));
   }
   if (e.action === 'recover') {
     const progress = clamp(1 - e.timer / spec.recovery);
-    const recoil = mix(follow, { ...follow, elbow: -0.9, leftElbow: -0.8, lean: follow.lean * 0.6, advance: follow.advance * 0.8 }, Math.min(1, progress / 0.18));
-    return progress < 0.18 ? recoil : mix(recoil, ENEMY_NEUTRAL, (progress - 0.18) / 0.82);
+    const recoil = accentPose({ ...follow, elbow: -0.9, leftElbow: -0.8, lean: follow.lean * 0.6, advance: follow.advance * 0.8 }, accent.recoil);
+    if (progress < 0.18) return mix(follow, recoil, progress / 0.18);
+    // Retrieve the weapon before unweighting the feet. Heavy carriers linger
+    // in their low stance; blade carriers fold the wrist back toward the sheath.
+    const reset = mix(recoil, ENEMY_NEUTRAL, 0.66);
+    reset.crouch = recoil.crouch * 0.72; reset.stance = recoil.stance * 0.8;
+    return progress < accent.settle ? mix(recoil, reset, (progress - 0.18) / (accent.settle - 0.18)) : mix(reset, ENEMY_NEUTRAL, (progress - accent.settle) / (1 - accent.settle));
   }
   return null;
 }

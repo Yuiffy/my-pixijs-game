@@ -50,21 +50,22 @@ export const TYPES = [
 ] as const;
 
 export type Answer = 0 | 1 | 2;
-export type Session = { step: number; answers: (Answer | null)[]; reflection: boolean | null };
-export const emptySession = (): Session => ({ step: -1, answers: QUESTIONS.map(() => null), reflection: null });
+export type Session = { step: number; answers: (Answer | null)[]; reflection: boolean | null; notes?: string };
+export const emptySession = (count: number = QUESTIONS.length): Session => ({ step: -1, answers: Array(count).fill(null), reflection: null });
 
-export function parseSession(raw: string | null): Session {
+export function parseSession(raw: string | null, count: number = QUESTIONS.length, reflectionRequired = true): Session {
   try {
     const value = JSON.parse(raw || 'null');
-    if (!value || !Array.isArray(value.answers) || value.answers.length !== QUESTIONS.length
+    if (!value || !Array.isArray(value.answers) || value.answers.length !== count
       || !value.answers.every((a: unknown) => a === null || a === 0 || a === 1 || a === 2)
-      || !Number.isInteger(value.step) || value.step < -1 || value.step > QUESTIONS.length + 1
-      || ![null, true, false].includes(value.reflection)) return emptySession();
+      || !Number.isInteger(value.step) || value.step < -1 || value.step > count + 1
+      || ![null, true, false].includes(value.reflection)) return emptySession(count);
     const missing = value.answers.indexOf(null);
-    if (value.step > QUESTIONS.length - 1 && missing !== -1) value.step = missing;
-    if (value.step === QUESTIONS.length + 1 && value.reflection === null) value.step = QUESTIONS.length;
+    if (value.step > count - 1 && missing !== -1) value.step = missing;
+    if (value.step === count + 1 && reflectionRequired && value.reflection === null) value.step = count;
+    if (value.notes !== undefined && (typeof value.notes !== 'string' || value.notes.length > 500)) return emptySession(count);
     return value;
-  } catch { return emptySession(); }
+  } catch { return emptySession(count); }
 }
 
 export function calculate(answers: (Answer | null)[]) {

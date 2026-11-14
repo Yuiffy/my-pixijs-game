@@ -1,7 +1,169 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-03T18:35:46.676Z",
+  "generatedAt": "2026-11-06T14:41:55.034Z",
   "sessions": [
+    {
+      "id": "2daca8db965158ed14a740f1e222c76727d1b6de40b68b61688f8b381977a6c3",
+      "recordedAt": "2026-11-04 22:18:21",
+      "title": "陪你这个猪过周三！影之刃和煮猪_merged",
+      "complete": true
+    },
+    {
+      "id": "edd6c83fc118b0d8ab5374d41fe2858f32d6abe248b0cd63c546bb0a93a35c73",
+      "recordedAt": "2026-11-03 20:11:29",
+      "title": "陪你这个猪过周二！唱唱聊聊_merged",
+      "complete": true
+    },
+    {
+      "id": "ee346158da3a67cf776cd2ddce0927053b2a0152dcaf41cc02920d90138249c0",
+      "recordedAt": "2026-11-02 20:33:27",
+      "title": "陪你这个猪过周一！",
+      "complete": true
+    },
+    {
+      "id": "62bf8772ba4d363bfd9d0734a77fd50d8b4423df790b0c5f69569d08b860ec2c",
+      "recordedAt": "2026-11-01 20:00:57",
+      "title": "陪你这个猪过周一！聊聊先影之刃零后_merged",
+      "complete": true
+    },
+    {
+      "id": "f6ae1ac1dc48c0590f5ba28c3d82b950990e6fc06015f898ab16fbacef660ce6",
+      "recordedAt": "2026-10-31 20:33:18",
+      "title": "10月最后一天拜拜10月！_merged",
+      "complete": true
+    },
+    {
+      "id": "e66abd44ca23b13f54c24bbf4753d365bb5233396cb9ebc119d57d1e10dd727f",
+      "recordedAt": "2026-10-29 20:03:31",
+      "title": "陪你这个猪过周四！唱唱聊聊_merged",
+      "complete": true
+    },
+    {
+      "id": "7ca11bece06571ca521f748c3f6ed615d44df297515a2f8d09d78f546979e887",
+      "recordedAt": "2026-10-28 22:00:47",
+      "title": "煮你这个猪的周三！",
+      "complete": true
+    },
+    {
+      "id": "05c2588eba88e000aa747a2b182bb04258cf099d7c17489f4663ff8d5485b57e",
+      "recordedAt": "2026-10-28 15:01:42",
+      "title": "和栞栞玩抬棺！",
+      "complete": true
+    },
+    {
+      "id": "a2c125feaa59cf06378d040889a01161f6a0467172ae1c52e10f417295fa9717",
+      "recordedAt": "2026-10-27 20:08:16",
+      "title": "陪你这个猪过周二！唱唱聊聊_merged",
+      "complete": true
+    },
+    {
+      "id": "d8ee0cdeb0b5cc212da81bb4e6d46ffc89d7badcbcd139f8b7ceadaeb76940c6",
+      "recordedAt": "2026-10-26 20:04:16",
+      "title": "陪你这个猪过周一！唱唱聊聊_merged",
+      "complete": true
+    },
+    {
+      "id": "39f7cb757a1eea2a15c7d2b72aa3cdbc08fe8ab661dedf0e04bd25a2ead47df8",
+      "recordedAt": "2026-10-25 19:50:12",
+      "title": "陪你这个猪过周日！唱唱聊聊",
+      "complete": true
+    },
+    {
+      "id": "c3d2f53f866b7413dc65bf9b21750182d39ba175ee871b90a0a185cc098e3023",
+      "recordedAt": "2026-10-23 20:00:30",
+      "title": "陪你这个猪过周五！先唱唱聊聊_merged",
+      "complete": true
+    },
+    {
+      "id": "ca8d01711b678f1e4d68d707e9f11b008728f92e7e44a50d973d60b63b267e85",
+      "recordedAt": "2026-10-21 22:00:29",
+      "title": "陪你这个猪过周二！唱唱聊",
+      "complete": true
+    },
+    {
+      "id": "de0f66060f6a8ad37fe515856a748626cf5e9849f48da86168c3d2eb386ff4c0",
+      "recordedAt": "2026-10-20 19:51:17",
+      "title": "陪你这个猪过周二！唱唱聊_darkrec_complete_merged",
+      "complete": true
+    },
+    {
+      "id": "67a5bbed015e8435ea38ee61508d5dbac9e7983493a8bda9e1e3ef2fa6ab0e09",
+      "recordedAt": "2026-10-19 20:12:43",
+      "title": "陪你这个猪过周一！唱唱聊_merged",
+      "complete": true
+    },
+    {
+      "id": "958d9f4f9561448da114700b425b0791e626eaf203b781895fd866c8bdd85def",
+      "recordedAt": "2026-10-17 20:03:49",
+      "title": "陪你这个猪过周六！唱唱聊聊_merged",
+      "complete": true
+    },
+    {
+      "id": "c2603a2edd4c11a7e1fb415fff8cb03f28e02c60ff49bc69e380a00e07142603",
+      "recordedAt": "2026-10-15 23:00:31",
+      "title": "陪你这个猪过周四！_merged",
+      "complete": true
+    },
+    {
+      "id": "79795a0274714b3aa2872c7a5ea297155cd986be99dbee97f34a7e94fd7ba68b",
+      "recordedAt": "2026-10-14 23:20:22",
+      "title": "陪你这个猪过周三！_merged",
+      "complete": true
+    },
+    {
+      "id": "5c4c15c0b3ffa534826f2c07b3a954518bc5ae385e16cc451420944b95ed77c8",
+      "recordedAt": "2026-10-13 20:33:18",
+      "title": "陪你这个猪过周二！唱唱聊聊",
+      "complete": true
+    },
+    {
+      "id": "327a60508778cc01a09def5a54e8b825e7e68347b3ed673712adcd6d5038988a",
+      "recordedAt": "2026-10-12 20:03:05",
+      "title": "陪你这个猪过周一！唱唱聊聊_merged",
+      "complete": true
+    },
+    {
+      "id": "1981c882decace8bf8d5f717dfa40f1ede10131e68ebf9b988d32dc581400f3d",
+      "recordedAt": "2026-10-11 20:52:05",
+      "title": "陪你这个猪过周日！_merged",
+      "complete": true
+    },
+    {
+      "id": "1ed74e6bdd4d5f834d5e5df19cf6fbba3adf5dcacfe94d4cae37e6a55eedf5ea",
+      "recordedAt": "2026-10-10 21:03:17",
+      "title": "陪你这个猪过周六！银河护卫队3",
+      "complete": false
+    },
+    {
+      "id": "375187966a401bd510dae8703accb720ba3147b3dfb2c47e979692d0c4dff90a",
+      "recordedAt": "2026-10-08 20:05:58",
+      "title": "陪你这个猪过周三！",
+      "complete": true
+    },
+    {
+      "id": "4edbc8ae7280dd9ab353d59d6ca476efa0cd23c4cf9ca36946e69d57868d45d9",
+      "recordedAt": "2026-10-07 20:02:22",
+      "title": "陪你这个猪过周三！唱唱聊聊",
+      "complete": true
+    },
+    {
+      "id": "e00732ddba619f8713beba61b7dc08575b1519e88ba6b0d9b12c6ae824ee84c9",
+      "recordedAt": "2026-10-06 20:02:04",
+      "title": "陪你这个猪过周二！唱唱聊聊然后复联3_merged",
+      "complete": true
+    },
+    {
+      "id": "a0ced0ae9d8e640e83a9948650acd9e77733bc2609319cc13b3fc2ba3ef4b63e",
+      "recordedAt": "2026-10-05 20:17:07",
+      "title": "陪你这个猪",
+      "complete": true
+    },
+    {
+      "id": "c9350d58b827c043dacd1abc5a0077640c6d9bc67326e4acb969ca5ca71b9a0b",
+      "recordedAt": "2026-10-04 20:38:02",
+      "title": "陪你这个猪过周日！唱唱聊聊_merged",
+      "complete": true
+    },
     {
       "id": "cdf353cc4ce461ed592cbf70ae3249da2e0c8cdab39d6859f68b30e744a15743",
       "recordedAt": "2026-10-02 20:24:20",
@@ -16,6 +178,472 @@
     }
   ],
   "performances": [
+    {
+      "id": "a0ced0ae9d8e640e83a9948650acd9e77733bc2609319cc13b3fc2ba3ef4b63e:activity-1",
+      "sessionId": "a0ced0ae9d8e640e83a9948650acd9e77733bc2609319cc13b3fc2ba3ef4b63e",
+      "name": null,
+      "start": 5320,
+      "end": 5355,
+      "performance": "fragment",
+      "confirmed": false,
+      "boundariesConfirmed": false,
+      "clip": null
+    },
+    {
+      "id": "e00732ddba619f8713beba61b7dc08575b1519e88ba6b0d9b12c6ae824ee84c9:activity-1",
+      "sessionId": "e00732ddba619f8713beba61b7dc08575b1519e88ba6b0d9b12c6ae824ee84c9",
+      "name": "小夜子",
+      "start": 4703,
+      "end": 5029,
+      "performance": "full",
+      "confirmed": true,
+      "boundariesConfirmed": false,
+      "clip": {
+        "bvid": "BV1y6pK6UE3t",
+        "part": 1,
+        "url": "https://www.bilibili.com/video/BV1y6pK6UE3t/?p=1"
+      }
+    },
+    {
+      "id": "e00732ddba619f8713beba61b7dc08575b1519e88ba6b0d9b12c6ae824ee84c9:activity-2",
+      "sessionId": "e00732ddba619f8713beba61b7dc08575b1519e88ba6b0d9b12c6ae824ee84c9",
+      "name": "连名带姓",
+      "start": 5104,
+      "end": 5458,
+      "performance": "full",
+      "confirmed": true,
+      "boundariesConfirmed": false,
+      "clip": {
+        "bvid": "BV1y6pK6UE3t",
+        "part": 2,
+        "url": "https://www.bilibili.com/video/BV1y6pK6UE3t/?p=2"
+      }
+    },
+    {
+      "id": "4edbc8ae7280dd9ab353d59d6ca476efa0cd23c4cf9ca36946e69d57868d45d9:activity-1",
+      "sessionId": "4edbc8ae7280dd9ab353d59d6ca476efa0cd23c4cf9ca36946e69d57868d45d9",
+      "name": "爱情讯息",
+      "start": 3198.44,
+      "end": 3488,
+      "performance": "full",
+      "confirmed": true,
+      "boundariesConfirmed": true,
+      "clip": {
+        "bvid": "BV1c8H26REoi",
+        "part": 1,
+        "url": "https://www.bilibili.com/video/BV1c8H26REoi/?p=1"
+      }
+    },
+    {
+      "id": "4edbc8ae7280dd9ab353d59d6ca476efa0cd23c4cf9ca36946e69d57868d45d9:activity-2",
+      "sessionId": "4edbc8ae7280dd9ab353d59d6ca476efa0cd23c4cf9ca36946e69d57868d45d9",
+      "name": "反方向的钟",
+      "start": 3755,
+      "end": 4024,
+      "performance": "full",
+      "confirmed": true,
+      "boundariesConfirmed": true,
+      "clip": {
+        "bvid": "BV1c8H26REoi",
+        "part": 2,
+        "url": "https://www.bilibili.com/video/BV1c8H26REoi/?p=2"
+      }
+    },
+    {
+      "id": "375187966a401bd510dae8703accb720ba3147b3dfb2c47e979692d0c4dff90a:activity-3",
+      "sessionId": "375187966a401bd510dae8703accb720ba3147b3dfb2c47e979692d0c4dff90a",
+      "name": "晚婚",
+      "start": 6884,
+      "end": 7274,
+      "performance": "full",
+      "confirmed": true,
+      "boundariesConfirmed": true,
+      "clip": {
+        "bvid": "BV1Cgpg6dEwf",
+        "part": 1,
+        "url": "https://www.bilibili.com/video/BV1Cgpg6dEwf/?p=1"
+      }
+    },
+    {
+      "id": "375187966a401bd510dae8703accb720ba3147b3dfb2c47e979692d0c4dff90a:activity-4",
+      "sessionId": "375187966a401bd510dae8703accb720ba3147b3dfb2c47e979692d0c4dff90a",
+      "name": "昨日晴空",
+      "start": 7478.229,
+      "end": 7920,
+      "performance": "full",
+      "confirmed": true,
+      "boundariesConfirmed": true,
+      "clip": {
+        "bvid": "BV1Cgpg6dEwf",
+        "part": 2,
+        "url": "https://www.bilibili.com/video/BV1Cgpg6dEwf/?p=2"
+      }
+    },
+    {
+      "id": "1981c882decace8bf8d5f717dfa40f1ede10131e68ebf9b988d32dc581400f3d:activity-2",
+      "sessionId": "1981c882decace8bf8d5f717dfa40f1ede10131e68ebf9b988d32dc581400f3d",
+      "name": null,
+      "start": 12247,
+      "end": 12640,
+      "performance": "fragment",
+      "confirmed": false,
+      "boundariesConfirmed": false,
+      "clip": null
+    },
+    {
+      "id": "327a60508778cc01a09def5a54e8b825e7e68347b3ed673712adcd6d5038988a:activity-1",
+      "sessionId": "327a60508778cc01a09def5a54e8b825e7e68347b3ed673712adcd6d5038988a",
+      "name": "屑屑",
+      "start": 6087,
+      "end": 6447,
+      "performance": "full",
+      "confirmed": true,
+      "boundariesConfirmed": true,
+      "clip": {
+        "bvid": "BV1VEWc6pERT",
+        "part": 1,
+        "url": "https://www.bilibili.com/video/BV1VEWc6pERT/?p=1"
+      }
+    },
+    {
+      "id": "327a60508778cc01a09def5a54e8b825e7e68347b3ed673712adcd6d5038988a:activity-2",
+      "sessionId": "327a60508778cc01a09def5a54e8b825e7e68347b3ed673712adcd6d5038988a",
+      "name": "恋爱困难少女",
+      "start": 6572,
+      "end": 6940,
+      "performance": "full",
+      "confirmed": true,
+      "boundariesConfirmed": true,
+      "clip": {
+        "bvid": "BV1VEWc6pERT",
+        "part": 2,
+        "url": "https://www.bilibili.com/video/BV1VEWc6pERT/?p=2"
+      }
+    },
+    {
+      "id": "5c4c15c0b3ffa534826f2c07b3a954518bc5ae385e16cc451420944b95ed77c8:activity-1",
+      "sessionId": "5c4c15c0b3ffa534826f2c07b3a954518bc5ae385e16cc451420944b95ed77c8",
+      "name": "One more time, One more chance",
+      "start": 4659,
+      "end": 5035,
+      "performance": "full",
+      "confirmed": true,
+      "boundariesConfirmed": true,
+      "clip": {
+        "bvid": "BV1WWpr67End",
+        "part": 1,
+        "url": "https://www.bilibili.com/video/BV1WWpr67End/?p=1"
+      }
+    },
+    {
+      "id": "5c4c15c0b3ffa534826f2c07b3a954518bc5ae385e16cc451420944b95ed77c8:activity-2",
+      "sessionId": "5c4c15c0b3ffa534826f2c07b3a954518bc5ae385e16cc451420944b95ed77c8",
+      "name": "刻在我心底的名字",
+      "start": 5246.7,
+      "end": 5601,
+      "performance": "full",
+      "confirmed": true,
+      "boundariesConfirmed": true,
+      "clip": {
+        "bvid": "BV1WWpr67End",
+        "part": 2,
+        "url": "https://www.bilibili.com/video/BV1WWpr67End/?p=2"
+      }
+    },
+    {
+      "id": "958d9f4f9561448da114700b425b0791e626eaf203b781895fd866c8bdd85def:activity-2",
+      "sessionId": "958d9f4f9561448da114700b425b0791e626eaf203b781895fd866c8bdd85def",
+      "name": null,
+      "start": 2246,
+      "end": 2334,
+      "performance": "fragment",
+      "confirmed": true,
+      "boundariesConfirmed": true,
+      "clip": null
+    },
+    {
+      "id": "958d9f4f9561448da114700b425b0791e626eaf203b781895fd866c8bdd85def:activity-5",
+      "sessionId": "958d9f4f9561448da114700b425b0791e626eaf203b781895fd866c8bdd85def",
+      "name": "我",
+      "start": 12575,
+      "end": 12887.66,
+      "performance": "full",
+      "confirmed": true,
+      "boundariesConfirmed": true,
+      "clip": {
+        "bvid": "BV1BxJz64Ehu",
+        "part": 1,
+        "url": "https://www.bilibili.com/video/BV1BxJz64Ehu/?p=1"
+      }
+    },
+    {
+      "id": "67a5bbed015e8435ea38ee61508d5dbac9e7983493a8bda9e1e3ef2fa6ab0e09:activity-1",
+      "sessionId": "67a5bbed015e8435ea38ee61508d5dbac9e7983493a8bda9e1e3ef2fa6ab0e09",
+      "name": "Virtual to LIVE",
+      "start": 703.639,
+      "end": 994,
+      "performance": "full",
+      "confirmed": true,
+      "boundariesConfirmed": true,
+      "clip": {
+        "bvid": "BV1Fwnc6WEVh",
+        "part": 1,
+        "url": "https://www.bilibili.com/video/BV1Fwnc6WEVh/?p=1"
+      }
+    },
+    {
+      "id": "67a5bbed015e8435ea38ee61508d5dbac9e7983493a8bda9e1e3ef2fa6ab0e09:activity-2",
+      "sessionId": "67a5bbed015e8435ea38ee61508d5dbac9e7983493a8bda9e1e3ef2fa6ab0e09",
+      "name": "Virtual to LIVE（改编片段）",
+      "start": 1332,
+      "end": 1392,
+      "performance": "fragment",
+      "confirmed": false,
+      "boundariesConfirmed": false,
+      "clip": {
+        "bvid": "BV1Fwnc6WEVh",
+        "part": 2,
+        "url": "https://www.bilibili.com/video/BV1Fwnc6WEVh/?p=2"
+      }
+    },
+    {
+      "id": "67a5bbed015e8435ea38ee61508d5dbac9e7983493a8bda9e1e3ef2fa6ab0e09:activity-3",
+      "sessionId": "67a5bbed015e8435ea38ee61508d5dbac9e7983493a8bda9e1e3ef2fa6ab0e09",
+      "name": "雪の轍",
+      "start": 15056.17,
+      "end": 15309.38,
+      "performance": "full",
+      "confirmed": true,
+      "boundariesConfirmed": true,
+      "clip": {
+        "bvid": "BV1Fwnc6WEVh",
+        "part": 3,
+        "url": "https://www.bilibili.com/video/BV1Fwnc6WEVh/?p=3"
+      }
+    },
+    {
+      "id": "de0f66060f6a8ad37fe515856a748626cf5e9849f48da86168c3d2eb386ff4c0:activity-1",
+      "sessionId": "de0f66060f6a8ad37fe515856a748626cf5e9849f48da86168c3d2eb386ff4c0",
+      "name": "慢冷",
+      "start": 2286,
+      "end": 2393,
+      "performance": "fragment",
+      "confirmed": false,
+      "boundariesConfirmed": false,
+      "clip": null
+    },
+    {
+      "id": "de0f66060f6a8ad37fe515856a748626cf5e9849f48da86168c3d2eb386ff4c0:activity-3",
+      "sessionId": "de0f66060f6a8ad37fe515856a748626cf5e9849f48da86168c3d2eb386ff4c0",
+      "name": null,
+      "start": 8012,
+      "end": 8076,
+      "performance": "fragment",
+      "confirmed": true,
+      "boundariesConfirmed": true,
+      "clip": null
+    },
+    {
+      "id": "de0f66060f6a8ad37fe515856a748626cf5e9849f48da86168c3d2eb386ff4c0:activity-4",
+      "sessionId": "de0f66060f6a8ad37fe515856a748626cf5e9849f48da86168c3d2eb386ff4c0",
+      "name": "我不难过",
+      "start": 8176,
+      "end": 8558,
+      "performance": "full",
+      "confirmed": true,
+      "boundariesConfirmed": true,
+      "clip": {
+        "bvid": "BV1jznK6YEeW",
+        "part": 1,
+        "url": "https://www.bilibili.com/video/BV1jznK6YEeW/?p=1"
+      }
+    },
+    {
+      "id": "de0f66060f6a8ad37fe515856a748626cf5e9849f48da86168c3d2eb386ff4c0:activity-5",
+      "sessionId": "de0f66060f6a8ad37fe515856a748626cf5e9849f48da86168c3d2eb386ff4c0",
+      "name": null,
+      "start": 9000,
+      "end": 9199,
+      "performance": "fragment",
+      "confirmed": false,
+      "boundariesConfirmed": false,
+      "clip": null
+    },
+    {
+      "id": "c3d2f53f866b7413dc65bf9b21750182d39ba175ee871b90a0a185cc098e3023:activity-2",
+      "sessionId": "c3d2f53f866b7413dc65bf9b21750182d39ba175ee871b90a0a185cc098e3023",
+      "name": "風を食む",
+      "start": 5980,
+      "end": 6429,
+      "performance": "full",
+      "confirmed": true,
+      "boundariesConfirmed": true,
+      "clip": {
+        "bvid": "BV1TSne68ExE",
+        "part": 1,
+        "url": "https://www.bilibili.com/video/BV1TSne68ExE/?p=1"
+      }
+    },
+    {
+      "id": "39f7cb757a1eea2a15c7d2b72aa3cdbc08fe8ab661dedf0e04bd25a2ead47df8:activity-1",
+      "sessionId": "39f7cb757a1eea2a15c7d2b72aa3cdbc08fe8ab661dedf0e04bd25a2ead47df8",
+      "name": "情书",
+      "start": 706.509,
+      "end": 977.6,
+      "performance": "full",
+      "confirmed": true,
+      "boundariesConfirmed": true,
+      "clip": {
+        "bvid": "BV1uenD6yEad",
+        "part": 1,
+        "url": "https://www.bilibili.com/video/BV1uenD6yEad/?p=1"
+      }
+    },
+    {
+      "id": "39f7cb757a1eea2a15c7d2b72aa3cdbc08fe8ab661dedf0e04bd25a2ead47df8:activity-2",
+      "sessionId": "39f7cb757a1eea2a15c7d2b72aa3cdbc08fe8ab661dedf0e04bd25a2ead47df8",
+      "name": "绝对占有 相对自由",
+      "start": 3152.389,
+      "end": 3597,
+      "performance": "full",
+      "confirmed": true,
+      "boundariesConfirmed": true,
+      "clip": {
+        "bvid": "BV1uenD6yEad",
+        "part": 2,
+        "url": "https://www.bilibili.com/video/BV1uenD6yEad/?p=2"
+      }
+    },
+    {
+      "id": "39f7cb757a1eea2a15c7d2b72aa3cdbc08fe8ab661dedf0e04bd25a2ead47df8:activity-4",
+      "sessionId": "39f7cb757a1eea2a15c7d2b72aa3cdbc08fe8ab661dedf0e04bd25a2ead47df8",
+      "name": "那个女孩",
+      "start": 7055.84,
+      "end": 7381,
+      "performance": "fragment",
+      "confirmed": false,
+      "boundariesConfirmed": false,
+      "clip": {
+        "bvid": "BV1uenD6yEad",
+        "part": 3,
+        "url": "https://www.bilibili.com/video/BV1uenD6yEad/?p=3"
+      }
+    },
+    {
+      "id": "d8ee0cdeb0b5cc212da81bb4e6d46ffc89d7badcbcd139f8b7ceadaeb76940c6:activity-1",
+      "sessionId": "d8ee0cdeb0b5cc212da81bb4e6d46ffc89d7badcbcd139f8b7ceadaeb76940c6",
+      "name": "大笨钟",
+      "start": 8253,
+      "end": 8443,
+      "performance": "fragment",
+      "confirmed": false,
+      "boundariesConfirmed": false,
+      "clip": {
+        "bvid": "BV15qnf6yE2k",
+        "part": 1,
+        "url": "https://www.bilibili.com/video/BV15qnf6yE2k/?p=1"
+      }
+    },
+    {
+      "id": "a2c125feaa59cf06378d040889a01161f6a0467172ae1c52e10f417295fa9717:activity-1",
+      "sessionId": "a2c125feaa59cf06378d040889a01161f6a0467172ae1c52e10f417295fa9717",
+      "name": null,
+      "start": 723,
+      "end": 779,
+      "performance": "fragment",
+      "confirmed": true,
+      "boundariesConfirmed": true,
+      "clip": null
+    },
+    {
+      "id": "a2c125feaa59cf06378d040889a01161f6a0467172ae1c52e10f417295fa9717:activity-2",
+      "sessionId": "a2c125feaa59cf06378d040889a01161f6a0467172ae1c52e10f417295fa9717",
+      "name": null,
+      "start": 4482,
+      "end": 4748,
+      "performance": "full",
+      "confirmed": true,
+      "boundariesConfirmed": true,
+      "clip": null
+    },
+    {
+      "id": "7ca11bece06571ca521f748c3f6ed615d44df297515a2f8d09d78f546979e887:activity-1",
+      "sessionId": "7ca11bece06571ca521f748c3f6ed615d44df297515a2f8d09d78f546979e887",
+      "name": null,
+      "start": 6858,
+      "end": 6875,
+      "performance": "fragment",
+      "confirmed": false,
+      "boundariesConfirmed": false,
+      "clip": null
+    },
+    {
+      "id": "f6ae1ac1dc48c0590f5ba28c3d82b950990e6fc06015f898ab16fbacef660ce6:activity-2",
+      "sessionId": "f6ae1ac1dc48c0590f5ba28c3d82b950990e6fc06015f898ab16fbacef660ce6",
+      "name": "画心",
+      "start": 7672,
+      "end": 8114,
+      "performance": "full",
+      "confirmed": false,
+      "boundariesConfirmed": false,
+      "clip": {
+        "bvid": "BV1SWxp6LERM",
+        "part": 1,
+        "url": "https://www.bilibili.com/video/BV1SWxp6LERM/?p=1"
+      }
+    },
+    {
+      "id": "62bf8772ba4d363bfd9d0734a77fd50d8b4423df790b0c5f69569d08b860ec2c:activity-1",
+      "sessionId": "62bf8772ba4d363bfd9d0734a77fd50d8b4423df790b0c5f69569d08b860ec2c",
+      "name": null,
+      "start": 3522,
+      "end": 3558,
+      "performance": "fragment",
+      "confirmed": false,
+      "boundariesConfirmed": false,
+      "clip": null
+    },
+    {
+      "id": "62bf8772ba4d363bfd9d0734a77fd50d8b4423df790b0c5f69569d08b860ec2c:activity-2",
+      "sessionId": "62bf8772ba4d363bfd9d0734a77fd50d8b4423df790b0c5f69569d08b860ec2c",
+      "name": "小伞的品格",
+      "start": 8542,
+      "end": 8790,
+      "performance": "fragment",
+      "confirmed": false,
+      "boundariesConfirmed": false,
+      "clip": {
+        "bvid": "BV1BN4K67EtQ",
+        "part": 1,
+        "url": "https://www.bilibili.com/video/BV1BN4K67EtQ/?p=1"
+      }
+    },
+    {
+      "id": "62bf8772ba4d363bfd9d0734a77fd50d8b4423df790b0c5f69569d08b860ec2c:activity-3",
+      "sessionId": "62bf8772ba4d363bfd9d0734a77fd50d8b4423df790b0c5f69569d08b860ec2c",
+      "name": "带我走",
+      "start": 9045.129,
+      "end": 9400,
+      "performance": "full",
+      "confirmed": true,
+      "boundariesConfirmed": true,
+      "clip": {
+        "bvid": "BV1BN4K67EtQ",
+        "part": 2,
+        "url": "https://www.bilibili.com/video/BV1BN4K67EtQ/?p=2"
+      }
+    },
+    {
+      "id": "ee346158da3a67cf776cd2ddce0927053b2a0152dcaf41cc02920d90138249c0:activity-1",
+      "sessionId": "ee346158da3a67cf776cd2ddce0927053b2a0152dcaf41cc02920d90138249c0",
+      "name": null,
+      "start": 5815,
+      "end": 5870,
+      "performance": "fragment",
+      "confirmed": false,
+      "boundariesConfirmed": false,
+      "clip": null
+    },
     {
       "id": "781977dcd37f5b1b516c738b725db57178ead246759649d2250874c5b57bce22:activity-1",
       "sessionId": "781977dcd37f5b1b516c738b725db57178ead246759649d2250874c5b57bce22",

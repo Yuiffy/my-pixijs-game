@@ -1,18 +1,25 @@
 import { clipCameraBoom, type CameraPoint } from '../gameCamera/boom';
 import { architectureIntervals } from './architecture';
-import { gateOpen, OBSTACLES, SURFACES } from './world';
+import { deckBottom, gateOpen, OBSTACLES, SURFACES } from './world';
 import type { WorldAccess } from './types';
 
 export function nightCameraBlocked({ x, y, z }: CameraPoint, state: WorldAccess, surfaces = SURFACES, obstacles = OBSTACLES) {
   const deck = surfaces.some(s => {
     if (x < s.x1 || x > s.x2 || z < s.z1 || z > s.z2) return false;
     const top = s.y + (((s.endY ?? s.y) - s.y) * (z - s.z1)) / (s.z2 - s.z1);
-    return y < top + 0.3 && y > top - 0.78;
+    return y < top + 0.3 && y > deckBottom(s, x, z) - 0.2;
   });
   return deck || obstacles.some(o => o.kind !== 'shrine' && !gateOpen(o, state)
     && Math.abs(x - o.x) < o.w / 2 + 0.2 && Math.abs(z - o.z) < o.d / 2 + 0.2
     && y > o.y && y < o.y + o.h + 0.3)
     || architectureIntervals(x, z).some(h => y > h.bottom - 0.2 && y < h.top + 0.2);
+}
+
+/** A close camera can enter the head/coat volume after retracting at a wall. */
+export function nightPlayerOpacity(camera: CameraPoint, torso: CameraPoint) {
+  const distance = Math.hypot(camera.x - torso.x, camera.y - torso.y, camera.z - torso.z);
+  const t = Math.max(0, Math.min(1, (distance - 1.8) / 1.2));
+  return t * t * (3 - 2 * t);
 }
 
 export function constrainNightCamera(target: CameraPoint, desired: CameraPoint, state: WorldAccess) {

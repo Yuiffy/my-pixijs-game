@@ -14,6 +14,7 @@ import {
   getStreamImageExclusionReason,
   imageBelongsToStream,
   isImageFallbackCandidate,
+  isContainedDuplicate,
   mergeRefreshedStream,
   parseStreamArtifact,
   readXmlDuration,
@@ -351,7 +352,7 @@ async function syncStreams() {
       const overlapRatio = calculateOverlapRatio(current, existing);
       
       // If overlap >= 90%, merge
-      if (overlapRatio >= 0.9) {
+      if (overlapRatio >= 0.9 || isContainedDuplicate(current, existing)) {
         console.log(`合并直播组: ${key} (${current.startTime.toISOString()}) -> ${mKey} (${existing.startTime.toISOString()}), 重叠度: ${(overlapRatio * 100).toFixed(1)}%`);
         
         // Merge files
@@ -955,8 +956,9 @@ async function syncStreams() {
     let merged = false;
     for (const existing of deduplicatedStreams) {
       const overlapRatio = calculateOverlapRatio(stream, existing);
+      const existingContained = isContainedDuplicate(existing, stream);
       
-      if (overlapRatio >= 0.9) {
+      if (overlapRatio >= 0.9 || isContainedDuplicate(stream, existing) || existingContained) {
         console.log(`最终去重: ${stream.id} -> ${existing.id}, 重叠度: ${(overlapRatio * 100).toFixed(1)}%`);
         
         // A stream reconstructed in this run owns its freshly calculated image list.
@@ -974,6 +976,15 @@ async function syncStreams() {
         if (stream.duration > existing.duration) {
           existing.duration = stream.duration;
           existing.durationStr = stream.durationStr;
+        }
+
+        // A contained short capture contributes no independent live interval;
+        // keep the long record's identity while retaining any useful links.
+        if (existingContained && stream.duration >= existing.duration) {
+          existing.id = stream.id;
+          existing.date = stream.date;
+          existing.time = stream.time;
+          existing.startTime = stream.startTime;
         }
         
         // Keep better data (prefer non-null values)

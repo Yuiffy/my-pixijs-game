@@ -11,7 +11,14 @@ const report = { errors: [], captures: [], checks: [], assets: [] };
 const ovenFocus = process.env.DELIVERY_ART_FOCUS === 'oven';
 const marketFocus = process.env.DELIVERY_ART_FOCUS === 'market';
 const freightFocus = process.env.DELIVERY_ART_FOCUS === 'freight';
-const selected = freightFocus ? {
+const rainFocus = process.env.DELIVERY_ART_FOCUS === 'rain';
+const selected = rainFocus ? {
+  'serving-machine': ['take-meal'],
+  'rain-relay': ['take-meal', 'canopy-warning', 'canopy-folded', 'last-roof', 'customer-arrival', 'delivered'],
+  'greenhouse-dinner': ['take-meal', 'water-lift-rider', 'water-lift-high', 'flower-route-open', 'customer-arrival', 'delivered'],
+  'bird-supper': ['take-meal', 'swoop-warning', 'nest-roof', 'ribbon-returned', 'customer-arrival', 'delivered'],
+  'scenery-lifts': ['take-meal'],
+} : freightFocus ? {
   'market-stalls': ['take-meal'],
   'freight-lunch': ['loading-dock', 'middle-stop', 'dispatch-reflection', 'under-loading-beam', 'unload-arrival', 'delivered'],
   'serving-machine': ['take-meal', 'arm-warning', 'arm-sweep', 'belt-stopped-0', 'upper-belt-1', 'belt-stopped-1', 'upper-belt-2', 'belt-stopped-2', 'serving-table-bridge'],
@@ -49,6 +56,26 @@ async function capture(p, name) {
   const ovenArt = await p.evaluate(() => window.deliveryTest.oven());
   const marketArt = await p.evaluate(() => window.deliveryTest.market());
   const servingArt = await p.evaluate(() => window.deliveryTest.serving());
+  const rainLevel = model.LEVELS.find(level => level.id === actual.order);
+  const rainFacades = servingArt.facades.filter(facade => ['rain-roof', 'greenhouse-hall', 'rain-service-window'].includes(facade.key));
+  if (rainLevel.rain) {
+    const windows = rainFacades.filter(facade => facade.key === 'rain-service-window');
+    assert.deepEqual(windows.map(facade => [facade.x, facade.y, facade.scale]), [[180, 615, 310 / 1364], [rainLevel.destination.x + 40, rainLevel.destination.y, 260 / 1364]]);
+    const hall = rainFacades.filter(facade => facade.key === 'greenhouse-hall');
+    const roofs = rainFacades.filter(facade => facade.key === 'rain-roof');
+    if (rainLevel.theme === 'greenhouse') {
+      assert.deepEqual(hall.map(facade => [facade.x, facade.y, facade.scale]), [[740, 680, 1600 / 2138]]);
+      assert.equal(roofs.length, 0);
+    } else {
+      assert.equal(hall.length, 0);
+      const expected = rainLevel.surfaces.filter(surface => surface.kind === 'wood' && surface.w >= 240 && surface.y < 600).flatMap(surface => {
+        const bays = Math.ceil(surface.w / 360); const width = surface.w / bays;
+        return Array.from({ length: bays }, (_, i) => [surface.x + i * width, surface.y + 12, width / 1161]);
+      });
+      assert.deepEqual(roofs.map(facade => [facade.x, facade.y, facade.scale]), expected);
+      for (const roof of roofs) assert.ok(roof.scale * 1161 <= 360, 'roof bays preserve window proportions');
+    }
+  } else assert.deepEqual(rainFacades, [], 'rain facade objects destroyed when leaving district');
   const freight = actual.order === 'freight-lunch';
   const sorter = actual.order === 'serving-machine';
   assert.equal(servingArt.facades.filter(facade => facade.key === 'freight-station').length, freight ? 3 : 0);
@@ -140,7 +167,9 @@ async function capture(p, name) {
         assert.ok(Math.abs(actual.player.x - mark.state.player.x) < 0.01); assert.ok(Math.abs(actual.player.y - mark.state.player.y) < 0.01);
         assert.equal(actual.player.health, 3); assert.equal(actual.deaths, 0);
         if ((selected[actual.order] || []).includes(mark.name)) await capture(p, `${actual.order}-${mark.name}`);
-        const mobileMilestone = freightFocus
+        const mobileMilestone = rainFocus
+          ? (actual.order === 'rain-relay' && mark.name === 'last-roof') || (actual.order === 'greenhouse-dinner' && mark.name === 'water-lift-high') || (actual.order === 'bird-supper' && mark.name === 'nest-roof')
+          : freightFocus
           ? (actual.order === 'freight-lunch' && mark.name === 'middle-stop') || (actual.order === 'serving-machine' && ['arm-sweep', 'upper-belt-2'].includes(mark.name))
           : marketFocus
           ? (actual.order === 'market-stalls' && ['moving-stall-rider', 'customer-arrival'].includes(mark.name)) || (actual.order === 'freight-lunch' && mark.name === 'under-loading-beam')
@@ -150,7 +179,7 @@ async function capture(p, name) {
         if (mobileMilestone) {
           for (const [orientation, width, height] of [['portrait', 390, 844], ['landscape', 844, 390]]) {
             await p.setViewportSize({ width, height });
-            await capture(p, `${freightFocus ? 'freight' : marketFocus ? 'market' : ovenFocus ? 'oven' : 'bakery'}-${mark.name}-${orientation}`);
+            await capture(p, `${rainFocus ? 'rain' : freightFocus ? 'freight' : marketFocus ? 'market' : ovenFocus ? 'oven' : 'bakery'}-${mark.name}-${orientation}`);
             const resized = await state(p);
             assert.equal(resized.player.x, actual.player.x);
             assert.equal(resized.player.y, actual.player.y);
@@ -179,11 +208,15 @@ async function capture(p, name) {
     await p.setViewportSize({ width: 844, height: 390 }); await capture(p, 'landscape-decorated-cafe');
     report.checks.push('four decorations bought through real UI after the campaign; lights, cloth, photo and herb shelf remain visible against the new facade on desktop, portrait and landscape');
     const assets = [...new Set(report.assets.map(v => v.url.split('/').at(-1)))].sort();
-    assert.deepEqual(assets, ['attic-v1.webp', 'bakery-backdoor-v1.webp', 'bakery-v1.webp', 'bread-rack-v1.webp', 'cafe-v1.webp', 'freight-station-v1.webp', 'gatehouse-v1.webp', 'kitchen-oven-v1.webp', 'kitchen-wall-v1.webp', 'market-canteen-v1.webp', 'market-cart-v1.webp', 'market-produce-v1.webp', 'oven-courtyard-v1.webp', 'oven-crab-claw-v1.webp', 'oven-crab-shell-v1.webp', 'sorter-ladle-v1.webp', 'sorter-tower-v1.webp', 'workshop-v1.webp']);
+    const environmentArt = JSON.parse(fs.readFileSync(path.resolve('docs/sui-delivery-environment-art.json'), 'utf8'));
+    assert.deepEqual(assets, environmentArt.images.map(art => path.basename(art.runtime)).sort());
     assert.ok(report.assets.every(v => v.status === 200));
     const expectedCaptures = Object.entries(selected).flatMap(([order, marks]) => marks.map(mark => `${order}-${mark}`));
     expectedCaptures.push('seated-ending', 'decorated-cafe', 'portrait-decorated-cafe', 'landscape-decorated-cafe');
-    if (freightFocus) {
+    if (rainFocus) {
+      for (const mark of ['last-roof', 'water-lift-high', 'nest-roof']) for (const orientation of ['portrait', 'landscape']) expectedCaptures.push(`rain-${mark}-${orientation}`);
+      report.checks.push('rain roof bays align below actual collision lips; greenhouse transparent structure sits behind real water lift, hook and low beam; entry and destination window sills align with actual serving positions in all three rain orders; rain art destroyed on leaving district; portrait/landscape roof, water lift and nest; actual arrival and delivery');
+    } else if (freightFocus) {
       for (const mark of ['middle-stop', 'arm-sweep', 'upper-belt-2']) for (const orientation of ['portrait', 'landscape']) expectedCaptures.push(`freight-${mark}-${orientation}`);
       report.checks.push('three open station canopies sit on actual loading/middle/upper unload platforms; sorter tower and live indicator colors follow all three actual switch states; ladle follows the true sweep center and disappears when stopped; all new props cleaned up in adjacent districts; portrait/landscape station, active sweep and highest belt');
     } else if (marketFocus) {

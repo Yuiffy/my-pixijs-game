@@ -3,6 +3,33 @@ import test from 'node:test';
 import { loadTypescriptModule } from './helpers/load-typescript-module.mjs';
 
 const { calculate, parseSession, emptySession, QUESTIONS } = await loadTypescriptModule('src/components/uwaki/questions.ts');
+const { QUESTIONNAIRES, storageKey } = await loadTypescriptModule('src/components/uwaki/questionnaires.ts');
+const { emptyIdeal, parseIdeal, idealBudget, validIdeal, idealSummary } = await loadTypescriptModule('src/components/uwaki/ideal.ts');
+
+test('questionnaires use independent storage and count-aware validation, retaining the legacy save', () => {
+  assert.equal(storageKey('boundary'), 'love-boundary-zh-v1');
+  assert.equal(new Set(['boundary', 'heavy', 'dependence', 'ideal'].map(storageKey)).size, 4);
+  assert.deepEqual(QUESTIONNAIRES.map(q => q.questions.length), [40, 30, 30]);
+  for (const q of QUESTIONNAIRES.slice(1)) {
+    const finished = { step: 31, answers: Array(30).fill(1), reflection: null, notes: '自己的补充' };
+    assert.deepEqual(parseSession(JSON.stringify(finished), 30, false), finished);
+    assert.equal(parseSession(JSON.stringify({ ...finished, answers: [null, ...Array(29).fill(1)] }), 30, false).step, 0);
+    assert.deepEqual(parseSession(JSON.stringify(finished)), emptySession());
+    assert.equal(q.labels.length, 3);
+  }
+});
+
+test('ideal creator validates allocation, unique drawbacks, preference ranges and skill budgets', () => {
+  const valid = { ...emptyIdeal(), step: 4, abilities: [6, 5, 4, 3, 3, 2, 2], preferences: [0, 1, 3, 3, 3, 3, 3], debuffs: [0, 8, 16], skills: [0, 1], notes: '理想中的人' };
+  assert.equal(validIdeal(valid), true);
+  assert.equal(idealBudget(valid), 0);
+  assert.deepEqual(parseIdeal(JSON.stringify(valid)), valid);
+  assert.match(idealSummary(valid), /情绪察觉/);
+  assert.equal(parseIdeal(JSON.stringify({ ...valid, abilities: Array(7).fill(1) })).step, 0);
+  for (const bad of [{ ...valid, skills: [14] }, { ...valid, debuffs: [0, 0, 0] }, { ...valid, preferences: [9, 1, 1, 1, 1, 1, 1] }, { ...valid, abilities: [-1, 6, 4, 4, 4, 4, 4] }, { ...valid, skills: [-1] }, { ...valid, notes: 42 }]) {
+    assert.deepEqual(parseIdeal(JSON.stringify(bad)), emptyIdeal());
+  }
+});
 
 test('all original score boundaries map to the four expected types', () => {
   assert.equal(QUESTIONS.length, 40);

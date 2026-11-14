@@ -8,6 +8,7 @@ the date a placeholder route was created as a launch date.
 
 | Game | Release evidence | Latest update evidence |
 | --- | --- | --- |
+| Echo Zero / 岁己 · 零日余烬 | 2026-11-13, first playable prologue demo and catalog entry | 2026-11-13, opening cinematic, posture/deflect/deathblow combat, checkpoint and boss encounter; local review, deployment pending |
 | Sui Fitness / 今天也要动 | 2026-10-03, first locally verified five-day survival campaign and catalog entry; deployment pending | 2026-10-25, offensive dash, charge interception, contextual guidance and compact touch HUD; release checks and production-build playtest passed |
 | Spring Delivery / 春日第一单 | 2026-10-22, delivery adventure catalog release | 2026-10-25, contact-based tray vault, buffered attack and contextual first-roof teaching; release checks and production-build playtest passed |
 | Beach Volley / 晴海双打 | 2026-10-02, first locally playable implementation and catalog entry; deployment pending | 2026-10-03, independent input holds, native keyboard activation and complete 2P touch actions; deployment pending |

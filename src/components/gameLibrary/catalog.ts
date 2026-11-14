@@ -26,6 +26,16 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
     title: '动作与探索',
     games: [
       {
+        title: '岁己 · 零日余烬 ECHO ZERO',
+        href: '/game/echo-zero',
+        description:
+          '雨夜封锁区的 3D 动作冒险序章。用弹反、架势与忍杀穿过第七区，点亮信号塔，迎战「零号 · 回声」；栞栞在无线电另一头指路。',
+        image: '/games/echo-zero/preview.webp',
+        meta: '魂系动作 · 3D 末日都市 · 弹反 / 架势 / 忍杀 · 序章 Demo',
+        releaseDate: '2026-11-13',
+        updateDate: '2026-11-13',
+      },
+      {
         title: '岁己 · 旅居之魂',
         href: '/game/night-rain',
         description:
@@ -283,12 +293,13 @@ export const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
     title: '问卷与心理测试',
     games: [
       {
-        title: '出轨行为忍耐程度问卷',
+        title: '恋爱判断问卷集',
         href: '/game/uwaki-hantei',
         image: '/games/uwaki-hantei/cover.svg',
-        description: '40 个日常情境，画出你的恋爱边界。和朋友或恋人聊聊彼此的答案。',
+        description: '出轨边界、爱的分量、依存与爱情，还有理想恋人创建表。选择一份，和朋友聊聊彼此的答案。',
         meta: '中文互动问卷 · 进度保存 · 结果图分享',
         releaseDate: '2026-10-19',
+        updateDate: '2026-11-15',
       },
       {
         title: '这个按钮，你按吗？',

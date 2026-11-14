@@ -2,9 +2,10 @@
 
 import { memo, useEffect, useMemo, useRef } from "react";
 import * as T from "three";
-import { BRIDGE_AXES, BRIDGE_RAILS, BRIDGE_SECTIONS, deckVertices, projectBridge } from "./bridges";
+import { BRIDGE_AXES, BRIDGE_RAILS, BRIDGE_SECTIONS, BRIDGE_SUPPORTS, deckVertices, projectBridge } from "./bridges";
 import { inMappedRiver, terrainHeight, WATER_LEVEL } from "./terrain";
-import { GUANGYA_LENGTH, GUANGYA_SECTIONS, GUANGYA_SIDEWALK_WIDTH, GUANGYA_SUPPORTS, guangyaPoint } from "./guangya";
+import { GUANGYA_LENGTH, GUANGYA_SECTIONS, GUANGYA_SIDEWALK_WIDTH, guangyaPoint } from "./guangya";
+import { WENCHANG_LENGTH, WENCHANG_SECTIONS, WENCHANG_SIDEWALK_WIDTH, WENCHANG_WIDTH, wenchangPoint } from "./wenchang";
 
 type Part = { at: T.Vector3; size: T.Vector3; rotation: T.Quaternion; color: string };
 type Arch = { geometry: T.TubeGeometry; transforms: T.Matrix4[] };
@@ -60,7 +61,7 @@ function BridgeView() {
     const slabs = new T.BufferGeometry();
     slabs.setAttribute("position", new T.Float32BufferAttribute(vertices, 3));
     slabs.setIndex(indices); slabs.computeVertexNormals();
-    for (const support of GUANGYA_SUPPORTS) add(new T.Vector3(...support.at), support.size, "#a1ada3", orient(support.yaw));
+    for (const support of BRIDGE_SUPPORTS) add(new T.Vector3(...support.at), support.size, "#a1ada3", orient(support.yaw));
 
     const pavingVertices: number[] = []; const pavingColors: number[] = [];
     const stripe = (section: typeof BRIDGE_SECTIONS[number], across: number, width: number, color: string, start = 0, end = 1) => {
@@ -90,6 +91,29 @@ function BridgeView() {
       }
       travelled += run;
     }
+    travelled = 0;
+    for (const section of WENCHANG_SECTIONS) {
+      const run = Math.hypot(section.b.x - section.a.x, section.b.z - section.a.z);
+      const edge = section.width / 2; const trafficEdge = edge - WENCHANG_SIDEWALK_WIDTH;
+      for (const side of [-1, 1]) {
+        stripe(section, side * (edge - WENCHANG_SIDEWALK_WIDTH / 2), WENCHANG_SIDEWALK_WIDTH, "#c9c7b9");
+        stripe(section, side * trafficEdge, 0.16, "#ede8d5");
+        stripe(section, side * 0.15, 0.1, "#d7be80");
+        for (const lane of [1, 2]) for (let from = Math.floor(travelled / 9) * 9; from < travelled + run; from += 9) {
+          const start = Math.max(0, from - travelled); const end = Math.min(run, from + 3.5 - travelled);
+          if (end > start) stripe(section, (side * trafficEdge * lane) / 3, 0.13, "#e6e4d8", start / run, end / run);
+        }
+      }
+      travelled += run;
+    }
+    for (let along = 24; along < WENCHANG_LENGTH - 15; along += 42) for (const side of [-1, 1]) {
+      const base = wenchangPoint(along, side * (WENCHANG_WIDTH / 2 - 0.6));
+      const next = wenchangPoint(along + 0.5); const centre = wenchangPoint(along); const rotation = orient(Math.atan2(next.x - centre.x, next.z - centre.z));
+      const origin = new T.Vector3(base.x, base.y, base.z);
+      add(origin.clone().add(new T.Vector3(0, 3.7, 0)), [0.16, 7.4, 0.16], "#b4bab2");
+      add(position(origin, rotation, -side * 0.9, 7.3, 0), [1.8, 0.16, 0.24], "#c1c5bb", rotation);
+      add(position(origin, rotation, -side * 1.6, 7.18, 0), [0.7, 0.16, 0.4], "#e7dfc5", rotation);
+    }
     const paving = new T.BufferGeometry();
     paving.setAttribute("position", new T.Float32BufferAttribute(pavingVertices, 3));
     paving.setAttribute("color", new T.Float32BufferAttribute(pavingColors, 3)); paving.computeVertexNormals();
@@ -114,7 +138,7 @@ function BridgeView() {
       for (let z = -rail.size[2] / 2; z <= rail.size[2] / 2; z += 6) add(position(origin, rotation, 0, 0.02, z), [0.12, 1.04, 0.12], "#bcc9bd", rotation);
     }
     for (const section of BRIDGE_SECTIONS) {
-      if (section.id.startsWith("guangya-")) continue;
+      if (section.id.startsWith("guangya-") || section.id.startsWith("wenchang-")) continue;
       const run = Math.hypot(section.b.x - section.a.x, section.b.z - section.a.z);
       const length = Math.hypot(run, section.b.y - section.a.y);
       const yaw = Math.atan2(section.b.x - section.a.x, section.b.z - section.a.z);

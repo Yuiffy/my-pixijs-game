@@ -22,6 +22,8 @@ import StationView from "./StationView";
 import StationNeighborhoodsView from "./StationNeighborhoodsView";
 import EshanView from "./EshanView";
 import SquareView from "./SquareView";
+import HedongView from "./HedongView";
+import { HEDONG_FACADE_IDS } from "./hedong";
 import XihuanView from "./XihuanView";
 import WuxingView from "./WuxingView";
 import { WUXING_FACADE_IDS, WUXING_RENDER_OVERRIDES } from "./wuxing";
@@ -205,7 +207,7 @@ const City = memo(({ roads, skyline }: { roads: RoadChunk[]; skyline?: SkylineDa
   } = useMemo(() => {
     const boxes: Box[] = [];
     const trees: Point[] = [];
-    BUILDINGS.filter(b => !b.id.startsWith("urban-wall-") && !b.id.startsWith("market-east-") && !b.id.startsWith(STATION_PREFIX) && !SQUARE_FACADE_IDS.has(b.id) && !WUXING_FACADE_IDS.has(b.id) && !XIHUAN_FACADE_IDS.has(b.id)).forEach((b, i) => {
+    BUILDINGS.filter(b => !b.id.startsWith("urban-wall-") && !b.id.startsWith("market-east-") && !b.id.startsWith(STATION_PREFIX) && !SQUARE_FACADE_IDS.has(b.id) && !WUXING_FACADE_IDS.has(b.id) && !XIHUAN_FACADE_IDS.has(b.id) && !HEDONG_FACADE_IDS.has(b.id)).forEach((b, i) => {
       const firstBox = boxes.length;
       if (!b.footprint) boxes.push({
         at: [b.x, b.h / 2, b.z],
@@ -288,6 +290,7 @@ const City = memo(({ roads, skyline }: { roads: RoadChunk[]; skyline?: SkylineDa
       <StationNeighborhoodsView />
       <EshanView />
       <SquareView />
+      <HedongView />
       <XihuanView />
       <WuxingView />
       <UndergroundView />

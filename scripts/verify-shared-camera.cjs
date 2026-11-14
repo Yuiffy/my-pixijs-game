@@ -1,11 +1,12 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { chromium } = require(require.resolve('playwright', { paths: [process.cwd(), path.join(require('node:os').homedir(), '.codex/skills/develop-web-game')] }));
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE || require.resolve('playwright', { paths: [process.cwd(), path.join(require('node:os').homedir(), '.codex/skills/develop-web-game')] }));
 const { quietContext } = require('./lib/liuzhou-test-browser.cjs');
 const { inspectPng } = require('./lib/autochess-screenshot.cjs');
 const base = process.env.CAMERA_BASE_URL || 'http://127.0.0.1:4132';
 const output = process.env.CAMERA_QA_DIR || '.tmp/shared-camera-night';
+const selected = new Set((process.env.CAMERA_SCENARIOS || '').split(',').filter(Boolean));
 const angle = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
 const report = { errors: [], captures: [], traces: [], pointerLock: 'quietContext virtual document only', passed: false };
 const state = page => page.evaluate(() => JSON.parse(window.render_game_to_text()));
@@ -41,6 +42,7 @@ async function capture(page, name) {
   const fresh = () => { const s = engine.createGame(); engine.startGame(s); return s; };
   const house = fresh(); place(house, { x: 3.2, y: 0, z: -5.5 });
   const roof = fresh(); place(roof, { x: -15.5, y: 6, z: -22.5 });
+  const market = fresh(); place(market, { x: 8.4, y: 0, z: -39.37 });
   const crypt = fresh(); place(crypt, dungeonPoint('crypt', { x: 96, y: 0, z: 33 })); crypt.discoveredDungeons = ['crypt'];
   const abbey = skyCompleted(); abbey.bellGates = ['bell-entry']; place(abbey, { x: -44, y: 35, z: -740 });
   let combat;
@@ -56,7 +58,8 @@ async function capture(page, name) {
   assert.ok(combat, 'valid combat fixture with a visible enemy');
   const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--mute-audio', '--disable-speech-api'] });
   try {
-    for (const [name, source] of [['house', house], ['roof', roof], ['crypt', crypt], ['abbey', abbey], ['combat', combat]]) {
+    for (const [name, source] of [['house', house], ['roof', roof], ['market', market], ['crypt', crypt], ['abbey', abbey], ['combat', combat]]) {
+      if (selected.size && !selected.has(name)) continue;
       assert.ok(world.canOccupy(source.player.x, source.player.z, source.player.y, source, 0.32), `${name}: valid player position`);
       const save = engine.saveGame(source); const loaded = engine.loadGame(save); assert.ok(loaded, `${name}: accepted save`);
       assert.equal(loaded.player.y, source.player.y);
@@ -75,7 +78,16 @@ async function capture(page, name) {
       await page.getByRole('button', { name: '继续雨夜旅程 →', exact: true }).click();
       await page.waitForFunction(() => typeof window.nightRainCamera === 'function' && document.pointerLockElement !== null);
       await page.getByText('雨正在落下，旧城即将亮灯……', { exact: true }).waitFor({ state: 'hidden', timeout: 60000 });
-      if (name === 'combat') {
+      if (name === 'market') {
+        await aim(page, 0, 0.6); await page.waitForTimeout(700);
+        const close = await frame(page); check(close, 0);
+        await capture(page, 'night-market-close');
+        assert.ok(close.camera.playerOpacity < 0.7, `wall-retracted camera fades the obstructing player: ${JSON.stringify(close.camera)}`);
+        await aim(page, Math.PI, 0.6); await page.waitForTimeout(900);
+        const open = await frame(page); check(open, Math.PI);
+        assert.ok(open.camera.playerOpacity > 0.99, 'normal orbit restores the full character');
+        await capture(page, 'night-market-open');
+      } else if (name === 'combat') {
         await page.keyboard.press('KeyQ'); await page.evaluate(() => window.advanceTime(16));
         await page.waitForTimeout(700);
         const locked = await frame(page); assert.ok(locked.state.lockedId, 'normal Q lock-on still works');

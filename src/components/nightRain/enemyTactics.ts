@@ -1,5 +1,26 @@
 import { enemyRole, isBoss } from './encounters';
-import type { Enemy, Vec3 } from './types';
+import { walkSegment } from './companion';
+import { canOccupy, lineClear, playerBlocked, supportAt } from './world';
+import type { Enemy, Vec3, WorldAccess } from './types';
+
+/** A player can stand closer to a wall than the route grid's clearance.
+ * Pursuit may finish within attack approach distance, but only on the same
+ * collision-clear ground; returning to a post still uses its exact position. */
+export function enemyPursuitTarget(enemy: Vec3, target: Vec3, access: WorldAccess, approach: number): Vec3 {
+  if (canOccupy(target.x, target.z, target.y, access, 0.36) && !playerBlocked(target.x, target.z, target.y, access, 0.36)) return target;
+  let best = target; let nearest = Infinity;
+  for (const radius of [approach / 2, approach]) for (let i = 0; i < 16; i += 1) {
+    const angle = (i * Math.PI) / 8;
+    const x = target.x + Math.sin(angle) * radius; const z = target.z + Math.cos(angle) * radius;
+    const y = supportAt(x, z, target.y + 0.6);
+    if (y === null || Math.abs(y - target.y) > 0.25) continue;
+    const candidate = { x, y, z }; const distance = Math.hypot(x - enemy.x, z - enemy.z);
+    if (distance >= nearest || !canOccupy(x, z, y, access, 0.36) || playerBlocked(x, z, y, access, 0.36)) continue;
+    if (!walkSegment(candidate, target, access, 0.25, 0.24) || !lineClear(candidate, target, access)) continue;
+    best = candidate; nearest = distance;
+  }
+  return best;
+}
 
 export function enemySenses(e: Pick<Enemy, 'id' | 'kind'>) {
   const role = enemyRole(e);

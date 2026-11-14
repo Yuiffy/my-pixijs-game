@@ -133,9 +133,10 @@ export function attackRain(
   ) {
     b.phase = "rest";
     b.timer = 4;
+    s.player.dashReady = true;
     feedback(s, "bird", b.x, b.y);
     tell(
-      "托盘轻轻一挡，小鸟停在空中喘口气。可以从它上方借一下力。它没有受伤。",
+      "挡住了！蒸汽冲刺已恢复，可以再冲一次；也能从小鸟上方借力。它没有受伤。",
     );
   }
 }
@@ -223,6 +224,9 @@ export function bounceBird(s: DeliveryGame, previousY: number) {
     p.vy = p.jumpHeld ? -710 : -540;
     p.grounded = false;
     p.coyote = 0;
+    // A real bird contact is a new foothold, just like a roof landing.
+    p.dash = 0;
+    p.dashReady = true;
     bird.timer = 0.3;
     s.bounces++;
     feedback(s, "stomp", bird.x, bird.y - 14);

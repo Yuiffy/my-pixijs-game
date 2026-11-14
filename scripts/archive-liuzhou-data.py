@@ -101,6 +101,22 @@ def archive():
             extra_destination, 'restricted-reference')
         entries[-1].update(originalFilename=extra_name,
                            contentStatus='Unverified browser export; not used for reconstruction')
+    # Later source acquisitions are registered in the same manifest. Rebuilding
+    # the original inventory must not silently drop those verified originals.
+    if MANIFEST.is_file():
+        previous = json.loads(MANIFEST.read_text(encoding='utf-8'))
+        known_paths = {entry['path'] for entry in entries}
+        for entry in previous['files']:
+            if entry['path'] in known_paths:
+                continue
+            preserved = (ARCHIVE / entry['path']).resolve()
+            if not preserved.is_relative_to(ARCHIVE.resolve()):
+                raise ValueError('Archive path escapes its root')
+            saved = preserved.read_bytes()
+            raw = gzip.decompress(saved) if entry['encoding'] == 'gzip' else saved
+            if (len(saved), digest(saved), len(raw), digest(raw)) != (entry['bytes'], entry['sha256'], entry['rawBytes'], entry['rawSha256']):
+                raise ValueError(f'Additional original failed verification: {preserved}')
+            entries.append(entry)
     manifest = {'version': 1, 'archivedDate': '2026-10-24',
                 'originWgs84': [109.41225, 24.31415], 'axes': 'x east, z south; metres',
                 'notes': ['Open data archives are versioned. Restricted files are local project backups, not public assets.',
@@ -109,6 +125,8 @@ def archive():
                           'Overture extract has 648 candidates and no heights; 410 footprints are currently integrated.',
                           'Derived runtime grids are versioned under src/components/liuzhou and public/games/liuzhou.'],
                 'files': entries}
+    if MANIFEST.is_file() and previous.get('updatedDate'):
+        manifest['updatedDate'] = previous['updatedDate']
     MANIFEST.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     print(f'Archived {len(entries)} files ({sum(e["bytes"] for e in entries):,} bytes)')
 

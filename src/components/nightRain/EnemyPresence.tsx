@@ -5,6 +5,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { enemyRole, isBoss } from './encounters';
 import { BOSS_ROSTER } from './bossRoster';
+import { sampleEnemyCloth } from './enemyLocomotion';
 import type { Enemy, GameState } from './types';
 
 /** Secondary cloth follows simulation time, including pause/hitstop. Equipment
@@ -17,9 +18,9 @@ export default function EnemyPresence({ enemy, stateRef }: { enemy: Enemy; state
     if (!cloth.current) return;
     const s = stateRef.current; const e = s.enemies.find(q => q.id === enemy.id);
     if (!e) return;
-    const intensity = e.action === 'attack' ? 0.26 : e.action === 'chase' ? 0.16 : 0.05;
-    cloth.current.rotation.x = -0.08 - Math.sin(s.time * 2.7 + e.spawn.x) * intensity;
-    cloth.current.rotation.z = Math.sin(s.time * 1.9 + e.spawn.z) * 0.07;
+    const motion = sampleEnemyCloth(e, s.time);
+    cloth.current.rotation.x = motion.pitch;
+    cloth.current.rotation.z = motion.roll;
   });
   return (
     <group name={`presence-${enemy.id}`}>

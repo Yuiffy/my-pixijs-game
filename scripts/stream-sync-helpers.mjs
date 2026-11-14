@@ -215,3 +215,37 @@ export function calculateOverlapRatio(stream1, stream2) {
   const union = Math.max(end1, end2) - Math.min(start1, start2);
   return union > 0 ? overlap / union : 0;
 }
+
+function streamInterval(stream) {
+  const start = stream.startTime instanceof Date
+    ? stream.startTime.getTime()
+    : streamIdToDate(stream.id)?.getTime();
+  const duration = Number(stream.duration || 0);
+  if (!Number.isFinite(start) || !Number.isFinite(duration) || duration <= 0) return null;
+  return { start, end: start + duration * 1000, duration };
+}
+
+function normalizedStreamTitle(title) {
+  return String(title || '').normalize('NFKC').toLocaleLowerCase()
+    .replace(/[\s\p{P}\p{S}]+/gu, '');
+}
+
+// A recorder can leave a short reconnect/probe file fully inside the real
+// recording. Overlap ratio is tiny in that case because the long recording
+// dominates the union, so treat it as a duplicate only when the title agrees
+// and the short interval is wholly contained in a much longer one.
+export function isContainedDuplicate(shortStream, longStream, {
+  maxShortSeconds = 15 * 60,
+  minLongSeconds = 30 * 60,
+  edgeToleranceMs = 30 * 1000,
+} = {}) {
+  const short = streamInterval(shortStream);
+  const longer = streamInterval(longStream);
+  if (!short || !longer || short.duration >= longer.duration
+    || short.duration > maxShortSeconds || longer.duration < minLongSeconds) return false;
+  const shortTitle = normalizedStreamTitle(shortStream.title);
+  const longTitle = normalizedStreamTitle(longStream.title);
+  if (!shortTitle || !longTitle || shortTitle !== longTitle) return false;
+  return short.start >= longer.start - edgeToleranceMs
+    && short.end <= longer.end + edgeToleranceMs;
+}

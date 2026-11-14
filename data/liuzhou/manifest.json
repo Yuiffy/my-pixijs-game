@@ -444,6 +444,31 @@
       "sourceUrl": null,
       "originalFilename": "柳州市 (2).gif",
       "contentStatus": "Unverified browser export; not used for reconstruction"
+    },
+    {
+      "path": "open/osm/hedong-south-20261026.osm.gz",
+      "bytes": 139701,
+      "sha256": "8a01dd18a987ff045fdf80cec51fe118d2ed95b7a4eb8f969e5317216670b8a1",
+      "rawBytes": 1611772,
+      "rawSha256": "ba64b92c40e88bd71bf5dc573e7942c2c605ffde7ea861db119cf4aa4d1cec32",
+      "encoding": "gzip",
+      "category": "open-osm",
+      "restoreCachePath": "tmp/liuzhou/hedong-2026-10-26/hedong-south.osm",
+      "sourceUrl": "https://api.openstreetmap.org/api/0.6/map?bbox=109.420,24.320,109.445,24.338",
+      "downloadedAt": "2026-10-26T06:21:27.149615+00:00"
+    },
+    {
+      "path": "open/osm/hedong-south-20261026.download.json",
+      "bytes": 420,
+      "sha256": "9e6aadbf789bfea569d8a1c35eac822191af35530bdf50d2dda72f49786cfa5f",
+      "rawBytes": 420,
+      "rawSha256": "9e6aadbf789bfea569d8a1c35eac822191af35530bdf50d2dda72f49786cfa5f",
+      "encoding": "identity",
+      "category": "open-osm",
+      "restoreCachePath": "tmp/liuzhou/hedong-2026-10-26/hedong-south.download.json",
+      "sourceUrl": "https://api.openstreetmap.org/api/0.6/map?bbox=109.420,24.320,109.445,24.338",
+      "downloadedAt": "2026-10-26T06:21:27.149615+00:00"
     }
-  ]
+  ],
+  "updatedDate": "2026-10-26"
 }

@@ -3,7 +3,7 @@
 import { memo, useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 import { SURFACES } from './world';
-import { foundationCells, isSpanningDeck, surfaceHeight } from './terrain';
+import { createTerrainGeometry } from './terrainVisual';
 import { createEarthTexture } from './earthTexture';
 import TerrainBackdrop from './TerrainBackdrop';
 import GeometryBatch, { type StoneBox } from './GeometryBatch';
@@ -13,41 +13,7 @@ import StaticDistrict from './StaticDistrict';
  * above lower paths. No per-frame work and no extra textures per street. */
 function TerrainView() {
   const texture = useMemo(createEarthTexture, []);
-  const geometry = useMemo(() => {
-    const positions: number[] = []; const uvs: number[] = []; const colors: number[] = [];
-    const tint = new THREE.Color();
-    const face = (a: number[], b: number[], c: number[], d: number[], seed: number) => {
-      const horizontal = Math.hypot(b[0] - a[0], b[2] - a[2]);
-      const rows = Math.max(1, Math.ceil(Math.abs(a[1] - d[1]) / 1.4));
-      const columns = Math.max(1, Math.ceil(horizontal / 2.4));
-      const point = (u: number, v: number) => [a[0] + (b[0] - a[0]) * u, (a[1] + (b[1] - a[1]) * u) * (1 - v) + (d[1] + (c[1] - d[1]) * u) * v, a[2] + (b[2] - a[2]) * u];
-      for (let x = 0; x < columns; x++) for (let y = 0; y < rows; y++) {
-        const corners = [point(x / columns, y / rows), point((x + 1) / columns, y / rows), point((x + 1) / columns, (y + 1) / rows), point(x / columns, (y + 1) / rows)];
-        const noise = Math.sin(seed * 31 + x * 17 + y * 43) * 0.5 + 0.5;
-        tint.set('#868774');
-        tint.multiplyScalar(0.82 + noise * 0.12);
-        for (const index of [0, 1, 2, 0, 2, 3]) {
-          const p = corners[index]; positions.push(...p); colors.push(tint.r, tint.g, tint.b);
-          uvs.push((Math.abs(b[0] - a[0]) > 0.1 ? p[0] : p[2]) / 3, p[1] / 2);
-        }
-      }
-    };
-    SURFACES.filter(s => s.y >= -10 && !isSpanningDeck(s)).forEach((s, index) => {
-      for (const c of foundationCells(s, SURFACES)) {
-        const ya = surfaceHeight(s, c.z1) - 0.08; const yb = surfaceHeight(s, c.z2) - 0.08;
-        const ba = c.bottom; const bb = c.endBottom;
-        face([c.x1, ya, c.z1], [c.x2, ya, c.z1], [c.x2, ba, c.z1], [c.x1, ba, c.z1], index);
-        face([c.x2, yb, c.z2], [c.x1, yb, c.z2], [c.x1, bb, c.z2], [c.x2, bb, c.z2], index + 1);
-        face([c.x1, yb, c.z2], [c.x1, ya, c.z1], [c.x1, ba, c.z1], [c.x1, bb, c.z2], index + 2);
-        face([c.x2, ya, c.z1], [c.x2, yb, c.z2], [c.x2, bb, c.z2], [c.x2, ba, c.z1], index + 3);
-      }
-    });
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
-    g.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3)); g.computeVertexNormals();
-    return g;
-  }, []);
+  const geometry = useMemo(() => createTerrainGeometry(SURFACES), []);
   const arches = useMemo(() => {
     const boxes: StoneBox[] = [];
     for (const s of SURFACES.filter(q => /bridge/.test(q.id) && q.y >= 0 && q.endY === undefined)) {

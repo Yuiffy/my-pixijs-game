@@ -30,7 +30,7 @@ function rain(save, mode = 'story') {
   p.waitFor(() => model.canopyPhase(p.s, model.deliveryLevel(p.s).rain.canopies[1]) === 'open');
   p.mark('canopy-reopened');
   j(1640, 150); p.mark('second-awning'); p.waitFor(() => p.s.player.vy < -680, 200); p.dashGo(2010, 25, 240); p.mark('middle-roof');
-  p.go(2130); p.tick({ right: true, run: true }, 18); p.dashGo(2640, 40, 260); p.mark('last-roof'); p.go(2850); p.tick({ interact: true }); p.mark('delivered');
+  p.go(2130); p.tick({ right: true, run: true }, 18); p.dashGo(2640, 40, 260); p.mark('last-roof'); p.go(2850); p.mark('customer-arrival'); p.tick({ interact: true }); p.mark('delivered');
   assert.equal(p.s.phase, 'delivered', JSON.stringify(p.milestones.map(m => [m.name, Math.round(m.state.player.x), Math.round(m.state.player.y), m.state.checkpoint, m.state.deaths]))); return p;
 }
 
@@ -39,7 +39,7 @@ function greenhouse(save, mode = 'story') {
   p.go(350); j(480); j(660); j(850); p.go(885); p.tick({ right: true }, 2); p.tick({ attack: true }, 20); p.mark('inlet-open');
   j(1150, 150); p.mark('water-lift-rider'); p.waitFor(() => p.s.rain.liftY <= 425.01); p.mark('water-lift-high');
   j(1400); p.go(1470); p.tick({ right: true }, 2); p.tick({ attack: true }, 20); p.mark('flower-route-open');
-  j(1720); j(1920); j(2140); p.mark('flower-bank'); p.go(2260); j(2430); j(2580); j(2800); p.tick({ interact: true }); p.mark('delivered');
+  j(1720); j(1920); j(2140); p.mark('flower-bank'); p.go(2260); j(2430); j(2580); j(2800); p.mark('customer-arrival'); p.tick({ interact: true }); p.mark('delivered');
   assert.equal(p.s.phase, 'delivered'); return p;
 }
 
@@ -51,7 +51,7 @@ function bird(save, mode = 'story') {
   p.go(1360); p.tick({ right: true, run: true }, 16); p.dashGo(1750, 40); p.mark('third-roof');
   p.go(1880); p.tick({ right: true, run: true }, 16); p.dashGo(2350, 40, 260); p.mark('nest-roof');
   p.go(2450); p.tick({ interact: true }); p.mark('ribbon-returned');
-  p.dashGo(2780, 25); j(3040); p.tick({ interact: true }); p.mark('delivered');
+  p.dashGo(2780, 25); j(3040); p.mark('customer-arrival'); p.tick({ interact: true }); p.mark('delivered');
   assert.equal(p.s.phase, 'delivered', JSON.stringify(p.milestones.map(m => [m.name, Math.round(m.state.player.x), Math.round(m.state.player.y), m.state.player.health, m.state.deaths, m.state.rain.bird.phase]))); return p;
 }
 module.exports = { rain, greenhouse, bird };

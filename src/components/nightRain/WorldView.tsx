@@ -4,11 +4,12 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { memo, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import * as THREE from "three";
 import type { CameraControl, Enemy, EnemyKind, GameState, Surface } from "./types";
-import { enemyMotion } from "./enemyCombat";
+import { createEnemyGait, updateEnemyGait, sampleEnemyPose, enemyGroundLift, type EnemyGait } from './enemyLocomotion';
 import EnemyStrike, { EnemyWeaponTell } from "./EnemyStrike";
 import GroundWarning from "./GroundWarningView";
 import { HOUSES, STRUCTURES, houseParts, type House } from './architecture';
-import { constrainNightCamera } from './camera';
+import { constrainNightCamera, nightPlayerOpacity } from './camera';
+import { createPlayerCameraVisibility } from './playerCameraVisibility';
 import { followCameraBoom } from '../gameCamera/boom';
 import { CharacterStyle, GuestStyle, GuestWeapon, PLAYER_SKINS } from './CharacterStyle';
 import ChapterView from "./ChapterView";
@@ -25,6 +26,7 @@ import { CHAPTER_GATES } from "./chapter";
 import { createSaltTexture } from './skyTexture';
 import { createStoneTexture } from './stoneTexture';
 import { createEarthTexture } from './earthTexture';
+import { isSpanningDeck } from './terrain';
 import CompanionView from './CompanionView';
 import CombatTrail from './CombatTrail';
 import PlayerActor from './PlayerActor';
@@ -275,7 +277,12 @@ function Deck({ surface }: { surface: Surface }) {
   const boxes = useMemo(() => {
     const items: StoneBox[] = [];
     const steps = endY !== y && !natural ? Math.round(Math.abs(endY - y) / 0.22) : 0;
-    if (!steps && endY === y) items.push({ position: [(x1 + x2) / 2, y - 0.3, (z1 + z2) / 2], size: [x2 - x1, 0.58, z2 - z1], color: COLORS.stone });
+    if (!steps && endY === y) {
+      // Solid streets meet their weathered foundation through a shallow stone
+      // rim; only real spanning decks expose a full structural slab.
+      const thickness = y < -10 || isSpanningDeck(surface) ? 0.58 : 0.1;
+      items.push({ position: [(x1 + x2) / 2, y - thickness / 2, (z1 + z2) / 2], size: [x2 - x1, thickness, z2 - z1], color: COLORS.stone });
+    }
     for (let i = 0; i < steps; i++) items.push({ position: [(x1 + x2) / 2, y + (endY - y) * ((i + 0.5) / steps) - 0.055, z1 + (i + 0.5) * ((z2 - z1) / steps)], size: [x2 - x1, 0.11, (z2 - z1) / steps - 0.04], color: i % 3 === 0 ? '#a6a393' : surface.color });
     for (const r of surfaceRails(surface)) {
       items.push({ position: [r.x, r.y + 0.35, r.z], size: [r.w, 0.65, r.d], rotation: [-Math.atan(r.slope), 0, 0], color: '#7f8b7e' });
@@ -555,7 +562,7 @@ function CityContent() {
       hole.moveTo(x - 3.3, z - 3.3); hole.lineTo(x - 3.3, z + 3.3); hole.lineTo(x + 3.3, z + 3.3); hole.lineTo(x + 3.3, z - 3.3); hole.closePath(); shape.holes.push(hole);
     }
     // The lower court is drained, three metres below the streets.
-    const court = new THREE.Path(); court.moveTo(-3.6, 6); court.lineTo(-3.6, 37); court.lineTo(9.1, 37); court.lineTo(9.1, 6); court.closePath(); shape.holes.push(court);
+    const court = new THREE.Path(); court.moveTo(-3.6, 6); court.lineTo(-3.6, 37); court.lineTo(10.05, 37); court.lineTo(10.05, 6); court.closePath(); shape.holes.push(court);
     return shape;
   }, []);
   return (
@@ -1155,6 +1162,7 @@ function LegacyActor({
   const walk = useRef(0);
   const gaitSpeed = useRef(0);
   const gaitTime = useRef(stateRef.current.time);
+  const enemyGait = useRef<EnemyGait | null>(null);
   const drinkAim = useMemo(() => ({ up: new THREE.Vector3(0, 1, 0), direction: new THREE.Vector3(), inverse: new THREE.Quaternion() }), []);
   const rollBounds = useMemo(() => ({ all: new THREE.Box3(), mesh: new THREE.Box3(), pivot: new THREE.Vector3() }), []);
   const kind: EnemyKind | "player" = enemyId
@@ -1212,7 +1220,7 @@ function LegacyActor({
     root.current.position.set(actor.x, actor.y, actor.z);
     body.current.position.x = 0; body.current.position.z = 0;
     body.current.scale.setScalar(size);
-    body.current.rotation.order = "XYZ";
+    body.current.rotation.order = enemy ? 'YXZ' : 'XYZ';
     body.current.rotation.y = actor.facing;
     const walking = gaitSpeed.current > 0.15 && actor.action !== "dead";
     const stride = Math.min(1, gaitSpeed.current / 2.4);
@@ -1288,7 +1296,9 @@ function LegacyActor({
         heldWeapon.current.visible = enemy.action !== 'dead';
         heldWeapon.current.rotation.x = Math.PI / 2;
       }
-      const pose = enemyMotion(enemy);
+      if (!enemyGait.current) enemyGait.current = createEnemyGait(enemy, state.time);
+      updateEnemyGait(enemyGait.current, enemy, state.time);
+      const pose = sampleEnemyPose(enemy, state.time, enemyGait.current);
       if (pose) {
         if (heldWeapon.current) heldWeapon.current.rotation.x = pose.weaponPitch;
         if (rightElbow.current) rightElbow.current.rotation.x = pose.elbow;
@@ -1298,15 +1308,18 @@ function LegacyActor({
         if (rightLeg.current) rightLeg.current.rotation.z = pose.stance;
         armX = pose.ax; armZ = pose.az;
         if (arm.current) arm.current.rotation.y = pose.ay;
-        body.current.rotation.x = pose.lean; body.current.rotation.y += pose.twist; body.current.position.y += pose.crouch;
+        body.current.rotation.x = pose.lean; body.current.rotation.y += pose.twist; body.current.rotation.z = pose.roll;
+        body.current.position.y = pose.crouch + (enemy.action === 'dead' ? 0 : enemyGroundLift(enemy.action === 'stagger' ? { ...pose, lean: -0.16 } : pose, size));
         if (leftArm.current) leftArm.current.rotation.set(pose.lx, 0, pose.lz);
         if (leftLeg.current) leftLeg.current.rotation.x = pose.legL;
         if (rightLeg.current) rightLeg.current.rotation.x = pose.legR;
       }
       if (enemy.action === "stagger") {
+        body.current.rotation.x = -0.16;
         armX = 0.6;
         armZ = -0.5;
       }
+      if (enemy.action === 'dead') body.current.rotation.x = -1.5;
     }
     if (enemy) {
       body.current.position.y += bossLeapHeight(state, enemy);
@@ -1689,10 +1702,13 @@ function CameraRig({
   const lastReset = useRef(-1);
   const skyCinema = useRef(0);
   const reducedMotion = useRef(false);
+  const playerVisibility = useMemo(createPlayerCameraVisibility, []);
+  const playerOpacity = useRef(1);
+  useEffect(() => () => playerVisibility.restore(), [playerVisibility]);
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('test') !== '1') return;
-    const testWindow = window as Window & { nightRainCamera?: () => { position: number[]; target: number[]; forward: number[] } };
-    testWindow.nightRainCamera = () => ({ position: camera.position.toArray(), target: target.toArray(), forward: camera.getWorldDirection(new THREE.Vector3()).toArray() });
+    const testWindow = window as Window & { nightRainCamera?: () => { position: number[]; target: number[]; forward: number[]; playerOpacity: number } };
+    testWindow.nightRainCamera = () => ({ position: camera.position.toArray(), target: target.toArray(), forward: camera.getWorldDirection(new THREE.Vector3()).toArray(), playerOpacity: playerOpacity.current });
     return () => { delete testWindow.nightRainCamera; };
   }, [camera, target]);
   useEffect(() => { const preference = window.matchMedia('(prefers-reduced-motion: reduce)'); const update = () => { reducedMotion.current = preference.matches; }; update(); preference.addEventListener('change', update); return () => preference.removeEventListener('change', update); }, []);
@@ -1701,14 +1717,14 @@ function CameraRig({
     const p = state.player;
     const controls = cameraControl.current;
     if (state.mode === 'interlude' && state.bellComplete) {
-      desired.set(-65, 49, -870); target.set(-44, 43, -891); camera.position.copy(desired); camera.lookAt(target); first.current = true; return;
+      desired.set(-65, 49, -870); target.set(-44, 43, -891); camera.position.copy(desired); camera.lookAt(target); playerVisibility.restore(); first.current = true; return;
     }
     if (state.mode === 'interlude' && state.skyComplete) {
       skyCinema.current += Math.min(dt, 0.05);
       const t = reducedMotion.current ? 0 : THREE.MathUtils.smoothstep(skyCinema.current, 0, 11);
       desired.set(-53 - t * 12, 49 + t * 3, -736 + t * 14);
       target.set(-40 - t * 25, 61 - t * 31, -697 + t * 90);
-      camera.position.copy(desired); camera.lookAt(target); first.current = true; return;
+      camera.position.copy(desired); camera.lookAt(target); playerVisibility.restore(); first.current = true; return;
     }
     skyCinema.current = 0;
     const locked = state.enemies.find(
@@ -1767,6 +1783,8 @@ function CameraRig({
     first.current = false;
     camera.position.set(boom.x, boom.y, boom.z);
     camera.lookAt(camera.position.x + aim.x, camera.position.y + aim.y, camera.position.z + aim.z);
+    playerOpacity.current = nightPlayerOpacity(camera.position, { x: p.x, y: p.y + p.jumpHeight + 1.2, z: p.z });
+    playerVisibility.apply(scene.getObjectByName('player-articulated-rig'), playerOpacity.current);
   });
   return null;
 }

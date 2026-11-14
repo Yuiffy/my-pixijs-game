@@ -77,7 +77,7 @@ export function buildSkylineGeometry(cityRoads: Road[], bounds: { minX: number; 
     }
     const buildings = occupied.length;
     for (const bridge of geography.bridges) {
-      if (bridge.name === "文惠桥") continue;
+      if (bridge.name === "文惠桥" || bridge.name === "文昌大桥" || bridge.name === "文昌桥") continue;
       const a = bridge.name === "广雅大桥" ? new T.Vector3(GUANGYA_MAIN.a.x, 0, GUANGYA_MAIN.a.z) : new T.Vector3(bridge.a[0], 0, bridge.a[1]);
       const b = bridge.name === "广雅大桥" ? new T.Vector3(GUANGYA_MAIN.b.x, 0, GUANGYA_MAIN.b.z) : new T.Vector3(bridge.b[0], 0, bridge.b[1]);
       const length = a.distanceTo(b); const direction = b.clone().sub(a).normalize();

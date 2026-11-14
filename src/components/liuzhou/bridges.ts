@@ -2,6 +2,7 @@ import map from "./map.json";
 import type { Point } from "./world";
 import { terrainHeight } from "./terrain";
 import { GUANGYA_SECTIONS, GUANGYA_SUPPORTS } from "./guangya";
+import { WENCHANG_SECTIONS, WENCHANG_SUPPORTS } from "./wenchang";
 
 // OSM supplies plan geometry. The approach lengths are from the 2013 project
 // report; vertical alignment remains a reconstruction, not an as-built survey.
@@ -9,7 +10,7 @@ export const BRIDGE_HEIGHT = Math.max(terrainHeight({ x: 80, z: 60 }), terrainHe
 export const APPROACH_LENGTH = 136.956;
 export const SOUTH_APPROACH_LENGTH = 351.584;
 export type BridgePoint = Point & { y: number; crossfall?: number };
-export type BridgeSection = { id: string; a: BridgePoint; b: BridgePoint; width: number; main: boolean };
+export type BridgeSection = { id: string; a: BridgePoint; b: BridgePoint; width: number; main: boolean; thickness?: number };
 const length = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.z - b.z);
 const roadPoints = (id: string) => map.features.find(f => f.id === id)!.points.map(([x, z]) => ({ x, z }));
 const decks = [
@@ -46,6 +47,8 @@ export const BRIDGE_AXES = decks.map(deck => {
 // Both approaches follow the paired archived carriageways. Their vertical
 // profile and crossfall remain estimates; render, Rapier and saves share them.
 BRIDGE_SECTIONS.push(...GUANGYA_SECTIONS);
+BRIDGE_SECTIONS.push(...WENCHANG_SECTIONS);
+export const BRIDGE_SUPPORTS = [...GUANGYA_SUPPORTS, ...WENCHANG_SUPPORTS];
 export function projectBridge(p: Point, section: BridgeSection) {
   const dx = section.b.x - section.a.x; const dz = section.b.z - section.a.z;
   const t = Math.max(0, Math.min(1, ((p.x - section.a.x) * dx + (p.z - section.a.z) * dz) / (dx * dx + dz * dz)));
@@ -87,7 +90,7 @@ export function roadDeckHeight(id: string, p: Point) {
   return y;
 }
 export const treeClearsBridge = (p: Point) => !bridgeSurface(p, 5);
-export function deckVertices(s: BridgeSection, thickness = 0.9) {
+export function deckVertices(s: BridgeSection, thickness = s.thickness ?? 0.9) {
   const d = length(s.a, s.b); const nx = (s.b.z - s.a.z) / d; const nz = -(s.b.x - s.a.x) / d;
   return [s.a, s.b].flatMap(p => [-1, 1].flatMap(side => [0, -thickness].flatMap(dy => [p.x + nx * side * (s.width / 2), p.y + (p.crossfall || 0) * side + dy, p.z + nz * side * (s.width / 2)])));
 }
@@ -101,7 +104,7 @@ export const BRIDGE_RAILS: BridgeRail[] = BRIDGE_SECTIONS.flatMap(s => {
   });
 });
 export function bridgeSupportSolid(p: BridgePoint, margin = 0.15) {
-  return GUANGYA_SUPPORTS.some(s => {
+  return BRIDGE_SUPPORTS.some(s => {
     const dx = p.x - s.at[0]; const dz = p.z - s.at[2];
     return Math.abs(dx * Math.cos(s.yaw) - dz * Math.sin(s.yaw)) < s.size[0] / 2 + margin
       && Math.abs(dx * Math.sin(s.yaw) + dz * Math.cos(s.yaw)) < s.size[2] / 2 + margin
@@ -112,7 +115,7 @@ export function bridgeSolid(p: BridgePoint, margin = 0.15) {
   if (bridgeSupportSolid(p, margin)) return true;
   const hit = bridgeSurface(p, margin);
   if (!hit) return false;
-  if (p.y > hit.y - 0.9 - margin && p.y < hit.y + margin) return true;
+  if (p.y > hit.y - (hit.section.thickness ?? 0.9) - margin && p.y < hit.y + margin) return true;
   return hit.distance > hit.section.width / 2 - 0.4 - margin && p.y > hit.y && p.y < hit.y + 1.3 + margin;
 }
 // Preserve the selected surface. An actor under a high deck is never snapped

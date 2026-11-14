@@ -11,12 +11,17 @@ import xihuanLayout from "./xihuan-layout.json";
 import { WUXING_SOURCE_IDS } from "./wuxing";
 import { CENTRAL_BUILDINGS, CENTRAL_SOURCE_IDS, centralReserved } from "./central";
 import { riversideReserved } from "./riverside";
+import hedongLayout from "./hedong-layout.json";
+import { HEDONG_BUILDINGS } from "./hedong";
+import { inHedong } from "./hedongBounds";
+import { WENCHANG_SECTIONS } from "./wenchang";
 
 const xihuanWidths: Record<string, number> = xihuanLayout.roadWidths;
 
 type P = { x: number; z: number };
 export type CityBuilding = P & { id: string; w: number; d: number; h: number; angle: number; color: string; real: boolean; footprint?: P[]; heightSource?: "estimated"; baseY?: number; foundationDepth?: number };
-export const CITY_ROADS = source.roads.filter(r => r.tags.railway !== "platform").map(r => ({
+const existingRoadIds = new Set(source.roads.map(r => r.id));
+export const CITY_ROADS = [...source.roads.filter(r => r.tags.railway !== "platform"), ...hedongLayout.roads.filter(r => !existingRoadIds.has(r.id) && r.tags.highway !== "steps")].map(r => ({
   id: `city-road-${r.id}`,
 sourceId: r.id,
 name: r.id === MARKET_SOURCE_ID ? "跃进路东一巷" : r.name || "街巷",
@@ -42,6 +47,8 @@ export function segmentDistance(p: P, a: P, b: P) {
 export const CITY_PARKS = source.areas.filter(a => a.tags.leisure === "park" || a.tags.leisure === "garden");
 const protectedAreas = source.areas.filter(a => a.tags.leisure === "park" || a.name.includes("五星步行街") || a.tags.landuse === "railway");
 export const CITY_DISTRICTS = [
+  { id: "civic-square", name: "市民广场 · 文昌桥", x: 1215, z: -1405, detail: "沿文昌桥两侧人行道连接两岸，桥下保留滨江东路与蟠龙路；市民广场保留来源外环、十个内孔和水景占地。桥面纵坡、桥墩、广场绿化与停用水景细节为估算重建。" },
+  { id: "sun100-utopia", name: "阳光100 · 乌托邦", x: 1590, z: -1515, detail: "建筑轮廓与名称来自补齐覆盖后的 OSM，包括乌托邦音乐城及两栋阳光100写字楼；未标注的楼高、外立面和颜色为估算，不代表实测或当前商户布局。" },
   { id: "wuxing", name: "五星街", x: -433, z: -105, detail: "沿解放南路、弧形五星街、中山中路和西侧商业街景游览商厦与书店外观；来源楼体与道路来自 OSM，六处补充商铺、楼高、立面、铺装与设施为估算重建。" },
   { id: "underground", name: "龙城地下街", x: -594, z: -99, detail: "沿 OSM 主通道、横向分支及 16 处楼梯入口制作，可步行进入地下层；宽度、深度与店铺为估算重建。" },
   { id: "people-square", name: "人民广场", x: -576, z: -730, detail: "可步行经过百家姓地雕、树荫座椅，眺望博物馆、文化艺术中心与地王大厦；周边道路和建筑轮廓来自 OSM，铺装、地雕位置、绿化和立面为估算重建。" },
@@ -81,6 +88,7 @@ for (const b of source.buildings) {
 for (const b of [...MARKET_BUILDINGS, ...STATION_BUILDINGS, ...STATION_NEIGHBORHOOD_BUILDINGS, ...SQUARE_ROOF_BUILDINGS]) {
   buildings.push(b); occupied.push({ x: b.x, z: b.z, r: Math.hypot(b.w, b.d) / 2 });
 }
+for (const b of HEDONG_BUILDINGS) { buildings.push(b); occupied.push({ x: b.x, z: b.z, r: Math.hypot(b.w, b.d) / 2 }); }
 for (let index = 0; index < CITY_ROAD_SEGMENTS.length; index++) {
   const { a, b, road } = CITY_ROAD_SEGMENTS[index];
   if (road.bridge || road.foot) continue;
@@ -91,6 +99,8 @@ for (let index = 0; index < CITY_ROAD_SEGMENTS.length; index++) {
     const p = { x: a.x + dx * n + dz * offset, z: a.z + dz * n - dx * offset };
     const seed = index * 31 + Math.floor(n) + side + 1;
     const w = 17 + (seed % 10); const d = 15 + (seed % 9); const radius = Math.hypot(w, d) / 2;
+    if (inHedong(p, -radius)) continue;
+    if (WENCHANG_SECTIONS.some(s => segmentDistance(p, s.a, s.b) < s.width / 2 + radius + 2)) continue;
     if (marketReserved(p, radius)) continue;
     if (centralReserved(p, radius)) continue;
     if (stationNeighborhoodReserved(p, radius)) continue;

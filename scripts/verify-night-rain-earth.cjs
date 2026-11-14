@@ -77,6 +77,21 @@ async function main() {
   try {
     await run('entry', async () => { const { page, context } = await open(fixture(world.SPAWN)); await capture(page, 'entry'); await context.close(); });
     await run('high', async () => { const { page, context } = await open(fixture({ x: 4, y: 6, z: -24 })); await look(page, -Math.PI / 2, 0.85); await capture(page, 'high-sunken-overlook'); await context.close(); });
+    await run('rock-bank', async () => {
+      const { page, context } = await open(fixture({ x: 6, y: -3, z: -18 }));
+      // Ordinary camera input observes the retaining bank from the playable
+      // lower route. This view exposes relief that an overhead shot hides.
+      await look(page, -Math.PI / 2, 0.18, 6);
+      let s = await capture(page, 'sunken-rock-bank-low');
+      assert.equal(s.mode, 'playing'); assert.equal(s.player.y, -3);
+      assert.equal(world.supportAt(s.player.x, s.player.z, s.player.y + 0.1), -3);
+      await advance(page, 800, { x: 0, z: -1 });
+      await advance(page, 1, { x: 0, z: 0 });
+      await look(page, -Math.PI / 2, 0.3, 4.5);
+      s = await capture(page, 'sunken-rock-bank-walk');
+      assert.equal(s.mode, 'playing'); assert.equal(s.player.y, -3); assert.ok(s.player.z < -19);
+      await context.close();
+    });
     await run('shrine', async () => {
       const { page, context } = await open(fixture(world.REST_POINTS.courtyard, s => { s.player.hp = 37; s.player.flasks = 1; }));
       await look(page, 0.45, 0.42, 5); let s = await capture(page, 'shrine-unlit');
