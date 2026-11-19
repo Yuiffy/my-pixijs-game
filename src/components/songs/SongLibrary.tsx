@@ -113,7 +113,14 @@ export default function SongLibrary() {
         <header className={styles.intro}>
           <Image src="/images/livers/sui.png" width={88} height={88} alt="岁己SUI" priority />
           <div><p className={styles.eyebrow}>SUI / SONG ARCHIVE</p><h1>岁己歌单<BetaBadge /><span>唱歌统计与歌切</span></h1>
-            <p>找到唱过的歌，回到每一次演唱。</p></div>
+            <p>找到唱过的歌，回到每一次演唱。</p>
+            <p>
+              站外推荐 ·{' '}
+              <a className={styles.recommendation} href="https://www.suijisui.space/" target="_blank" rel="noopener noreferrer">
+                岁己歌单 <span aria-hidden="true">↗</span>
+              </a>
+            </p>
+          </div>
         </header>
         <div className={styles.stats} aria-label="全库统计">
           <div><strong>{named}</strong><span>已确认歌曲</span></div>

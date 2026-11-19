@@ -57,9 +57,9 @@ const HomeModule = () => (
           <Title level={4} className="!text-cyan-300 !mb-4 flex items-center gap-2"><StarOutlined /> 新饼须知</Title>
           <div className="flex flex-col h-full py-2">
              <ul className="space-y-2 text-slate-300 text-sm">
-                <li className="flex items-center gap-2">📅 上五休一，每晚7:40，左右</li>
+                <li className="flex items-center gap-2">📅 上五休一，直播日晚上 8 点左右开播</li>
                 <li className="flex items-center gap-2">🍜 每周三 22:00 人头麦煮面</li>
-                <li className="flex items-center gap-2">🎮 一三五七下午加播</li>
+                <li className="flex items-center gap-2">☀️ 近期没有下午场</li>
                 <li className="flex items-center gap-2">🎵 主杂谈，小唱。然后游戏/同步视听</li>
              </ul>
           </div>

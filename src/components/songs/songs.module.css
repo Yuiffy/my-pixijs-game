@@ -10,6 +10,8 @@
 .intro h1 { font-size: clamp(30px, 4vw, 42px); font-weight: 700; line-height: 1.35; }
 .intro h1 span { font-size: 15px; color: #a4b7bb; display: inline-block; margin-left: 20px; font-weight: 400; }
 .intro p { color: #9badb3; margin-top: 8px; font-size: 14px; }
+.recommendation { color: #a5dfcf; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+.recommendation:hover { color: #c1f4e7; }
 .stats { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid #2e4146; border-bottom: 1px solid #2e4146; padding: 25px 0; margin-bottom: 32px; gap: 16px; }
 .stats strong { display: block; font-size: 32px; font-weight: 500; font-variant-numeric: tabular-nums; line-height: 1.2; }
 .stats small { font-size: 18px; color: #8fa4aa; }
