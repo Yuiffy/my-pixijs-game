@@ -11,8 +11,8 @@ import styles from './songs.module.css';
 
 const remote = `https://raw.githubusercontent.com/${shards.index.repo}/${shards.index.branch}/public/data/streams/sui/songs.json`;
 const pageSize = 20;
-type Filters = { q: string; kind: string; upload: string; certainty: string; from: string; to: string; sort: string };
-const defaults: Filters = { q: '', kind: 'all', upload: 'all', certainty: 'all', from: '', to: '', sort: 'recent' };
+type Filters = { q: string; titles: string; kind: string; upload: string; certainty: string; from: string; to: string; sort: string };
+const defaults: Filters = { q: '', titles: 'named', kind: 'all', upload: 'all', certainty: 'all', from: '', to: '', sort: 'recent' };
 
 export default function SongLibrary() {
   const [catalog, setCatalog] = useState<SongCatalog>(snapshot as SongCatalog);
@@ -27,6 +27,7 @@ export default function SongLibrary() {
       const params = new URLSearchParams(window.location.search);
       const next = { ...defaults };
       (Object.keys(next) as (keyof Filters)[]).forEach(key => { next[key] = params.get(key) || defaults[key]; });
+      if (!['named', 'unknown', 'all'].includes(next.titles)) next.titles = 'named';
       if (!['all', 'full', 'fragment'].includes(next.kind)) next.kind = 'all';
       if (!['all', 'uploaded', 'missing'].includes(next.upload)) next.upload = 'all';
       if (!['all', 'confirmed', 'pending'].includes(next.certainty)) next.certainty = 'all';
@@ -69,12 +70,14 @@ export default function SongLibrary() {
   const sessions = useMemo(() => new Map(catalog.sessions.map(s => [s.id, s])), [catalog]);
   const confirmed = catalog.performances.filter(p => p.confirmed);
   const named = new Set(confirmed.filter(p => p.name).map(p => normalizeSongName(p.name!))).size;
+  const unknown = catalog.performances.filter(p => !p.name).length;
   const uploaded = catalog.performances.filter(p => p.clip).length;
   const invalidRange = Boolean(filters.from && filters.to && filters.from > filters.to);
   const groups = useMemo(() => {
     const result = new Map<string, { key: string; name: string; rows: SongPerformance[]; latest: string }>();
     const query = normalizeSongName(filters.q);
     for (const row of catalog.performances) {
+      if ((filters.titles === 'named' && !row.name) || (filters.titles === 'unknown' && row.name)) continue;
       const session = sessions.get(row.sessionId)!;
       const date = performedAt(session.recordedAt, row.start).slice(0, 10).replaceAll('/', '-');
       if (invalidRange || (filters.from && date < filters.from) || (filters.to && date > filters.to)
@@ -114,14 +117,15 @@ export default function SongLibrary() {
           <Image src="/images/livers/sui.png" width={88} height={88} alt="岁己SUI" priority />
           <div><p className={styles.eyebrow}>SUI / SONG ARCHIVE</p><h1>岁己歌单<BetaBadge /><span>唱歌统计与歌切</span></h1>
             <p>找到唱过的歌，回到每一次演唱。</p>
-            <p>
-              站外推荐 ·{' '}
-              <a className={styles.recommendation} href="https://www.suijisui.space/" target="_blank" rel="noopener noreferrer">
-                岁己歌单 <span aria-hidden="true">↗</span>
-              </a>
-            </p>
           </div>
         </header>
+        <a className={styles.recommendation} href="https://www.suijisui.space/" target="_blank" rel="noopener noreferrer">
+          <div>
+            <h2>推荐 · 站外岁己歌单</h2>
+            <p>想找更多岁己唱过的歌？先去这里逛逛。</p>
+          </div>
+          <span className={styles.recommendationAction}>打开岁己歌单 <span aria-hidden="true">↗</span></span>
+        </a>
         <div className={styles.stats} aria-label="全库统计">
           <div><strong>{named}</strong><span>已确认歌曲</span></div>
           <div><strong>{confirmed.length}</strong><span>已确认演唱</span></div>
@@ -133,6 +137,7 @@ export default function SongLibrary() {
             <input id="song-search" type="search" placeholder="搜索歌名、直播标题、日期或 BV 号" value={filters.q} onChange={e => update('q', e.target.value)} />
           </label>
           <div className={styles.filters}>
+            <label htmlFor="song-titles">歌名状态<select id="song-titles" value={filters.titles} onChange={e => update('titles', e.target.value)}><option value="named">已有歌名</option><option value="unknown">歌名待补 ({unknown})</option><option value="all">全部记录</option></select></label>
             <label htmlFor="song-kind">演唱类型<select id="song-kind" value={filters.kind} onChange={e => update('kind', e.target.value)}><option value="all">全部类型</option><option value="full">完整演唱</option><option value="fragment">片段演唱</option></select></label>
             <label htmlFor="song-upload">歌切<select id="song-upload" value={filters.upload} onChange={e => update('upload', e.target.value)}><option value="all">全部记录</option><option value="uploaded">已有歌切</option><option value="missing">暂无歌切</option></select></label>
             <label htmlFor="song-certainty">核验状态<select id="song-certainty" value={filters.certainty} onChange={e => update('certainty', e.target.value)}><option value="all">全部状态</option><option value="confirmed">已确认</option><option value="pending">待核验</option></select></label>
@@ -143,7 +148,7 @@ export default function SongLibrary() {
           {invalidRange && <p role="alert">开始日期不能晚于结束日期。</p>}
         </section>
         <div className={styles.results}>
-          <p role="status">{groups.length} 个歌曲条目 · {groups.reduce((n, g) => n + g.rows.length, 0)} 条记录</p>
+          <p role="status">{groups.filter(group => group.rows[0].name).length} 个歌曲条目 · {groups.reduce((n, g) => n + g.rows.length, 0)} 条记录</p>
           <label htmlFor="song-sort">排序<select id="song-sort" value={filters.sort} onChange={e => update('sort', e.target.value)}><option value="recent">最近演唱</option><option value="count">记录最多</option><option value="name">歌曲名称</option></select></label>
         </div>
         <section aria-label="歌曲与演唱记录" className={styles.list}>

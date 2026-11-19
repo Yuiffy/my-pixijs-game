@@ -61,6 +61,29 @@ test('deduplicates session copies using latest record, excludes work directories
   assert.deepEqual(collectSongFiles([f.root]), [f.file]);
 });
 
+test('sync resolves session-relative manifests and reads reviewed single-item title evidence', t => {
+  const f = fixture(t);
+  f.record.songs[0].name = null;
+  f.save(f.file, f.record);
+  const release = path.join(f.dir, 'release');
+  f.save(path.join(f.dir, 'PLAN.json'), { sessionId: f.record.sessionId, signature: 'active', uploadManifestPath: 'release/UPLOAD_MANIFEST.json' });
+  f.save(path.join(release, 'UPLOAD_MANIFEST.json'), { clips: [{ reviewIndex: 1, metadataPath: 'reviewed/songs.json' }] });
+  f.save(path.join(release, 'upload_state.json'), { done: { 1: { bvid: 'BV1pvaU6xE6i' } } });
+  const metadata = {
+    type: 'stream_activity_submission', kind: 'songs', planSignature: 'active', source: f.record.source,
+    activities: [{ id: 'a1', start: 100, end: 280 }], output: { parts: [{ activityId: 'a1', name: ' ' }] },
+    uploadReady: true, activityReview: { status: 'approved', authority: 'automatic', checks: { titles: true } },
+    presentation: { titleEvidence: { activityId: 'a1', name: '已审核曲名' } },
+  };
+  f.save(path.join(release, 'reviewed', 'songs.json'), metadata);
+  const [performance] = buildSongCatalog([f.file]).performances;
+  assert.equal(performance.name, '已审核曲名');
+  assert.equal(performance.clip?.url, 'https://www.bilibili.com/video/BV1pvaU6xE6i/?p=1');
+  metadata.output.parts[0].name = '冲突歌名';
+  f.save(path.join(release, 'reviewed', 'songs.json'), metadata);
+  assert.equal(buildSongCatalog([f.file]).performances[0].name, null);
+});
+
 test('recaps and library fill reviewed names before upload and reject mismatched revisions', t => {
   const f = fixture(t);
   f.record.songs[0].name = null; f.save(f.file, f.record);

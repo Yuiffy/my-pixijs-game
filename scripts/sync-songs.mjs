@@ -15,16 +15,19 @@ export function correctedSongName(sessionId, song, corrections = titleCorrection
 }
 const portableBase = file => String(file || '').split(/[\\/]/).at(-1);
 const recordingKey = file => portableBase(file).replace(/\.[^.]+$/, '');
-function resolveSessionPath(directory, value) {
-  let resolved = path.resolve(value);
-  let relative = path.relative(directory, resolved);
-  if (relative.startsWith('..') || path.isAbsolute(relative)) {
-    const parts = String(value).split(/[\\/]/);
+function resolveSessionPath(directory, value, base = directory) {
+  const parts = value.split(/[\\/]/);
+  const absolute = path.isAbsolute(value) || path.win32.isAbsolute(value);
+  const outsideSession = file => {
+    const relative = path.relative(directory, file);
+    return relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative);
+  };
+  let resolved = absolute ? path.resolve(value) : path.resolve(base, ...parts);
+  if (absolute && (outsideSession(resolved) || !path.isAbsolute(value))) {
     const index = parts.lastIndexOf(portableBase(directory));
     if (index >= 0) resolved = path.resolve(directory, ...parts.slice(index + 1));
-    relative = path.relative(directory, resolved);
   }
-  if (relative.startsWith('..') || path.isAbsolute(relative)) throw new Error('Activity manifest is outside its session');
+  if (outsideSession(resolved)) throw new Error('Activity manifest or metadata is outside its session');
   return resolved;
 }
 
@@ -50,17 +53,18 @@ export function songDetailsFor(directory, record) {
   // The active publication manifest is authoritative for links, but reviewed
   // names may live in a later retry/revision. Read all same-signature metadata
   // under the session so a later correction replaces an earlier null name.
-  const publicationByActivity = new Map();
+  const publishedByMetadata = new Map();
   if (plan.uploadManifestPath) {
     const manifestFile = resolveSessionPath(directory, plan.uploadManifestPath);
     if (fs.existsSync(manifestFile)) {
       const manifest = read(manifestFile);
       const stateFile = path.join(path.dirname(manifestFile), 'upload_state.json');
       const state = fs.existsSync(stateFile) ? read(stateFile) : {};
-      for (const clip of manifest.clips || []) publicationByActivity.set(String(clip.metadataPath), {
-        uploaded: state.done?.[String(clip.reviewIndex)],
-        metadataPath: path.join(path.dirname(manifestFile), portableBase(clip.metadataPath)),
-      });
+      for (const clip of manifest.clips || []) {
+        if (typeof clip.metadataPath !== 'string' || !clip.metadataPath) continue;
+        const metadataPath = resolveSessionPath(directory, clip.metadataPath, path.dirname(manifestFile));
+        publishedByMetadata.set(metadataPath, state.done?.[String(clip.reviewIndex)]);
+      }
     }
   }
   for (const metadataFile of metadataFiles) {
@@ -72,6 +76,8 @@ export function songDetailsFor(directory, record) {
     const review = metadata.activityReview;
     const reviewed = review?.status === 'approved'
       && (review.authority === 'human' || (review.authority === 'automatic' && review.checks?.titles === true));
+    const titleEvidence = metadata.presentation?.titleEvidence;
+    const titleItems = Array.isArray(titleEvidence?.items) ? titleEvidence.items : [titleEvidence];
     for (const song of record.songs || []) {
       const activity = metadata.activities?.find(event => event.id === song.activityId
         && event.start === song.start && event.end === song.end);
@@ -79,21 +85,20 @@ export function songDetailsFor(directory, record) {
       const partIndex = metadata.output?.parts?.findIndex(part => part.activityId === song.activityId);
       if (!(partIndex >= 0)) continue;
       const part = metadata.output.parts[partIndex];
-      const evidence = metadata.presentation?.titleEvidence?.items?.filter(item => item.activityId === song.activityId) || [];
-      const title = typeof part.name === 'string' ? part.name.trim() : evidence[0]?.name?.trim();
-      const publication = [...publicationByActivity.values()].find(item => path.resolve(item.metadataPath) === path.resolve(metadataFile));
-      const clip = /^BV[0-9A-Za-z]{10}$/.test(publication?.uploaded?.bvid || '') ? {
-        bvid: publication.uploaded.bvid, part: partIndex + 1,
-        url: `https://www.bilibili.com/video/${publication.uploaded.bvid}/?p=${partIndex + 1}`,
+      const evidence = titleItems.filter(item => item?.activityId === song.activityId)
+        .map(item => typeof item.name === 'string' ? item.name.trim() : '');
+      const title = (typeof part.name === 'string' && part.name.trim()) || evidence[0];
+      const publication = publishedByMetadata.get(path.resolve(metadataFile));
+      const clip = /^BV[0-9A-Za-z]{10}$/.test(publication?.bvid || '') ? {
+        bvid: publication.bvid, part: partIndex + 1,
+        url: `https://www.bilibili.com/video/${publication.bvid}/?p=${partIndex + 1}`,
       } : null;
-      if (reviewed && title && (!evidence.length || evidence.every(item => item.name === title))) {
+      if (reviewed && title && evidence.every(name => name === title)) {
         result.set(song.activityId, { ...(result.get(song.activityId) || {}), name: title });
       }
       if (clip) result.set(song.activityId, { ...(result.get(song.activityId) || { name: null }), clip });
     }
   }
-  // Retain the old behavior for reviewed metadata that is only reachable via
-  // the manifest, while allowing later historical revisions to fill names.
   for (const song of record.songs || []) if (!result.has(song.activityId)) result.set(song.activityId, { name: null, clip: null });
   return result;
 }

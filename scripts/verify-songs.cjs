@@ -15,7 +15,11 @@ fs.mkdirSync(output, { recursive: true });
   const errors = []; const screenshots = [];
   try {
     const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, timezoneId: 'America/Los_Angeles' });
-    await context.addInitScript(() => { if (window.speechSynthesis) window.speechSynthesis.speak = () => {}; });
+    await context.addInitScript(() => {
+      Element.prototype.requestPointerLock = () => {};
+      document.exitPointerLock = () => {};
+      if (window.speechSynthesis) window.speechSynthesis.speak = () => {};
+    });
     const page = await context.newPage();
     await page.route('**/api/record', route => route.fulfill({ json: { success: true } }));
     for (const pattern of ['**/pagead/**', '**/hm.baidu.com/**']) await page.route(pattern, route => route.fulfill({ body: '', contentType: 'application/javascript' }));
@@ -32,18 +36,27 @@ fs.mkdirSync(output, { recursive: true });
     }
     await page.goto(url);
     await page.getByText('暂时无法获取最新歌单，正在显示已保存的数据。', { exact: false }).waitFor();
+    const recommendation = page.getByRole('link', { name: /打开岁己歌单/ });
+    assert.equal(await recommendation.getAttribute('href'), 'https://www.suijisui.space/');
+    assert.equal(await recommendation.getAttribute('target'), '_blank');
+    assert.equal(await page.getByText('未识别歌名', { exact: true }).count(), 0);
     const bubble = page.locator('section[aria-label="歌曲与演唱记录"] > details').filter({ has: page.locator('summary').filter({ hasText: '泡泡' }) });
-    await bubble.locator('summary').click();
+    await page.getByLabel('搜索歌曲', { exact: true }).fill('泡泡');
+    await bubble.waitFor();
     assert.equal(await bubble.getByRole('link', { name: '播放歌切' }).getAttribute('href'), real.performances.find(p => p.name === '泡泡').clip.url);
     assert.match(await bubble.locator('time').innerText(), /2026\/10\/01 21:25:20/);
-    for (const name of ['泡泡', "Don't Look Back in Anger", 'Moon River']) {
+    for (const name of ['泡泡', "Don't Look Back in Anger", 'Moon River', 'いつも何度でも']) {
+      await page.getByLabel('搜索歌曲', { exact: true }).fill(name);
+      await page.locator('summary strong').getByText(name, { exact: true }).waitFor();
       assert.equal(await page.locator('summary strong').getByText(name, { exact: true }).count(), 1);
     }
     assert.equal(await page.getByRole('link', { name: '返回岁己首页' }).getAttribute('href'), '/');
     response = { ...real, generatedAt: '2026-10-02T00:00:00Z', performances: real.performances.map(p => ({ ...p, name: null })) };
     await page.getByRole('button', { name: '刷新数据' }).click();
     await page.getByText('远端数据尚未更新', { exact: false }).waitFor();
+    await page.getByLabel('搜索歌曲', { exact: true }).fill('Moon River');
     assert.equal(await page.locator('summary strong').getByText('Moon River', { exact: true }).count(), 1);
+    await page.getByRole('button', { name: '重置筛选' }).click();
     await capture('01-real-desktop');
     await page.setViewportSize({ width: 390, height: 844 });
     await capture('02-real-mobile');
@@ -62,6 +75,14 @@ fs.mkdirSync(output, { recursive: true });
     ] };
     await page.getByRole('button', { name: '刷新数据' }).click();
     await page.getByText('已加载最新歌单', { exact: false }).waitFor();
+    const titles = page.getByLabel('歌名状态');
+    await titles.selectOption('unknown');
+    await page.getByRole('status').filter({ hasText: '0 个歌曲条目 · 2 条记录' }).waitFor();
+    assert.equal(await page.getByText('未识别歌名', { exact: true }).count(), 2);
+    await page.reload();
+    await page.getByText('已加载最新歌单', { exact: false }).waitFor();
+    assert.equal(await titles.inputValue(), 'unknown');
+    await titles.selectOption('named');
     await page.getByRole('button', { name: '下一页' }).click();
     assert.match(await page.getByRole('navigation', { name: '歌曲分页' }).innerText(), /2 \/ 2/);
     await page.getByLabel('搜索歌曲', { exact: true }).fill('夜曲');
@@ -82,6 +103,7 @@ fs.mkdirSync(output, { recursive: true });
     assert.equal(await page.getByLabel('搜索歌曲', { exact: true }).inputValue(), '夜曲');
     assert.equal(await page.getByLabel('歌切').inputValue(), 'uploaded');
     await page.getByRole('button', { name: '重置筛选' }).click();
+    await titles.selectOption('all');
     await page.getByLabel('演唱日期 · 从').fill('2026-10-02');
     await page.getByLabel('到', { exact: true }).fill('2026-10-02');
     await page.getByRole('status').filter({ hasText: '2 条记录' }).waitFor();

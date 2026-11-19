@@ -37,5 +37,88 @@
       "time": "01:44:44.760",
       "quote": "嗯moonriver"
     }
+  },
+  {
+    "sessionId": "de0f66060f6a8ad37fe515856a748626cf5e9849f48da86168c3d2eb386ff4c0",
+    "activityId": "activity-3",
+    "start": 8012,
+    "end": 8076,
+    "name": "模特",
+    "evidence": {
+      "transcript": "2026-10-20 source SRT",
+      "cue": 2162,
+      "time": "02:13:43",
+      "quote": "我想想啊李荣浩模特怎么唱的"
+    }
+  },
+  {
+    "sessionId": "a2c125feaa59cf06378d040889a01161f6a0467172ae1c52e10f417295fa9717",
+    "activityId": "activity-2",
+    "start": 4482,
+    "end": 4748,
+    "name": "Innocence",
+    "evidence": {
+      "transcript": "2026-10-27 ALIGNED.srt",
+      "cue": 1387,
+      "time": "01:16:29.680",
+      "quote": "this innocence is",
+      "note": "前后多句对应 Avril Lavigne《Innocence》，演唱后主播评价了这次演唱。"
+    }
+  },
+  {
+    "sessionId": "465a550a0ed7506116e721501ae993270a96c37733cf99b94c7ff5f02b8aa34d",
+    "activityId": "activity-1",
+    "start": 2251,
+    "end": 2390,
+    "name": "Die With A Smile",
+    "evidence": {
+      "transcript": "2026-11-08 source SRT",
+      "cue": 574,
+      "time": "00:38:08",
+      "quote": "Whatever you go",
+      "note": "接续歌词对应《Die With A Smile》，同段 2365.308 秒弹幕明确提到歌名。"
+    }
+  },
+  {
+    "sessionId": "465a550a0ed7506116e721501ae993270a96c37733cf99b94c7ff5f02b8aa34d",
+    "activityId": "activity-2",
+    "start": 3473,
+    "end": 3515,
+    "name": "彩云之南",
+    "evidence": {
+      "transcript": "2026-11-08 source SRT",
+      "cue": 913,
+      "time": "00:58:02",
+      "quote": "彩云指南我心的方向",
+      "note": "主播在第 910 条明确提到《彩云之南》，同段弹幕亦引用歌词。"
+    }
+  },
+  {
+    "sessionId": "e3bce16d5189f2db4f986d7ecfc820ad3c4ef416a73b8ef05990389e03455efd",
+    "activityId": "activity-1",
+    "start": 1107,
+    "end": 1116,
+    "name": "等你下课",
+    "evidence": {
+      "transcript": "2026-11-15 source SRT",
+      "cue": 323,
+      "time": "00:18:27",
+      "quote": "你住的巷子里住住一间公寓",
+      "note": "下一句‘为了能和你不期而遇’也与《等你下课》开头对应。"
+    }
+  },
+  {
+    "sessionId": "2bbba61e53a1050193af182a99f55823cb40f196799aa6833442556d2f40c709",
+    "activityId": "activity-4",
+    "start": 6351.279,
+    "end": 6626,
+    "name": "いつも何度でも",
+    "evidence": {
+      "transcript": "2026-11-16 source SRT",
+      "cue": 1881,
+      "time": "01:48:23.739",
+      "quote": "阿达拉西",
+      "note": "第 1881 至 1888 条可辨认的日语音节对应木村弓《いつも何度でも》第二段，从‘新しい景色が’唱到‘海の彼方には もう探さない’。同段的歌曲检索也收录此曲为候选。"
+    }
   }
 ]
