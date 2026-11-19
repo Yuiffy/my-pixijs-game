@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getLiverConfig } from './liver-config.js';
-import { correctedSongName, songDetailsFor } from './sync-songs.mjs';
+import { correctedSongName, isExcludedSong, readSongExclusions, songDetailsFor } from './sync-songs.mjs';
 import { getIndexLiverDir } from './stream-shards.mjs';
 import { parseStreamArtifact, copyFileIfChanged } from './stream-sync-helpers.mjs';
 
@@ -118,7 +118,7 @@ function uniqueItems(items) {
   });
 }
 
-export function buildStreamRecap(summary, { liverId, plan, songs, songDetails = new Map(), publications = new Map(), games = [] } = {}) {
+export function buildStreamRecap(summary, { liverId, plan, songs, songDetails = new Map(), songExclusions = [], publications = new Map(), games = [] } = {}) {
   if (summary?.status !== 'success' || !summary.content || typeof summary.content.overview !== 'string') return null;
   const content = summary.content;
   const events = Array.isArray(plan?.events) ? plan.events : summary.activityTimeline?.events || [];
@@ -126,6 +126,7 @@ export function buildStreamRecap(summary, { liverId, plan, songs, songDetails = 
   if (typeof summary.generatedAt === 'string' && Number.isFinite(Date.parse(summary.generatedAt))) recap.generatedAt = summary.generatedAt;
   const songEvents = Array.isArray(songs?.songs) ? songs.songs.map(song => ({ ...song, id: song.activityId })) : events.filter(event => event.kind === 'song');
   for (const event of songEvents.filter(validRange)) {
+    if (isExcludedSong(songExclusions, event.id, event.start, event.end)) continue;
     const published = publications.get(event.id);
     const name = (liverId === 'sui' ? correctedSongName(songs?.sessionId || plan?.sessionId, { ...event, activityId: event.id }) : event.name) || songDetails.get(event.id)?.name || published?.name || '未识别歌名';
     recap.songs.push({ name, start: event.start, end: event.end, ...(published ? { clips: [published.clip] } : {}) });
@@ -234,7 +235,8 @@ export function enrichStreamRecaps(streams, { sourceDirs, liverId }) {
     }) : new Map();
     const publications = activity ? activityPublications(activity.directory, plan) : new Map();
     const games = game ? gamePublications(game.directory, game.plan) : [];
-    const recap = buildStreamRecap(summary, { liverId, plan, songs, songDetails, publications, games });
+    const songExclusions = activity && liverId === 'sui' && plan.sessionId ? readSongExclusions(activity.directory, plan.sessionId) : [];
+    const recap = buildStreamRecap(summary, { liverId, plan, songs, songDetails, songExclusions, publications, games });
     return recap ? { ...stream, recap } : stream;
   });
 }

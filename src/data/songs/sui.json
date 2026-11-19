@@ -1,7 +1,13 @@
 {
   "version": 1,
-  "generatedAt": "2026-11-19T17:27:52.485Z",
+  "generatedAt": "2026-11-19T18:33:48.923Z",
   "sessions": [
+    {
+      "id": "a7b0f490a6d3e20cc4edd53f34a0d400d65fc4a8f9d6ec60ed7f84f91e9b6da0",
+      "recordedAt": "2026-11-19 20:16:03",
+      "title": "陪你这个猪过周四【新衣活动中_merged",
+      "complete": true
+    },
     {
       "id": "a7c36e8e93f2f255c8e4d92686cbd5d5717cf4d53d627e03c698bc6bb69a9f4a",
       "recordedAt": "2026-11-18 20:39:02",
@@ -239,17 +245,6 @@
   ],
   "performances": [
     {
-      "id": "958d9f4f9561448da114700b425b0791e626eaf203b781895fd866c8bdd85def:activity-2",
-      "sessionId": "958d9f4f9561448da114700b425b0791e626eaf203b781895fd866c8bdd85def",
-      "name": null,
-      "start": 2246,
-      "end": 2334,
-      "performance": "fragment",
-      "confirmed": true,
-      "boundariesConfirmed": true,
-      "clip": null
-    },
-    {
       "id": "958d9f4f9561448da114700b425b0791e626eaf203b781895fd866c8bdd85def:activity-5",
       "sessionId": "958d9f4f9561448da114700b425b0791e626eaf203b781895fd866c8bdd85def",
       "name": "我",
@@ -347,17 +342,6 @@
       }
     },
     {
-      "id": "de0f66060f6a8ad37fe515856a748626cf5e9849f48da86168c3d2eb386ff4c0:activity-5",
-      "sessionId": "de0f66060f6a8ad37fe515856a748626cf5e9849f48da86168c3d2eb386ff4c0",
-      "name": null,
-      "start": 9000,
-      "end": 9199,
-      "performance": "fragment",
-      "confirmed": false,
-      "boundariesConfirmed": false,
-      "clip": null
-    },
-    {
       "id": "c3d2f53f866b7413dc65bf9b21750182d39ba175ee871b90a0a185cc098e3023:activity-2",
       "sessionId": "c3d2f53f866b7413dc65bf9b21750182d39ba175ee871b90a0a185cc098e3023",
       "name": "風を食む",
@@ -433,17 +417,6 @@
       }
     },
     {
-      "id": "a2c125feaa59cf06378d040889a01161f6a0467172ae1c52e10f417295fa9717:activity-1",
-      "sessionId": "a2c125feaa59cf06378d040889a01161f6a0467172ae1c52e10f417295fa9717",
-      "name": null,
-      "start": 723,
-      "end": 779,
-      "performance": "fragment",
-      "confirmed": true,
-      "boundariesConfirmed": true,
-      "clip": null
-    },
-    {
       "id": "a2c125feaa59cf06378d040889a01161f6a0467172ae1c52e10f417295fa9717:activity-2",
       "sessionId": "a2c125feaa59cf06378d040889a01161f6a0467172ae1c52e10f417295fa9717",
       "name": "Innocence",
@@ -452,17 +425,6 @@
       "performance": "full",
       "confirmed": true,
       "boundariesConfirmed": true,
-      "clip": null
-    },
-    {
-      "id": "7ca11bece06571ca521f748c3f6ed615d44df297515a2f8d09d78f546979e887:activity-1",
-      "sessionId": "7ca11bece06571ca521f748c3f6ed615d44df297515a2f8d09d78f546979e887",
-      "name": null,
-      "start": 6858,
-      "end": 6875,
-      "performance": "fragment",
-      "confirmed": false,
-      "boundariesConfirmed": false,
       "clip": null
     },
     {
@@ -479,17 +441,6 @@
         "part": 1,
         "url": "https://www.bilibili.com/video/BV1SWxp6LERM/?p=1"
       }
-    },
-    {
-      "id": "62bf8772ba4d363bfd9d0734a77fd50d8b4423df790b0c5f69569d08b860ec2c:activity-1",
-      "sessionId": "62bf8772ba4d363bfd9d0734a77fd50d8b4423df790b0c5f69569d08b860ec2c",
-      "name": null,
-      "start": 3522,
-      "end": 3558,
-      "performance": "fragment",
-      "confirmed": false,
-      "boundariesConfirmed": false,
-      "clip": null
     },
     {
       "id": "62bf8772ba4d363bfd9d0734a77fd50d8b4423df790b0c5f69569d08b860ec2c:activity-2",
@@ -522,17 +473,6 @@
       }
     },
     {
-      "id": "ee346158da3a67cf776cd2ddce0927053b2a0152dcaf41cc02920d90138249c0:activity-1",
-      "sessionId": "ee346158da3a67cf776cd2ddce0927053b2a0152dcaf41cc02920d90138249c0",
-      "name": null,
-      "start": 5815,
-      "end": 5870,
-      "performance": "fragment",
-      "confirmed": false,
-      "boundariesConfirmed": false,
-      "clip": null
-    },
-    {
       "id": "03422496112b26200b963527f42281d28fdcd61b7eff5bed5acb1d649edf8167:activity-1",
       "sessionId": "03422496112b26200b963527f42281d28fdcd61b7eff5bed5acb1d649edf8167",
       "name": "天之若",
@@ -561,28 +501,6 @@
         "part": 2,
         "url": "https://www.bilibili.com/video/BV1Gu4V6ZE2q/?p=2"
       }
-    },
-    {
-      "id": "2a2eae3b6cd5f3d7b0a8eabbd8ff32bfde27b1c255231b03331c96074fa44ce6:activity-1",
-      "sessionId": "2a2eae3b6cd5f3d7b0a8eabbd8ff32bfde27b1c255231b03331c96074fa44ce6",
-      "name": null,
-      "start": 134,
-      "end": 153,
-      "performance": "fragment",
-      "confirmed": false,
-      "boundariesConfirmed": false,
-      "clip": null
-    },
-    {
-      "id": "2a2eae3b6cd5f3d7b0a8eabbd8ff32bfde27b1c255231b03331c96074fa44ce6:activity-2",
-      "sessionId": "2a2eae3b6cd5f3d7b0a8eabbd8ff32bfde27b1c255231b03331c96074fa44ce6",
-      "name": null,
-      "start": 2980,
-      "end": 3052,
-      "performance": "fragment",
-      "confirmed": false,
-      "boundariesConfirmed": false,
-      "clip": null
     },
     {
       "id": "465a550a0ed7506116e721501ae993270a96c37733cf99b94c7ff5f02b8aa34d:activity-1",
@@ -697,39 +615,6 @@
       }
     },
     {
-      "id": "d307b84f4e2237b1326f7f3d94af5c49a1aa5ff77a6224eebe5b94beee7b58b3:activity-1",
-      "sessionId": "d307b84f4e2237b1326f7f3d94af5c49a1aa5ff77a6224eebe5b94beee7b58b3",
-      "name": null,
-      "start": 2784,
-      "end": 2933,
-      "performance": "fragment",
-      "confirmed": false,
-      "boundariesConfirmed": false,
-      "clip": null
-    },
-    {
-      "id": "d307b84f4e2237b1326f7f3d94af5c49a1aa5ff77a6224eebe5b94beee7b58b3:activity-2",
-      "sessionId": "d307b84f4e2237b1326f7f3d94af5c49a1aa5ff77a6224eebe5b94beee7b58b3",
-      "name": null,
-      "start": 3854,
-      "end": 4107,
-      "performance": "fragment",
-      "confirmed": false,
-      "boundariesConfirmed": false,
-      "clip": null
-    },
-    {
-      "id": "d307b84f4e2237b1326f7f3d94af5c49a1aa5ff77a6224eebe5b94beee7b58b3:activity-3",
-      "sessionId": "d307b84f4e2237b1326f7f3d94af5c49a1aa5ff77a6224eebe5b94beee7b58b3",
-      "name": null,
-      "start": 17847,
-      "end": 18143,
-      "performance": "fragment",
-      "confirmed": false,
-      "boundariesConfirmed": false,
-      "clip": null
-    },
-    {
       "id": "e3bce16d5189f2db4f986d7ecfc820ad3c4ef416a73b8ef05990389e03455efd:activity-1",
       "sessionId": "e3bce16d5189f2db4f986d7ecfc820ad3c4ef416a73b8ef05990389e03455efd",
       "name": "等你下课",
@@ -771,6 +656,61 @@
       "performance": "full",
       "confirmed": true,
       "boundariesConfirmed": true,
+      "clip": null
+    },
+    {
+      "id": "a7b0f490a6d3e20cc4edd53f34a0d400d65fc4a8f9d6ec60ed7f84f91e9b6da0:activity-1",
+      "sessionId": "a7b0f490a6d3e20cc4edd53f34a0d400d65fc4a8f9d6ec60ed7f84f91e9b6da0",
+      "name": null,
+      "start": 5838,
+      "end": 5859,
+      "performance": "fragment",
+      "confirmed": false,
+      "boundariesConfirmed": false,
+      "clip": null
+    },
+    {
+      "id": "a7b0f490a6d3e20cc4edd53f34a0d400d65fc4a8f9d6ec60ed7f84f91e9b6da0:activity-2",
+      "sessionId": "a7b0f490a6d3e20cc4edd53f34a0d400d65fc4a8f9d6ec60ed7f84f91e9b6da0",
+      "name": null,
+      "start": 5988,
+      "end": 6243,
+      "performance": "fragment",
+      "confirmed": false,
+      "boundariesConfirmed": false,
+      "clip": null
+    },
+    {
+      "id": "a7b0f490a6d3e20cc4edd53f34a0d400d65fc4a8f9d6ec60ed7f84f91e9b6da0:activity-3",
+      "sessionId": "a7b0f490a6d3e20cc4edd53f34a0d400d65fc4a8f9d6ec60ed7f84f91e9b6da0",
+      "name": null,
+      "start": 6560,
+      "end": 6900,
+      "performance": "full",
+      "confirmed": true,
+      "boundariesConfirmed": true,
+      "clip": null
+    },
+    {
+      "id": "a7b0f490a6d3e20cc4edd53f34a0d400d65fc4a8f9d6ec60ed7f84f91e9b6da0:activity-4",
+      "sessionId": "a7b0f490a6d3e20cc4edd53f34a0d400d65fc4a8f9d6ec60ed7f84f91e9b6da0",
+      "name": "蒲公英的约定",
+      "start": 7088,
+      "end": 7347,
+      "performance": "full",
+      "confirmed": false,
+      "boundariesConfirmed": false,
+      "clip": null
+    },
+    {
+      "id": "a7b0f490a6d3e20cc4edd53f34a0d400d65fc4a8f9d6ec60ed7f84f91e9b6da0:activity-5",
+      "sessionId": "a7b0f490a6d3e20cc4edd53f34a0d400d65fc4a8f9d6ec60ed7f84f91e9b6da0",
+      "name": "唯一",
+      "start": 7658,
+      "end": 7863,
+      "performance": "full",
+      "confirmed": false,
+      "boundariesConfirmed": false,
       "clip": null
     },
     {
@@ -817,17 +757,6 @@
         "part": 2,
         "url": "https://www.bilibili.com/video/BV1HnHh61ES8/?p=2"
       }
-    },
-    {
-      "id": "a0ced0ae9d8e640e83a9948650acd9e77733bc2609319cc13b3fc2ba3ef4b63e:activity-1",
-      "sessionId": "a0ced0ae9d8e640e83a9948650acd9e77733bc2609319cc13b3fc2ba3ef4b63e",
-      "name": null,
-      "start": 5320,
-      "end": 5355,
-      "performance": "fragment",
-      "confirmed": false,
-      "boundariesConfirmed": false,
-      "clip": null
     },
     {
       "id": "e00732ddba619f8713beba61b7dc08575b1519e88ba6b0d9b12c6ae824ee84c9:activity-1",
@@ -918,17 +847,6 @@
         "part": 2,
         "url": "https://www.bilibili.com/video/BV1Cgpg6dEwf/?p=2"
       }
-    },
-    {
-      "id": "1981c882decace8bf8d5f717dfa40f1ede10131e68ebf9b988d32dc581400f3d:activity-2",
-      "sessionId": "1981c882decace8bf8d5f717dfa40f1ede10131e68ebf9b988d32dc581400f3d",
-      "name": null,
-      "start": 12247,
-      "end": 12640,
-      "performance": "fragment",
-      "confirmed": false,
-      "boundariesConfirmed": false,
-      "clip": null
     },
     {
       "id": "327a60508778cc01a09def5a54e8b825e7e68347b3ed673712adcd6d5038988a:activity-1",

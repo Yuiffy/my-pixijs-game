@@ -13,6 +13,21 @@ export function correctedSongName(sessionId, song, corrections = titleCorrection
   return corrections.find(entry => entry.sessionId === sessionId
     && entry.activityId === song.activityId && entry.start === song.start && entry.end === song.end)?.name || null;
 }
+export function readSongExclusions(directory, sessionId) {
+  const file = path.join(directory, 'SONG_REVIEW.json');
+  if (!fs.existsSync(file)) return [];
+  const review = read(file);
+  if (review.version !== 1 || review.sessionId !== sessionId || !Array.isArray(review.exclusions)
+    || review.exclusions.some(item => !item || typeof item.activityId !== 'string'
+      || !Number.isFinite(item.start) || item.start < 0 || !Number.isFinite(item.end) || item.end <= item.start)) {
+    throw new Error(`Invalid song review: ${file}`);
+  }
+  return review.exclusions;
+}
+
+export const isExcludedSong = (exclusions, activityId, start, end) => exclusions.some(item =>
+  item.activityId === activityId && item.start === start && item.end === end);
+
 const portableBase = file => String(file || '').split(/[\\/]/).at(-1);
 const recordingKey = file => portableBase(file).replace(/\.[^.]+$/, '');
 function resolveSessionPath(directory, value, base = directory) {
@@ -145,11 +160,14 @@ export function buildSongCatalog(files, generatedAt = new Date().toISOString()) 
     const complete = record.coverage?.status === 'complete' && ['planned', 'rendered'].includes(record.status);
     const title = recordingKey(record.source?.mediaPath).replace(/^录制-\d+-\d{8}-\d{6}-\d+-/, '');
     sessions.push({ id: record.sessionId, recordedAt: record.recordedAt, title, complete });
-    const details = songDetailsFor(path.dirname(file), record);
+    const directory = path.dirname(file);
+    const exclusions = readSongExclusions(directory, record.sessionId);
+    const details = songDetailsFor(directory, record);
     for (const song of record.songs) {
       if (!song.activityId || !Number.isFinite(song.start) || song.start < 0
         || !Number.isFinite(song.end) || song.end <= song.start
         || !['full', 'fragment'].includes(song.performance)) throw new Error(`Invalid performance: ${file}`);
+      if (isExcludedSong(exclusions, song.activityId, song.start, song.end)) continue;
       const confirmed = complete && song.verificationStatus === 'keep'
         && !(song.reviewIssues || []).some(issue => ['media_verification_unconfirmed', 'source_transcript_timing_unreliable'].includes(issue));
       performances.push({

@@ -147,6 +147,31 @@ test('synchronization is stable, catches historical review changes, and retains 
   assert.equal(fs.readFileSync(output, 'utf8'), updated);
 });
 
+test('a human exclusion removes only the exact activity from the catalog and recap', t => {
+  const f = fixture(t);
+  f.record.songs.push({ ...f.song, activityId: 'a2', name: '另一首歌' });
+  f.save(f.file, f.record);
+  f.save(path.join(f.root, '2026_10_01', f.record.source.mediaPath.replace(/\.flv$/, '_LIVE_CONTENT.json')),
+    { status: 'success', content: { overview: '唱歌', songs: ['测试曲', '另一首歌'] } });
+  const directory = path.join(path.dirname(f.dir), f.record.source.mediaPath.replace(/\.flv$/, ''));
+  fs.renameSync(f.dir, directory);
+  const file = path.join(directory, 'SONGS.json');
+  f.save(path.join(directory, 'PLAN.json'), { sessionId: f.record.sessionId, source: f.record.source });
+  const sidecar = path.join(directory, 'SONG_REVIEW.json');
+  const exclusion = { activityId: 'a1', start: 100, end: 280, reasons: ['listening'] };
+  f.save(sidecar, { version: 1, sessionId: f.record.sessionId, exclusions: [exclusion] });
+  const catalog = () => buildSongCatalog([file]);
+  const recap = () => enrichStreamRecaps([{ id: '2026_10_01_23_59_00' }], { sourceDirs: [f.root], liverId: 'sui' })[0].recap;
+  assert.deepEqual(catalog().performances.map(row => row.name), ['另一首歌']);
+  assert.deepEqual(recap().songs.map(row => row.name), ['另一首歌']);
+  assert.equal(catalog().sessions.length, 1);
+  assert.doesNotMatch(JSON.stringify(catalog()), /listening|exclusions/);
+  f.record.songs[0].end += 1;
+  f.save(file, f.record);
+  assert.deepEqual(catalog().performances.map(row => row.name), ['测试曲', '另一首歌']);
+  assert.deepEqual(recap().songs.map(row => row.name), ['测试曲', '另一首歌']);
+});
+
 test('public schema rejects unsafe links and invalid dates; time uses Beijing across midnight', t => {
   const f = fixture(t); const data = buildSongCatalog([f.file]);
   assert.equal(isSongCatalog(data), true);
