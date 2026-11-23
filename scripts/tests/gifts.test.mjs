@@ -69,7 +69,7 @@ test('milestone gifts cannot become unconditional gifts', () => {
 });
 
 test('year, month, tier and keywords combine without leaking another tier into matches', () => {
-  assert.deepEqual(filterMonths(months, { ...DEFAULT_FILTERS, q: '2026 手写信', tier: 'governor' }).map(m => m.month), ['2026-09']);
+  assert.deepEqual(filterMonths(months, { ...DEFAULT_FILTERS, q: '2026 手写信', tier: 'governor' }).map(m => m.month), ['2026-11', '2026-09']);
   assert.equal(filterMonths(months, { ...DEFAULT_FILTERS, q: '手写信', year: '2026', tier: 'captain' }).length, 0);
   const result = filterMonths(months, { ...DEFAULT_FILTERS, year: '2024', month: '09', tier: 'admiral', q: '卫衣' });
   assert.deepEqual(result.map(m => m.month), ['2024-09']);
