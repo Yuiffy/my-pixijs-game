@@ -4,6 +4,7 @@ import React from 'react';
 import { Typography, Space, Card, Tag } from 'antd';
 import { HeartOutlined, StarOutlined } from '@ant-design/icons';
 import NextImage from 'next/image';
+import HomeShowcase from './HomeShowcase';
 import { suiInfo } from './SuiData';
 
 const { Title, Text, Paragraph } = Typography;
@@ -42,6 +43,8 @@ const HomeModule = () => (
         </Paragraph>
       </div>
     </div>
+
+    <HomeShowcase />
 
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
        <Card className="bg-white/5 border-white/10 backdrop-blur-md rounded-2xl">

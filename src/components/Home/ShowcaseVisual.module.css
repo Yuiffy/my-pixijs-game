@@ -1,0 +1,233 @@
+.visual {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 170px;
+  overflow: hidden;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(ellipse at 52% 49%, var(--glow), transparent 72%);
+}
+
+.gallery { --glow: #a96fbd38; }
+.records { --glow: #39b0b83b; }
+.games { --glow: #ec92703b; }
+
+.gallerySpread {
+  width: min(100%, 450px);
+  height: 100%;
+  min-height: inherit;
+  position: relative;
+}
+
+.artCard {
+  --y: 5px;
+  position: absolute;
+  top: 50%;
+  left: var(--x);
+  width: clamp(74px, 29%, 132px);
+  height: min(74%, 169px);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--light) 57%, transparent);
+  border-radius: 11px;
+  background: radial-gradient(100% 95% at 54% 8%, var(--back), #151526);
+  box-shadow: 0 9px 25px #0b091766, inset 0 0 24px color-mix(in srgb, var(--light) 15%, transparent);
+  transform: translate(-50%, calc(-50% + var(--y))) rotate(var(--tilt));
+  animation: cardEnter 720ms cubic-bezier(.19, 1, .22, 1) both;
+}
+
+.artCard:nth-child(1) { --x: 27%; --tilt: -12deg; --back: #602e4e; --light: #fca5c7; }
+.artCard:nth-child(2) { --x: 50%; --y: -5px; --tilt: 1deg; --back: #534285; --light: #d6bcff; z-index: 2; animation-delay: 70ms; }
+.artCard:nth-child(3) { --x: 73%; --tilt: 11deg; --back: #274e6a; --light: #a5eaff; animation-delay: 120ms; }
+
+.artCard img {
+  object-fit: cover;
+  object-position: center 8%;
+}
+
+.artCard > span {
+  position: absolute;
+  inset: auto 0 0;
+  display: flex;
+  align-items: center;
+  gap: .36rem;
+  padding: 14px 7px 7px;
+  color: #fff3ff;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: .04em;
+  white-space: nowrap;
+  background: linear-gradient(transparent, #131020 73%);
+}
+
+.artCard i {
+  color: var(--light);
+  font: normal 8px/1 ui-monospace, monospace;
+}
+
+.archive {
+  width: min(89%, 360px);
+  padding: 11px 12px 8px;
+  border-radius: 12px;
+  color: #d4f5f3;
+  background: linear-gradient(145deg, #1b313f, #142333 80%);
+  border: 1px solid #74dad34d;
+  box-shadow: 0 12px 26px #030d193f, inset 0 1px #affffa18;
+  animation: enter 580ms cubic-bezier(.19, 1, .22, 1) both;
+}
+
+.archiveTop, .chapter {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+}
+
+.archiveTop {
+  justify-content: space-between;
+  color: #a9d8d7;
+}
+
+.archiveTop time { font-family: ui-monospace, monospace; letter-spacing: -0.035em; }
+.archiveTitle { margin: 5px 0 8px; font-size: 14px; font-weight: 720; }
+
+.recordTrack {
+  display: grid;
+  grid-template-columns: 1fr .8fr 1.1fr .7fr;
+  gap: 3px;
+  margin: 0 0 6px;
+}
+
+.recordTrack span {
+  height: 3px;
+  border-radius: 6px;
+  background: #66a8a855;
+}
+
+.recordTrack span:nth-child(2) {
+  background: #92f7de;
+  box-shadow: 0 0 12px #83fadd76;
+  transform-origin: left;
+  animation: progress 870ms 100ms cubic-bezier(.19, 1, .22, 1) both;
+}
+
+.chapter { min-height: 22px; padding: 1px 6px; border-radius: 5px; color: #acc6d1; }
+.chapter b { color: #99c5cb; font: 9px/1 ui-monospace, monospace; }
+.chapterFirst { animation: previousChapter 1.2s 160ms ease both; }
+.chapterBright { background: #a3f3dc18; color: #e8fffa; animation: selectedChapter 500ms 880ms ease both; }
+.chapterMark { margin-left: auto; color: #99ebd7; font-size: 8px; animation: progress 280ms 900ms ease both; }
+
+.gameStage {
+  position: relative;
+  width: min(91%, 420px);
+  height: min(78%, 185px);
+  min-height: 132px;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 13px;
+  border: 1px solid #ffbc9180;
+  background: #27202b;
+  box-shadow: 0 14px 26px #150e1b72;
+  animation: enter 580ms cubic-bezier(.19, 1, .22, 1) both;
+}
+
+.gameStage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, #1b1423 3%, #20162712 63%), linear-gradient(90deg, #28194777, transparent 70%);
+}
+
+.gameArt { position: absolute; inset: 0; animation: artEnter 1000ms ease-out both; }
+.gameArt img { object-fit: cover; object-position: center 35%; }
+
+.gameGrid {
+  position: absolute;
+  inset: 52% -10% -12%;
+  transform: perspective(90px) rotateX(32deg);
+  background: repeating-linear-gradient(90deg, transparent 0 20px, #ffb8a445 20px 21px), repeating-linear-gradient(0deg, transparent 0 15px, #ffb8a445 15px 16px);
+  mask-image: linear-gradient(transparent, #000 72%);
+}
+
+.gameLabel, .gameAccent { position: absolute; z-index: 1; }
+.gameLabel { display: grid; bottom: 11px; left: 13px; color: #ffeadc; text-shadow: 0 2px 8px #160e1e; }
+.gameLabel span { color: #ffd1b2; font-size: 10px; letter-spacing: .1em; }
+.gameLabel b { font-weight: 750; font-size: 17px; letter-spacing: .09em; }
+.gameAccent { top: 8px; right: 12px; color: #ffe3b7; text-shadow: 0 0 14px #ffd396; }
+
+.formation {
+  position: absolute;
+  right: 11px;
+  bottom: 9px;
+  z-index: 1;
+  padding: 4px 6px 5px;
+  border: 1px solid #ffd4ad4d;
+  border-radius: 6px;
+  background: #221825ed;
+  color: #ffdec3;
+  text-align: center;
+  font-size: 8px;
+  letter-spacing: .04em;
+}
+
+.formationGrid { margin-top: 3px; display: grid; grid-template-columns: repeat(2, 22px); gap: 2px; }
+.formationGrid i {
+  border-radius: 3px;
+  background: #b97a526b;
+  color: #fff1db;
+  font: normal 8px/12px sans-serif;
+  animation: formationIn 450ms 260ms cubic-bezier(.19, 1, .22, 1) both;
+}
+.formationGrid i:nth-child(2) { animation-delay: 400ms; }
+.formationGrid i:nth-child(3) { grid-column: 2; background: #6d526f; animation-delay: 540ms; }
+
+@keyframes cardEnter {
+  from { opacity: 0; transform: translate(-50%, calc(-50% + var(--y) + 14px)) rotate(0deg) scale(.95); }
+  to { opacity: 1; transform: translate(-50%, calc(-50% + var(--y))) rotate(var(--tilt)); }
+}
+
+@keyframes enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes artEnter {
+  from { transform: scale(1.08); }
+  to { transform: scale(1); }
+}
+
+@keyframes progress {
+  from { transform: scaleX(.13); opacity: .55; }
+  to { transform: scaleX(1); opacity: 1; }
+}
+
+@keyframes previousChapter {
+  0%, 20% { background: transparent; }
+  35%, 70% { background: #a3f3dc18; }
+  100% { background: transparent; }
+}
+
+@keyframes selectedChapter {
+  from { background: transparent; }
+  to { background: #a3f3dc18; }
+}
+
+@keyframes formationIn {
+  from { opacity: .35; transform: translate(6px, -8px) scale(.72); }
+  to { opacity: 1; transform: translate(0, 0) scale(1); }
+}
+
+@media (min-width: 768px) {
+  .visual { min-height: 210px; }
+  .artCard > span { font-size: 12px; padding: 18px 9px 8px; }
+  .archive { padding: 12px 14px 10px; }
+  .archiveTop, .chapter { font-size: 11px; }
+  .archiveTitle { font-size: 16px; }
+  .chapter { min-height: 25px; }
+  .gameLabel b { font-size: 21px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .artCard, .archive, .recordTrack span:nth-child(2), .chapterFirst, .chapterBright, .chapterMark, .gameStage, .gameArt, .formationGrid i { animation: none; }
+}

@@ -170,6 +170,7 @@
     "@react-three/fiber": "^8.18.0",
     "antd": "^5.14.0",
     "dayjs": "^1.11.19",
+    "embla-carousel-react": "8.6.0",
     "i18next": "^26.4.2",
     "matter-js": "^0.19.0",
     "next": "14.2.35",
